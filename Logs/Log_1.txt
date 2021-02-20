@@ -1,2 +1,0 @@
-02-18-2021_09:44:46>Block.cpp             | 19  | Block             : Failed to load blocks!!
-02-18-2021_09:44:46>main.cpp             | 10  | Module             : Logger Test
