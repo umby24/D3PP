@@ -1,0 +1,10 @@
+.vs/
+.idea/
+bin/
+CMakeFiles/
+Data/
+Heartbeat/
+Logs/
+obj/
+Testing/
+*.exe
