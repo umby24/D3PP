@@ -1,0 +1,13 @@
+{
+    "files": {
+        "Answer": "[Main][Data]Answer.txt",
+        "Block": "[Main][Data]Block.json",
+        "Log": "[Main][Logs]Log_[i].txt"
+    },
+    "folders": {
+        "Data": "Data/",
+        "Heartbeat": "Heartbeat/",
+        "Logs": "Logs/",
+        "Main": ""
+    }
+}

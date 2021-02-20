@@ -1,0 +1,17 @@
+{
+  "version": "0.2.1",
+  "tasks": [
+    {
+      "taskName": "build-all",
+      "taskLabel": "task-main",
+      "appliesTo": "main.cpp",
+      "contextType": "build",
+      "type": "launch"
+    },
+    {
+      "appliesTo": "main.cpp",
+      "taskLabel": "task-main",
+      "type": "launch"
+    }
+  ]
+}

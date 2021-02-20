@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="D3PP"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="D:/Documents/git/D3PP"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="D:/Documents/git/D3PP"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="D3PP">
+				<Option output="D:/Documents/git/D3PP/D3PP.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="D:/Documents/git/D3PP"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="D:/Documents/git/D3PP/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/8.2.0/include/c++"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/8.2.0/include/c++/mingw32"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/8.2.0/include/c++/backward"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/8.2.0/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/8.2.0/../../../../include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/8.2.0/include-fixed"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 D3PP"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="D3PP/fast">
+				<Option output="D:/Documents/git/D3PP/D3PP.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="D:/Documents/git/D3PP"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="D:/Documents/git/D3PP/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/8.2.0/include/c++"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/8.2.0/include/c++/mingw32"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/8.2.0/include/c++/backward"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/8.2.0/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/8.2.0/../../../../include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/8.2.0/include-fixed"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 D3PP/fast"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="D:/Documents/git/D3PP"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/Documents/git/D3PP/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="D:/Documents/git/D3PP/include/Block.h">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/include/Files.h">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/include/Logger.h">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/include/Network.h">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/include/TaskScheduler.h">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/include/Utils.h">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/include/mingw.invoke.h">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/include/mingw.mutex.h">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/include/mingw.thread.h">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/main.cpp">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/src/Block.cpp">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/src/Files.cpp">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/src/Logger.cpp">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/src/Network.cpp">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/src/TaskScheduler.cpp">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/src/Utils.cpp">
+			<Option target="D3PP"/>
+		</Unit>
+		<Unit filename="D:/Documents/git/D3PP/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "inheritEnvironments": [
+        "mingw_64"
+      ],
+      "name": "Mingw64",
+      "includePath": [
+        "${env.INCLUDE}",
+        "${workspaceRoot}\\**"
+      ],
+      "intelliSenseMode": "windows-clang-x64",
+      "environments": [
+        {
+          "MINGW_PREFIX": "C:\\MinGW\\bin",
+          "MINGW_CHOST": "x86_64-w64-mingw32",
+          "MINGW_PACKAGE_PREFIX": "mingw-w64-x86_64",
+          "MSYSTEM": "MINGW64",
+          "MSYSTEM_CARCH": "x64_64",
+          "INCLUDE": "project/lib/include;c:\\mingw\\bin\\../lib/gcc/mingw32/9.2.0/include/;c:\\mingw\\bin\\../lib/gcc/mingw32/9.2.0/include/c++;c:\\mingw\\bin\\../lib/gcc/mingw32/9.2.0/include-fixed/;c:\\mingw\\bin\\../lib/gcc/mingw32/9.2.0/include/c++/mingw32"
+        }]
+        }
+      ]
+}
