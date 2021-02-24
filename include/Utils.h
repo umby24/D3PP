@@ -3,6 +3,7 @@
 
 #include <string>
 #include <time.h>
+#include <sstream>
 #include <filesystem>
 
 #include <sys/types.h>

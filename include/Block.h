@@ -25,8 +25,8 @@ enum PhysicsType {
 struct MapBlock {
     int Id;
     std::string Name;
-    char OnClient;
-    char Physics;
+    int OnClient;
+    int Physics;
     std::string PhysicsPlugin;
     int PhysicsTime;
     int PhysicsRandom;
@@ -37,18 +37,18 @@ struct MapBlock {
     int ReplaceOnLoad;
     int RankPlace;
     int RankDelete;
-    char AfterDelete;
+    int AfterDelete;
     bool Kills;
     bool Special;
     int OverviewColor;
-    char CpeLevel;
-    char CpeReplace;
+    int CpeLevel;
+    int CpeReplace;
 };
 
 class Block : TaskItem {
 public:
     Block();
-    MapBlock GetBlock();
+    MapBlock GetBlock(int id);
     void Save();
 protected:
 private:

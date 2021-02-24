@@ -9,7 +9,6 @@
 #include <map>
 #include <chrono>
 #include <mutex>
-#include <shared_mutex>
 
 #include "Utils.h"
 #include "Logger.h"
@@ -37,8 +36,7 @@ public:
     static void RunTeardownTasks();
 private:
     static std::map<std::string, TaskItem> _tasks;
-    std::shared_mutex
-    static std::shared_lock _taskLock;
+    static std::mutex _taskLock;
 };
 
 #endif //D3PP_TASKSCHEDULER_H

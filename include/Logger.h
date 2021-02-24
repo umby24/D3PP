@@ -15,7 +15,7 @@ enum LogType {
     NORMAL = 0,
     CHAT = 1,
     WARNING = 5,
-    ERROR = 10
+    L_ERROR = 10
 };
 
 struct LogMessage {

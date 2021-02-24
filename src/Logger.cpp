@@ -32,7 +32,7 @@ void Logger::FileWrite() {
 
     char buffer[255];
     struct LogMessage last = Messages[Messages.size() - 1];
-    strftime(buffer, sizeof(buffer), "%m-%d-%Y_%H:%M:%S", localtime(&last.Time));
+    strftime(buffer, sizeof(buffer), "%m-%d-%Y_%H:%M:%S", localtime(reinterpret_cast<const time_t *>(&last.Time)));
     fileStream << buffer << ">";
     fileStream << last.File << std::setw(15) << " | ";
     fileStream << last.Line << std::setw(4) << " | ";
@@ -54,7 +54,7 @@ void Logger::Add(struct LogMessage message) {
         std::cout << message.Module << "|";
         std::cout << message.Message << std::endl;
     } else {
-        std::cout << message.File << std::setw(15) << "| ";
+        std::cout << message.File << std::setw(15 - message.File.size()) << "| ";
         std::cout << message.Module << ": ";
         std::cout << message.Message << std::endl;
     }

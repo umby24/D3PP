@@ -4,7 +4,8 @@
 
 #include "TaskScheduler.h"
 const std::string MODULE_NAME = "Task Scheduler";
-std::shared_lock TaskScheduler::_taskLock();
+std::map<std::string, TaskItem> TaskScheduler::_tasks;
+std::mutex TaskScheduler::_taskLock;
 
 std::string TaskScheduler::RegisterTask(std::string name, TaskItem &item) {
     _taskLock.lock();
