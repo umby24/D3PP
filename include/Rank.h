@@ -5,14 +5,14 @@
 #ifndef D3PP_RANK_H
 #define D3PP_RANK_H
 #include <string>
-#include <vector>
+#include <map>
 
 #include "json.hpp"
 #include "Utils.h"
 #include "TaskScheduler.h"
 
 using json = nlohmann::json;
-const std::string RANK_FILE_NAME = "ranks.json";
+const std::string RANK_FILE_NAME = "Rank";
 
 struct RankItem {
     int Rank;
@@ -26,16 +26,17 @@ class Rank : TaskItem {
 public:
     Rank();
     void Add(RankItem item);
-    RankItem GetRank();
+    RankItem GetRank(int rank, bool exact);
     void Delete(int id);
 private:
     bool SaveFile;
     time_t LastFileDate;
-    std::vector<RankItem> _ranks;
+    std::map<int, RankItem> _ranks;
 
     void Load();
     void Save();
     void MainFunc();
+    void DefaultRanks();
 };
 
 

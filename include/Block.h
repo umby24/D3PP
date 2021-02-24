@@ -54,13 +54,11 @@ protected:
 private:
     bool SaveFile;
     time_t LastFileDate;
-    time_t FileCheckTimer;
     std::vector<MapBlock> Blocks;
 
     void Load();
 
     void MainFunc();
-    void Shutdown();
 };
 
 

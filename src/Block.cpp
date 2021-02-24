@@ -70,6 +70,7 @@ void Block::Load() {
         loadedItem.OverviewColor = item["OverviewColor"];
         loadedItem.CpeLevel = item["CpeLevel"];
         loadedItem.CpeReplace = item["CpeReplace"];
+        Blocks[loadedItem.Id] = loadedItem;
     }
 
     Logger::LogAdd(MODULE_NAME, "File loaded.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
@@ -135,8 +136,3 @@ void Block::MainFunc() {
         LastFileDate = modTime;
     }
 }
-
-void Block::Shutdown() {
-    Save();
-}
-
