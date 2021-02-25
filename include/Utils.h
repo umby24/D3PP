@@ -24,6 +24,7 @@ std::string stringulate(ValueType v)
     return std::to_string(v);
 #else
     std::ostringstream oss;
+    oss << std::setprecision(6) << std::fixed;
     oss << v;
     return oss.str();
 #endif
