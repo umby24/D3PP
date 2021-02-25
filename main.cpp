@@ -2,6 +2,7 @@
 #include <Logger.h>
 #include <Block.h>
 #include "Rank.h"
+#include "Mem.h"
 using namespace std;
 bool isRunning = false;
 void mainLoop();
@@ -14,7 +15,14 @@ int main()
 
     TaskScheduler::RunSetupTasks();
     isRunning = true;
+
+    char* someMemory = Mem::Allocate(20, "Main.cpp", 15, "Test");
+    someMemory[0] = 5;
+    someMemory[1] = 10;
+
+
     mainLoop();
+    Mem::Free(someMemory);
     isRunning = false;
     TaskScheduler::RunTeardownTasks();
 

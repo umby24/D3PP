@@ -28,4 +28,4 @@ if (WIN32)
     endif()
 endif ()
 # add the executable
-add_executable(D3PP main.cpp src/Files.cpp include/Files.h src/Logger.cpp include/Logger.h  src/Utils.cpp include/Utils.h src/Block.cpp include/Block.h src/TaskScheduler.cpp include/TaskScheduler.h src/Network.cpp include/Network.h include/mingw.thread.h include/mingw.mutex.h src/Rank.cpp include/Rank.h)
+add_executable(D3PP main.cpp src/Files.cpp include/Files.h src/Logger.cpp include/Logger.h  src/Utils.cpp include/Utils.h src/Block.cpp include/Block.h src/TaskScheduler.cpp include/TaskScheduler.h src/Network.cpp include/Network.h src/Rank.cpp include/Rank.h src/Mem.cpp include/Mem.h)
