@@ -6,6 +6,7 @@
 #include "Rank.h"
 #include "Mem.h"
 #include "watchdog.h"
+#include "System.h"
 
 using namespace std;
 bool isRunning = false;
@@ -17,6 +18,7 @@ int main()
     Logger::LogAdd("Main", "====== Welcome to D3PP =====", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     Block b;
     Rank r;
+    System s;
 
     TaskScheduler::RunSetupTasks();
     isRunning = true;
