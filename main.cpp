@@ -7,6 +7,7 @@
 #include "Mem.h"
 #include "watchdog.h"
 #include "System.h"
+#include "Chat.h"
 
 using namespace std;
 bool isRunning = false;
