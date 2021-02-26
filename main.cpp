@@ -1,3 +1,5 @@
+#include "network/WindowsServerSockets.h"
+
 #include <Files.h>
 #include <Logger.h>
 #include <Block.h>
@@ -7,7 +9,7 @@
 #include "Mem.h"
 #include "watchdog.h"
 #include "System.h"
-#include "Chat.h"
+
 
 using namespace std;
 bool isRunning = false;
@@ -27,6 +29,8 @@ int main()
     char* someMemory = Mem::Allocate(20, "Main.cpp", 15, "Test");
     someMemory[0] = 5;
     someMemory[1] = 10;
+    ServerSocket sock(25565);
+    sock.Listen();
 
     std::thread mainThread(mainLoop);
     MainConsole();
