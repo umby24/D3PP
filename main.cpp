@@ -5,6 +5,7 @@
 
 #include "Rank.h"
 #include "Mem.h"
+#include "watchdog.h"
 
 using namespace std;
 bool isRunning = false;
@@ -47,7 +48,10 @@ void MainConsole() {
 
 void mainLoop() {
     while (isRunning) {
+        watchdog::Watch("Main", "Begin Mainslope", 0);
         TaskScheduler::RunMainTasks();
+        watchdog::Watch("Main", "End Mainslope", 2);
+
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
