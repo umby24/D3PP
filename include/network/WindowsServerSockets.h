@@ -14,10 +14,13 @@
 
 class ServerSocket {
 public:
+    ServerSocket();
     ServerSocket(int port);
-
+    void Init(int port);
     void Listen();
+    void Stop();
 private:
+    bool hasInit;
     int listenPort;
     SOCKET listenSocket;
     struct addrinfo hints;

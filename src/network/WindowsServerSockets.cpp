@@ -3,7 +3,40 @@
 //
 #include "network/WindowsServerSockets.h"
 
+ServerSocket::ServerSocket() {
+    hasInit = false;
+}
+
 ServerSocket::ServerSocket(int port) {
+    Init(port);
+}
+
+void ServerSocket::Listen() {
+    if (!hasInit) {
+        // -- exception?
+    }
+    int iResult;
+
+    iResult = bind(listenSocket, result->ai_addr, (int)result->ai_addrlen);
+    if (iResult== SOCKET_ERROR) {
+        Logger::LogAdd("ServerSocket", "Failed to start networking", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        return;
+    }
+
+    iResult = listen(listenSocket, SOMAXCONN);
+    if (iResult== SOCKET_ERROR) {
+        Logger::LogAdd("ServerSocket", "Failed to start listening", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        closesocket(listenSocket);
+        return;
+    }
+
+    // -- Now we're ready to accept clients <3
+}
+
+void ServerSocket::Init(int port) {
+    if (hasInit)
+        return;
+
     listenPort = port;
     WSADATA wsaData;
     int iResult;
@@ -37,25 +70,9 @@ ServerSocket::ServerSocket(int port) {
         freeaddrinfo(result);
         return;
     }
+    hasInit = true;
 }
 
-void ServerSocket::Listen() {
-    int iResult;
 
-    iResult = bind(listenSocket, result->ai_addr, (int)result->ai_addrlen);
-    if (iResult== SOCKET_ERROR) {
-        Logger::LogAdd("ServerSocket", "Failed to start networking", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
-        return;
-    }
-
-    iResult = listen(listenSocket, SOMAXCONN);
-    if (iResult== SOCKET_ERROR) {
-        Logger::LogAdd("ServerSocket", "Failed to start listening", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
-        closesocket(listenSocket);
-        return;
-    }
-
-    // -- Now we're ready to accept clients <3
-}
 
 
