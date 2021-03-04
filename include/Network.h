@@ -13,18 +13,22 @@
 #include <string>
 #include <map>
 #include <vector>
-#include "Mem.h"
-#include "json.hpp"
 
 #ifndef __linux__
 #include "network/WindowsServerSockets.h"
+#include "network/WindowsSockets.h"
 #else
 #include "network/LinuxServerSockets.h"
 #endif
 
+#include "Mem.h"
+#include "json.hpp"
 using json = nlohmann::json;
 
 class NetworkClient {
+public:
+    NetworkClient();
+    NetworkClient(const Sockets& socket);
     int Id;
     std::string IP;
     char* InputBuffer;
@@ -46,7 +50,7 @@ class NetworkClient {
     bool CPE;
     int CustomBlocksLevel;
     bool GlobalChat;
-
+    Sockets clientSocket;
     std::map<std::string, int> Extensions;
     std::vector<bool> Selections;
 };
@@ -58,8 +62,9 @@ public:
     void Load();
     void Start();
     void Stop();
+    void meh();
 protected:
-    void AddClient();
+    void AddClient(Sockets clientSocket);
     NetworkClient* GetClient(int id);
 private:
     void HtmlStats();

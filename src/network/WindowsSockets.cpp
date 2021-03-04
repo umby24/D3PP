@@ -80,4 +80,14 @@ Sockets::~Sockets()
     Disconnect();
     WSACleanup();
 }
+
+Sockets::Sockets(SOCKET accept) {
+    socketfd = accept;
+    connected = true;
+}
+
+Sockets::Sockets() {
+
+}
+
 #endif

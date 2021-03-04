@@ -8,11 +8,13 @@ ServerSocket::ServerSocket() {
 }
 
 ServerSocket::ServerSocket(int port) {
+    hasInit = false;
     Init(port);
 }
 
 void ServerSocket::Listen() {
     if (!hasInit) {
+        Logger::LogAdd("ServerSocket", "WINSOCK NOT INITIALIZED YET!!!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         // -- exception?
     }
     int iResult;
@@ -71,6 +73,19 @@ void ServerSocket::Init(int port) {
         return;
     }
     hasInit = true;
+}
+
+void ServerSocket::Stop() {
+
+}
+
+Sockets ServerSocket::Accept() {
+    SOCKET clientSocket = accept(listenSocket, NULL, NULL);
+
+    if (clientSocket == INVALID_SOCKET)
+        throw std::runtime_error("Failed to accept client socket");
+
+    return Sockets(clientSocket);
 }
 
 

@@ -75,3 +75,30 @@ NetworkClient *Network::GetClient(int id) {
 
     return &_clients.at(id);
 }
+
+void Network::AddClient(Sockets clientSocket) {
+    NetworkClient newClient(clientSocket);
+    _clients[newClient.Id] = newClient;
+}
+
+void Network::meh() {
+    Sockets newClient = listenSocket.Accept();
+    AddClient(newClient);
+}
+
+NetworkClient::NetworkClient(const Sockets& socket) : clientSocket(socket) {
+    Id= reinterpret_cast<uintptr_t>(&clientSocket);
+    InputBuffer = Mem::Allocate(NETWORK_BUFFER_SIZE, __FILE__, __LINE__, "NetworkClient(" + stringulate(Id) + ")\\InputBuffer");
+    OutputBuffer = Mem::Allocate(NETWORK_BUFFER_SIZE, __FILE__, __LINE__, "NetworkClient(" + stringulate(Id) + ")\\OutputBuffer");
+    InputBufferAvailable = 0;
+    InputBufferOffset = 0;
+    OutputBufferOffset = 0;
+    OutputBufferAvailable = 0;
+    LastTimeEvent = time(nullptr);
+
+    Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+}
+
+NetworkClient::NetworkClient() {
+
+}

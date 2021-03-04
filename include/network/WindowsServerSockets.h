@@ -11,6 +11,7 @@
 #include <ws2tcpip.h>
 #include <stdio.h>
 #include "../Logger.h"
+#include "WindowsSockets.h"
 
 class ServerSocket {
 public:
@@ -18,6 +19,7 @@ public:
     ServerSocket(int port);
     void Init(int port);
     void Listen();
+    Sockets Accept();
     void Stop();
 private:
     bool hasInit;

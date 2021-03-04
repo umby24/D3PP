@@ -9,7 +9,7 @@
 #include "Mem.h"
 #include "watchdog.h"
 #include "System.h"
-
+#include "Network.h"
 
 using namespace std;
 bool isRunning = false;
@@ -22,17 +22,20 @@ int main()
     Block b;
     Rank r;
     System s;
+    Network n;
 
     TaskScheduler::RunSetupTasks();
     isRunning = true;
+    n.Load();
+    n.Save();
 
     char* someMemory = Mem::Allocate(20, "Main.cpp", 15, "Test");
     someMemory[0] = 5;
     someMemory[1] = 10;
-    ServerSocket sock(25565);
-    sock.Listen();
+    n.Start();
 
     std::thread mainThread(mainLoop);
+    n.meh();
     MainConsole();
 
     Mem::Free(someMemory);
