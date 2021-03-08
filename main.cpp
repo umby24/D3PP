@@ -29,16 +29,11 @@ int main()
     n.Load();
     n.Save();
 
-    char* someMemory = Mem::Allocate(20, "Main.cpp", 15, "Test");
-    someMemory[0] = 5;
-    someMemory[1] = 10;
     n.Start();
 
     std::thread mainThread(mainLoop);
-    n.meh();
     MainConsole();
 
-    Mem::Free(someMemory);
     TaskScheduler::RunTeardownTasks();
 
     Logger::LogAdd("Module", "Server shutdown complete.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);

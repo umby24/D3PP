@@ -48,6 +48,7 @@ bool Sockets::Connect() {
 
 void Sockets::Disconnect() {
     if (connected) {
+        shutdown(socketfd, SD_SEND);
         closesocket(socketfd);
         connected = false;
     }

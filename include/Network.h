@@ -13,6 +13,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <thread>
 
 #ifndef __linux__
 #include "network/WindowsServerSockets.h"
@@ -22,6 +23,8 @@
 #endif
 
 #include "Mem.h"
+#include "TaskScheduler.h"
+#include "watchdog.h"
 #include "json.hpp"
 using json = nlohmann::json;
 
@@ -29,14 +32,18 @@ class NetworkClient {
 public:
     NetworkClient();
     NetworkClient(const Sockets& socket);
+    void InputWriteBuffer(char* data, int size);
+    void OutputReadBuffer(char* dataBuffer, int size);
+    void OutputAddOffset(int bytes);
+    void OutputPing();
     int Id;
     std::string IP;
     char* InputBuffer;
-    char* InputBufferOffset;
-    char* InputBufferAvailable;
+    int InputBufferOffset;
+    int InputBufferAvailable;
     char* OutputBuffer;
-    char* OutputBufferOffset;
-    char* OutputBufferAvailable;
+    int OutputBufferOffset;
+    int OutputBufferAvailable;
     int DisconnectTime;
     int LastTimeEvent;
     int UploadRate;
@@ -53,6 +60,12 @@ public:
     Sockets clientSocket;
     std::map<std::string, int> Extensions;
     std::vector<bool> Selections;
+private:
+    void OutputWriteByte(char value);
+    void OutputWriteShort(short value);
+    void OutputWriteInt(int value);
+    void OutputWriteString(std::string value);
+    void OutputWriteBlob(char* data, int dataSize);
 };
 
 class Network {
@@ -62,13 +75,19 @@ public:
     void Load();
     void Start();
     void Stop();
-    void meh();
 protected:
     void AddClient(Sockets clientSocket);
     NetworkClient* GetClient(int id);
 private:
+    void UpdateNetworkStats();
     void HtmlStats();
-    
+    void MainFunc();
+    void ClientAcceptance();
+    void NetworkEvents();
+    void NetworkOutputSend();
+    void NetworkOutput();
+    void NetworkInput();
+
     ServerSocket listenSocket;
     bool isListening;
     char* TempBuffer;
@@ -80,6 +99,8 @@ private:
     int Port;
     std::map<int, NetworkClient> _clients;
     time_t lastModifiedTime;
+    bool SaveFile;
+    std::thread _acceptThread;
 };
 
 const std::string NETWORK_HTML = R"(<html>
