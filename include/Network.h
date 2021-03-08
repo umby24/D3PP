@@ -26,13 +26,18 @@
 #include "TaskScheduler.h"
 #include "watchdog.h"
 #include "json.hpp"
+
 using json = nlohmann::json;
 
 class NetworkClient {
 public:
     NetworkClient();
     NetworkClient(const Sockets& socket);
+    // -- Input Buffer Commands
+    void InputAddOffset(int bytes);
+    char InputReadByte();
     void InputWriteBuffer(char* data, int size);
+    // -- Output Buffer Commands
     void OutputReadBuffer(char* dataBuffer, int size);
     void OutputAddOffset(int bytes);
     void OutputPing();

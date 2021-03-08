@@ -15,7 +15,7 @@ ServerSocket::ServerSocket(int port) {
 void ServerSocket::Listen() {
     if (!hasInit) {
         Logger::LogAdd("ServerSocket", "WINSOCK NOT INITIALIZED YET!!!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
-        // -- exception?
+        throw std::runtime_error("Attempted to start listening before initializing winsock");
     }
     int iResult;
 
@@ -80,12 +80,26 @@ void ServerSocket::Stop() {
 }
 
 Sockets ServerSocket::Accept() {
-    SOCKET clientSocket = accept(listenSocket, NULL, NULL);
+    // -- TODO: return a unique_ptr<Sockets> here.. maybe start tracking sockets inside this class using the sock descriptor.
+    FD_ZERO(&mySockDescripts);
+    FD_SET(listenSocket, &mySockDescripts);
+    int activity = select(0, &mySockDescripts, NULL, NULL, reinterpret_cast<PTIMEVAL const>(10));
+    if (FD_ISSET(listenSocket, &mySockDescripts)) {
+        sockaddr_in from;
+        int addrLen = sizeof(sockaddr_in);
+        SOCKET clientSocket = accept(listenSocket, (struct sockaddr *) &from, &addrLen);
+        char *ipAddr;
+        ipAddr = inet_ntoa(from.sin_addr);
 
-    if (clientSocket == INVALID_SOCKET)
-        throw std::runtime_error("Failed to accept client socket");
+        std::cout << "Accepting.." << ipAddr << std::endl;
 
-    return Sockets(clientSocket);
+        if (clientSocket == INVALID_SOCKET)
+            throw std::runtime_error("Failed to accept client socket");
+
+        return Sockets(clientSocket);
+    } else {
+        return -1;
+    }
 }
 
 

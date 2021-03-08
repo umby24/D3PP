@@ -9,6 +9,7 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
+#include <ws2def.h>
 #include <stdio.h>
 #include "../Logger.h"
 #include "WindowsSockets.h"
@@ -25,6 +26,7 @@ private:
     bool hasInit;
     int listenPort;
     SOCKET listenSocket;
+    fd_set mySockDescripts;
     struct addrinfo hints;
     struct addrinfo *result;
 };

@@ -4,32 +4,7 @@
 
 #include "../include/Network.h"
 
-int InputBufferAvailable(NetworkClient* client) {
-    return client->InputBufferAvailable;
-}
 
-void InputAddOffset(NetworkClient* client, int bytes) {
-    client->InputBufferOffset += bytes;
-    client->InputBufferAvailable -= bytes;
-
-    if (client->InputBufferOffset < 0)
-        client->InputBufferOffset += NETWORK_BUFFER_SIZE;
-
-    if (client->InputBufferOffset >= NETWORK_BUFFER_SIZE)
-        client->InputBufferOffset -= NETWORK_BUFFER_SIZE;
-}
-
-char InputReadByte(NetworkClient* client) {
-    char result;
-    if (client->InputBufferAvailable >= 1) {
-        result = client->InputBuffer[client->InputBufferOffset];
-        client->InputBufferOffset += 1;
-        client->InputBufferAvailable -= 1;
-        if (client->InputBufferOffset >= NETWORK_BUFFER_SIZE)
-            client->InputBufferOffset -= NETWORK_BUFFER_SIZE;
-    }
-    return result;
-}
 
 short InputReadShort(NetworkClient* client) {
     short result;

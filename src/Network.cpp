@@ -222,19 +222,51 @@ void Network::NetworkInput() {
     for(auto nc : _clients) {
         int maxRepeat = 10;
         while (nc.second.InputBufferAvailable >= 1 && maxRepeat > 0) {
-            char commandByte = nc.second.InputBuffer[0];
-            // -- ClientInputReadBYte
-            // -- InputAddOffset
+            char commandByte = nc.second.InputReadByte();
+            nc.second.InputAddOffset(-1);
             nc.second.LastTimeEvent = time(nullptr);
+
             switch(commandByte) {
                 case 0: // -- Login
+                    if (nc.second.InputBufferAvailable >= 1 + 1 + 64 + 64 + 1) {
+
+                    }
+                    break;
                 case 1: // -- Ping
+                    if (nc.second.InputBufferAvailable >= 1) {
+
+                    }
+                    break;
                 case 5: // -- Block Change
+                    if (nc.second.InputBufferAvailable >= 9) {
+
+                    }
+                    break;
                 case 8: // -- Player Movement
+                    if (nc.second.InputBufferAvailable >= 10) {
+
+                    }
+                    break;
                 case 13: // -- Chat Message
+                    if (nc.second.InputBufferAvailable >= 66) {
+
+                    }
+                    break;
                 case 16: // -- CPe ExtInfo
+                    if (nc.second.InputBufferAvailable >= 67) {
+
+                    }
+                    break;
                 case 17: // -- CPE ExtEntry
+                    if (nc.second.InputBufferAvailable >= 1 + 64 + 4) {
+
+                    }
+                    break;
                 case 19: // -- CPE Custom Block Support
+                    if (nc.second.InputBufferAvailable >= 2) {
+
+                    }
+                    break;
                 default:
                     Logger::LogAdd(MODULE_NAME, "Unknown Packet Recieved [" + stringulate(commandByte) + "]", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
                     // -- Kick
@@ -247,8 +279,15 @@ void Network::NetworkInput() {
 
 void Network::ClientAcceptance() {
     while (isListening) {
-        Sockets newClient = listenSocket.Accept();
-        AddClient(newClient);
+        try {
+            Sockets newClient = listenSocket.Accept();
+
+            if (newClient != -1)
+                AddClient(newClient);
+        } catch (...) {
+            continue;
+        }
+
     }
 }
 
@@ -336,6 +375,30 @@ void NetworkClient::Kick(std::string message, bool hide) {
         // -- LogoutHide = hide
         Logger::LogAdd(MODULE_NAME, "Client Kicked [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     }
+}
+
+void NetworkClient::InputAddOffset(int bytes) {
+    InputBufferOffset += bytes;
+    InputBufferAvailable -= bytes;
+
+    if (InputBufferOffset < 0)
+        InputBufferOffset += NETWORK_BUFFER_SIZE;
+
+    if (InputBufferOffset >= NETWORK_BUFFER_SIZE)
+        InputBufferOffset -= NETWORK_BUFFER_SIZE;
+}
+
+char NetworkClient::InputReadByte() {
+    char result;
+    if (InputBufferAvailable >= 1) {
+        result = InputBuffer[InputBufferOffset];
+        InputBufferOffset += 1;
+        InputBufferAvailable -= 1;
+
+        if (InputBufferOffset >= NETWORK_BUFFER_SIZE)
+            InputBufferOffset -= NETWORK_BUFFER_SIZE;
+    }
+    return result;
 }
 
 void Network::DeleteClient(int clientId, std::string message, bool sendToAll) {
