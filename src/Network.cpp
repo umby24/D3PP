@@ -219,6 +219,30 @@ void Network::NetworkOutput() {
 
 void Network::NetworkInput() {
     // -- Packet handling
+    for(auto nc : _clients) {
+        int maxRepeat = 10;
+        while (nc.second.InputBufferAvailable >= 1 && maxRepeat > 0) {
+            char commandByte = nc.second.InputBuffer[0];
+            // -- ClientInputReadBYte
+            // -- InputAddOffset
+            nc.second.LastTimeEvent = time(nullptr);
+            switch(commandByte) {
+                case 0: // -- Login
+                case 1: // -- Ping
+                case 5: // -- Block Change
+                case 8: // -- Player Movement
+                case 13: // -- Chat Message
+                case 16: // -- CPe ExtInfo
+                case 17: // -- CPE ExtEntry
+                case 19: // -- CPE Custom Block Support
+                default:
+                    Logger::LogAdd(MODULE_NAME, "Unknown Packet Recieved [" + stringulate(commandByte) + "]", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+                    // -- Kick
+            }
+
+            maxRepeat--;
+        }
+    }
 }
 
 void Network::ClientAcceptance() {
@@ -302,4 +326,26 @@ void NetworkClient::InputWriteBuffer(char *data, int size) {
         dataWrote += dataTempSize;
         InputBufferAvailable += dataTempSize;
     }
+}
+
+void NetworkClient::Kick(std::string message, bool hide) {
+    // -- System_red_screen
+    if (DisconnectTime == 0) {
+        DisconnectTime = time(nullptr) + 1000;
+        LoggedIn = false;
+        // -- LogoutHide = hide
+        Logger::LogAdd(MODULE_NAME, "Client Kicked [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    }
+}
+
+void Network::DeleteClient(int clientId, std::string message, bool sendToAll) {
+    if (_clients.find(clientId) == _clients.end())
+        return;
+
+    // -- Plugin event client delete
+    // -- Client_Logout
+    Mem::Free(_clients[clientId].InputBuffer);
+    Mem::Free(_clients[clientId].OutputBuffer);
+    Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(clientId) + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    _clients.erase(clientId);
 }

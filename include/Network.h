@@ -36,6 +36,7 @@ public:
     void OutputReadBuffer(char* dataBuffer, int size);
     void OutputAddOffset(int bytes);
     void OutputPing();
+    void Kick(std::string message, bool hide);
     int Id;
     std::string IP;
     char* InputBuffer;
@@ -77,6 +78,7 @@ public:
     void Stop();
 protected:
     void AddClient(Sockets clientSocket);
+    void DeleteClient(int clientId, std::string message, bool sendToAll);
     NetworkClient* GetClient(int id);
 private:
     void UpdateNetworkStats();
