@@ -39,6 +39,8 @@ class Utils
         static long FileModTime(std::string filePath);
         static bool DirectoryExists(std::string filePath, bool create);
         static std::string TrimPathString(std::string input);
+        static void padTo(std::string &str, const size_t num, const char paddingChar = ' ');
+
     protected:
 
     private:

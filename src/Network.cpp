@@ -461,3 +461,10 @@ void Network::DeleteClient(int clientId, std::string message, bool sendToAll) {
     Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(clientId) + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     _clients.erase(clientId);
 }
+
+Network *Network::GetInstance() {
+    if (singleton_ == nullptr)
+        singleton_ = new Network();
+
+    return singleton_;
+}

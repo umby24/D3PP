@@ -66,7 +66,6 @@ public:
     unique_ptr<Sockets> clientSocket;
     std::map<std::string, int> Extensions;
     std::vector<bool> Selections;
-private:
     void OutputWriteByte(char value);
     void OutputWriteShort(short value);
     void OutputWriteInt(int value);
@@ -81,9 +80,12 @@ public:
     void Load();
     void Start();
     void Stop();
+    static Network* GetInstance();
+    static Network* singleton_;
+    std::shared_ptr<NetworkClient> GetClient(int id);
 protected:
     void DeleteClient(int clientId, std::string message, bool sendToAll);
-    std::shared_ptr<NetworkClient> GetClient(int id);
+
 private:
     void UpdateNetworkStats();
     void HtmlStats();

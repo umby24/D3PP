@@ -4,8 +4,6 @@
 
 #include "../include/Network.h"
 
-
-
 short InputReadShort(NetworkClient* client) {
     short result;
     if (client->InputBufferAvailable >= 2) {
