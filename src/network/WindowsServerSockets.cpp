@@ -3,6 +3,8 @@
 //
 #include "network/WindowsServerSockets.h"
 
+#include <memory>
+
 ServerSocket::ServerSocket() {
     hasInit = false;
 }
@@ -79,8 +81,8 @@ void ServerSocket::Stop() {
 
 }
 
-Sockets ServerSocket::Accept() {
-    // -- TODO: return a unique_ptr<Sockets> here.. maybe start tracking sockets inside this class using the sock descriptor.
+unique_ptr<Sockets> ServerSocket::Accept() {
+    // -- maybe start tracking sockets inside this class using the sock descriptor.
     FD_ZERO(&mySockDescripts);
     FD_SET(listenSocket, &mySockDescripts);
     int activity = select(0, &mySockDescripts, NULL, NULL, reinterpret_cast<PTIMEVAL const>(10));
@@ -91,15 +93,27 @@ Sockets ServerSocket::Accept() {
         char *ipAddr;
         ipAddr = inet_ntoa(from.sin_addr);
 
-        std::cout << "Accepting.." << ipAddr << std::endl;
+        std::cout << "Accepting.. " << ipAddr << std::endl;
 
         if (clientSocket == INVALID_SOCKET)
             throw std::runtime_error("Failed to accept client socket");
 
-        return Sockets(clientSocket);
+        unique_ptr<Sockets> sock = std::make_unique<Sockets>(clientSocket);
+
+        return sock;
     } else {
-        return -1;
+        return nullptr;
     }
+}
+
+ServerSocketEvent ServerSocket::CheckEvents() {
+    int activity = select(0, &mySockDescripts, NULL, NULL, reinterpret_cast<PTIMEVAL const>(10));
+
+    if (FD_ISSET(listenSocket, &mySockDescripts)) {
+        return ServerSocketEvent::SOCKET_EVENT_CONNECT;
+    }
+
+    return SOCKET_EVENT_DATA;
 }
 
 

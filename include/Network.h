@@ -32,7 +32,7 @@ using json = nlohmann::json;
 class NetworkClient {
 public:
     NetworkClient();
-    NetworkClient(const Sockets& socket);
+    NetworkClient(unique_ptr<Sockets> socket);
     // -- Input Buffer Commands
     void InputAddOffset(int bytes);
     char InputReadByte();
@@ -63,7 +63,7 @@ public:
     bool CPE;
     int CustomBlocksLevel;
     bool GlobalChat;
-    Sockets clientSocket;
+    unique_ptr<Sockets> clientSocket;
     std::map<std::string, int> Extensions;
     std::vector<bool> Selections;
 private:
@@ -82,9 +82,8 @@ public:
     void Start();
     void Stop();
 protected:
-    void AddClient(Sockets clientSocket);
     void DeleteClient(int clientId, std::string message, bool sendToAll);
-    NetworkClient* GetClient(int id);
+    std::shared_ptr<NetworkClient> GetClient(int id);
 private:
     void UpdateNetworkStats();
     void HtmlStats();
@@ -104,11 +103,12 @@ private:
     int UploadRateCounter;
     int DownloadRateCounter;
     int Port;
-    std::map<int, NetworkClient> _clients;
+    std::map<int, std::shared_ptr<NetworkClient>> _clients;
     time_t lastModifiedTime;
     bool SaveFile;
     std::thread _acceptThread;
 };
+const std::string NETWORK_HTML_FILENAME = "Network_HTML";
 
 const std::string NETWORK_HTML = R"(<html>
   <head>
@@ -116,11 +116,9 @@ const std::string NETWORK_HTML = R"(<html>
   </head>
   <body>
       <b><u>Overview:</u></b><br>
-      Port: 13337.<br>
-      Download_Rate: 0.000kbytes/s.<br>
-      Download_Rate: <font color="#FF0000"></font><br>
-      Upload_Rate: 0.000kbytes/s.<br>
-      Upload_Rate: <font color="#FF0000"></font><br>
+      Port: [PORT].<br>
+      Download_Rate: [DRATE].<br>
+      Upload_Rate: [URATE].<br>
       <br>
       <br>
       <br>
@@ -135,10 +133,11 @@ const std::string NETWORK_HTML = R"(<html>
           <th><b>Upload_Rate</b></th>
           <th><b>Entity_ID</b></th>
         </tr>
+        [CLIENTS_TABLE]
       </table>      <br>
       <br>
       <br>
-      Site generated in 0 ms. 19:35:33  12.02.2021 (1613158533)<br>
+      Site generated in [GEN_TIME] ms at [GEN_TIMESTAMP]<br>
   </body>
 </html>)";
 

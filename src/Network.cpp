@@ -103,22 +103,26 @@ void Network::Start() {
 void Network::Stop() {
     if (!isListening)
         return;
-    // -- TODO: Disconnect all clients
+    std::vector<int> toDelete;
+
+    for(auto const &nc : _clients) { // -- Because this list is going to be modified.
+        toDelete.push_back(nc.first);
+    }
+
+    for (auto const id : toDelete) {
+        DeleteClient(id, "Client Disconnected", true);
+    }
+
     listenSocket.Stop();
     isListening = false;
     Logger::LogAdd(MODULE_NAME, "Network server stopped", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
-NetworkClient *Network::GetClient(int id) {
+std::shared_ptr<NetworkClient> Network::GetClient(int id) {
     if (this->_clients.find(id) == this->_clients.end())
         return nullptr;
 
-    return &_clients.at(id);
-}
-
-void Network::AddClient(Sockets clientSocket) {
-    NetworkClient newClient(clientSocket);
-    _clients[newClient.Id] = newClient;
+    return _clients.at(id);
 }
 
 void Network::MainFunc() {
@@ -140,16 +144,58 @@ void Network::MainFunc() {
 }
 
 void Network::HtmlStats() {
+    time_t startTime = time(nullptr);
+    std::string result = NETWORK_HTML;
 
+    Utils::replaceAll(result, "[PORT]", stringulate(this->Port));
+    Utils::replaceAll(result, "[DRATE]", stringulate(this->DownloadRate));
+    Utils::replaceAll(result, "[URATE]", stringulate(this->UploadRate));
+
+    // -- Client Table Generation
+    std::string clientTable;
+    for (auto const& nc : _clients) {
+        clientTable += "<tr>";
+        clientTable += "<td>" + stringulate(nc.first) + "</td>";
+        // -- TODO: Player name
+        //clientTable += "<td>" + stringulate(nc.first) + "</td>";
+        // -- TODO: Player Version
+        //clientTable += "<td>" + stringulate(nc.first) + "</td>";
+        clientTable += "<td>" + nc.second->IP + "</td>";
+        clientTable += "<td>" + stringulate(nc.second->DownloadRate / 1000) + "</td>";
+        clientTable += "<td>" + stringulate(nc.second->UploadRate / 1000) + "</td>";
+        // -- TODO: Entity ID
+        //clientTable += "<td>" + stringulate(nc.first) + "</td>";
+        clientTable += "</tr>";
+    }
+    // --
+    time_t finishTime = time(nullptr);
+    long duration = finishTime - startTime;
+    char buffer[255];
+    strftime(buffer, sizeof(buffer), "%H:%M:%S  %m-%d-%Y", localtime(reinterpret_cast<const time_t *>(&finishTime)));
+    std::string meh(buffer);
+    Utils::replaceAll(result, "[GEN_TIME]", stringulate(duration));
+    Utils::replaceAll(result, "[GEN_TIMESTAMP]", meh);
+
+    Files* files = Files::GetInstance();
+    std::string memFile = files->GetFile(NETWORK_HTML_FILENAME);
+
+    ofstream oStream(memFile, std::ios::out | std::ios::trunc);
+    if (oStream.is_open()) {
+        oStream << result;
+        oStream.close();
+    } else {
+        Logger::LogAdd(MODULE_NAME, "Couldn't open file :<" + memFile, LogType::WARNING, __FILE__, __LINE__, __FUNCTION__ );
+    }
 }
 
 void Network::UpdateNetworkStats() {
-    for (auto nc : _clients) {
-        nc.second.DownloadRate = nc.second.DownloadRateCounter / 5;
-        nc.second.UploadRate = nc.second.UploadRateCounter / 5;
-        nc.second.DownloadRateCounter = 0;
-        nc.second.UploadRateCounter = 0;
+    for (auto const& nc : _clients) {
+        nc.second->DownloadRate = nc.second->DownloadRateCounter / 5;
+        nc.second->UploadRate = nc.second->UploadRateCounter / 5;
+        nc.second->DownloadRateCounter = 0;
+        nc.second->UploadRateCounter = 0;
     }
+
     DownloadRate = DownloadRateCounter / 5;
     UploadRate = UploadRateCounter / 5;
     DownloadRateCounter = 0;
@@ -163,30 +209,28 @@ void Network::NetworkEvents() {
     // -- search for incoming data from clients
     watchdog::Watch("Network", "Begin events", 0);
 
-    for(auto nc : _clients) {
-        int dataRead = nc.second.clientSocket.Read(TempBuffer, NETWORK_TEMP_BUFFER_SIZE);
+    for(auto const &nc : _clients) {
+        int dataRead = nc.second->clientSocket->Read(TempBuffer, NETWORK_TEMP_BUFFER_SIZE);
         if (dataRead > 0) {
-            nc.second.InputWriteBuffer(TempBuffer, dataRead);
-            nc.second.DownloadRateCounter += dataRead;
+            nc.second->InputWriteBuffer(TempBuffer, dataRead);
+            nc.second->DownloadRateCounter += dataRead;
             DownloadRateCounter += dataRead;
         }
 
-        if (nc.second.DisconnectTime > 0 && nc.second.DisconnectTime < time(nullptr)) {
-            // -- TODO: Network CLient Delete "Forced Disconnect"
-            nc.second.clientSocket.Disconnect();
-        } else if (nc.second.LastTimeEvent + NETWORK_CLIENT_TIMEOUT < time(nullptr)) {
-            // -- TODO: Network Client Deelete; " Timeout"
-            nc.second.clientSocket.Disconnect();
+        if (nc.second->DisconnectTime > 0 && nc.second->DisconnectTime < time(nullptr)) {
+            DeleteClient(nc.first, "Forced Disconnect", true);
+            nc.second->clientSocket->Disconnect();
+        } else if (nc.second->LastTimeEvent + NETWORK_CLIENT_TIMEOUT < time(nullptr)) {
+            DeleteClient(nc.first, "Timeout", true);
+            nc.second->clientSocket->Disconnect();
         }
     }
     watchdog::Watch("Network", "End Events", 2);
-    // -- Search for client disconnects
-    // -- Perform timeouts / timed disconnects
 }
 
 void Network::NetworkOutputSend() {
-    for(auto nc : _clients) {
-        auto availData = nc.second.OutputBufferAvailable;
+    for(auto const &nc : _clients) {
+        auto availData = nc.second->OutputBufferAvailable;
         while (availData > 0) {
             int dataSize = availData;
 
@@ -195,75 +239,77 @@ void Network::NetworkOutputSend() {
             else if (dataSize > NETWORK_TEMP_BUFFER_SIZE)
                 dataSize = NETWORK_TEMP_BUFFER_SIZE;
 
-            nc.second.OutputReadBuffer(TempBuffer, dataSize);
-            nc.second.OutputAddOffset(-dataSize);
-            int bytesSent = nc.second.clientSocket.Send(TempBuffer, dataSize);
+            nc.second->OutputReadBuffer(TempBuffer, dataSize);
+            nc.second->OutputAddOffset(-dataSize);
+            int bytesSent = nc.second->clientSocket->Send(TempBuffer, dataSize);
+
             if (bytesSent > 0) {
-                nc.second.OutputAddOffset(bytesSent);
-                nc.second.UploadRateCounter += bytesSent;
+                nc.second->OutputAddOffset(bytesSent);
+                nc.second->UploadRateCounter += bytesSent;
                 UploadRateCounter += bytesSent;
+                availData = nc.second->OutputBufferAvailable;
             }
         }
     }
 }
 
 void Network::NetworkOutput() {
-    for (auto nc : _clients) {
-        if (nc.second.PingTime < time(nullptr))  {
-            nc.second.PingTime = time(nullptr) + 5000;
-            nc.second.PingSentTime = time(nullptr);
-            nc.second.OutputPing();
+    for (auto const &nc : _clients) {
+        if (nc.second->PingTime < time(nullptr))  {
+            nc.second->PingTime = time(nullptr) + 5000;
+            nc.second->PingSentTime = time(nullptr);
+            nc.second->OutputPing();
         }
     }
 }
 
 void Network::NetworkInput() {
     // -- Packet handling
-    for(auto nc : _clients) {
+    for(auto const &nc : _clients) {
         int maxRepeat = 10;
-        while (nc.second.InputBufferAvailable >= 1 && maxRepeat > 0) {
-            char commandByte = nc.second.InputReadByte();
-            nc.second.InputAddOffset(-1);
-            nc.second.LastTimeEvent = time(nullptr);
+        while (nc.second->InputBufferAvailable >= 1 && maxRepeat > 0) {
+            char commandByte = nc.second->InputReadByte();
+            nc.second->InputAddOffset(-1);
+            nc.second->LastTimeEvent = time(nullptr);
 
             switch(commandByte) {
                 case 0: // -- Login
-                    if (nc.second.InputBufferAvailable >= 1 + 1 + 64 + 64 + 1) {
+                    if (nc.second->InputBufferAvailable >= 1 + 1 + 64 + 64 + 1) {
 
                     }
                     break;
                 case 1: // -- Ping
-                    if (nc.second.InputBufferAvailable >= 1) {
+                    if (nc.second->InputBufferAvailable >= 1) {
 
                     }
                     break;
                 case 5: // -- Block Change
-                    if (nc.second.InputBufferAvailable >= 9) {
+                    if (nc.second->InputBufferAvailable >= 9) {
 
                     }
                     break;
                 case 8: // -- Player Movement
-                    if (nc.second.InputBufferAvailable >= 10) {
+                    if (nc.second->InputBufferAvailable >= 10) {
 
                     }
                     break;
                 case 13: // -- Chat Message
-                    if (nc.second.InputBufferAvailable >= 66) {
+                    if (nc.second->InputBufferAvailable >= 66) {
 
                     }
                     break;
                 case 16: // -- CPe ExtInfo
-                    if (nc.second.InputBufferAvailable >= 67) {
+                    if (nc.second->InputBufferAvailable >= 67) {
 
                     }
                     break;
                 case 17: // -- CPE ExtEntry
-                    if (nc.second.InputBufferAvailable >= 1 + 64 + 4) {
+                    if (nc.second->InputBufferAvailable >= 1 + 64 + 4) {
 
                     }
                     break;
                 case 19: // -- CPE Custom Block Support
-                    if (nc.second.InputBufferAvailable >= 2) {
+                    if (nc.second->InputBufferAvailable >= 2) {
 
                     }
                     break;
@@ -280,10 +326,12 @@ void Network::NetworkInput() {
 void Network::ClientAcceptance() {
     while (isListening) {
         try {
-            Sockets newClient = listenSocket.Accept();
+            unique_ptr<Sockets> newClient = listenSocket.Accept();
 
-            if (newClient != -1)
-                AddClient(newClient);
+            if (newClient != nullptr) {
+                NetworkClient newNcClient(std::move(newClient));
+                _clients.insert(std::make_pair(newNcClient.Id, std::make_shared<NetworkClient>(std::move(newNcClient))));
+            }
         } catch (...) {
             continue;
         }
@@ -291,7 +339,7 @@ void Network::ClientAcceptance() {
     }
 }
 
-NetworkClient::NetworkClient(const Sockets& socket) : clientSocket(socket) {
+NetworkClient::NetworkClient(unique_ptr<Sockets> socket) {
     Id= reinterpret_cast<uintptr_t>(&clientSocket);
     InputBuffer = Mem::Allocate(NETWORK_BUFFER_SIZE, __FILE__, __LINE__, "NetworkClient(" + stringulate(Id) + ")\\InputBuffer");
     OutputBuffer = Mem::Allocate(NETWORK_BUFFER_SIZE, __FILE__, __LINE__, "NetworkClient(" + stringulate(Id) + ")\\OutputBuffer");
@@ -300,6 +348,7 @@ NetworkClient::NetworkClient(const Sockets& socket) : clientSocket(socket) {
     OutputBufferOffset = 0;
     OutputBufferAvailable = 0;
     LastTimeEvent = time(nullptr);
+    clientSocket = std::move(socket);
 
     Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
@@ -407,8 +456,8 @@ void Network::DeleteClient(int clientId, std::string message, bool sendToAll) {
 
     // -- Plugin event client delete
     // -- Client_Logout
-    Mem::Free(_clients[clientId].InputBuffer);
-    Mem::Free(_clients[clientId].OutputBuffer);
+    Mem::Free(_clients[clientId]->InputBuffer);
+    Mem::Free(_clients[clientId]->OutputBuffer);
     Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(clientId) + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     _clients.erase(clientId);
 }
