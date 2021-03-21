@@ -1,7 +1,0 @@
-Server = irc.esper.net
-Port = 6667
-Channel = #nothere
-Botname = D3
-Ident = D3
-Realname = Pure
-NickPass = 

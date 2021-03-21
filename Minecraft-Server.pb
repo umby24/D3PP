@@ -123,6 +123,7 @@ UseSQLiteDatabase()
 ; - Beim synchronen Login von zwei Spielern wird der Name verstauscht.
 
 ; ########################################## Variablen / Variables ##########################################
+#Headless_Build = 0
 
 Structure Main
   Version.l           ; Version 1000 = V.1.000
@@ -142,7 +143,7 @@ Global FreeID.w = 0 ; For CPE stuff.
 Global NextID.w = 0
 ; ########################################## Ladekram / Loading ############################################
 
-Main\Version = 1017 ;#PB_Editor_CompileCount*0.4 + #PB_Editor_BuildCount*4.9
+Main\Version = 1018 ;#PB_Editor_CompileCount*0.4 + #PB_Editor_BuildCount*4.9
 
 Main\Running_Time = Date()
 
@@ -276,8 +277,8 @@ CoreShutdown()
 ; ########################################## Ende / End ##########################################
 ; IDE Options = PureBasic 5.30 (Windows - x64)
 ; ExecutableFormat = Console
-; CursorPosition = 148
-; FirstLine = 136
+; CursorPosition = 126
+; FirstLine = 105
 ; Folding = -
 ; EnableThread
 ; EnableXP

@@ -872,6 +872,8 @@ Declare CPE_Send_Extensions(Client_ID)
 
 Declare.s Emote_Replace(Message.s)
 
+Declare CPE_GetHeldBlock(Client_ID)
+
 Declare CPE_HoldThis(Client_ID, Block, CanChange)
 
 Declare CPE_Selection_Cuboid_Add(Client_ID, SelectionID, Label.s, StartX.w, StartY.w, StartZ.w, EndX.w, EndY.w, EndZ.w, Red.w, Green.w, Blue.w, Opacity.w)

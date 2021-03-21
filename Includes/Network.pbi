@@ -489,8 +489,8 @@ RegisterCore("Network_Output_Send", 0, #Null, #Null, @Network_Output_Send())
 RegisterCore("Network_Output_Do", 0, #Null, #Null, @Network_Output_Do())
 RegisterCore("Network_Input_Do", 0, #Null, #Null, @Network_Input_Do())
 ; IDE Options = PureBasic 5.30 (Windows - x64)
-; CursorPosition = 332
-; FirstLine = 304
-; Folding = ----
+; CursorPosition = 466
+; FirstLine = 41
+; Folding = gAw-
 ; EnableUnicode
 ; EnableXP

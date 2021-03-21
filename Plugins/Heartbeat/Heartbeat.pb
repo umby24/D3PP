@@ -141,7 +141,7 @@ Procedure Heartbeat_Do(*Heartbeat_Info.Heartbeat_Info)
     EndIf
     
     ;If ReceiveHTTPFile("http://www.minecraft.net/heartbeat.jsp?port="+Str(*Heartbeat_Info\Port)+"&users="+Str(*Heartbeat_Info\Clients)+"&max="+Str(*Heartbeat_Info\Clients_Max)+"&name="+*Heartbeat_Info\Name+"&public="+Public_String+"&version="+Str(*Heartbeat_Info\Version)+"&salt="+*Heartbeat_Info\Salt, *Heartbeat_Info\Filename)
-    If ReceiveHTTPFile("http://www.classicube.net/heartbeat.jsp?port="+Str(*Heartbeat_Info\Port)+"&users="+Str(*Heartbeat_Info\Clients)+"&max="+Str(*Heartbeat_Info\Clients_Max)+"&name="+*Heartbeat_Info\Name+"&public="+Public_String+"&version="+Str(*Heartbeat_Info\Version)+"&salt="+*Heartbeat_Info\Salt, *Heartbeat_Info\Filename)
+    If ReceiveHTTPFile("http://www.classicube.net/heartbeat.jsp?software=D3&port="+Str(*Heartbeat_Info\Port)+"&users="+Str(*Heartbeat_Info\Clients)+"&max="+Str(*Heartbeat_Info\Clients_Max)+"&name="+*Heartbeat_Info\Name+"&public="+Public_String+"&version="+Str(*Heartbeat_Info\Version)+"&salt="+*Heartbeat_Info\Salt, *Heartbeat_Info\Filename)
         *Heartbeat_Info\State = 2
     Else
         *Heartbeat_Info\State = 3
@@ -222,13 +222,13 @@ ProcedureCDLL Main()
 EndProcedure
 ; IDE Options = PureBasic 5.30 (Windows - x64)
 ; ExecutableFormat = Shared Dll
-; CursorPosition = 173
-; FirstLine = 170
+; CursorPosition = 153
+; FirstLine = 122
 ; Folding = --
 ; EnableThread
 ; EnableXP
 ; EnableOnError
-; Executable = Heartbeat.x86.dll
+; Executable = Heartbeat.x64.dll
 ; DisableDebugger
 ; CompileSourceDirectory
-; Compiler = PureBasic 5.30 (Windows - x86)
+; Compiler = PureBasic 5.30 (Windows - x64)

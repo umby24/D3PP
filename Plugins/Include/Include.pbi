@@ -185,11 +185,11 @@ Prototype CPE_Client_Set_Block_Permissions(Client_ID, Block_ID, CanPlace, CanDel
 Prototype Map_Env_Appearance_Set(*Map_Data.Map_Data, Texture.s, Side_Block, Edge_Block, Side_Level.w)
 Prototype CPE_Client_Send_Map_Appearence(Client_ID, URL.s, Side_Block, Edge_Block, Side_Level.w)
 
-Prototype CPE_Client_Hackcontrol_Send(Client_ID, Flying, Noclip, Speeding, SpawnControl, ThirdPerson, WeatherControl, Jumpheight.w)
+Prototype CPE_Client_Hackcontrol_Send(Client_ID, Flying, Noclip, Speeding, SpawnControl, ThirdPerson, Jumpheight.w)
 Prototype CPE_Client_Send_Hotkeys(Client_ID)
 Prototype Hotkey_Add(Label.s, Action.s, Keycode.l, Keymods.b)
 Prototype Hotkey_Remove(Label.s)
-Prototype Map_HackControl_Set(*Map_Data.Map_Data, Flying, NoClip, Speeding, SpawnControl, ThirdPerson, Weather, JumpHeight.w)
+Prototype Map_HackControl_Set(*Map_Data.Map_Data, Flying, NoClip, Speeding, SpawnControl, ThirdPerson, JumpHeight.w)
 ; ################################################### Macros ################################################
 
 ; ################################################### Procedures ############################################
@@ -336,7 +336,8 @@ Procedure Define_Prototypes(*Pointer.Plugin_Function)
   Global Map_HackControl_Set.Map_HackControl_Set = *Pointer\Map_HackControl_Set
 EndProcedure
 ; IDE Options = PureBasic 5.30 (Windows - x64)
-; CursorPosition = 19
+; CursorPosition = 199
+; FirstLine = 178
 ; Folding = -
 ; EnableXP
 ; DisableDebugger

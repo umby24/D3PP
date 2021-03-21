@@ -2240,10 +2240,10 @@ Procedure Map_Main()
 EndProcedure
 
 RegisterCore("Map", 1000, #Null, #Null, @Map_Main())
-; IDE Options = PureBasic 5.30 (Windows - x86)
-; CursorPosition = 1981
-; FirstLine = 154
-; Folding = AAAAAAAk+
+; IDE Options = PureBasic 5.30 (Windows - x64)
+; CursorPosition = 1665
+; FirstLine = 146
+; Folding = AAAAAQAk+
 ; EnableThread
 ; EnableXP
 ; DisableDebugger

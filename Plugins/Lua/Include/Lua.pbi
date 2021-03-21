@@ -999,36 +999,11 @@ EndProcedure
 ProcedureC Lua_CMD_Entity_Position_Set(Lua_State)
   Entity_ID = lua_tointeger(Lua_State, 1)
   Map_ID = lua_tointeger(Lua_State, 2)
-  X.d = lua_tointeger(Lua_State, 3)
-  CompilerIf #PB_Compiler_OS = #PB_OS_Windows And #PB_Compiler_Processor = #PB_Processor_x64
-    EnableASM
-    MOVQ X, XMM0
-    DisableASM
-  CompilerEndIf
-  Y.d = lua_tointeger(Lua_State, 4)
-  CompilerIf #PB_Compiler_OS = #PB_OS_Windows And #PB_Compiler_Processor = #PB_Processor_x64
-    EnableASM
-    MOVQ Y, XMM0
-    DisableASM
-  CompilerEndIf
-  Z.d = lua_tointeger(Lua_State, 5)
-  CompilerIf #PB_Compiler_OS = #PB_OS_Windows And #PB_Compiler_Processor = #PB_Processor_x64
-    EnableASM
-    MOVQ Z, XMM0
-    DisableASM
-  CompilerEndIf
-  Rotation.d = lua_tointeger(Lua_State, 6)
-  CompilerIf #PB_Compiler_OS = #PB_OS_Windows And #PB_Compiler_Processor = #PB_Processor_x64
-    EnableASM
-    MOVQ Rotation, XMM0
-    DisableASM
-  CompilerEndIf
-  Look.d = lua_tointeger(Lua_State, 7)
-  CompilerIf #PB_Compiler_OS = #PB_OS_Windows And #PB_Compiler_Processor = #PB_Processor_x64
-    EnableASM
-    MOVQ Look, XMM0
-    DisableASM
-  CompilerEndIf
+  X.d = lua_tonumber(Lua_State, 3)
+  Y.d = lua_tonumber(Lua_State, 4)
+  Z.d = lua_tonumber(Lua_State, 5)
+  Rotation.d = lua_tonumber(Lua_State, 6)
+  Look.d = lua_tonumber(Lua_State, 7)
   Priority = lua_tointeger(Lua_State, 8)
   Send_Own_Client = lua_tointeger(Lua_State, 9)
   
@@ -2545,7 +2520,9 @@ ProcedureC Lua_CMD_CPE_Get_Held_Block(Lua_State)
         lua_pushinteger(Lua_State, *Pointer\Player\Entity\Held_Block)
       EndIf
     EndIf
-  EndIf
+EndIf
+
+ProcedureReturn 1
 EndProcedure
 
 ProcedureC Lua_CMD_CPE_Set_Held_Block(Lua_State)
@@ -2658,10 +2635,9 @@ ProcedureC Lua_CMD_CPE_Client_Hackcontrol_Send(Lua_State)
     Speeding = lua_tointeger(Lua_State, 4)
     SpawnControl = lua_tointeger(Lua_State, 5)
     ThirdPerson = lua_tointeger(Lua_State, 6)
-    WeatherControl = lua_tointeger(Lua_State, 7)
-    Jumpheight.w = lua_tointeger(Lua_State, 8)
+    Jumpheight.w = lua_tointeger(Lua_State, 7)
     
-    CPE_Client_Hackcontrol_Send(Client_ID, Flying, Noclip, Speeding, SpawnControl, ThirdPerson, WeatherControl, Jumpheight)
+    CPE_Client_Hackcontrol_Send(Client_ID, Flying, Noclip, Speeding, SpawnControl, ThirdPerson, Jumpheight)
     ProcedureReturn 0
 EndProcedure
 ProcedureC Lua_CMD_Hotkey_Add(Lua_State)
@@ -2679,6 +2655,7 @@ ProcedureC Lua_CMD_Hotkey_Remove(Lua_State)
     Hotkey_Remove(Label)
     ProcedureReturn 0
 EndProcedure
+
 ProcedureC Lua_CMD_Map_Hackcontrol_Set(Lua_State)
     Map_ID = lua_tointeger(Lua_State, 1)
     Flying = lua_tointeger(Lua_State, 2)
@@ -2686,12 +2663,11 @@ ProcedureC Lua_CMD_Map_Hackcontrol_Set(Lua_State)
     Speeding = lua_tointeger(Lua_State, 4)
     SpawnControl = lua_tointeger(Lua_State, 5)
     ThirdPerson = lua_tointeger(Lua_State, 6)
-    WeatherControl = lua_tointeger(Lua_State, 7)
-    Jumpheight.w = lua_tointeger(Lua_State, 8)
+    Jumpheight.w = lua_tointeger(Lua_State, 7)
     
     *MapData = Map_Get_Pointer(Map_ID)
     If *MapData
-        Map_HackControl_Set(*MapData, Flying, Noclip, Speeding, SpawnControl, ThirdPerson, WeatherControl, Jumpheight)
+        Map_HackControl_Set(*MapData, Flying, Noclip, Speeding, SpawnControl, ThirdPerson, Jumpheight)
     EndIf
     
     ProcedureReturn 0
@@ -3576,8 +3552,8 @@ Procedure Lua_Check_New_Files(Directory.s)
 EndProcedure
 ; IDE Options = PureBasic 5.30 (Windows - x64)
 ; ExecutableFormat = Shared Dll
-; CursorPosition = 2717
-; FirstLine = 2700
+; CursorPosition = 2676
+; FirstLine = 2658
 ; Folding = -------------------------------------
 ; EnableThread
 ; EnableXP

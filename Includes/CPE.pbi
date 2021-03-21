@@ -124,6 +124,22 @@ Procedure.s Emote_Replace(Message.s)
     ProcedureReturn Message.s
 EndProcedure
 
+Procedure CPE_GetHeldBlock(Client_ID)
+    Protected *Network_Client_Old, heldBlock
+    
+    If Network_Client_Select(Client_ID) ; Get the NetworkClient of the person getting the packet..
+        If CPE_GetClientExtVersion("heldblock") = 1
+            heldBlock = Network_Client()\Player\Entity\Held_Block
+        Else
+            heldBlock = Network_Client()\Player\Entity\Last_Material
+        EndIf
+    EndIf
+    
+    List_Restore(*Network_Client_Old, Network_Client())
+    ProcedureReturn heldBlock
+EndProcedure
+
+    
 Procedure CPE_HoldThis(Client_ID, Block, CanChange)
     List_Store(*Network_Client_Old, Network_Client()) ; Store the old NetworkClient
     
@@ -467,9 +483,9 @@ Procedure CPE_GetClientExtVersion(Extension.s)
     ProcedureReturn Result
 EndProcedure
 ; IDE Options = PureBasic 5.30 (Windows - x64)
-; CursorPosition = 182
-; FirstLine = 124
-; Folding = vj--
+; CursorPosition = 464
+; FirstLine = 326
+; Folding = vH--
 ; EnableThread
 ; EnableXP
 ; EnableOnError
