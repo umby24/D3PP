@@ -1,4 +1,6 @@
 #include "network/WindowsServerSockets.h"
+#include <string>
+#include <vector>
 
 #include <Files.h>
 #include <Logger.h>
@@ -22,14 +24,19 @@ int main()
     Block b;
     Rank r;
     System s;
-    Network n;
+    string derp("Hi I am a string to split");
+    vector<string> meh = Utils::splitString(derp);
+    for (auto const &d : meh) {
+        cout << d << endl;
+    }
+//    Network n;
 
     TaskScheduler::RunSetupTasks();
     isRunning = true;
-    n.Load();
-    n.Save();
-
-    n.Start();
+//    n.Load();
+//    n.Save();
+//
+//    n.Start();
 
     std::thread mainThread(mainLoop);
     MainConsole();

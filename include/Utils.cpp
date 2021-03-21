@@ -56,9 +56,31 @@ std::string Utils::TrimPathString(std::string input) {
     return input.substr(location+1);
 }
 
+int Utils::strCount(std::string input, char search) {
+   int result = 0;
+
+   for(auto i = 0; i < input.size(); i++) {
+       if (input.at(i) == search)
+           result++;
+   }
+
+   return result;
+}
 void Utils::padTo(std::string &str, const size_t num, const char paddingChar) {
 
         if(num > str.size())
             str.insert(0, num - str.size(), paddingChar);
 
+}
+
+std::vector<std::string> Utils::splitString(std::string input, const char splitChar) {
+    std::vector<std::string> result;
+    int count = strCount(input, splitChar);
+    for (auto i = 0; i < count+1; i++) {
+        int location = input.find(splitChar);
+        result.push_back(input.substr(0, location));
+        input = input.substr(location+1, input.size() - (location +1));
+    }
+
+    return result;
 }

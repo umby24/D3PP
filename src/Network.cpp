@@ -4,6 +4,7 @@
 
 #include "Network.h"
 const std::string MODULE_NAME = "Network";
+Network* Network::singleton_ = nullptr;
 
 Network::Network() {
     TempBuffer = Mem::Allocate(NETWORK_TEMP_BUFFER_SIZE, __FILE__, __LINE__, "Network\\TempBuffer");
@@ -448,6 +449,22 @@ char NetworkClient::InputReadByte() {
             InputBufferOffset -= NETWORK_BUFFER_SIZE;
     }
     return result;
+}
+
+void NetworkClient::OutputWriteShort(short value) {
+
+}
+
+void NetworkClient::OutputWriteInt(int value) {
+
+}
+
+void NetworkClient::OutputWriteString(std::string value) {
+
+}
+
+void NetworkClient::OutputWriteBlob(char *data, int dataSize) {
+
 }
 
 void Network::DeleteClient(int clientId, std::string message, bool sendToAll) {

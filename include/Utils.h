@@ -40,8 +40,9 @@ class Utils
         static bool DirectoryExists(std::string filePath, bool create);
         static std::string TrimPathString(std::string input);
         static void padTo(std::string &str, const size_t num, const char paddingChar = ' ');
-
-    protected:
+        static int strCount(std::string input, char search);
+        static std::vector<std::string> splitString(std::string input, const char splitChar = ' ');
+protected:
 
     private:
 };
