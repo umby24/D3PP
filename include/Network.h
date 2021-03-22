@@ -25,6 +25,7 @@
 #include "Mem.h"
 #include "TaskScheduler.h"
 #include "watchdog.h"
+#include "Network_Functions.h"
 #include "json.hpp"
 
 using json = nlohmann::json;
@@ -36,6 +37,11 @@ public:
     // -- Input Buffer Commands
     void InputAddOffset(int bytes);
     char InputReadByte();
+    short InputReadShort();
+    int InputReadInt();
+    std::string InputReadString();
+    void InputReadBytes(char* data, int datalen);
+
     void InputWriteBuffer(char* data, int size);
     // -- Output Buffer Commands
     void OutputReadBuffer(char* dataBuffer, int size);
@@ -70,7 +76,7 @@ public:
     void OutputWriteShort(short value);
     void OutputWriteInt(int value);
     void OutputWriteString(std::string value);
-    void OutputWriteBlob(char* data, int dataSize);
+    void OutputWriteBlob(const char* data, int dataSize);
 };
 
 class Network {

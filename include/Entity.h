@@ -4,11 +4,11 @@
 
 #ifndef D3PP_ENTITY_H
 #define D3PP_ENTITY_H
+
 #include <string>
+#include <map>
 // -- Dependencies:
 //-> Player
-//-> NC
-//->Network_Functions
 //-> Map
 
 class Entity {
@@ -28,6 +28,7 @@ public:
     void Delete();
     void Resend(int id);
 private:
+    std::map<int, std::shared_pointer<Entity>> _entities;
 };
 
 #endif //D3PP_ENTITY_H

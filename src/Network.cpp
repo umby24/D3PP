@@ -400,6 +400,7 @@ void NetworkClient::OutputWriteByte(char value) {
     OutputBufferAvailable += 1;
 }
 
+// -- Writes data into a clients input buffer after being received off a socket.
 void NetworkClient::InputWriteBuffer(char *data, int size) {
     int dataWrote = 0;
 
@@ -418,10 +419,12 @@ void NetworkClient::InputWriteBuffer(char *data, int size) {
 }
 
 void NetworkClient::Kick(std::string message, bool hide) {
-    // -- System_red_screen
+    NetworkFunctions::SystemRedScreen(this->Id, message);
+
     if (DisconnectTime == 0) {
         DisconnectTime = time(nullptr) + 1000;
         LoggedIn = false;
+        // -- TODO: Requires player
         // -- LogoutHide = hide
         Logger::LogAdd(MODULE_NAME, "Client Kicked [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     }
@@ -452,19 +455,38 @@ char NetworkClient::InputReadByte() {
 }
 
 void NetworkClient::OutputWriteShort(short value) {
-
+    int location = ((OutputBufferOffset + OutputBufferAvailable) % NETWORK_BUFFER_SIZE);
+    OutputBuffer[location++] = (unsigned char) (value >> 8);
+    OutputBuffer[location++] = (unsigned char) value;
+    OutputBufferAvailable += 2;
 }
 
 void NetworkClient::OutputWriteInt(int value) {
-
+    int location = ((OutputBufferOffset + OutputBufferAvailable) % NETWORK_BUFFER_SIZE);
+    OutputBuffer[location++] = (unsigned char) (value >> 24);
+    OutputBuffer[location++] = (unsigned char) (value >> 16);
+    OutputBuffer[location++] = (unsigned char) (value >> 8);
+    OutputBuffer[location++] = (unsigned char) value;
+    OutputBufferAvailable += 2;
 }
 
 void NetworkClient::OutputWriteString(std::string value) {
-
+    const char *meh = value.c_str();
+    OutputWriteBlob(meh, value.size());
 }
 
-void NetworkClient::OutputWriteBlob(char *data, int dataSize) {
-
+void NetworkClient::OutputWriteBlob(const char *data, int dataSize) {
+    int dataWrote = 0;
+    while (dataWrote < dataSize) {
+        int writeOffset = ((OutputBufferOffset + OutputBufferAvailable) % NETWORK_BUFFER_SIZE);
+        int maxOffset = NETWORK_BUFFER_SIZE - writeOffset;
+        int dataTempSize = dataSize - dataWrote;
+        if (dataTempSize > maxOffset)
+            dataTempSize = maxOffset;
+        memcpy(OutputBuffer + writeOffset, data + dataWrote, dataTempSize);
+        dataWrote += dataTempSize;
+        OutputBufferAvailable += dataTempSize;
+    }
 }
 
 void Network::DeleteClient(int clientId, std::string message, bool sendToAll) {

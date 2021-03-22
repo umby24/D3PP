@@ -4,6 +4,8 @@
 
 #ifndef D3PP_PACKETS_H
 #define D3PP_PACKETS_H
+
+#include <string>
 #include "Network.h"
 
 class Packets {
