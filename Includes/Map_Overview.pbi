@@ -27,7 +27,8 @@ Procedure Map_Overview_Save_2D(*Map_Data_Element.Map_Data, Directory.s) ; Speich
       Directory.s = *Map_Data_Element\Directory
     EndIf
     Filename.s = Directory+#Map_Filename_Overview
-    
+    CompilerIf Not #Headless_Build
+        
     Image_ID.i = CreateImage(#PB_Any, Map_Size_X, Map_Size_Y)
     
     If IsImage(Image_ID)
@@ -82,6 +83,8 @@ Procedure Map_Overview_Save_2D(*Map_Data_Element.Map_Data, Directory.s) ; Speich
       EndIf
       
       FreeImage(Image_ID)
+      CompilerEndIf
+      
     EndIf
   EndIf
 EndProcedure
@@ -93,7 +96,7 @@ Procedure Map_Overview_Save_Iso_Fast(*Map_Data_Element.Map_Data, Filename.s) ; S
     
   *Pointer.Map_Block
   
-  If 1 ; Hier sollte das Element geprüft werden!
+  If 1 ; Hier sollte das Element geprüft werden! / The element should be checked here
     Map_Size_X = *Map_Data_Element\Size_X
     Map_Size_Y = *Map_Data_Element\Size_Y
     Map_Size_Z = *Map_Data_Element\Size_Z
@@ -115,7 +118,7 @@ Procedure Map_Overview_Save_Iso_Fast(*Map_Data_Element.Map_Data, Filename.s) ; S
     Offset_X = Map_Size_Y
     Offset_Y = Map_Size_Z
     
-    
+    CompilerIf Not #Headless_Build
     Image_ID.i = CreateImage(#PB_Any, Image_Size_X, Image_Size_Y)
     
     If IsImage(Image_ID)
@@ -175,12 +178,13 @@ Procedure Map_Overview_Save_Iso_Fast(*Map_Data_Element.Map_Data, Filename.s) ; S
       EndIf
       
       FreeImage(Image_ID)
+      CompilerEndIf
     EndIf
   EndIf
 EndProcedure
 ; IDE Options = PureBasic 5.30 (Windows - x64)
-; CursorPosition = 11
-; Folding = 9
+; CursorPosition = 183
+; Folding = 7
 ; EnableThread
 ; EnableXP
 ; DisableDebugger

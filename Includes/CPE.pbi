@@ -465,26 +465,26 @@ Procedure CPE_Client_Hackcontrol_Send(Client_ID, Flying, Noclip, Speeding, Spawn
     List_Restore(*Network_Client_Old, Network_Client())
 EndProcedure
 
-Procedure CPE_GetClientExtVersion(Extension.s)
+Procedure CPE_GetClientExtVersion(*client.Network_Client, Extension.s)
     Protected Result.l = 0
     
-    If Network_Client()\CPE = #False ; - Skip searching for clients that don't even support CPE.
+    If *client\CPE = #False ; - Skip searching for clients that don't even support CPE.
         ProcedureReturn Result
     EndIf
     
-    ResetMap(Network_Client()\Extensions())
+    ResetMap(*client\Extensions())
     
-    If Not FindMapElement(Network_Client()\Extensions(), LCase(Extension))
+    If Not FindMapElement(*client\Extensions(), LCase(Extension))
         ProcedureReturn Result
     EndIf
     
-    Result = Network_Client()\Extensions(LCase(Extension))
+    Result = *client\Extensions(LCase(Extension))
     
     ProcedureReturn Result
 EndProcedure
 ; IDE Options = PureBasic 5.30 (Windows - x64)
-; CursorPosition = 464
-; FirstLine = 326
+; CursorPosition = 479
+; FirstLine = 301
 ; Folding = vH--
 ; EnableThread
 ; EnableXP

@@ -1,12 +1,12 @@
-﻿
-Procedure InputBufferAvailable(*Client.Network_Client)     ;  -- Bytes available in the receive buffer
-    Protected ReturnValue
+﻿;TODO: Create a common ringbuffer module
+
+Procedure.l InputBufferAvailable(*Client.Network_Client)     ;  -- Bytes available in the receive buffer
+    Protected ReturnValue.l
     ReturnValue = *Client\Buffer_Input_Available
     ProcedureReturn ReturnValue
 EndProcedure
-;Network_Client_Input_Read_Byte
+
 Procedure InputAddOffset(*Client.Network_Client, Bytes)     ; Addiert einige Bytes zum Offset des Empfangbuffers -- Adds some bytes to offset the receive buffer
-    
     *Client\Buffer_Input_Offset + Bytes
     *Client\Buffer_Input_Available - Bytes
     
@@ -92,7 +92,7 @@ Procedure.s ClientInputReadString(*Client.Network_Client, Length)     ; Liest ei
 EndProcedure
 
 Procedure ClientInputReadBytes(*Client.Network_Client, *Data_Buffer, Data_Size)   ; Liest Daten aus dem Empfangsbuffer -- Reads data from the receive buffer
-    
+    Protected Data_Read.l, Ringbuffer_Max_Data.l, Data_Temp_Size.l, *Ringbuffer_Adress
     ; Anzahl gelesener Daten - Amount of data read
     Data_Read = 0
     
@@ -121,44 +121,30 @@ Procedure ClientInputReadBytes(*Client.Network_Client, *Data_Buffer, Data_Size) 
 EndProcedure
 
 ;- Writes data into a clients input buffer, after it has been received from a socket.
-Procedure InputWriteBuffer(*Client.Network_Client, *Data_Buffer, Data_Size)   ; Schreibt Daten in den Empfangsbuffer -- Write data in the receive buffer
-   ; List_Store(*Network_Client_Old, Network_Client())
+Procedure InputWriteBuffer(*Client.Network_Client, *Data_Buffer, Data_Size)   ; Schreibt Daten in den Empfangsbuffer -- Write data in the receive buffer 
+    Protected Data_Wrote.l, Ringbuffer_Write_Offset.l, Ringbuffer_Max_Data.l, Data_Temp_Size.l, *Ringbuffer_Adress
+    ; Anzahl geschriebener Daten
+    Data_Wrote = 0
     
-  ;  If Network_Client_Select(Client_ID)
+    While Data_Wrote < Data_Size
         
-        ; Anzahl geschriebener Daten
-        Data_Wrote = 0
+        ; Position im Ringbuffer
+        Ringbuffer_Write_Offset = (*Client\Buffer_Input_Offset + *Client\Buffer_Input_Available) % #Network_Buffer_Size
+        ; Platz bis zum "ende" des Ringbuffers
+        Ringbuffer_Max_Data = #Network_Buffer_Size - (Ringbuffer_Write_Offset)
+        ; Bufferadresse mit Offset
+        *Ringbuffer_Adress = *Client\Buffer_Input + Ringbuffer_Write_Offset
+        ; Tempor?re zu schreibende Datenmenge
+        Data_Temp_Size = Data_Size - Data_Wrote
+        If Data_Temp_Size > Ringbuffer_Max_Data : Data_Temp_Size = Ringbuffer_Max_Data : EndIf
         
-        While Data_Wrote < Data_Size
-            
-            ; Position im Ringbuffer
-            Ringbuffer_Write_Offset = (*Client\Buffer_Input_Offset + *Client\Buffer_Input_Available) % #Network_Buffer_Size
-            ; Platz bis zum "ende" des Ringbuffers
-            Ringbuffer_Max_Data = #Network_Buffer_Size - (Ringbuffer_Write_Offset)
-            ; Bufferadresse mit Offset
-            *Ringbuffer_Adress = *Client\Buffer_Input + Ringbuffer_Write_Offset
-            ; Tempor?re zu schreibende Datenmenge
-            Data_Temp_Size = Data_Size - Data_Wrote
-            If Data_Temp_Size > Ringbuffer_Max_Data : Data_Temp_Size = Ringbuffer_Max_Data : EndIf
-            
-            CopyMemory(*Data_Buffer + Data_Wrote, *Ringbuffer_Adress, Data_Temp_Size)
-            Data_Wrote + Data_Temp_Size
-            *Client\Buffer_Input_Available + Data_Temp_Size
-        Wend
-        
-        ;If Data_Size
-        ;  If IsFile(tempfile) ; ######################################### Debug
-        ;    WriteData(tempfile, *Data_Buffer, Data_Size)
-        ;    WriteString(tempfile, "|||")
-        ;  EndIf
-        ;EndIf
-  ;  EndIf
-    
-   ; List_Restore(*Network_Client_Old, Network_Client())
+        CopyMemory(*Data_Buffer + Data_Wrote, *Ringbuffer_Adress, Data_Temp_Size)
+        Data_Wrote + Data_Temp_Size
+        *Client\Buffer_Input_Available + Data_Temp_Size
+    Wend
 EndProcedure
 ; IDE Options = PureBasic 5.30 (Windows - x64)
-; CursorPosition = 145
-; FirstLine = 107
-; Folding = --
+; CursorPosition = 2
+; Folding = A+
 ; EnableUnicode
 ; EnableXP

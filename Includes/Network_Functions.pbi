@@ -1,55 +1,31 @@
 ; ####################################### System
 
 Procedure System_Login_Screen(Client_ID, Message_0.s, Message_1.s, Op_Mode)
-    If ListIndex(Network_Client()) <> -1
-        *Network_Client_Old = Network_Client()
-    Else
-        *Network_Client_Old = 0
-    EndIf
-    
+    Protected Text_0.s, Text_1.s, Blank.s
     Message_0 = String_GV(Message_0)
     Message_1 = String_GV(Message_1)
     Text_0.s = LSet(Message_0, 64, " ")
     Text_1.s = LSet(Message_1, 64, " ")
+    Blank.s = LSet("", 64, " ")
     
-    If Text_0 <> LSet("", 64, " ") And Text_1 <> LSet("", 64, " ")
-        If Network_Client_Select(Client_ID) And Network_Client()\Logged_In = #True
-            SendClientHandshake(Client_ID, 7, Text_0, Text_1, Op_Mode)
-        EndIf
-    EndIf
-    
-    If *Network_Client_Old
-        ChangeCurrentElement(Network_Client(), *Network_Client_Old)
+    If Text_0 <> Blank And Text_1 <> Blank
+        SendClientHandshake(Client_ID, 7, Text_0, Text_1, Op_Mode)
     EndIf
 EndProcedure
 
 Procedure System_Red_Screen(Client_ID, Message.s)
-    If ListIndex(Network_Client()) <> -1
-        *Network_Client_Old = Network_Client()
-    Else
-        *Network_Client_Old = 0
-    EndIf
-    
+    Protected Text.s
     Message = String_GV(Message)
     Text.s = LSet(Message, 64, " ")
     
     If Text <> LSet("", 64, " ")
-        If Network_Client_Select(Client_ID) And Network_Client()\Logged_In = #True
-            SendDisconnect(Client_ID, Text)
-        EndIf
-    EndIf
-    
-    If *Network_Client_Old
-        ChangeCurrentElement(Network_Client(), *Network_Client_Old)
+        SendDisconnect(Client_ID, Text)
     EndIf
 EndProcedure
 
 Procedure System_Message_Network_Send(Client_ID, Message.s, Type=0) ; Sendet eine Nachricht zu einem Clienten
-    If ListIndex(Network_Client()) <> -1
-        *Network_Client_Old = Network_Client()
-    Else
-        *Network_Client_Old = 0
-    EndIf
+    Protected Lines.l, Text.s, *client.Network_Client
+    *client = Network_Client_Get_Pointer(Client_ID)
     
     Message = ReplaceString(Message, "<br>", Chr(10))
     
@@ -64,22 +40,16 @@ Procedure System_Message_Network_Send(Client_ID, Message.s, Type=0) ; Sendet ein
     For i = 1 To Lines
         Text.s = StringField(Message, i, Chr(10))
         
-        If String_IV(Right(Text, 1)) And CPE_GetClientExtVersion("emotefix") = 0
-            Text = Text + "." ; Suffix emotes for non-fixed clients.
+        If String_IV(Right(Text, 1)) And CPE_GetClientExtVersion(*client, "emotefix") = 0
+            Text + "." ; Suffix emotes for non-fixed clients.
         EndIf
         
         Text = LSet(Text, 64, " ")
         
         If Text <> LSet("", 64, " ") And Text <> ""
-            If Network_Client_Select(Client_ID) And Network_Client()\Logged_In = #True
-                SendChatMessage(Client_ID, Text, Type)
-            EndIf
+            SendChatMessage(Client_ID, Text, Type)
         EndIf
     Next
-    
-    If *Network_Client_Old
-        ChangeCurrentElement(Network_Client(), *Network_Client_Old)
-    EndIf
 EndProcedure
 
 Procedure System_Message_Network_Send_2_All(Map_ID, Message.s, Type=0) ; Sendet eine Nachricht zu allen Clienten
@@ -106,7 +76,7 @@ Procedure System_Message_Network_Send_2_All(Map_ID, Message.s, Type=0) ; Sendet 
         If Text <> LSet("", 64, " ") And Text <> ""
             ForEach Network_Client()
                 If Network_Client()\Player\Map_ID = Map_ID Or Map_ID = -1
-                    If String_IV(Right(Text, 1)) And CPE_GetClientExtVersion("emotefix") = 0
+                    If String_IV(Right(Text, 1)) And CPE_GetClientExtVersion(Network_Client(), "emotefix") = 0
                         Text = Text + "." ; Suffix emotes for non-fixed clients.
                     EndIf
                     
@@ -192,44 +162,22 @@ Procedure Network_Out_Entity_Add(Client_ID, ID_Client, Name.s, X.f, Y.f, Z.f, Ro
 EndProcedure
 
 Procedure Network_Out_Entity_Delete(Client_ID, ID_Client) ; Löscht eine Spielerobjekt auf einem Client
-    If ListIndex(Network_Client()) <> -1
-        *Network_Client_Old = Network_Client()
-    Else
-        *Network_Client_Old = 0
-    EndIf
-    
     SendDespawnEntity(Client_ID, ID_Client)
-    
-    If *Network_Client_Old
-        ChangeCurrentElement(Network_Client(), *Network_Client_Old)
-    EndIf
 EndProcedure
 
 Procedure Network_Out_Entity_Position(Client_ID, ID_Client, X.f, Y.f, Z.f, Rotation.f, Look.f) ; Sendet die Spielerbewegung von "Client_ID" zu allen
-    If ListIndex(Network_Client()) <> -1
-        *Network_Client_Old = Network_Client()
-    Else
-        *Network_Client_Old = 0
-    EndIf
+    X = X*32
+    Y = Y*32
+    Z = Z*32 + 51
+    Rotation = Rotation/360*256
+    Look = Look/360*256
     
-    If Network_Client_Select(Client_ID)
-        X = X*32
-        Y = Y*32
-        Z = Z*32 + 51
-        Rotation = Rotation/360*256
-        Look = Look/360*256
-        
-        SendPlayerTeleport(Client_ID, ID_Client, X, Y, Z, Rotation, Look)
-    EndIf
-    
-    If *Network_Client_Old
-        ChangeCurrentElement(Network_Client(), *Network_Client_Old)
-    EndIf
+    SendPlayerTeleport(Client_ID, ID_Client, X, Y, Z, Rotation, Look)
 EndProcedure
 ; IDE Options = PureBasic 5.30 (Windows - x64)
-; CursorPosition = 170
-; FirstLine = 117
-; Folding = 98
+; CursorPosition = 85
+; FirstLine = 24
+; Folding = --
 ; EnableXP
 ; DisableDebugger
 ; CompileSourceDirectory

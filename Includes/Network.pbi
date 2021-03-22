@@ -254,21 +254,15 @@ Procedure Network_Client_Delete(Client_ID, Message.s, Show_2_All)     ; Deletes 
     EndIf
 EndProcedure
 
-Procedure Network_Client_Kick(Client_ID, Message.s, Hide) ; Kick the client
-    List_Store(*Network_Client_Old, Network_Client())
+Procedure Network_Client_Kick(*Client.Network_Client, Message.s, Hide) ; Kick the client
+    System_Red_Screen(*Client\ID, Message) ; - Sends the kick packet
     
-    If Network_Client_Select(Client_ID)
-        System_Red_Screen(Network_Client()\ID, Message) ; - Sends the kick packet
-        
-        If Network_Client()\Disconnect_Time = 0
-            Network_Client()\Disconnect_Time = Milliseconds() + 1000
-            Network_Client()\Logged_In = 0
-            Network_Client()\Player\Logout_Hide = Hide
-            Log_Add("Network_Client", Lang_Get("", "Client kicked", Network_Client()\Player\Login_Name, Message), 0, #PB_Compiler_File, #PB_Compiler_Line, #PB_Compiler_Procedure)
-        EndIf
+    If *Client\Disconnect_Time = 0
+        *Client\Disconnect_Time = Milliseconds() + 1000
+        *Client\Logged_In = 0
+        *Client\Player\Logout_Hide = Hide
+        Log_Add("Network_Client", Lang_Get("", "Client kicked", *Client\Player\Login_Name, Message), 0, #PB_Compiler_File, #PB_Compiler_Line, #PB_Compiler_Procedure)
     EndIf
-    
-    List_Restore(*Network_Client_Old, Network_Client())
 EndProcedure
 
 Procedure Network_Client_Ping(Client_ID) ; Send a ping to the specified client.
@@ -364,23 +358,23 @@ Procedure Network_Output_Send() ; Sends data from the send buffers
     ;SortStructuredList(Network_Client(), #PB_Sort_Ascending, OffsetOf(Network_Client\Buffer_Output_Available), #PB_Integer)
     
     ForEach Network_Client()
-        While Network_Client_Output_Available(Network_Client()\ID)
-            Data_Size = Network_Client_Output_Available(Network_Client()\ID)
+        While Network_Client_Output_Available(Network_Client())
+            Data_Size = Network_Client_Output_Available(Network_Client())
             If Data_Size > #Network_Packet_Size : Data_Size = #Network_Packet_Size : EndIf ; - Breaks packets into smaller chunks if they exceed a certain size
             If Data_Size > #Network_Temp_Buffer_Size : Data_Size = #Network_Temp_Buffer_Size : EndIf 
             
-            Network_Client_Output_Read_Buffer(Network_Client()\ID, Network_Main\Buffer_Temp, Data_Size) ; - Pulls data from the output buffer
-            Network_Client_Output_Add_Offset(Network_Client()\ID, -Data_Size) ; - ???
+            Network_Client_Output_Read_Buffer(Network_Client(), Network_Main\Buffer_Temp, Data_Size) ; - Pulls data from the output buffer
+            Network_Client_Output_Add_Offset(Network_Client(), -Data_Size) ; - ???
             
-            Bytes_Sent = SendNetworkData(Network_Client()\ID, Network_Main\Buffer_Temp, Data_Size) ; - Sends the data across the network.
+            Bytes_Sent = SendNetworkData(Network_Client(), Network_Main\Buffer_Temp, Data_Size) ; - Sends the data across the network.
             
             If Bytes_Sent > 0
-                Network_Client_Output_Add_Offset(Network_Client()\ID, Bytes_Sent) ; - Pushes the offset of the send buffer up so the sent data wont be sent again
+                Network_Client_Output_Add_Offset(Network_Client(), Bytes_Sent) ; - Pushes the offset of the send buffer up so the sent data wont be sent again
                 Network_Client()\Upload_Rate_Counter + Bytes_Sent ; - Updates the upload counter for this user/
                 Network_Main\Upload_Rate_Counter + Bytes_Sent
             ElseIf Bytes_Sent = 0
                 Log_Add("Network", Lang_Get("", "Can't send data", Str(Network_Client()\ID), Str(Bytes_Sent)), 10, #PB_Compiler_File, #PB_Compiler_Line, #PB_Compiler_Procedure)
-                Network_Client_Kick(Network_Client()\ID, Lang_Get("", "Networkerror"), 0)
+                Network_Client_Kick(Network_Client(), Lang_Get("", "Networkerror"), 0)
                 Break
             ElseIf Bytes_Sent = -1
                 ; - Translation: Failed to send to the client, Function result: [Field_1]
@@ -489,8 +483,7 @@ RegisterCore("Network_Output_Send", 0, #Null, #Null, @Network_Output_Send())
 RegisterCore("Network_Output_Do", 0, #Null, #Null, @Network_Output_Do())
 RegisterCore("Network_Input_Do", 0, #Null, #Null, @Network_Input_Do())
 ; IDE Options = PureBasic 5.30 (Windows - x64)
-; CursorPosition = 466
-; FirstLine = 41
-; Folding = gAw-
+; CursorPosition = 29
+; Folding = gAA-
 ; EnableUnicode
 ; EnableXP
