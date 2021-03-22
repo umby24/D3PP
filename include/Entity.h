@@ -7,12 +7,51 @@
 
 #include <string>
 #include <map>
+#include <memory>
+
 // -- Dependencies:
 //-> Player
 //-> Map
+struct EntityShort {
+    int Id;
+    char ClientId;
+};
 
 class Entity {
 public:
+    // -- Properties:
+    int Id;
+    std::string Prefix;
+    std::string Name;
+    std::string Suffix;
+    char ClientId;
+    // -- Unique_Ptr<Player_List>
+    bool resend;
+    // --
+    int MapID;
+    float X;
+    float Y;
+    float Z;
+    float Rotation;
+    float Look;
+    bool SendPosOwn;
+    bool SendPos;
+    // --
+    int timeMessageDeath;
+    int timeMessageOther;
+    std::string lastPrivateMessage;
+    // --
+    char heldBlock;
+    std::string model;
+    char lastMaterial;
+    short buildMaterial;
+    std::string BuildMode;
+    char BuildState;
+    // -- array of build variables
+    std::string ChatBuffer;
+    bool SpawnSelf;
+
+    // -- Methods:
     Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look);
 
     static void GetPointer(int id);
@@ -28,7 +67,7 @@ public:
     void Delete();
     void Resend(int id);
 private:
-    std::map<int, std::shared_pointer<Entity>> _entities;
+    std::map<int, std::shared_ptr<Entity>> _entities;
 };
 
 #endif //D3PP_ENTITY_H

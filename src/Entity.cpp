@@ -5,11 +5,16 @@
 #include "Entity.h"
 
 int Entity::GetFreeId() {
-    int id;
+    int id = 0;
     bool found = false;
     while (true) {
-        found = false;
-        for(auto const &e)
+        found = (_entities.find(id) != _entities.end());
+
+        if (found)
+            id++;
+        else {
+            return id;
+        }
     }
-    return 0;
+
 }

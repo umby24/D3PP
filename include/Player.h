@@ -7,6 +7,7 @@
 #include <string>
 #include "TaskScheduler.h"
 #include "Files.h"
+#include "Entity.h"
 #include "json.hpp"
 
 using json = nlohmann::json;
@@ -45,6 +46,20 @@ private:
 
 class Player : TaskItem {
 public:
+    // -- Properties
+    std::string LoginName;
+    std::string MPPass;
+    char ClientVersion;
+    int MapId;
+    std::vector<EntityShort> Entities;
+    std::unique_ptr<Entity> Entity;
+    short NameId;
+    std::string lastPrivateMessage;
+    int timeDeathMessage;
+    int timeBuildMessage;
+    bool LogoutHide;
+
+    // -- Methods
     Player();
 
     int GetAttribute(std::string attrName); // -- REQ: Player_List
