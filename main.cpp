@@ -12,6 +12,7 @@
 #include "watchdog.h"
 #include "System.h"
 #include "Network.h"
+#include "Player_List.h"
 
 using namespace std;
 bool isRunning = false;
@@ -24,19 +25,10 @@ int main()
     Block b;
     Rank r;
     System s;
-    string derp("Hi I am a string to split");
-    vector<string> meh = Utils::splitString(derp);
-    for (auto const &d : meh) {
-        cout << d << endl;
-    }
-//    Network n;
+    Player_List l;
 
     TaskScheduler::RunSetupTasks();
     isRunning = true;
-//    n.Load();
-//    n.Save();
-//
-//    n.Start();
 
     std::thread mainThread(mainLoop);
     MainConsole();
