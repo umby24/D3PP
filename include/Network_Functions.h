@@ -6,9 +6,9 @@
 #define D3PP_NETWORK_FUNCTIONS_H
 #include <string>
 
+#include "Network.h"
 #include "Chat.h"
 #include "Utils.h"
-#include "Network.h"
 #include "Packets.h"
 
 class NetworkFunctions {

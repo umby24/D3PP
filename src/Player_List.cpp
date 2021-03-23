@@ -3,6 +3,7 @@
 //
 #include "Player_List.h"
 const std::string MODULE_NAME = "Player_List";
+Player_List* Player_List::Instance = nullptr;
 
 void Player_List::CloseDatabase() {
     if (dbOpen) {
@@ -210,4 +211,154 @@ int Player_List::GetNumber() {
     }
 
     return result;
+}
+
+Player_List *Player_List::GetInstance() {
+    if (Instance == nullptr)
+        Instance = new Player_List();
+
+    return Instance;
+}
+
+int PlayerListEntry::GetAttribute(std::string attrName) {
+    int result = 0;
+
+    for (auto i = 0; i < NUM_PLAYER_ATTRIBUTES - 1; i++) {
+        if (Attributes[i] == attrName) {
+            result = NumAttributes[i];
+            break;
+        }
+    }
+
+    return result;
+}
+
+std::string PlayerListEntry::GetAttributeStr(std::string attrName) {
+    std::string result = "";
+
+    for (auto i = 0; i < NUM_PLAYER_ATTRIBUTES - 1; i++) {
+        if (Attributes[i] == attrName) {
+            result = StrAttributes[i];
+            break;
+        }
+    }
+
+    return result;
+}
+
+void PlayerListEntry::SetAttribute(std::string attrName, int value) {
+    bool found = false;
+    for (auto i = 0; i < NUM_PLAYER_ATTRIBUTES - 1; i++) {
+        if (Attributes[i] == attrName) {
+            if (value == 0)
+                Attributes[i] = "";
+
+            NumAttributes[i] = value;
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        for (auto i = 0; i < NUM_PLAYER_ATTRIBUTES - 1; i++) {
+            if (Attributes[i].empty()) {
+                if (value != 0)
+                    Attributes[i] = attrName;
+                NumAttributes[i] = value;
+                break;
+            }
+        }
+    }
+}
+
+void PlayerListEntry::SetAttribute(std::string attrName, std::string value) {
+    bool found = false;
+    for (auto i = 0; i < NUM_PLAYER_ATTRIBUTES - 1; i++) {
+        if (Attributes[i] == attrName) {
+            if (value.empty())
+                Attributes[i] = "";
+
+            StrAttributes[i] = value;
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        for (auto i = 0; i < NUM_PLAYER_ATTRIBUTES - 1; i++) {
+            if (Attributes[i].empty()) {
+                if (!value.empty())
+                    Attributes[i] = attrName;
+                StrAttributes[i] = value;
+                break;
+            }
+        }
+    }
+}
+
+void PlayerListEntry::SetRank(int rank, const std::string &reason) {
+    this->PRank = rank;
+    RankMessage = reason;
+    Save = true;
+    Player_List* i = Player_List::GetInstance();
+    i->SaveFile = true;
+
+    Network* ni = Network::GetInstance();
+    Rank* r = Rank::GetInstance();
+
+    for(auto &nc : ni->_clients) {
+        if (nc.second->player && nc.second->player->Entity && nc.second->player->Entity->playerList && nc.second->player->Entity->playerList->Number == Number) {
+            RankItem ri = r->GetRank(rank, false);
+            Entity::SetDisplayName(nc.second->player->Entity->Id, ri.Prefix, this->Name, ri.Suffix);
+            NetworkFunctions::SystemMessageNetworkSend(nc.first, "Your rank has been changed to '" + ri.Name + "' (" + reason + ")");
+        }
+    }
+}
+
+void PlayerListEntry::Kick(std::string reason, int count, bool log, bool show) {
+    bool found = false;
+    Network* ni = Network::GetInstance();
+
+    for(auto &nc : ni->_clients) {
+        if (nc.second->player && nc.second->player->Entity && nc.second->player->Entity->playerList && nc.second->player->Entity->playerList->Number == Number) {
+            nc.second->Kick(reason, "You got kicked (" + reason + ")", !show);
+            found = true;
+        }
+    }
+    if (found) {
+        KickCounter++;
+        KickMessage = reason;
+        Save = true;
+        Player_List *i = Player_List::GetInstance();
+        i->SaveFile = true;
+        if (show) {
+            NetworkFunctions::SystemMessageNetworkSend2All(-1, "Player " + Name + " was kicked (" + reason + ")");
+        }
+        if (log) {
+            Logger::LogAdd(MODULE_NAME, "Player " + Name + " was kicked (" + reason + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+        }
+    }
+}
+
+void PlayerListEntry::SetGlobal(bool globalChat) {
+    GlobalChat = globalChat;
+    Save = true;
+    Player_List *i = Player_List::GetInstance();
+    i->SaveFile = true;
+}
+
+void PlayerListEntry::Mute(int minutes, std::string reason) {
+
+}
+
+void PlayerListEntry::Unmute() {
+
+}
+
+void PlayerListEntry::Stop(std::string reason) {
+
+}
+
+void PlayerListEntry::Unstop() {
+
 }

@@ -14,6 +14,7 @@
 #include <map>
 #include <vector>
 #include <thread>
+#include <memory>
 
 #ifndef __linux__
 #include "network/WindowsServerSockets.h"
@@ -22,6 +23,7 @@
 #include "network/LinuxServerSockets.h"
 #endif
 
+#include "Player.h"
 #include "Mem.h"
 #include "TaskScheduler.h"
 #include "watchdog.h"
@@ -70,6 +72,8 @@ public:
     int CustomBlocksLevel;
     bool GlobalChat;
     unique_ptr<Sockets> clientSocket;
+    unique_ptr<Player> player;
+
     std::map<std::string, int> Extensions;
     std::vector<bool> Selections;
     void OutputWriteByte(char value);
@@ -89,6 +93,7 @@ public:
     static Network* GetInstance();
     static Network* singleton_;
     std::shared_ptr<NetworkClient> GetClient(int id);
+    std::map<int, std::shared_ptr<NetworkClient>> _clients;
 protected:
     void DeleteClient(int clientId, std::string message, bool sendToAll);
 
@@ -111,7 +116,7 @@ private:
     int UploadRateCounter;
     int DownloadRateCounter;
     int Port;
-    std::map<int, std::shared_ptr<NetworkClient>> _clients;
+
     time_t lastModifiedTime;
     bool SaveFile;
     std::thread _acceptThread;

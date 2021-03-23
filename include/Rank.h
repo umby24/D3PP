@@ -28,7 +28,9 @@ public:
     void Add(RankItem item);
     RankItem GetRank(int rank, bool exact);
     void Delete(int id);
+    static Rank* GetInstance();
 private:
+    static Rank* Instance;
     bool SaveFile;
     time_t LastFileDate;
     std::map<int, RankItem> _ranks;

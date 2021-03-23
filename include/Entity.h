@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include "Player_List.h"
 
 // -- Dependencies:
 //-> Player
@@ -25,7 +26,7 @@ public:
     std::string Name;
     std::string Suffix;
     char ClientId;
-    // -- Unique_Ptr<Player_List>
+    Player_List* playerList;
     bool resend;
     // --
     int MapID;

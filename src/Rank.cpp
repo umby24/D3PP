@@ -4,6 +4,8 @@
 
 #include "Rank.h"
 const std::string MODULE_NAME = "Rank";
+Rank* Rank::Instance = nullptr;
+
 Rank::Rank() {
     this->Interval = std::chrono::seconds(2);
     this->Setup = [this] { Load(); };
@@ -145,5 +147,12 @@ void Rank::DefaultRanks() {
     Add(builderRank);
     Add(opRank);
     Add(owner);
+}
+
+Rank *Rank::GetInstance() {
+    if (Instance == nullptr)
+        Instance = new Rank();
+
+    return Instance;
 }
 
