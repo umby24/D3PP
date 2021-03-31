@@ -56,8 +56,10 @@ void Logger::Add(struct LogMessage message) {
     } else {
         if (message.File.size() > 15)
             message.File = message.File.substr(0, 15);
+        else
+            Utils::padTo(message.File, 15);
 
-        std::cout << message.File << std::setw(15 - message.File.size()) << "| ";
+        std::cout << message.File << "| ";
         std::cout << message.Module << ": ";
         std::cout << message.Message << std::endl;
     }
