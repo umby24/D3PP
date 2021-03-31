@@ -32,6 +32,7 @@ public:
     void Disconnect();
     int Read(char* buffer, int size);
     int Send(char* data, int size);
+    SOCKET GetSocketFd();
 private:
     bool connected;
     SOCKET socketfd;

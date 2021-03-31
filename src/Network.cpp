@@ -216,6 +216,10 @@ void Network::NetworkEvents() {
             nc.second->InputWriteBuffer(TempBuffer, dataRead);
             nc.second->DownloadRateCounter += dataRead;
             DownloadRateCounter += dataRead;
+        } else {
+            DeleteClient(nc.first, "Disconnected", true);
+            nc.second->clientSocket->Disconnect();
+            return;
         }
 
         if (nc.second->DisconnectTime > 0 && nc.second->DisconnectTime < time(nullptr)) {
@@ -544,6 +548,7 @@ void Network::DeleteClient(int clientId, std::string message, bool sendToAll) {
     // -- Client_Logout
     Mem::Free(_clients[clientId]->InputBuffer);
     Mem::Free(_clients[clientId]->OutputBuffer);
+    listenSocket.Unaccept(_clients[clientId]->clientSocket->GetSocketFd());
     Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(clientId) + "] [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     _clients.erase(clientId);
 }

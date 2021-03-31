@@ -130,6 +130,14 @@ ServerSocketEvent ServerSocket::CheckEvents() {
     return SOCKET_EVENT_NONE;
 }
 
+void ServerSocket::Unaccept(SOCKET fd) {
+    for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
+        if (clientSockets[i] == fd) {
+            clientSockets[i] = 0;
+        }
+    }
+}
+
 
 
 

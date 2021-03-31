@@ -91,4 +91,8 @@ Sockets::Sockets() {
 
 }
 
+SOCKET Sockets::GetSocketFd() {
+    return socketfd;
+}
+
 #endif

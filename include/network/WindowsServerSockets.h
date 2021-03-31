@@ -30,6 +30,7 @@ public:
     void Listen();
     ServerSocketEvent CheckEvents();
     unique_ptr<Sockets> Accept();
+    void Unaccept(SOCKET fd);
     void Stop();
 private:
     bool hasInit;
