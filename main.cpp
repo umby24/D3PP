@@ -26,7 +26,7 @@ int main()
     Rank *r = Rank::GetInstance();
     System s;
     Player_List *l = Player_List::GetInstance();
-    PlayerMain pm;
+    PlayerMain *pm = PlayerMain::GetInstance();
     Network *n = Network::GetInstance();
 
     TaskScheduler::RunSetupTasks();

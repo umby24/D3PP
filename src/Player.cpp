@@ -4,6 +4,7 @@
 
 #include "Player.h"
 const std::string MODULE_NAME = "Player";
+PlayerMain* PlayerMain::Instance = nullptr;
 
 void PlayerMain::Save() {
     json j;
@@ -58,6 +59,7 @@ void PlayerMain::Load() {
         MaxPlayers = 32;
         NameVerification = true;
         killMode = KillMode::MAP_SPAWN;
+        SaveFile = true;
         return;
     }
     iStream.close();
@@ -89,4 +91,19 @@ void PlayerMain::MainFunc() {
 
         // -- TODO: Player_List: Player_Ontime_Counter_Add(seconds);
     }
+}
+
+PlayerMain *PlayerMain::GetInstance() {
+    if (Instance == nullptr)
+        Instance = new PlayerMain();
+
+    return Instance;
+}
+
+Player::Player() {
+    ClientVersion = 0;
+    MapId = 0;
+    timeDeathMessage = 0;
+    timeBuildMessage = 0;
+    LogoutHide = false;
 }

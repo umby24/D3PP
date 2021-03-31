@@ -6,12 +6,12 @@
 
 void Client::Login(int clientId, std::string name, std::string mppass, char version) {
     Network *n = Network::GetInstance();
-    //PlayerMain *pm = PlayerMain::GetInstance();
+    PlayerMain *pm = PlayerMain::GetInstance();
     Player_List *pl = Player_List::GetInstance();
 
     shared_ptr<NetworkClient> c = n->GetClient(clientId);
 
-    //c->player = make_unique<Player>();
+    c->player = make_unique<Player>();
     c->player->LoginName = name;
     c->player->MPPass = mppass;
     c->player->ClientVersion = version;

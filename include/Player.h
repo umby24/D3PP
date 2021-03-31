@@ -37,7 +37,10 @@ public:
     int killSpawnRot;
     int killSpawnLook;
     int spawnMapId;
+    static PlayerMain* GetInstance();
+
 private:
+    static PlayerMain* Instance;
     bool SaveFile;
     time_t LastFileDate;
     time_t OntimeCounter;
@@ -53,15 +56,15 @@ public:
     // -- Properties
     std::string LoginName;
     std::string MPPass;
-    char ClientVersion;
-    int MapId;
+    char ClientVersion{};
+    int MapId{};
     std::vector<EntityShort> Entities;
     std::unique_ptr<Entity> Entity;
-    short NameId;
+    short NameId{};
     std::string lastPrivateMessage;
-    int timeDeathMessage;
-    int timeBuildMessage;
-    bool LogoutHide;
+    int timeDeathMessage{};
+    int timeBuildMessage{};
+    bool LogoutHide{};
 
     // -- Methods
     Player();

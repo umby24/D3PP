@@ -6,6 +6,7 @@
 #define D3PP_CLIENT_H
 #include <string>
 #include "Network.h"
+#include "Player.h"
 
 class Client {
 public:
