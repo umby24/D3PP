@@ -18,3 +18,7 @@ int Entity::GetFreeId() {
     }
 
 }
+
+void Entity::SetDisplayName(int id, std::string prefix, std::string name, std::string suffix) {
+
+}

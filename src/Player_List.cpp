@@ -9,17 +9,11 @@ void Player_List::CloseDatabase() {
     if (dbOpen) {
         dbOpen = false;
         sqlite3_close(db);
-        Logger::LogAdd(MODULE_NAME, "Database closed []", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Database closed [" + fileName + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     }
 }
 
 static int callback(void* NotUsed, int argc, char **argv, char **azColName) {
-    int i;
-    fprintf(stderr, "%s: ", (const char*)NotUsed);
-    for(i = 0; i<argc; i++) {
-        printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
-    }
-    printf("\n");
     return 0;
 }
 
@@ -46,6 +40,7 @@ void Player_List::OpenDatabase() {
         CreateDatabase();
     }
     sqlite3_open(fileName.c_str(), &db);
+    dbOpen = true;
     Logger::LogAdd(MODULE_NAME, "Database Opened.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
@@ -85,7 +80,7 @@ void Player_List::Load() {
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
         newEntry.Name = std::string(tmp);
 
-        newEntry.Rank = sqlite3_column_int(stmt, 2);
+        newEntry.PRank = sqlite3_column_int(stmt, 2);
         newEntry.LoginCounter = sqlite3_column_int(stmt, 3);
         newEntry.KickCounter = sqlite3_column_int(stmt, 4);
         newEntry.OntimeCounter = sqlite3_column_int(stmt, 5);
@@ -139,7 +134,7 @@ void Player_List::Save() {
         if (rc == SQLITE_OK) {
             sqlite3_bind_int(res, 1, i.Number);
             sqlite3_bind_text(res, 2, i.Name.c_str(), -1, nullptr);
-            sqlite3_bind_int(res, 3, i.Rank);
+            sqlite3_bind_int(res, 3, i.PRank);
             sqlite3_bind_int(res, 4, i.LoginCounter);
             sqlite3_bind_int(res, 5, i.KickCounter);
             sqlite3_bind_int(res, 6, i.OntimeCounter);
@@ -171,9 +166,9 @@ PlayerListEntry* Player_List::GetPointer(int playerId) {
     return nullptr;
 }
 
-PlayerListEntry *Player_List::GetPointer(std::string playe) {
+PlayerListEntry *Player_List::GetPointer(std::string player) {
     for (auto & i : _pList) {
-        if (i.Name == playe) {
+        if (i.Name == player) {
             return &i;
         }
     }
@@ -195,7 +190,7 @@ void Player_List::Add(std::string name) {
     PlayerListEntry newEntry;
     newEntry.Number = GetNumber();
     newEntry.Name = name;
-    newEntry.Rank = 0;
+    newEntry.PRank = 0;
     newEntry.Save = true;
     newEntry.GlobalChat = true;
     SaveFile = true;
@@ -321,7 +316,7 @@ void PlayerListEntry::Kick(std::string reason, int count, bool log, bool show) {
 
     for(auto &nc : ni->_clients) {
         if (nc.second->player && nc.second->player->Entity && nc.second->player->Entity->playerList && nc.second->player->Entity->playerList->Number == Number) {
-            nc.second->Kick(reason, "You got kicked (" + reason + ")", !show);
+            nc.second->Kick("You got kicked (" + reason + ")", !show);
             found = true;
         }
     }

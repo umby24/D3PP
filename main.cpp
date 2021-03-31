@@ -23,13 +23,17 @@ int main()
 {
     Logger::LogAdd("Main", "====== Welcome to D3PP =====", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     Block b;
-    Rank r;
+    Rank *r = Rank::GetInstance();
     System s;
-    Player_List l;
+    Player_List *l = Player_List::GetInstance();
+    PlayerMain pm;
+    Network *n = Network::GetInstance();
 
     TaskScheduler::RunSetupTasks();
     isRunning = true;
-
+    n->Load();
+    n->Save();
+    n->Start();
     std::thread mainThread(mainLoop);
     MainConsole();
 

@@ -57,7 +57,6 @@ private:
     std::vector<MapBlock> Blocks;
 
     void Load();
-
     void MainFunc();
 };
 

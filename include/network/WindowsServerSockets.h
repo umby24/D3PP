@@ -34,12 +34,12 @@ public:
 private:
     bool hasInit;
     int listenPort;
+    WSADATA wsa;
     SOCKET listenSocket;
     SOCKET clientSockets[MAXIMUM_CONNECTIONS];
+    struct sockaddr_in server, address;
 
-    fd_set mySockDescripts;
-    struct addrinfo hints;
-    struct addrinfo *result;
+    fd_set readfds;
 };
 
 #endif //D3PP_WINDOWSSERVERSOCKETS_H

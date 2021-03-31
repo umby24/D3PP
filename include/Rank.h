@@ -7,9 +7,10 @@
 #include <string>
 #include <map>
 
-#include "json.hpp"
+
 #include "Utils.h"
 #include "TaskScheduler.h"
+#include "json.hpp"
 
 using json = nlohmann::json;
 const std::string RANK_FILE_NAME = "Rank";

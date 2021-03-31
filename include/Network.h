@@ -23,14 +23,20 @@
 #include "network/LinuxServerSockets.h"
 #endif
 
+#include "PacketHandlers.h"
+#include "Entity.h"
 #include "Player.h"
 #include "Mem.h"
 #include "TaskScheduler.h"
 #include "watchdog.h"
 #include "Network_Functions.h"
+
 #include "json.hpp"
 
+
 using json = nlohmann::json;
+
+class Player;
 
 class NetworkClient {
 public:

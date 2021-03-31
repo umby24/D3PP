@@ -6,12 +6,14 @@
 #define D3PP_PLAYER_H
 #include <string>
 
+#include "Entity.h"
 #include "json.hpp"
-
 #include "TaskScheduler.h"
 #include "Files.h"
-#include "Entity.h"
 
+
+struct EntityShort;
+class Entity;
 using json = nlohmann::json;
 
 enum KillMode {

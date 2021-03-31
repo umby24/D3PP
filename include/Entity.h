@@ -10,6 +10,8 @@
 #include <memory>
 #include "Player_List.h"
 
+class PlayerListEntry;
+class Player;
 // -- Dependencies:
 //-> Player
 //-> Map
@@ -26,7 +28,7 @@ public:
     std::string Name;
     std::string Suffix;
     char ClientId;
-    Player_List* playerList;
+    PlayerListEntry* playerList;
     bool resend;
     // --
     int MapID;

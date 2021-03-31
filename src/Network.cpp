@@ -276,7 +276,7 @@ void Network::NetworkInput() {
             switch(commandByte) {
                 case 0: // -- Login
                     if (nc.second->InputBufferAvailable >= 1 + 1 + 64 + 64 + 1) {
-
+                        PacketHandlers::HandleHandshake(nc.second);
                     }
                     break;
                 case 1: // -- Ping
@@ -315,7 +315,7 @@ void Network::NetworkInput() {
                     }
                     break;
                 default:
-                    Logger::LogAdd(MODULE_NAME, "Unknown Packet Recieved [" + stringulate(commandByte) + "]", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+                    Logger::LogAdd(MODULE_NAME, "Unknown Packet Received [" + stringulate(commandByte) + "]", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
                     // -- Kick
             }
 
@@ -327,11 +327,15 @@ void Network::NetworkInput() {
 void Network::ClientAcceptance() {
     while (isListening) {
         try {
-            unique_ptr<Sockets> newClient = listenSocket.Accept();
+            ServerSocketEvent e = listenSocket.CheckEvents();
+            if (e == ServerSocketEvent::SOCKET_EVENT_CONNECT) {
+                unique_ptr<Sockets> newClient = listenSocket.Accept();
 
-            if (newClient != nullptr) {
-                NetworkClient newNcClient(std::move(newClient));
-                _clients.insert(std::make_pair(newNcClient.Id, std::make_shared<NetworkClient>(std::move(newNcClient))));
+                 if (newClient != nullptr) {
+                     NetworkClient newNcClient(std::move(newClient));
+                     int clientId = newNcClient.Id;
+                     _clients.insert(std::make_pair(clientId, std::make_shared<NetworkClient>(std::move(newNcClient))));
+                 }
             }
         } catch (...) {
             continue;
@@ -350,6 +354,18 @@ NetworkClient::NetworkClient(unique_ptr<Sockets> socket) {
     OutputBufferAvailable = 0;
     LastTimeEvent = time(nullptr);
     clientSocket = std::move(socket);
+    PingTime = time(nullptr) + 5000;
+    DisconnectTime = 0;
+    LoggedIn = false;
+    UploadRate = 0;
+    DownloadRate = 0;
+    UploadRateCounter = 0;
+    DownloadRateCounter = 0;
+    CPE = false;
+    PingSentTime = PingTime;
+    Ping = 0;
+    CustomBlocksLevel = 0;
+    GlobalChat = false;
 
     Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
@@ -489,6 +505,37 @@ void NetworkClient::OutputWriteBlob(const char *data, int dataSize) {
     }
 }
 
+std::string NetworkClient::InputReadString() {
+    char* tempBuffer = Mem::Allocate(64, __FILE__, __LINE__, "Temp_Buffer");
+
+    if (InputBufferAvailable >= 64) {
+        InputReadBytes(tempBuffer, 64);
+    }
+
+    std::string result(tempBuffer, 64);
+    return result;
+}
+
+void NetworkClient::InputReadBytes(char *data, int datalen) {
+    int dataRead = 0;
+
+    while (dataRead < datalen) {
+        int ringbufferMaxData = NETWORK_BUFFER_SIZE - (InputBufferOffset);
+        int tempDataSize = datalen - dataRead;
+
+        if (tempDataSize > ringbufferMaxData)
+            tempDataSize = ringbufferMaxData;
+
+        memcpy(data + dataRead, InputBuffer + InputBufferOffset, tempDataSize);
+        dataRead += tempDataSize;
+        InputBufferOffset += tempDataSize;
+        InputBufferAvailable -= tempDataSize;
+
+        if (InputBufferOffset >= NETWORK_BUFFER_SIZE)
+            InputBufferOffset -= NETWORK_BUFFER_SIZE;
+    }
+}
+
 void Network::DeleteClient(int clientId, std::string message, bool sendToAll) {
     if (_clients.find(clientId) == _clients.end())
         return;
@@ -497,7 +544,7 @@ void Network::DeleteClient(int clientId, std::string message, bool sendToAll) {
     // -- Client_Logout
     Mem::Free(_clients[clientId]->InputBuffer);
     Mem::Free(_clients[clientId]->OutputBuffer);
-    Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(clientId) + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(clientId) + "] [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     _clients.erase(clientId);
 }
 

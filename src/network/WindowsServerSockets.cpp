@@ -5,31 +5,41 @@
 
 #include <memory>
 
+const std::string MODULE_NAME = "ServerSocket";
+
 ServerSocket::ServerSocket() {
     hasInit = false;
+
+    for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
+        clientSockets[i] = 0;
+    }
 }
 
 ServerSocket::ServerSocket(int port) {
     hasInit = false;
+    for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
+        clientSockets[i] = 0;
+    }
     Init(port);
 }
 
 void ServerSocket::Listen() {
     if (!hasInit) {
-        Logger::LogAdd("ServerSocket", "WINSOCK NOT INITIALIZED YET!!!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "WINSOCK NOT INITIALIZED YET!!!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         throw std::runtime_error("Attempted to start listening before initializing winsock");
     }
+
     int iResult;
-
-    iResult = bind(listenSocket, result->ai_addr, (int)result->ai_addrlen);
+    iResult = bind(listenSocket, (struct sockaddr*)&server, sizeof(server));
     if (iResult== SOCKET_ERROR) {
-        Logger::LogAdd("ServerSocket", "Failed to start networking", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Failed to start networking", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         return;
-    }
 
-    iResult = listen(listenSocket, SOMAXCONN);
+    }
+    iResult = listen(listenSocket, 5);
+
     if (iResult== SOCKET_ERROR) {
-        Logger::LogAdd("ServerSocket", "Failed to start listening", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Failed to start listening", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         closesocket(listenSocket);
         return;
     }
@@ -42,38 +52,25 @@ void ServerSocket::Init(int port) {
         return;
 
     listenPort = port;
-    WSADATA wsaData;
     int iResult;
 
-    listenSocket = INVALID_SOCKET;
-    result = NULL;
-
-    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    iResult = WSAStartup(MAKEWORD(2, 2), &wsa);
     if (iResult != 0) {
-        Logger::LogAdd("ServerSocket", "Failed to initilize winsock", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        int wsaError = WSAGetLastError();
+        Logger::LogAdd(MODULE_NAME, "Failed to initialize winsock [" + stringulate(wsaError) + "]", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         return;
     }
 
-    ZeroMemory(&hints, sizeof(hints));
-    hints.ai_family = AF_INET; // -- IPV4 only plz
-    hints.ai_socktype = SOCK_STREAM; // -- TCP Socket
-    hints.ai_protocol = IPPROTO_TCP; // -- TCP Protocol
-    hints.ai_flags = AI_PASSIVE; // -- dunno.
-
-    iResult = getaddrinfo(NULL, stringulate(listenPort).c_str(), &hints, &result);
-    if (iResult!= 0) {
-        Logger::LogAdd("ServerSocket", "Failed to initilize winsock[2]", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
-        WSACleanup();
-        return;
-    }
-
-    listenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    listenSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (listenSocket == INVALID_SOCKET) {
-        Logger::LogAdd("ServerSocket", "Failed to initilize winsock[3]", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Failed to initialize winsock[3]", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         WSACleanup();
-        freeaddrinfo(result);
         return;
     }
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = INADDR_ANY;
+    server.sin_port = htons(port);
+
     hasInit = true;
 }
 
@@ -82,38 +79,55 @@ void ServerSocket::Stop() {
 }
 
 unique_ptr<Sockets> ServerSocket::Accept() {
-    // -- maybe start tracking sockets inside this class using the sock descriptor.
-    FD_ZERO(&mySockDescripts);
-    FD_SET(listenSocket, &mySockDescripts);
-    int activity = select(0, &mySockDescripts, NULL, NULL, reinterpret_cast<PTIMEVAL const>(10));
-    if (FD_ISSET(listenSocket, &mySockDescripts)) {
-        sockaddr_in from;
-        int addrLen = sizeof(sockaddr_in);
-        SOCKET clientSocket = accept(listenSocket, (struct sockaddr *) &from, &addrLen);
-        char *ipAddr;
-        ipAddr = inet_ntoa(from.sin_addr);
+    SOCKET newSocket;
+    int addrlen = sizeof(struct sockaddr_in);
+    newSocket = accept(listenSocket, (struct sockaddr*)&address, (int*)&addrlen);
 
-        std::cout << "Accepting.. " << ipAddr << std::endl;
-
-        if (clientSocket == INVALID_SOCKET)
-            throw std::runtime_error("Failed to accept client socket");
-
-        unique_ptr<Sockets> sock = std::make_unique<Sockets>(clientSocket);
-
-        return sock;
-    } else {
-        return nullptr;
+    for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
+        if (clientSockets[i] == 0) {
+            clientSockets[i] = newSocket;
+        }
     }
+
+    return std::make_unique<Sockets>(newSocket);
 }
 
 ServerSocketEvent ServerSocket::CheckEvents() {
-    int activity = select(0, &mySockDescripts, NULL, NULL, reinterpret_cast<PTIMEVAL const>(10));
+    if (!hasInit)
+        return SOCKET_EVENT_NONE;
 
-    if (FD_ISSET(listenSocket, &mySockDescripts)) {
-        return ServerSocketEvent::SOCKET_EVENT_CONNECT;
+    FD_ZERO(&readfds);
+    FD_SET(listenSocket, &readfds);
+
+    for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
+        if (clientSockets[i] > 0) {
+            FD_SET(clientSockets[i], &readfds);
+        }
     }
 
-    return SOCKET_EVENT_DATA;
+    int activity = select(0, &readfds, NULL, NULL, NULL);
+
+    if (activity == SOCKET_ERROR) {
+
+        int errMsg = WSAGetLastError();
+        Logger::LogAdd("ServerSocket", "Some error occured calling select." + stringulate(errMsg), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+
+        return SOCKET_EVENT_NONE;
+    }
+
+    if (FD_ISSET(listenSocket, &readfds)) {
+        // -- Incoming connection
+        return SOCKET_EVENT_CONNECT;
+    }
+
+    for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
+        SOCKET s = clientSockets[i];
+        if (FD_ISSET(s, &readfds)) {
+            return SOCKET_EVENT_DATA;
+        }
+    }
+
+    return SOCKET_EVENT_NONE;
 }
 
 
