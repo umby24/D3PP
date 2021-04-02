@@ -9,7 +9,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-
+#include <random>
 #ifndef WIN32
 #include <unistd.h>
 #endif // WIN32
@@ -31,6 +31,7 @@ class Utils
 {
     public:
         Utils();
+        static int RandomNumber(int max);
         static void replaceAll(std::string &str, const std::string &from, const std::string &to);
         static int FileSize(std::string filePath);
         static long FileModTime(std::string filePath);

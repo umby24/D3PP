@@ -21,6 +21,7 @@ void MainConsole();
 
 int main()
 {
+    srand(time(nullptr));
     Logger::LogAdd("Main", "====== Welcome to D3PP =====", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     Block b;
     Rank *r = Rank::GetInstance();

@@ -90,3 +90,10 @@ bool Utils::InsensitiveCompare(std::string &first, std::string &second) {
     std::transform(second.begin(), second.end(), second.begin(), ::tolower);
     return first == second;
 }
+
+int Utils::RandomNumber(int max) {
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_real_distribution<double> dist(1.0, max);
+    return (dist(mt));
+}
