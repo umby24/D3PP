@@ -16,6 +16,8 @@
 class Sockets
 {
     public:
+        Sockets();
+        Sockets(int acceptfd);
         Sockets(std::string address, std::string port);
         virtual ~Sockets();
         bool Connect();
@@ -27,6 +29,7 @@ class Sockets
         unsigned int GetCounter() { return m_Counter; }
         int GetStatus() { return status; }
         bool GetConnected() { return connected; }
+        int GetSocketFd() { return socketfd; }
         // -- Setters
         void SetCounter(int val) { m_Counter = val; }
     protected:

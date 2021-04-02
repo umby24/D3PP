@@ -2,7 +2,8 @@
 #define UTILS_H
 
 #include <string>
-#include <time.h>
+#include <algorithm>
+#include <ctime>
 #include <sstream>
 #include <filesystem>
 
@@ -20,14 +21,10 @@
 template<typename ValueType>
 std::string stringulate(ValueType v)
 {
-#ifdef __linux__
-    return std::to_string(v);
-#else
     std::ostringstream oss;
     oss << std::setprecision(6) << std::fixed;
     oss << v;
     return oss.str();
-#endif
 }
 
 class Utils
@@ -38,6 +35,7 @@ class Utils
         static int FileSize(std::string filePath);
         static long FileModTime(std::string filePath);
         static bool DirectoryExists(std::string filePath, bool create);
+        static bool InsensitiveCompare(std::string &first, std::string &second);
         static std::string TrimPathString(std::string input);
         static void padTo(std::string &str, const size_t num, const char paddingChar = ' ');
         static int strCount(std::string input, char search);

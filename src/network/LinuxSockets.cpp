@@ -71,4 +71,14 @@ Sockets::~Sockets()
     Disconnect();
     freeaddrinfo(host_info_list);
 }
+
+Sockets::Sockets() {
+
+}
+
+Sockets::Sockets(int acceptfd) {
+    socketfd = acceptfd;
+    connected = true;
+}
+
 #endif

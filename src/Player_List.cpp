@@ -302,9 +302,9 @@ void PlayerListEntry::SetRank(int rank, const std::string &reason) {
     Rank* r = Rank::GetInstance();
 
     for(auto &nc : ni->_clients) {
-        if (nc.second->player && nc.second->player->Entity && nc.second->player->Entity->playerList && nc.second->player->Entity->playerList->Number == Number) {
+        if (nc.second->player && nc.second->player->tEntity && nc.second->player->tEntity->playerList && nc.second->player->tEntity->playerList->Number == Number) {
             RankItem ri = r->GetRank(rank, false);
-            Entity::SetDisplayName(nc.second->player->Entity->Id, ri.Prefix, this->Name, ri.Suffix);
+            Entity::SetDisplayName(nc.second->player->tEntity->Id, ri.Prefix, this->Name, ri.Suffix);
             NetworkFunctions::SystemMessageNetworkSend(nc.first, "Your rank has been changed to '" + ri.Name + "' (" + reason + ")");
         }
     }
@@ -315,7 +315,7 @@ void PlayerListEntry::Kick(std::string reason, int count, bool log, bool show) {
     Network* ni = Network::GetInstance();
 
     for(auto &nc : ni->_clients) {
-        if (nc.second->player && nc.second->player->Entity && nc.second->player->Entity->playerList && nc.second->player->Entity->playerList->Number == Number) {
+        if (nc.second->player && nc.second->player->tEntity && nc.second->player->tEntity->playerList && nc.second->player->tEntity->playerList->Number == Number) {
             nc.second->Kick("You got kicked (" + reason + ")", !show);
             found = true;
         }

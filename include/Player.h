@@ -59,7 +59,7 @@ public:
     char ClientVersion{};
     int MapId{};
     std::vector<EntityShort> Entities;
-    std::unique_ptr<Entity> Entity;
+    std::shared_ptr<Entity> tEntity;
     short NameId{};
     std::string lastPrivateMessage;
     int timeDeathMessage{};

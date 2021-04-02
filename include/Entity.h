@@ -57,20 +57,24 @@ public:
     // -- Methods:
     Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look);
 
-    static void GetPointer(int id);
+    static shared_ptr<Entity> GetPointer(int id);
+    static shared_ptr<Entity> GetPointer(std::string name);
     static std::string GetDisplayname(int id);
     static void SetDisplayName(int id, std::string prefix, std::string name, std::string suffix);
+    static void MessageToClients(int id, const std::string& message);
+    static void Delete(int id);
+
     void Kill();
     void PositionCheck();
     void PositionSet();
     void Send();
     void MainFunc();
-    int GetFreeId();
-    int GetFreeIdClient(int mapId);
+    static int GetFreeId();
+    static int GetFreeIdClient(int mapId);
     void Delete();
     void Resend(int id);
 private:
-    std::map<int, std::shared_ptr<Entity>> _entities;
+    static std::map<int, std::shared_ptr<Entity>> _entities;
 };
 
 #endif //D3PP_ENTITY_H

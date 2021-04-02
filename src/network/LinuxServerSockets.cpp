@@ -1,11 +1,9 @@
 //
-// Created by Wande on 2/26/2021.
+// Created by unknown on 4/2/21.
 //
-#ifndef __linux__
-#include "network/WindowsServerSockets.h"
 
-#include <memory>
-
+#include "network/LinuxServerSockets.h"
+#ifdef __linux__
 const std::string MODULE_NAME = "ServerSocket";
 
 ServerSocket::ServerSocket() {
@@ -26,22 +24,22 @@ ServerSocket::ServerSocket(int port) {
 
 void ServerSocket::Listen() {
     if (!hasInit) {
-        Logger::LogAdd(MODULE_NAME, "WINSOCK NOT INITIALIZED YET!!!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
-        throw std::runtime_error("Attempted to start listening before initializing winsock");
+        Logger::LogAdd(MODULE_NAME, "SOCKETS NOT INITIALIZED YET!!!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        throw std::runtime_error("Attempted to start listening before initializing SOCKETS");
     }
 
     int iResult;
     iResult = bind(listenSocket, (struct sockaddr*)&server, sizeof(server));
-    if (iResult== SOCKET_ERROR) {
+    if (iResult < 0) {
         Logger::LogAdd(MODULE_NAME, "Failed to start networking", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         return;
 
     }
     iResult = listen(listenSocket, 5);
 
-    if (iResult== SOCKET_ERROR) {
+    if (iResult < 0) {
         Logger::LogAdd(MODULE_NAME, "Failed to start listening", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
-        closesocket(listenSocket);
+        close(listenSocket);
         return;
     }
 
@@ -53,19 +51,10 @@ void ServerSocket::Init(int port) {
         return;
 
     listenPort = port;
-    int iResult;
-
-    iResult = WSAStartup(MAKEWORD(2, 2), &wsa);
-    if (iResult != 0) {
-        int wsaError = WSAGetLastError();
-        Logger::LogAdd(MODULE_NAME, "Failed to initialize winsock [" + stringulate(wsaError) + "]", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
-        return;
-    }
 
     listenSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (listenSocket == INVALID_SOCKET) {
-        Logger::LogAdd(MODULE_NAME, "Failed to initialize winsock[3]", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
-        WSACleanup();
+    if (listenSocket < 0) {
+        Logger::LogAdd(MODULE_NAME, "Failed to initialize sockets[3]", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         return;
     }
     server.sin_family = AF_INET;
@@ -80,9 +69,9 @@ void ServerSocket::Stop() {
 }
 
 unique_ptr<Sockets> ServerSocket::Accept() {
-    SOCKET newSocket;
+    int newSocket;
     int addrlen = sizeof(struct sockaddr_in);
-    newSocket = accept(listenSocket, (struct sockaddr*)&address, (int*)&addrlen);
+    newSocket = accept(listenSocket, (struct sockaddr*)&address, (socklen_t *) &addrlen);
 
     for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
         if (clientSockets[i] == 0) {
@@ -108,11 +97,8 @@ ServerSocketEvent ServerSocket::CheckEvents() {
 
     int activity = select(0, &readfds, NULL, NULL, NULL);
 
-    if (activity == SOCKET_ERROR) {
-
-        int errMsg = WSAGetLastError();
-        Logger::LogAdd("ServerSocket", "Some error occured calling select." + stringulate(errMsg), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
-
+    if (activity == -1) {
+        Logger::LogAdd("ServerSocket", "Some error occured calling select.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         return SOCKET_EVENT_NONE;
     }
 
@@ -122,7 +108,7 @@ ServerSocketEvent ServerSocket::CheckEvents() {
     }
 
     for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
-        SOCKET s = clientSockets[i];
+        int s = clientSockets[i];
         if (FD_ISSET(s, &readfds)) {
             return SOCKET_EVENT_DATA;
         }
@@ -131,7 +117,7 @@ ServerSocketEvent ServerSocket::CheckEvents() {
     return SOCKET_EVENT_NONE;
 }
 
-void ServerSocket::Unaccept(SOCKET fd) {
+void ServerSocket::Unaccept(int fd) {
     for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
         if (clientSockets[i] == fd) {
             clientSockets[i] = 0;
@@ -139,6 +125,3 @@ void ServerSocket::Unaccept(SOCKET fd) {
     }
 }
 #endif
-
-
-
