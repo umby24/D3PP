@@ -126,5 +126,163 @@ void Entity::Delete(int id) {
 }
 
 void Entity::Kill() {
-    
+    // -- mapSelectId(MapId)
+    if (timeMessageDeath < time(nullptr)) {
+        timeMessageDeath = time(nullptr) + 2000;
+        NetworkFunctions::SystemMessageNetworkSend2All(MapID, "&c" + Name + " died.");
+        // -- setPos to map spawn..
+        //PositionSet();
+    }
+}
+
+void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float lk, char priority, bool sendOwn) {
+    if (SendPos <= priority) {
+        if (mapId != MapID) { // -- Changing map
+            // -- mapSelect
+            // -- TODO:
+        } else {
+            if (sendOwn || !SendPosOwn) {
+                X = x;
+                Y = y;
+                Z = z;
+                Rotation = rot;
+                Look = lk;
+                SendPos = priority;
+                if (sendOwn)
+                    SendPosOwn = true;
+            }
+        }
+    }
+}
+
+void Entity::PositionCheck() {
+    int mapId = MapID;
+    float x = round(X);
+    float y = round(Y);
+    float z = round(Z);
+    // -- if mapselect
+    // -- do a teleporter check..
+    //else.. set them to a functional map
+    // -- check if the block we're touching is a killing block, if so call kill.
+    // -- TODO:
+}
+
+void Entity::MainFunc() {
+    for(auto const &e : _entities) {
+        e.second->PositionCheck();
+    }
+
+    Send();
+}
+
+void Entity::Send() {
+    Network *n = Network::GetInstance();
+    for(auto const &nc : n->_clients) {
+        if (!nc.second->LoggedIn)
+            continue;
+
+        std::vector<int> toRemove;
+        for(auto const &vEntity : nc.second->player->Entities) {
+            shared_ptr<Entity> fullEntity = GetPointer(vEntity.Id);
+            if (fullEntity == nullptr) { // -- Entity no longer exists, despawn them.
+                NetworkFunctions::NetworkOutEntityDelete(nc.first, vEntity.ClientId);
+                toRemove.push_back(vEntity.Id);
+                continue;
+            }
+            bool shouldDelete = false;
+            if (fullEntity->MapID != nc.second->player->MapId)
+                shouldDelete = true;
+            if (nc.second->player->tEntity && nc.second->player->tEntity->Id == vEntity.Id)
+                shouldDelete = true;
+            if (fullEntity->resend) {
+                shouldDelete = true;
+                fullEntity->resend = false;
+            }
+
+            if (shouldDelete) {
+                NetworkFunctions::NetworkOutEntityDelete(nc.first, vEntity.ClientId);
+                toRemove.push_back(vEntity.Id);
+            }
+        }
+
+        while(true) { // -- stupid.. but a safe way to delete elements =/
+            int removed = 0;
+            int iterator = 0;
+            for(auto const &vEntity : nc.second->player->Entities) {
+                if (vEntity.Id == toRemove.at(0)) {
+                    nc.second->player->Entities.erase(nc.second->player->Entities.begin() + iterator);
+                    removed++;
+                    break;
+                }
+                iterator++;
+            }
+            if (removed == 0 || toRemove.empty())
+                break;
+        }
+
+        // -- now loop the global entities list, for creation.
+        for (auto const &bEntity : _entities) {
+            if (bEntity.second->MapID != nc.second->player->MapId)
+                continue;
+            bool create = true;
+            for(auto const &vEntity : nc.second->player->Entities) {
+                if (vEntity.Id == bEntity.first) {
+                    create = false;
+                    break;
+                }
+            }
+            if (create) {
+                EntityShort s;
+                s.Id = bEntity.first;
+                s.ClientId = bEntity.second->ClientId;
+                nc.second->player->Entities.push_back(s); // -- track the new client
+                // -- spawn them :)
+                NetworkFunctions::NetworkOutEntityAdd(nc.first, s.ClientId, Entity::GetDisplayname(s.Id), bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
+            }
+        }
+    }
+    // Loop through the entire global entities list *again*
+    for (auto const &bEntity : _entities) {
+        if (bEntity.second->SendPos) {
+            bEntity.second->SendPos = 0;
+            for(auto const &nc : n->_clients) {
+                if (!nc.second->LoggedIn)
+                    continue;
+
+                for (auto const &vEntity : nc.second->player->Entities) {
+                    if (vEntity.Id == bEntity.first)
+                        NetworkFunctions::NetworkOutEntityPosition(nc.first, vEntity.ClientId, bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
+                }
+            }
+        }
+
+        if (bEntity.second->SendPosOwn) {
+            bEntity.second->SendPosOwn = false;
+            for(auto const &nc : n->_clients) {
+                if (!nc.second->LoggedIn)
+                    continue;
+
+                if (nc.second->player->tEntity == bEntity.second) {
+                    NetworkFunctions::NetworkOutEntityPosition(nc.first, 255, bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
+                }
+            }
+        }
+
+        if (bEntity.second->SpawnSelf) {
+            bEntity.second->SpawnSelf = false;
+            for(auto const &nc : n->_clients) {
+                if (!nc.second->LoggedIn)
+                    continue;
+
+                if (nc.second->player->tEntity == bEntity.second) {
+                    NetworkFunctions::NetworkOutEntityAdd(nc.first, 255, Entity::GetDisplayname(bEntity.first), bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
+                }
+            }
+        }
+    }
+
+}
+
+void Entity::Delete() {
+
 }

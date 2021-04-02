@@ -68,9 +68,6 @@ public:
 
     // -- Methods
     Player();
-
-
-
 };
 
 #endif //D3PP_PLAYER_H

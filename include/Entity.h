@@ -38,7 +38,7 @@ public:
     float Rotation;
     float Look;
     bool SendPosOwn;
-    bool SendPos;
+    char SendPos;
     // --
     int timeMessageDeath;
     int timeMessageOther;
@@ -66,9 +66,9 @@ public:
 
     void Kill();
     void PositionCheck();
-    void PositionSet();
-    void Send();
-    void MainFunc();
+    void PositionSet(int mapId, float x, float y, float z, float rot, float lk, char priority, bool sendOwn);
+    static void Send();
+    static void MainFunc();
     static int GetFreeId();
     static int GetFreeIdClient(int mapId);
     void Delete();
