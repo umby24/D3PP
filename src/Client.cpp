@@ -3,6 +3,7 @@
 //
 
 #include "Client.h"
+const std::string MODULE_NAME = "Client";
 
 void Client::Login(int clientId, std::string name, std::string mppass, char version) {
     Network *n = Network::GetInstance();
@@ -18,11 +19,21 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 
     bool preLoginCorrect = true;
     if (version != 7) {
-
+        preLoginCorrect = false;
+        Logger::LogAdd(MODULE_NAME, "Unknown Client version: " + stringulate(version), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        c->Kick("Unknown client version", true);
     } else if (Chat::StringIV(name)) {
-
+        preLoginCorrect = false;
+        Logger::LogAdd(MODULE_NAME, "Invalid Name: " + name, LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        c->Kick("Invalid name", true);
     } else if (name.empty()) {
-
+        preLoginCorrect = false;
+        Logger::LogAdd(MODULE_NAME, "Empty Name provided: " + stringulate(version), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        c->Kick("Invalid name", true);
+    } else if (n->_clients.size() > pm->MaxPlayers) {
+        preLoginCorrect = false;
+        Logger::LogAdd(MODULE_NAME, "Login Failed: Server is full", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        c->Kick("Server is full", true);
     }
 
     if (!preLoginCorrect) {
@@ -41,5 +52,9 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
         entry->LoginCounter++;
         entry->IP = c->IP;
         c->GlobalChat = entry->GlobalChat;
+        //std::string name, int mapId, float X, float Y, float Z, float rotation, float look
+        shared_ptr<Entity> newEntity = std::make_shared<Entity>(name, pm->spawnMapId, 0, 0, 0, 0, 0);
+        Entity::Add(newEntity);
+        Entity::SetDisplayName(newEntity->Id, "", name, "");
     }
 }

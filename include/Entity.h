@@ -62,6 +62,7 @@ public:
     static std::string GetDisplayname(int id);
     static void SetDisplayName(int id, std::string prefix, std::string name, std::string suffix);
     static void MessageToClients(int id, const std::string& message);
+    static void Add(shared_ptr<Entity> e);
     static void Delete(int id);
 
     void Kill();

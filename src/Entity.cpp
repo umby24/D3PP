@@ -286,3 +286,7 @@ void Entity::Send() {
 void Entity::Delete() {
 
 }
+
+void Entity::Add(shared_ptr<Entity> e) {
+    _entities.insert(std::make_pair(e->Id, e));
+}
