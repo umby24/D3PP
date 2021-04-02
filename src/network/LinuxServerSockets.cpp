@@ -88,14 +88,16 @@ ServerSocketEvent ServerSocket::CheckEvents() {
 
     FD_ZERO(&readfds);
     FD_SET(listenSocket, &readfds);
-
+    int maxFd = listenSocket;
     for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
         if (clientSockets[i] > 0) {
+            if (clientSockets[i] > maxFd)
+                maxFd = clientSockets[i];
             FD_SET(clientSockets[i], &readfds);
         }
     }
 
-    int activity = select(0, &readfds, NULL, NULL, NULL);
+    int activity = select(maxFd+1, &readfds, NULL, NULL, NULL);
 
     if (activity == -1) {
         Logger::LogAdd("ServerSocket", "Some error occured calling select.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
