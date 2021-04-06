@@ -10,6 +10,7 @@
 #include "Utils.h"
 #include "Packets.h"
 #include "Network.h"
+#include "Block.h"
 
 class NetworkFunctions {
 public:

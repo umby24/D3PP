@@ -53,16 +53,59 @@ void NetworkFunctions::SystemMessageNetworkSend(int clientId, std::string messag
 }
 
 void NetworkFunctions::SystemMessageNetworkSend2All(int mapId, std::string message, int type) {
- // -- TODO: Requires player, map.
+    Network* n = Network::GetInstance();
+    Utils::replaceAll(message, "<br>", "\n");
+    message = Chat::StringMultiline(message);
+    message = Chat::StringGV(message);
+    std::string blankie;
+    Utils::padTo(blankie, 64);
+    int lines = Utils::strCount(message, '\n') + 1;
+    std::vector<std::string> linev = Utils::splitString(message, '\n');
+    // -- emote replace
+    for (auto i = 1; i < lines; i++) {
+        std::string text = linev.at(i - 1);
+        Utils::padTo(text, 64);
+        if (!text.empty() && text != blankie) {
+            for (auto const &nc : n->_clients) {
+                if (mapId == -1 || nc.second->player->MapId == mapId) {
+                    Packets::SendChatMessage(nc.first, text, type);
+                }
+            }
+        }
+    }
 }
 
 void NetworkFunctions::NetworkOutBlockSet(int clientId, short x, short y, short z, char type) {
-    // -- TODO: CHeck if logged in, check for cpe block levels.
-    Packets::SendBlockChange(clientId, x, y, z, type);
+    Network* n = Network::GetInstance();
+    Block* b = Block::GetInstance();
+    MapBlock mb = b->GetBlock(type);
+    shared_ptr<NetworkClient> nc = n->GetClient(clientId);
+    if (nc->LoggedIn) {
+        if (mb.CpeLevel > nc->CustomBlocksLevel) {
+            type = mb.CpeReplace;
+        } else {
+            type = mb.OnClient;
+        }
+        Packets::SendBlockChange(clientId, x, y, z, type);
+    }
 }
 
 void NetworkFunctions::NetworkOutBlockSet2Map(int mapId, short x, short y, short z, char type) {
-    // -- TODO: Requires player
+    Network* n = Network::GetInstance();
+    Block* b = Block::GetInstance();
+    MapBlock mb = b->GetBlock(type);
+    for(auto const &nc : n->_clients) {
+        if (nc.second->player->MapId != mapId || !nc.second->LoggedIn)
+            continue;
+
+        if (mb.CpeLevel > nc.second->CustomBlocksLevel) {
+            type = mb.CpeReplace;
+        } else {
+            type = mb.OnClient;
+        }
+
+        Packets::SendBlockChange(nc.first, x, y, z, type);
+    }
 }
 
 void NetworkFunctions::NetworkOutEntityAdd(int clientId, char playerId, std::string name, float x, float y, float z,

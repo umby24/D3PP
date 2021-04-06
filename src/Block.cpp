@@ -4,6 +4,7 @@
 
 #include "Block.h"
 const std::string MODULE_NAME = "Block";
+Block* Block::Instance = nullptr;
 
 Block::Block() {
     for(auto i = 0; i < 255; i++) { // -- Pre-pop..
@@ -135,4 +136,11 @@ void Block::MainFunc() {
         Load();
         LastFileDate = modTime;
     }
+}
+
+Block *Block::GetInstance() {
+    if (Instance == nullptr)
+        Instance = new Block();
+
+    return Instance;
 }

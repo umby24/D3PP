@@ -50,7 +50,9 @@ public:
     Block();
     MapBlock GetBlock(int id);
     void Save();
+    static Block* GetInstance();
 protected:
+    static Block* Instance;
 private:
     bool SaveFile;
     time_t LastFileDate;

@@ -23,7 +23,7 @@ int main()
 {
     srand(time(nullptr));
     Logger::LogAdd("Main", "====== Welcome to D3PP =====", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-    Block b;
+    Block *b = Block::GetInstance();
     Rank *r = Rank::GetInstance();
     System s;
     Player_List *l = Player_List::GetInstance();
