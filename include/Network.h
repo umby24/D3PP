@@ -30,7 +30,7 @@
 #include "TaskScheduler.h"
 #include "watchdog.h"
 #include "Network_Functions.h"
-
+#include "Client.h"
 #include "json.hpp"
 
 

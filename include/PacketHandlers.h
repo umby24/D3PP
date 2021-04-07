@@ -16,6 +16,13 @@ class NetworkClient;
 class PacketHandlers {
 public:
     static void HandleHandshake(const std::shared_ptr<NetworkClient>& client);
+    static void HandlePing(const std::shared_ptr<NetworkClient>& client);
+    static void HandleBlockChange(const std::shared_ptr<NetworkClient>& client);
+    static void HandlePlayerTeleport(const std::shared_ptr<NetworkClient>& client);
+    static void HandleChatPacket(const std::shared_ptr<NetworkClient>& client);
+    static void HandleExtInfo(const std::shared_ptr<NetworkClient>& client);
+    static void HandleExtEntry(const std::shared_ptr<NetworkClient>& client);
+    static void HandleCustomBlockSupportLevel(const std::shared_ptr<NetworkClient>& client);
 };
 
 

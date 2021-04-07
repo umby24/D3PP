@@ -9,6 +9,7 @@
 #include <map>
 #include <memory>
 #include "Player_List.h"
+#include "Map.h"
 
 class PlayerListEntry;
 class Player;

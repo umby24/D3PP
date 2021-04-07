@@ -7,6 +7,10 @@
 #include <string>
 #include "Network.h"
 #include "Player.h"
+#include "Network_Functions.h"
+#include "Map.h"
+#include "watchdog.h"
+
 
 class Client {
 public:

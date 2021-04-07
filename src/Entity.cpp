@@ -126,20 +126,41 @@ void Entity::Delete(int id) {
 }
 
 void Entity::Kill() {
-    // -- mapSelectId(MapId)
+    MapMain *mm = MapMain::GetInstance();
+    shared_ptr<Map> cm = mm->GetPointer(MapID);
+
     if (timeMessageDeath < time(nullptr)) {
         timeMessageDeath = time(nullptr) + 2000;
         NetworkFunctions::SystemMessageNetworkSend2All(MapID, "&c" + Name + " died.");
-        // -- setPos to map spawn..
-        //PositionSet();
+        PositionSet(MapID, cm->data.SpawnX, cm->data.SpawnY, cm->data.SpawnZ, cm->data.SpawnRot, cm->data.SpawnLook, 5, true);
     }
 }
 
 void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float lk, char priority, bool sendOwn) {
+    MapMain* mm = MapMain::GetInstance();
     if (SendPos <= priority) {
         if (mapId != MapID) { // -- Changing map
-            // -- mapSelect
-            // -- TODO:
+            shared_ptr<Map> nm = mm->GetPointer(mapId);
+            if (playerList == nullptr || playerList->PRank >= nm->data.RankJoin) {
+                std::string entityName = GetDisplayname(Id);
+                std::string mapChangeMessage = "Player '" + entityName + "' changed to map '" + nm->data.Name + "'";
+                NetworkFunctions::SystemMessageNetworkSend2All(MapID, mapChangeMessage);
+                NetworkFunctions::SystemMessageNetworkSend2All(mapId, mapChangeMessage);
+                nm->data.Clients += 1;
+                int oldMapId = MapID;
+                shared_ptr<Map> om = mm->GetPointer(oldMapId);
+                om->data.Clients -= 1;
+
+                MapID = mapId;
+                X = x;
+                Y = y;
+                Z = z;
+                Rotation = rot;
+                Look = lk;
+                ClientId = GetFreeIdClient(mapId);
+            } else {
+                MessageToClients(Id, "You are not allowed to join map '" + nm->data.Name + "'");
+            }
         } else {
             if (sendOwn || !SendPosOwn) {
                 X = x;

@@ -157,15 +157,14 @@ void Network::HtmlStats() {
     for (auto const& nc : _clients) {
         clientTable += "<tr>";
         clientTable += "<td>" + stringulate(nc.first) + "</td>";
-        // -- TODO: Player name
-        //clientTable += "<td>" + stringulate(nc.first) + "</td>";
-        // -- TODO: Player Version
-        //clientTable += "<td>" + stringulate(nc.first) + "</td>";
+        clientTable += "<td>" + nc.second->player->LoginName + "</td>";
+        clientTable += "<td>" + stringulate(nc.second->player->ClientVersion) + "</td>";
         clientTable += "<td>" + nc.second->IP + "</td>";
         clientTable += "<td>" + stringulate(nc.second->DownloadRate / 1000) + "</td>";
         clientTable += "<td>" + stringulate(nc.second->UploadRate / 1000) + "</td>";
-        // -- TODO: Entity ID
-        //clientTable += "<td>" + stringulate(nc.first) + "</td>";
+        if (nc.second->player->tEntity) {
+            clientTable += "<td>" + stringulate(nc.second->player->tEntity->Id) + "</td>";
+        }
         clientTable += "</tr>";
     }
     // --
@@ -285,42 +284,42 @@ void Network::NetworkInput() {
                     break;
                 case 1: // -- Ping
                     if (nc.second->InputBufferAvailable >= 1) {
-
+                        PacketHandlers::HandlePing(nc.second);
                     }
                     break;
                 case 5: // -- Block Change
                     if (nc.second->InputBufferAvailable >= 9) {
-
+                        PacketHandlers::HandleBlockChange(nc.second);
                     }
                     break;
                 case 8: // -- Player Movement
                     if (nc.second->InputBufferAvailable >= 10) {
-
+                        PacketHandlers::HandlePlayerTeleport(nc.second);
                     }
                     break;
                 case 13: // -- Chat Message
                     if (nc.second->InputBufferAvailable >= 66) {
-
+                        PacketHandlers::HandleChatPacket(nc.second);
                     }
                     break;
                 case 16: // -- CPe ExtInfo
                     if (nc.second->InputBufferAvailable >= 67) {
-
+                        PacketHandlers::HandleExtInfo(nc.second);
                     }
                     break;
                 case 17: // -- CPE ExtEntry
                     if (nc.second->InputBufferAvailable >= 1 + 64 + 4) {
-
+                        PacketHandlers::HandleExtEntry(nc.second);
                     }
                     break;
                 case 19: // -- CPE Custom Block Support
                     if (nc.second->InputBufferAvailable >= 2) {
-
+                        PacketHandlers::HandleCustomBlockSupportLevel(nc.second);
                     }
                     break;
                 default:
                     Logger::LogAdd(MODULE_NAME, "Unknown Packet Received [" + stringulate(commandByte) + "]", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
-                    // -- Kick
+                    nc.second->Kick("Invalid Packet", true);
             }
 
             maxRepeat--;
@@ -444,8 +443,7 @@ void NetworkClient::Kick(std::string message, bool hide) {
     if (DisconnectTime == 0) {
         DisconnectTime = time(nullptr) + 1000;
         LoggedIn = false;
-        // -- TODO: Requires player
-        // -- LogoutHide = hide
+        player->LogoutHide = hide;
         Logger::LogAdd(MODULE_NAME, "Client Kicked [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     }
 }
@@ -545,7 +543,7 @@ void Network::DeleteClient(int clientId, std::string message, bool sendToAll) {
         return;
 
     // -- Plugin event client delete
-    // -- Client_Logout
+    Client::Logout(clientId, message, sendToAll);
     Mem::Free(_clients[clientId]->InputBuffer);
     Mem::Free(_clients[clientId]->OutputBuffer);
     listenSocket.Unaccept(_clients[clientId]->clientSocket->GetSocketFd());
