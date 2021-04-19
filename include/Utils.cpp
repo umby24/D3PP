@@ -97,3 +97,11 @@ int Utils::RandomNumber(int max) {
     std::uniform_real_distribution<double> dist(1.0, max);
     return (dist(mt));
 }
+
+void Utils::TrimString(std::string &input) {
+    while (input[0] == ' ')
+        input = input.substr(1);
+
+    while (input[input.size()-1] == ' ' || input[input.size()-1] == '\r' || input[input.size()-1] == '\n')
+        input = input.substr(0, input.size() - 1);
+}

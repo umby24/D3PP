@@ -18,6 +18,7 @@ using namespace std;
 bool isRunning = false;
 void mainLoop();
 void MainConsole();
+int MainVersion = 1018;
 
 int main()
 {

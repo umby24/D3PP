@@ -41,6 +41,7 @@ class Utils
         static void padTo(std::string &str, const size_t num, const char paddingChar = ' ');
         static int strCount(std::string input, char search);
         static std::vector<std::string> splitString(std::string input, const char splitChar = ' ');
+        static void TrimString(std::string &input);
 protected:
 
     private:

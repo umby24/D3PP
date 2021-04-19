@@ -11,10 +11,13 @@
 #include <map>
 #include <thread>
 #include <memory>
+#include <filesystem>
 
 #include "TaskScheduler.h"
+#include "Mem.h"
 #include "Logger.h"
 #include "ZLib.h"
+#include "common/PreferenceLoader.h"
 #include "Utils.h"
 
 struct MapBlockDo { // -- Physics Queue Item
@@ -145,7 +148,11 @@ const int MAP_BLOCK_ELEMENT_SIZE = 4;
 
 class Map {
 public:
+    PreferenceLoader _configFile;
     MapData data;
+    bool Resize(short x, short y, short z);
+    bool Save(std::string directory);
+    void Load(std::string directory);
 };
 
 class MapMain : TaskItem {
@@ -154,16 +161,19 @@ public:
     shared_ptr<Map> GetPointer(int id);
     int GetMapId();
     std::string GetUniqueId();
+    int Add(int id, short x, short y, short z, std::string name);
+    void Delete(int id);
     static MapMain* GetInstance();
     static int GetMapSize(int x, int y, int z, int blockSize) { return (x * y * z) * blockSize; }
     static int GetMapOffset(int x, int y, int z, int sizeX, int sizeY, int sizeZ, int blockSize) { return (x + y * sizeX + z * sizeX * sizeY) * blockSize;}
     void MainFunc();
+    bool SaveFile;
 private:
     static MapMain* Instance;
     std::thread BlockchangeThread;
     std::thread PhysicsThread;
     std::thread ActionThread;
-    bool SaveFile;
+
     int SaveFileTimer;
     std::string TempFilename;
     int TempId;
