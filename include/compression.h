@@ -2,8 +2,8 @@
 // Created by unknown on 4/2/21.
 //
 
-#ifndef D3PP_ZLIB_H
-#define D3PP_ZLIB_H
+#ifndef D3PP_COMPRESSION_H
+#define D3PP_COMPRESSION_H
 #include <string>
 #include <zlib.h>
 #include <fstream>
@@ -21,4 +21,4 @@ public:
 
     static int GZip_DecompressFromFile(unsigned char *output, int outputLen, std::string filename);
 };
-#endif //D3PP_ZLIB_H
+#endif //D3PP_COMPRESSION_H

@@ -16,7 +16,7 @@
 #include "TaskScheduler.h"
 #include "Mem.h"
 #include "Logger.h"
-#include "ZLib.h"
+#include "compression.h"
 #include "common/PreferenceLoader.h"
 #include "Utils.h"
 
@@ -148,7 +148,7 @@ const int MAP_BLOCK_ELEMENT_SIZE = 4;
 
 class Map {
 public:
-    PreferenceLoader _configFile;
+    Map();
     MapData data;
     bool Resize(short x, short y, short z);
     bool Save(std::string directory);
@@ -188,5 +188,6 @@ private:
 
 
     void MapListSave();
+    void MapListLoad();
 };
 #endif //D3PP_MAP_H

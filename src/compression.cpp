@@ -2,7 +2,7 @@
 // Created by unknown on 4/2/21.
 //
 
-#include "ZLib.h"
+#include "compression.h"
 
 int GZIP::GZip_Decompress(unsigned char *output, int outputLen, unsigned char *input, int inputLen) {
     z_stream asdf;

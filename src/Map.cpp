@@ -5,6 +5,7 @@
 #include "Map.h"
 
 const std::string MODULE_NAME = "Map";
+MapMain* MapMain::Instance = nullptr;
 
 MapMain::MapMain() {
     this->Main = [this] { MainFunc(); };
@@ -89,18 +90,55 @@ std::string MapMain::GetUniqueId() {
 void MapMain::MapListSave() {
     Files* f = Files::GetInstance();
     std::string fName = f->GetFile(MAP_LIST_FILE);
-    ofstream oStream(fName);
+    PreferenceLoader pl(fName, "");
 
     for(auto const &m : _maps) {
-        oStream << "[" << m.first << "]" << endl;
-        oStream << "Name = " << m.second->data.Name << endl;
-        oStream << "Directory = " << m.second->data.Directory << endl;
-        oStream << "Delete = 0" << endl;
-        oStream << "Reload = 0" << endl;
+        pl.SelectGroup(stringulate(m.first));
+        pl.Write("Name", m.second->data.Name);
+        pl.Write("Directory", m.second->data.Directory);
+        pl.Write("Delete", 0);
+        pl.Write("Reload", 0);
     }
-    oStream.close();
+    pl.SaveFile();
+
     LastWriteTime = Utils::FileModTime(fName);
     Logger::LogAdd(MODULE_NAME, "File saved. [" + fName + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+}
+
+void MapMain::MapListLoad() {
+    Files* f = Files::GetInstance();
+    std::string fName = f->GetFile(MAP_LIST_FILE);
+    PreferenceLoader pl(fName, "");
+    pl.LoadFile();
+
+    for(auto const &m : pl.SettingsDictionary) {
+        if (m.first.empty())
+            continue;
+        int mapId = stoi(m.first);
+
+        pl.SelectGroup(m.first);
+        std::string mapName = pl.Read("Name", m.first);
+        std::string directory = pl.Read("Directory", f->GetFolder("Maps") + m.first + "/");
+        bool mapDelete = (pl.Read("Delete", 0) == 1);
+        bool mapReload = (pl.Read("Reload", 0) == 1);
+        if (mapDelete) {
+            // -- MapActionAddDelete
+        } else {
+            shared_ptr<Map> mapPtr = GetPointer(mapId);
+            if (mapPtr == nullptr) {
+                Add(mapId, 64, 64, 64, mapName);
+                mapReload = true;
+            }
+            mapPtr->data.Directory = directory;
+            if ((mapReload)) {
+                // -- MapActionAddLoad
+            }
+        }
+    }
+    SaveFile = true;
+
+    LastWriteTime = Utils::FileModTime(fName);
+    Logger::LogAdd(MODULE_NAME, "File loaded. [" + fName + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 int MapMain::Add(int id, short x, short y, short z, std::string name) {
@@ -157,6 +195,8 @@ void MapMain::Delete(int id) {
     _maps.erase(mp->data.ID);
     SaveFile = true;
 }
+
+
 
 bool Map::Resize(short x, short y, short z) {
     if (!data.loaded) {
@@ -294,13 +334,12 @@ bool Map::Save(std::string directory) {
 
 void Map::Load(std::string directory) {
     PreferenceLoader pLoader(MAP_FILENAME_CONFIG, directory);
-    std::swap(_configFile, pLoader);
     pLoader.LoadFile();
     data.SizeX = pLoader.Read("Size_X", 0);
     data.SizeY = pLoader.Read("Size_Y", 0);
     data.SizeZ = pLoader.Read("Size_Z", 0);
 
-    data.UniqueID = pLoader.Read("Unique_ID", MapMain::GetUniqueId());
+  //  data.UniqueID = pLoader.Read("Unique_ID", MapMain::GetUniqueId());
     data.RankBuild = pLoader.Read("Rank_Build", 0);
     data.RankBuild = pLoader.Read("Rank_Join", 0);
     data.RankBuild = pLoader.Read("Rank_Show", 0);
@@ -314,3 +353,5 @@ void Map::Load(std::string directory) {
     data.SpawnRot = stof(pLoader.Read("Spawn_Rot", "0"));
     data.SpawnLook = stof(pLoader.Read("Spawn_Look", "0"));
 }
+
+Map::Map() = default;

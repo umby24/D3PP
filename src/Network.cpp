@@ -538,6 +538,22 @@ void NetworkClient::InputReadBytes(char *data, int datalen) {
     }
 }
 
+short NetworkClient::InputReadShort() {
+    short result = 0;
+
+    if (InputBufferAvailable >= 2) {
+        result |= InputBuffer[InputBufferOffset++];
+        result |= InputBuffer[InputBufferOffset++] << 4;
+        InputBufferAvailable -= 2;
+
+        if (InputBufferOffset >= NETWORK_BUFFER_SIZE)
+            InputBufferOffset -= NETWORK_BUFFER_SIZE;
+        return result;
+    }
+
+    return -1;
+}
+
 void Network::DeleteClient(int clientId, std::string message, bool sendToAll) {
     if (_clients.find(clientId) == _clients.end())
         return;
