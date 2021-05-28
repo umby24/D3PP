@@ -48,6 +48,10 @@ std::string Files::GetFolder(std::string name) {
 }
 
 void Files::Load() {
+    if (Utils::FileSize("files.json") == -1) {
+        std::cout << "files.json not found!! Critical Error!!" << std::endl;
+    }
+
     json j;
     std::ifstream iStream("files.json");
 

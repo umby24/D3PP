@@ -13,12 +13,15 @@
 #include <memory>
 #include <filesystem>
 
+#include "Network.h"
 #include "TaskScheduler.h"
 #include "Mem.h"
 #include "Logger.h"
 #include "compression.h"
 #include "common/PreferenceLoader.h"
 #include "Utils.h"
+#include "Block.h"
+
 
 struct MapBlockDo { // -- Physics Queue Item
     int time;
@@ -137,6 +140,8 @@ struct MapData {
 };
 const std::string MAP_LIST_FILE = "Map_List";
 const std::string MAP_SETTINGS_FILE = "Map_Settings";
+const std::string MAP_HTML_FILE = "Map_HTML";
+
 // -- Names of the files within a map directory
 const std::string MAP_FILENAME_DATA = "Data-Layer.gz";
 const std::string MAP_FILENAME_RANK = "Rank-Layer.txt";
@@ -151,8 +156,13 @@ public:
     Map();
     MapData data;
     bool Resize(short x, short y, short z);
+
     bool Save(std::string directory);
     void Load(std::string directory);
+    void Reload();
+    void Unload();
+    void Send(int clientId);
+    void Resend();
 };
 
 class MapMain : TaskItem {
@@ -160,10 +170,12 @@ public:
     MapMain();
     shared_ptr<Map> GetPointer(int id);
     int GetMapId();
-    std::string GetUniqueId();
+    static std::string GetUniqueId();
+    
     int Add(int id, short x, short y, short z, std::string name);
     void Delete(int id);
     static MapMain* GetInstance();
+    std::string GetMapMOTDOverride(int mapId);
     static int GetMapSize(int x, int y, int z, int blockSize) { return (x * y * z) * blockSize; }
     static int GetMapOffset(int x, int y, int z, int sizeX, int sizeY, int sizeZ, int blockSize) { return (x + y * sizeX + z * sizeX * sizeY) * blockSize;}
     void MainFunc();
@@ -186,8 +198,40 @@ private:
     int mapSettingsTimerFileCheck;
     int mapSettingsMaxChangesSec;
 
-
+    void HtmlStats(time_t time_);
     void MapListSave();
     void MapListLoad();
+    void MapSettingsSave(); // -- Where are these called from? 
+    void MapSettingsLoad();
 };
+
+const std::string MAP_HTML_TEMPLATE = R"(<html>
+  <head>
+    <title>Minecraft-Server Map</title>
+  </head>
+  <body>
+      <b><u>Maps:</u></b><br>
+      <br>
+      <table border=1>        <tr>
+          <th><b>ID</b></th>
+          <th><b>U-ID</b></th>
+          <th><b>Name</b></th>
+          <th><b>Directory</b></th>
+          <th><b>Save Intervall</b></th>
+          <th><b>Ranks (B,J,S)</b></th>
+          <th><b>Size (X,Y,Z)</b></th>
+          <th><b>Memory</b></th>
+          <th><b>Physic_Queue</b></th>
+          <th><b>Send_Queue</b></th>
+          <th><b>Physics</b></th>
+          <th><b>Blockchange</b></th>
+        </tr>
+        [MAP_TABLE]
+      </table>      <br>
+      <br>
+      <br>
+    Site generated in [GEN_TIME] ms. [GEN_TIMESTAMP]<br>
+  </body>
+</html>)";
+
 #endif //D3PP_MAP_H

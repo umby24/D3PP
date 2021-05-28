@@ -9,6 +9,7 @@
 #include <fstream>
 
 #include "Logger.h"
+
 class GZIP {
 public:
     static int GZip_CompressBound(int inputLen);

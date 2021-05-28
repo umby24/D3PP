@@ -100,7 +100,7 @@ void Rank::Add(RankItem item) {
     SaveFile = true;
 }
 
-RankItem Rank::GetRank(int rank, bool exact) {
+RankItem Rank::GetRank(const int rank, bool exact) {
     struct RankItem result;
     bool found = false;
 

@@ -217,7 +217,10 @@ void Network::NetworkEvents() {
             DownloadRateCounter += dataRead;
         } else {
             DeleteClient(nc.first, "Disconnected", true);
-            nc.second->clientSocket->Disconnect();
+            
+            if (nc.second != nullptr && nc.second->clientSocket != nullptr)
+                nc.second->clientSocket->Disconnect();
+            
             return;
         }
 

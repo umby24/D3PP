@@ -48,6 +48,11 @@ void PlayerMain::Load() {
 
     if (!iStream.is_open()) {
         Logger::LogAdd(MODULE_NAME, "Failed to load Player!!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        WelcomeMessage = "Welcome to D3";
+        MaxPlayers = 32;
+        NameVerification = true;
+        killMode = KillMode::MAP_SPAWN;
+        SaveFile = true;
         return;
     }
 

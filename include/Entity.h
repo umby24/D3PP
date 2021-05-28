@@ -75,8 +75,9 @@ public:
     static int GetFreeIdClient(int mapId);
     void Delete();
     void Resend(int id);
-private:
     static std::map<int, std::shared_ptr<Entity>> _entities;
+private:
+    
 };
 
 #endif //D3PP_ENTITY_H

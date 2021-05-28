@@ -14,6 +14,9 @@ const std::string SYSTEM_FILE_NAME = "System";
 
 class System : TaskItem {
 public:
+    static bool IsRunning;
+    static System* GetInstance();
+    static System* Instance_;
     std::string ServerName;
     std::string Motd;
     int ClickDistance;
