@@ -77,12 +77,12 @@ void PreferenceLoader::SaveFile() {
     for (auto const &pair : SettingsDictionary) {
         if (pair.first != "") {
             std::string grpName = pair.first;
-            grpName.replace(grpName.begin(), grpName.end(), "§");
+            Utils::replaceAll(grpName, "§", "");
             oStream << "[" << grpName << "]" << std::endl;
         }
 
         for(auto const &subset : pair.second) {
-            oStream << subset.first << " = " << subset.second;
+            oStream << subset.first << " = " << subset.second << std::endl;
         }
     }
 

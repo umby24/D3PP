@@ -20,10 +20,11 @@ Network::Network() {
     networkStats.Main = [this] { UpdateNetworkStats(); };
     TaskScheduler::RegisterTask("Network_Stats", networkStats);
 
-    TaskItem networkEvents;
-    networkEvents.Interval = std::chrono::milliseconds(1);
-    networkEvents.Main = [this] { NetworkEvents(); };
-    TaskScheduler::RegisterTask("Network_Events", networkEvents);
+    // TaskItem networkEvents;
+    // networkEvents.Interval = std::chrono::milliseconds(1);
+    // networkEvents.Main = [this] { NetworkEvents(); };
+    // TaskScheduler::RegisterTask("Network_Events", networkEvents);
+    
 
     TaskItem networkOutputSender;
     networkOutputSender.Interval = std::chrono::milliseconds(0);
@@ -96,7 +97,9 @@ void Network::Start() {
     isListening = true;
 
     std::thread watcher(&Network::ClientAcceptance, this);
+    std::thread eventThread(&Network::NetworkEvents, this);
     swap(watcher, _acceptThread);
+    swap(eventThread, _eventThread);
 
     Logger::LogAdd(MODULE_NAME, "Network server started on port " + stringulate(this->Port), LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
@@ -207,6 +210,7 @@ void Network::UpdateNetworkStats() {
 void Network::NetworkEvents() {
     // -- Search for incoming connections [Handled in a different thread]
     // -- search for incoming data from clients
+    while (System::IsRunning) {
     watchdog::Watch("Network", "Begin events", 0);
 
     for(auto const &nc : _clients) {
@@ -218,8 +222,8 @@ void Network::NetworkEvents() {
         } else {
             DeleteClient(nc.first, "Disconnected", true);
             
-            if (nc.second != nullptr && nc.second->clientSocket != nullptr)
-                nc.second->clientSocket->Disconnect();
+          //  if (nc.second != nullptr && nc.second->clientSocket != nullptr)
+          //      nc.second->clientSocket->Disconnect();
             
             return;
         }
@@ -233,6 +237,8 @@ void Network::NetworkEvents() {
         }
     }
     watchdog::Watch("Network", "End Events", 2);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
 }
 
 void Network::NetworkOutputSend() {

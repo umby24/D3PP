@@ -4,6 +4,9 @@ bin/
 CMakeFiles/
 Data/
 Heartbeat/
+build/
+.vscode/
+cmake-build-mingw64/
 Logs/
 obj/
 Testing/

@@ -51,27 +51,55 @@ void Block::Load() {
 
     for(auto &item : j) {
         struct MapBlock loadedItem;
-        loadedItem.Id = item["id"];
-        loadedItem.Name = item["Name"];
-        loadedItem.OnClient = item["OnClient"];
-        loadedItem.Physics = item["Physics"];
-        loadedItem.PhysicsPlugin = item["PhysicsPlugin"];
-        loadedItem.PhysicsTime = item["PhysicsTime"];
-        loadedItem.PhysicsRandom = item["PhysicsRandom"];
-        loadedItem.PhysicsRepeat = item["PhysicsRepeat"];
-        loadedItem.PhysicsOnLoad = item["PhysicsOnLoad"];
-        loadedItem.CreatePlugin = item["CreatePlugin"];
-        loadedItem.DeletePlugin = item["DeletePlugin"];
-        loadedItem.ReplaceOnLoad = item["ReplaceOnLoad"];
-        loadedItem.RankPlace = item["RankPlace"];
-        loadedItem.RankDelete = item["RankDelete"];
-        loadedItem.AfterDelete = item["AfterDelete"];
-        loadedItem.Kills = item["Kills"];
-        loadedItem.Special = item["Special"];
-        loadedItem.OverviewColor = item["OverviewColor"];
-        loadedItem.CpeLevel = item["CpeLevel"];
-        loadedItem.CpeReplace = item["CpeReplace"];
-        Blocks[loadedItem.Id] = loadedItem;
+        if (item["Id"].is_number()) {
+            loadedItem.Id = item["Id"];
+            loadedItem.Name = item["Name"];
+            loadedItem.OnClient = item["OnClient"];
+            loadedItem.Physics = item["Physics"];
+            loadedItem.PhysicsPlugin = item["PhysicsPlugin"];
+            loadedItem.PhysicsTime = item["PhysicsTime"];
+            loadedItem.PhysicsRandom = item["PhysicsRandom"];
+            loadedItem.PhysicsRepeat = item["PhysicsRepeat"];
+            
+            if (item["PhysicsOnLoad"].is_boolean())
+                loadedItem.PhysicsOnLoad = item["PhysicsOnLoad"];
+            
+            if (!item["CreatePlugin"].is_null())
+                loadedItem.CreatePlugin = item["CreatePlugin"];
+
+            if (!item["DeletePlugin"].is_null())
+                loadedItem.DeletePlugin = item["DeletePlugin"];
+
+            if (!item["ReplaceOnLoad"].is_null())
+                loadedItem.ReplaceOnLoad = item["ReplaceOnLoad"];
+
+            if (!item["RankPlace"].is_null())
+                loadedItem.RankPlace = item["RankPlace"];
+
+            if (!item["RankDelete"].is_null())
+                loadedItem.RankDelete = item["RankDelete"];
+
+            if (!item["AfterDelete"].is_null())
+                loadedItem.AfterDelete = item["AfterDelete"];
+
+            if (!item["Kills"].is_null())
+                loadedItem.Kills = item["Kills"];
+
+            if (!item["Special"].is_null())
+                loadedItem.Special = item["Special"];
+
+            if (!item["OverviewColor"].is_null())
+                loadedItem.OverviewColor = item["OverviewColor"];
+
+            if (item["CpeLevel"].is_number())
+                loadedItem.CpeLevel = item["CpeLevel"];
+
+            if (!item["CpeReplace"].is_null())
+            loadedItem.CpeReplace = item["CpeReplace"];
+
+
+            Blocks[loadedItem.Id] = loadedItem;
+        }
     }
 
     Logger::LogAdd(MODULE_NAME, "File loaded.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
@@ -88,7 +116,7 @@ void Block::Save() {
     for(auto i = 0; i < 255; i++) {
         j[i] = nullptr;
         j[i] = {
-                {"id", i},
+                {"Id", i},
                 {"Name", Blocks[i].Name},
                 {"OnClient", Blocks[i].OnClient},
                 {"Physics", Blocks[i].Physics},

@@ -4,6 +4,8 @@
 
 #include "System.h"
 const std::string MODULE_NAME = "System";
+System* System::Instance_ = nullptr;
+bool System::IsRunning = false;
 
 System::System() {
     this->Interval = std::chrono::seconds(2);
@@ -84,4 +86,11 @@ void System::MainFunc() {
         Load();
         lastModified = modTime;
     }
+}
+
+System* System::GetInstance() {
+    if (Instance_ == nullptr)
+        Instance_ = new System();
+    
+    return Instance_;
 }

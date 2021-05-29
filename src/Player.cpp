@@ -107,7 +107,7 @@ PlayerMain *PlayerMain::GetInstance() {
 
 Player::Player() {
     ClientVersion = 0;
-    MapId = 0;
+    MapId = -1;
     timeDeathMessage = 0;
     timeBuildMessage = 0;
     LogoutHide = false;

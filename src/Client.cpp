@@ -6,7 +6,6 @@
 const std::string MODULE_NAME = "Client";
 
 void Client::Login(int clientId, std::string name, std::string mppass, char version) {
-    Logger::LogAdd("CLIENT DEBUG", "Beginning login Process!!", LogType::NORMAL, "", 0, "");
     Network *n = Network::GetInstance();
     PlayerMain *pm = PlayerMain::GetInstance();
     Player_List *pl = Player_List::GetInstance();
@@ -38,7 +37,6 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     }
 
     if (!preLoginCorrect) {
-        Logger::LogAdd("CLIENT DEBUG", "Prelogin incorrect", LogType::NORMAL, "", 0, "");
         return;
     }
     PlayerListEntry *entry = pl->GetPointer(c->player->LoginName);
@@ -94,10 +92,9 @@ void Client::LoginThread() {
     System* sMain = System::GetInstance();
     MapMain* mMain = MapMain::GetInstance();
     Rank* rMain = Rank::GetInstance();
-    Logger::LogAdd("CLIENT DEBUG", "Beginning login thread", LogType::NORMAL, "", 0, "");
 
     while (System::IsRunning) { // -- While server running?
-        watchdog::Watch("Client_Login", "Begin Thread-Slope", 0);
+        watchdog::Watch("Client_login", "Begin Thread-Slope", 0);
         for(auto const &nc : n->_clients) {
             if (!nc.second->LoggedIn || !nc.second->player->tEntity)
                 continue;
@@ -140,8 +137,7 @@ void Client::LoginThread() {
             nc.second->player->MapId = eMapId;
         }
 
-        watchdog::Watch("Client_Login", "End Thread-Slope", 2);
+        watchdog::Watch("Client_login", "End Thread-Slope", 2);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    Logger::LogAdd("CLIENT DEBUG", "ending login thread", LogType::NORMAL, "", 0, "");
 }

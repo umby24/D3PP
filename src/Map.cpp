@@ -199,8 +199,9 @@ void MapMain::MapListLoad() {
                 mapPtr = GetPointer(mapId);
             }
             mapPtr->data.Directory = directory;
-            mapPtr->Load("");
+            //mapPtr->Load("");
             if ((mapReload)) {
+                mapPtr->Load("");
                 // -- MapActionAddLoad
             }
         }
@@ -220,6 +221,8 @@ int MapMain::Add(int id, short x, short y, short z, std::string name) {
 
     if (GetPointer(id) != nullptr)
         return -1;
+
+    Logger::LogAdd("MAP DEBUG", "Going to add a map", LogType::NORMAL, "", 0, "");
     Files *f = Files::GetInstance();
 
     shared_ptr<Map> newMap = std::make_shared<Map>();
@@ -227,6 +230,7 @@ int MapMain::Add(int id, short x, short y, short z, std::string name) {
     newMap->data.Data = Mem::Allocate(mapSize, __FILE__, __LINE__, "Map_ID = " + stringulate(id));
     newMap->data.BlockchangeData = Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Blockchange) = " + stringulate(id));
     newMap->data.PhysicData = Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Physics) = " + stringulate(id));
+    Logger::LogAdd("MAP DEBUG", "Created shares and allocs", LogType::NORMAL, "", 0, "");
     newMap->data.ID = id;
     newMap->data.UniqueID = GetUniqueId();
     newMap->data.Name = name;
@@ -244,13 +248,15 @@ int MapMain::Add(int id, short x, short y, short z, std::string name) {
     newMap->data.loading = false;
     newMap->data.Clients = 0;
     newMap->data.LastClient = time(nullptr);
-
+Logger::LogAdd("MAP DEBUG", "Pre block count", LogType::NORMAL, "", 0, "");
     for(auto i = 1; i < 255; i++)
         newMap->data.blockCounter[i] = 0;
 
     newMap->data.blockCounter[0] = x*y*z;
+    Logger::LogAdd("MAP DEBUG", "post block count", LogType::NORMAL, "", 0, "");
     _maps.insert(std::make_pair(id, newMap));
     SaveFile = true;
+    Logger::LogAdd("MAP DEBUG", "Add complete", LogType::NORMAL, "", 0, "");
     return id;
 }
 
@@ -408,7 +414,12 @@ bool Map::Save(std::string directory) {
 }
 
 void Map::Load(std::string directory) {
+    Logger::LogAdd("MAP DEBUG", "Going to load", LogType::NORMAL, "", 0, "");
     Block* blockMain = Block::GetInstance();
+
+    if (directory.empty()) {
+        directory = data.Directory;
+    }
 
     PreferenceLoader pLoader(MAP_FILENAME_CONFIG, directory);
     pLoader.LoadFile();
@@ -416,8 +427,9 @@ void Map::Load(std::string directory) {
     int sizeY = pLoader.Read("Size_Y", 0);
     int sizeZ = pLoader.Read("Size_Z", 0);
     int mapSize = sizeX * sizeY * sizeZ;
-    Resize(sizeX, sizeY, sizeZ);
 
+    Resize(sizeX, sizeY, sizeZ);
+    Logger::LogAdd("MAP DEBUG", "Map Resized", LogType::NORMAL, "", 0, "");
     data.UniqueID = pLoader.Read("Unique_ID", MapMain::GetUniqueId());
     data.RankBuild = pLoader.Read("Rank_Build", 0);
     data.RankBuild = pLoader.Read("Rank_Join", 0);
@@ -433,6 +445,7 @@ void Map::Load(std::string directory) {
     data.SpawnLook = stof(pLoader.Read("Spawn_Look", "0"));
 
     int dSize = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.Data), mapSize * MAP_BLOCK_ELEMENT_SIZE, directory + MAP_FILENAME_DATA);
+    Logger::LogAdd("MAP DEBUG", "Decompressed", LogType::NORMAL, "", 0, "");
     if (dSize == (mapSize * MAP_BLOCK_ELEMENT_SIZE)) {
         // -- TODO: Clear undo map
         for(int i = 0; i < 255; i++) {
@@ -542,8 +555,8 @@ void Map::Send(int clientId) {
     tempBuf[tempBufferOffset++] = mapSize;
 
     for (int i = 0; i < mapSize-1; i++) {
-        char* pointInArray = data.Data + i * MAP_BLOCK_ELEMENT_SIZE;
-        MapBlock mb = bMain->GetBlock(pointInArray[0]);
+        char rawBlock = data.Data[i * MAP_BLOCK_ELEMENT_SIZE];
+        MapBlock mb = bMain->GetBlock(rawBlock);
         if (mb.CpeLevel > nc->CustomBlocksLevel)
             tempBuf[tempBufferOffset++] = mb.CpeReplace;
         else     
