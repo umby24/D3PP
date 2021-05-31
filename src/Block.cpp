@@ -23,6 +23,9 @@ Block::Block() {
 
 
 MapBlock Block::GetBlock(int id) {
+    if (!hasLoaded)
+        Load();
+
     if (id >= 0 && id <= 255)
         return Blocks[id];
 
@@ -30,7 +33,58 @@ MapBlock Block::GetBlock(int id) {
     return result;
 }
 
+void Block::LoadOld() {
+    if (Utils::FileSize("Data/Block.txt") == -1)
+        return;
+    
+    Logger::LogAdd(MODULE_NAME, "Importing old block file, Blocks.json will be overwritten.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Blocks.clear();
+    PreferenceLoader pl("Block.txt", "Data/");
+    pl.LoadFile();
+    
+    for (auto const &item : pl.SettingsDictionary) {
+        if (item.first.empty() || item.second.size() == 0)
+            continue;
+
+        pl.SelectGroup(item.first);
+        struct MapBlock newItem;
+        newItem.Id = stoi(item.first);
+        newItem.Name = pl.Read("Name", "Unknown");
+        newItem.OnClient = pl.Read("On_Client", 4);
+        newItem.Physics = pl.Read("Physic", 0);
+        newItem.PhysicsPlugin = pl.Read("Physics_Plugin", "");
+        newItem.PhysicsTime = pl.Read("Do_Time", 0);
+        newItem.PhysicsRandom = pl.Read("Do_Time_Random", 0);
+        newItem.PhysicsRepeat = (pl.Read("Do_Repeat", 0) == 1);
+        newItem.PhysicsOnLoad = (pl.Read("Do_By_Load", 0) == 1);
+        newItem.CreatePlugin = pl.Read("Create_Plugin", "");
+        newItem.DeletePlugin = pl.Read("Delete_Plugin", "");
+        newItem.RankPlace = pl.Read("Rank_Place", 0);
+        newItem.RankDelete = pl.Read("Rank_Delete", 0);
+        newItem.AfterDelete = pl.Read("After_Delete", 0);
+        newItem.ReplaceOnLoad = pl.Read("Replace_By_Load", -1);
+        newItem.Kills = (pl.Read("Killer", 0) == 1);
+        newItem.Special = (pl.Read("Special", 0) == 1);
+        newItem.OverviewColor = pl.Read("Color_Overview", 0);
+        newItem.CpeLevel = pl.Read("CPE_Level", 0);
+        newItem.CpeReplace = pl.Read("CPE_Replace", 0);
+        Blocks[newItem.Id] = newItem;
+    }
+
+    Logger::LogAdd(MODULE_NAME, stringulate(Blocks.size()) + " blocks imported.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Save();
+    std::filesystem::remove("Data/Block.txt");
+}
+bool compareBlockIds(MapBlock i1, MapBlock i2) {
+    return (i1.Id < i2.Id);
+}
+
 void Block::Load() {
+    if (Utils::FileSize("Data/Block.txt") != -1) {
+        LoadOld();
+        return;
+    }
+    
     Files* f = Files::GetInstance();
     std::string filePath = f->GetFile(BLOCK_FILE_NAME);
     json j;
@@ -60,7 +114,7 @@ void Block::Load() {
             loadedItem.PhysicsTime = item["PhysicsTime"];
             loadedItem.PhysicsRandom = item["PhysicsRandom"];
             loadedItem.PhysicsRepeat = item["PhysicsRepeat"];
-            
+
             if (item["PhysicsOnLoad"].is_boolean())
                 loadedItem.PhysicsOnLoad = item["PhysicsOnLoad"];
             
@@ -72,6 +126,8 @@ void Block::Load() {
 
             if (!item["ReplaceOnLoad"].is_null())
                 loadedItem.ReplaceOnLoad = item["ReplaceOnLoad"];
+            else
+                loadedItem.ReplaceOnLoad = -1;
 
             if (!item["RankPlace"].is_null())
                 loadedItem.RankPlace = item["RankPlace"];
@@ -103,7 +159,7 @@ void Block::Load() {
     }
 
     Logger::LogAdd(MODULE_NAME, "File loaded.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
-
+    hasLoaded = true;
     time_t modTime = Utils::FileModTime(filePath);
     LastFileDate = modTime;
 }
@@ -112,6 +168,8 @@ void Block::Save() {
     json j;
     Files* f = Files::GetInstance();
     std::string blockFile = f->GetFile(BLOCK_FILE_NAME);
+    
+    std::sort(Blocks.begin(), Blocks.end(), compareBlockIds);
 
     for(auto i = 0; i < 255; i++) {
         j[i] = nullptr;

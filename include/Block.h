@@ -6,6 +6,9 @@
 #define D3PP_BLOCK_H
 #include <string>
 #include <vector>
+#include <filesystem>
+
+#include "common/PreferenceLoader.h"
 #include "TaskScheduler.h"
 #include "json.hpp"
 #include "Utils.h"
@@ -55,9 +58,11 @@ protected:
     static Block* Instance;
 private:
     bool SaveFile;
+    bool hasLoaded;
     time_t LastFileDate;
     std::vector<MapBlock> Blocks;
-
+    
+    void LoadOld();
     void Load();
     void MainFunc();
 };

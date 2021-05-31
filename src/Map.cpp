@@ -454,13 +454,14 @@ void Map::Load(std::string directory) {
         for (int iz = 0; iz < data.SizeZ; iz++) {
             for (int iy = 0; iy < data.SizeY; iy++) {
                 for (int ix = 0; ix < data.SizeX; ix++) {
-                    char* point = data.Data + MapMain::GetMapOffset(ix, iy, iz, sizeX, sizeY, sizeZ, MAP_BLOCK_ELEMENT_SIZE);
-                    MapBlock b = blockMain->GetBlock(point[0]);
+                    int index = MapMain::GetMapOffset(ix, iy, iz, sizeX, sizeY, sizeZ, MAP_BLOCK_ELEMENT_SIZE);
+                    unsigned char point = data.Data[index];
+                    MapBlock b = blockMain->GetBlock(point);
 
                     if (b.ReplaceOnLoad >= 0)
-                        point[0] = static_cast<char>(b.ReplaceOnLoad);
+                        data.Data[index] = static_cast<char>(b.ReplaceOnLoad);
 
-                    data.blockCounter[point[0]] += 1;
+                    data.blockCounter[point] += 1;
                     
                     if (b.PhysicsOnLoad) {
                         // -- map_block_do_add
@@ -553,16 +554,20 @@ void Map::Send(int clientId) {
     tempBuf[tempBufferOffset++] = mapSize / 65536;
     tempBuf[tempBufferOffset++] = mapSize / 256;
     tempBuf[tempBufferOffset++] = mapSize;
+    std::vector<unsigned char> seenIds;
+    std::vector<int> returnedIds;
 
     for (int i = 0; i < mapSize-1; i++) {
-        char rawBlock = data.Data[i * MAP_BLOCK_ELEMENT_SIZE];
+        int index = i * MAP_BLOCK_ELEMENT_SIZE;
+
+        unsigned char rawBlock = static_cast<unsigned char>(data.Data[index]);
         MapBlock mb = bMain->GetBlock(rawBlock);
+
         if (mb.CpeLevel > nc->CustomBlocksLevel)
             tempBuf[tempBufferOffset++] = mb.CpeReplace;
         else     
             tempBuf[tempBufferOffset++] = mb.OnClient;
     }
-
     int tempBuffer2Size = GZIP::GZip_CompressBound(tempBufferOffset) + 1024 + 512;
     char* tempBuf2 = Mem::Allocate(tempBuffer2Size, __FILE__, __LINE__, "Temp");
 
