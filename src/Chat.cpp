@@ -70,3 +70,29 @@ bool Chat::StringIV(std::string input) {
 std::string Chat::StringGV(std::string input) {
     return std::regex_replace(input, AllowedRegexp, "#");
 }
+
+void Chat::NetworkSend2All(int entityId, std::string message) {
+    std::shared_ptr<Entity> em = Entity::GetPointer(entityId);
+    if (em == nullptr)
+        return;
+
+    if (em->playerList != nullptr) {
+        // -- Check if muted..
+        Logger::LogAdd("Chat", em->Name + ": " + message, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
+        message = Entity::GetDisplayname(entityId) + "&f: " + message;
+        NetworkFunctions::SystemMessageNetworkSend2All(-1, message);
+    }
+}
+
+void Chat::HandleIncomingChat(const shared_ptr<NetworkClient> client, std::string input, char playerId) {
+    if (input[0] == '/') {
+        // -- Do COmmands
+    } else if (input[0] == '#') {
+        // -- do global chat
+    } else
+    {
+        NetworkSend2All(client->player->tEntity->Id, input);
+        // -- do normal chat.
+    }
+    
+}
