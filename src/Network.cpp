@@ -158,17 +158,19 @@ void Network::HtmlStats() {
     // -- Client Table Generation
     std::string clientTable;
     for (auto const& nc : _clients) {
-        clientTable += "<tr>";
-        clientTable += "<td>" + stringulate(nc.first) + "</td>";
-        clientTable += "<td>" + nc.second->player->LoginName + "</td>";
-        clientTable += "<td>" + stringulate(nc.second->player->ClientVersion) + "</td>";
-        clientTable += "<td>" + nc.second->IP + "</td>";
-        clientTable += "<td>" + stringulate(nc.second->DownloadRate / 1000) + "</td>";
-        clientTable += "<td>" + stringulate(nc.second->UploadRate / 1000) + "</td>";
-        if (nc.second->player->tEntity) {
-            clientTable += "<td>" + stringulate(nc.second->player->tEntity->Id) + "</td>";
+        if (nc.second->LoggedIn && nc.second->player != nullptr) {
+            clientTable += "<tr>";
+            clientTable += "<td>" + stringulate(nc.first) + "</td>";
+            clientTable += "<td>" + nc.second->player->LoginName + "</td>";
+            clientTable += "<td>" + stringulate(nc.second->player->ClientVersion) + "</td>";
+            clientTable += "<td>" + nc.second->IP + "</td>";
+            clientTable += "<td>" + stringulate(nc.second->DownloadRate / 1000) + "</td>";
+            clientTable += "<td>" + stringulate(nc.second->UploadRate / 1000) + "</td>";
+            if (nc.second->player->tEntity) {
+                clientTable += "<td>" + stringulate(nc.second->player->tEntity->Id) + "</td>";
+            }
+            clientTable += "</tr>";
         }
-        clientTable += "</tr>";
     }
     // --
     time_t finishTime = time(nullptr);

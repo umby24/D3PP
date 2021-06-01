@@ -79,7 +79,7 @@ int Sockets::Send(char* data, int size) {
 Sockets::~Sockets()
 {
     Disconnect();
-    WSACleanup();
+    //WSACleanup();
 }
 
 Sockets::Sockets(SOCKET accept) {

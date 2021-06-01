@@ -87,6 +87,7 @@ std::unique_ptr<Sockets> ServerSocket::Accept() {
     for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
         if (clientSockets[i] == 0) {
             clientSockets[i] = newSocket;
+            break;
         }
     }
 
@@ -109,7 +110,7 @@ ServerSocketEvent ServerSocket::CheckEvents() {
     int activity = select(0, &readfds, NULL, NULL, NULL);
 
     if (activity == SOCKET_ERROR) {
-
+        
         int errMsg = WSAGetLastError();
         Logger::LogAdd("ServerSocket", "Some error occured calling select." + stringulate(errMsg), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
 
@@ -135,6 +136,7 @@ void ServerSocket::Unaccept(SOCKET fd) {
     for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
         if (clientSockets[i] == fd) {
             clientSockets[i] = 0;
+            break;
         }
     }
 }
