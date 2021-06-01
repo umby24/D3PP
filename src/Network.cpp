@@ -334,8 +334,9 @@ void Network::NetworkInput() {
             }
 
             maxRepeat--;
-        }
-    }
+        } // -- /While
+
+    } // -- /For
 }
 
 void Network::ClientAcceptance() {
@@ -359,7 +360,7 @@ void Network::ClientAcceptance() {
 }
 
 NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) {
-    Id= reinterpret_cast<uintptr_t>(&clientSocket);
+    Id= static_cast<int>(socket->GetSocketFd());
     InputBuffer = Mem::Allocate(NETWORK_BUFFER_SIZE, __FILE__, __LINE__, "NetworkClient(" + stringulate(Id) + ")\\InputBuffer");
     OutputBuffer = Mem::Allocate(NETWORK_BUFFER_SIZE, __FILE__, __LINE__, "NetworkClient(" + stringulate(Id) + ")\\OutputBuffer");
     InputBufferAvailable = 0;

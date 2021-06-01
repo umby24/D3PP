@@ -117,6 +117,9 @@ void Entity::Delete(int id) {
     Network* n = Network::GetInstance();
 
     for(auto const &nc : n->_clients) {
+        if (nc.second->player == nullptr || nc.second->player->tEntity == nullptr)
+            continue;
+            
         if (nc.second->player->tEntity == e) {
             nc.second->player->tEntity = nullptr;
         }
