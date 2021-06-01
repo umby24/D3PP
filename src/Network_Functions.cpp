@@ -4,7 +4,7 @@
 
 #include "Network_Functions.h"
 
-static shared_ptr<NetworkClient> GetPlayer(int id) {
+static std::shared_ptr<NetworkClient> GetPlayer(int id) {
     auto network = Network::GetInstance();
     auto result = network->GetClient(id);
     return result;
@@ -79,7 +79,7 @@ void NetworkFunctions::NetworkOutBlockSet(int clientId, short x, short y, short 
     Network* n = Network::GetInstance();
     Block* b = Block::GetInstance();
     MapBlock mb = b->GetBlock(type);
-    shared_ptr<NetworkClient> nc = n->GetClient(clientId);
+    std::shared_ptr<NetworkClient> nc = n->GetClient(clientId);
     if (nc->LoggedIn) {
         if (mb.CpeLevel > nc->CustomBlocksLevel) {
             type = mb.CpeReplace;

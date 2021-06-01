@@ -20,7 +20,7 @@ void PlayerMain::Save() {
     j["KillSpawnLook"] = killSpawnLook;
     j["SpawnMapId"] = spawnMapId;
 
-    ofstream oStream(fileName, std::ios::trunc);
+    std::ofstream oStream(fileName, std::ios::trunc);
     oStream << std::setw(4) << j;
     oStream.flush();
     oStream.close();
@@ -44,7 +44,7 @@ PlayerMain::PlayerMain() {
 
 void PlayerMain::Load() {
     json j;
-    ifstream iStream(fileName);
+    std::ifstream iStream(fileName);
 
     if (!iStream.is_open()) {
         Logger::LogAdd(MODULE_NAME, "Failed to load Player!!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);

@@ -68,7 +68,7 @@ bool GZIP::GZip_CompressToFile(unsigned char *input, int inputLen, std::string f
     if (compResult == -1)
         return false;
 
-    ofstream wf(filename, ios::out | ios::binary);
+    std::ofstream wf(filename, std::ios::out | std::ios::binary);
     wf.write((char *)compressed, compResult);
     wf.close();
 
@@ -78,7 +78,7 @@ bool GZIP::GZip_CompressToFile(unsigned char *input, int inputLen, std::string f
 int GZIP::GZip_DecompressFromFile(unsigned char *output, int outputLen, std::string filename) {
     int fileSize = Utils::FileSize(filename);
 
-    ifstream of(filename, ios::in | ios::binary);
+    std::ifstream of(filename, std::ios::in | std::ios::binary);
 
     char* data = new char[fileSize];
     of.read(data, fileSize);

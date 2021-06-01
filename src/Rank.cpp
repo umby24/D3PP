@@ -32,7 +32,7 @@ void Rank::Save() {
         j[key]["OnClient"] = item.OnClient;
     }
 
-    ofstream oStream(rankFile, std::ios::trunc);
+    std::ofstream oStream(rankFile, std::ios::trunc);
     oStream << std::setw(4) << j;
     oStream.flush();
     oStream.close();
@@ -64,7 +64,7 @@ void Rank::Load() {
     std::string filePath = f->GetFile(RANK_FILE_NAME);
     json j;
 
-    ifstream iStream(filePath);
+    std::ifstream iStream(filePath);
 
     if (!iStream.is_open()) {
         Logger::LogAdd(MODULE_NAME, "Failed to load ranks!!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);

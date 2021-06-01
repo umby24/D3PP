@@ -10,9 +10,9 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     PlayerMain *pm = PlayerMain::GetInstance();
     Player_List *pl = Player_List::GetInstance();
     MapMain *mm = MapMain::GetInstance();
-    shared_ptr<NetworkClient> c = n->GetClient(clientId);
+    std::shared_ptr<NetworkClient> c = n->GetClient(clientId);
 
-    c->player = make_unique<Player>();
+    c->player = std::make_unique<Player>();
     c->player->LoginName = name;
     c->player->MPPass = mppass;
     c->player->ClientVersion = version;
@@ -53,8 +53,8 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     entry->LoginCounter++;
     entry->IP = c->IP;
     c->GlobalChat = entry->GlobalChat;
-    shared_ptr<Map> spawnMap = mm->GetPointer(pm->spawnMapId);
-    shared_ptr<Entity> newEntity = std::make_shared<Entity>(name, pm->spawnMapId, spawnMap->data.SpawnX, spawnMap->data.SpawnY, spawnMap->data.SpawnZ, spawnMap->data.SpawnRot, spawnMap->data.SpawnLook);
+    std::shared_ptr<Map> spawnMap = mm->GetPointer(pm->spawnMapId);
+    std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(name, pm->spawnMapId, spawnMap->data.SpawnX, spawnMap->data.SpawnY, spawnMap->data.SpawnZ, spawnMap->data.SpawnRot, spawnMap->data.SpawnLook);
     newEntity->buildMaterial = -1;
     newEntity->playerList = entry;
     c->player->tEntity = newEntity;
@@ -72,11 +72,11 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 void Client::Logout(int clientId, std::string message, bool showtoall) {
     Network *n = Network::GetInstance();
     MapMain *mm = MapMain::GetInstance();
-    shared_ptr<NetworkClient> c = n->GetClient(clientId);
+    std::shared_ptr<NetworkClient> c = n->GetClient(clientId);
 
     Logger::LogAdd(MODULE_NAME, "Player logged out (IP: " + c->IP + " Name: " + c->player->LoginName + " Message: " + message + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     if (c->player && c->player->tEntity) {
-        shared_ptr<Map> currentMap = mm->GetPointer(c->player->MapId);
+        std::shared_ptr<Map> currentMap = mm->GetPointer(c->player->MapId);
         currentMap->data.Clients -= 1;
 
         if (showtoall && !c->player->LogoutHide) {
@@ -122,7 +122,7 @@ void Client::LoginThread() {
             float entityLook = nc.second->player->tEntity->Look;
 
             RankItem ri = rMain->GetRank(rank, false);
-            shared_ptr<Map> sendMap = mMain->GetPointer(eMapId);
+            std::shared_ptr<Map> sendMap = mMain->GetPointer(eMapId);
             
             NetworkFunctions::SystemLoginScreen(clientId, sMain->ServerName, motd, ri.OnClient);
             sendMap->Send(clientId);

@@ -22,7 +22,7 @@ int Entity::GetFreeId() {
 }
 
 void Entity::SetDisplayName(int id, std::string prefix, std::string name, std::string suffix) {
-    shared_ptr<Entity> e = GetPointer(id);
+    std::shared_ptr<Entity> e = GetPointer(id);
     if (e == nullptr)
         return;
 
@@ -74,7 +74,7 @@ Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rot
     BuildState = 0;
 }
 
-shared_ptr<Entity> Entity::GetPointer(int id) {
+std::shared_ptr<Entity> Entity::GetPointer(int id) {
     if (_entities.find(id) == _entities.end())
         return nullptr;
 
@@ -92,7 +92,7 @@ void Entity::MessageToClients(int id, const std::string& message) {
 }
 
 std::string Entity::GetDisplayname(int id) {
-    shared_ptr<Entity> e = GetPointer(id);
+    std::shared_ptr<Entity> e = GetPointer(id);
 
     if (e == nullptr)
         return "";
@@ -100,7 +100,7 @@ std::string Entity::GetDisplayname(int id) {
     return e->Prefix + e->Name + e->Suffix;
 }
 
-shared_ptr<Entity> Entity::GetPointer(std::string name) {
+std::shared_ptr<Entity> Entity::GetPointer(std::string name) {
     for(auto const &e : _entities) {
         if (Utils::InsensitiveCompare(e.second->Name, name)) {
             return e.second;
@@ -111,7 +111,7 @@ shared_ptr<Entity> Entity::GetPointer(std::string name) {
 }
 
 void Entity::Delete(int id) {
-    shared_ptr<Entity> e = GetPointer(id);
+    std::shared_ptr<Entity> e = GetPointer(id);
     if (e == nullptr)
         return;
     Network* n = Network::GetInstance();
@@ -127,7 +127,7 @@ void Entity::Delete(int id) {
 
 void Entity::Kill() {
     MapMain *mm = MapMain::GetInstance();
-    shared_ptr<Map> cm = mm->GetPointer(MapID);
+    std::shared_ptr<Map> cm = mm->GetPointer(MapID);
 
     if (timeMessageDeath < time(nullptr)) {
         timeMessageDeath = time(nullptr) + 2000;
@@ -140,7 +140,7 @@ void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float 
     MapMain* mm = MapMain::GetInstance();
     if (SendPos <= priority) {
         if (mapId != MapID) { // -- Changing map
-            shared_ptr<Map> nm = mm->GetPointer(mapId);
+            std::shared_ptr<Map> nm = mm->GetPointer(mapId);
             if (playerList == nullptr || playerList->PRank >= nm->data.RankJoin) {
                 std::string entityName = GetDisplayname(Id);
                 std::string mapChangeMessage = "Player '" + entityName + "' changed to map '" + nm->data.Name + "'";
@@ -148,7 +148,7 @@ void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float 
                 NetworkFunctions::SystemMessageNetworkSend2All(mapId, mapChangeMessage);
                 nm->data.Clients += 1;
                 int oldMapId = MapID;
-                shared_ptr<Map> om = mm->GetPointer(oldMapId);
+                std::shared_ptr<Map> om = mm->GetPointer(oldMapId);
                 om->data.Clients -= 1;
 
                 MapID = mapId;
@@ -204,7 +204,7 @@ void Entity::Send() {
 
         std::vector<int> toRemove;
         for(auto const &vEntity : nc.second->player->Entities) {
-            shared_ptr<Entity> fullEntity = GetPointer(vEntity.Id);
+            std::shared_ptr<Entity> fullEntity = GetPointer(vEntity.Id);
             if (fullEntity == nullptr) { // -- Entity no longer exists, despawn them.
                 NetworkFunctions::NetworkOutEntityDelete(nc.first, vEntity.ClientId);
                 toRemove.push_back(vEntity.Id);
@@ -308,6 +308,6 @@ void Entity::Delete() {
 
 }
 
-void Entity::Add(shared_ptr<Entity> e) {
+void Entity::Add(std::shared_ptr<Entity> e) {
     _entities.insert(std::make_pair(e->Id, e));
 }

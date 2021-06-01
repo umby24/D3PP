@@ -41,7 +41,7 @@ class Player;
 class NetworkClient {
 public:
     NetworkClient();
-    NetworkClient(unique_ptr<Sockets> socket);
+    NetworkClient(std::unique_ptr<Sockets> socket);
     // -- Input Buffer Commands
     void InputAddOffset(int bytes);
     char InputReadByte();
@@ -77,8 +77,8 @@ public:
     bool CPE;
     int CustomBlocksLevel;
     bool GlobalChat;
-    unique_ptr<Sockets> clientSocket;
-    unique_ptr<Player> player;
+    std::unique_ptr<Sockets> clientSocket;
+    std::unique_ptr<Player> player;
 
     std::map<std::string, int> Extensions;
     std::vector<bool> Selections;

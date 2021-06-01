@@ -29,7 +29,7 @@ std::string Files::GetFile(std::string name) {
         return "";
     }
 
-    string result = files[name];
+    std::string result = files[name];
 
     for (auto const& x : folders) {
         Utils::replaceAll(result, "[" + x.first + "]", x.second);

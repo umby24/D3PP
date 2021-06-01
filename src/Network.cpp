@@ -51,7 +51,7 @@ void Network::Load() {
     json j;
     Files* f = Files::GetInstance();
     std::string fileName = f->GetFile(MODULE_NAME);
-    ifstream iFile(fileName);
+    std::ifstream iFile(fileName);
 
     if (!iFile.is_open()) {
         this->Port = 25565;
@@ -74,7 +74,7 @@ void Network::Save() {
     std::string fileName = f->GetFile(MODULE_NAME);
     j["port"] = this->Port;
 
-    ofstream oFile(fileName);
+    std::ofstream oFile(fileName);
     if (!oFile.is_open()) {
         Logger::LogAdd(MODULE_NAME, "File could not be saved", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         return;
@@ -91,7 +91,7 @@ void Network::Start() {
         Stop();
 
     ServerSocket mSock(this->Port);
-    swap(listenSocket, mSock);
+    std::swap(listenSocket, mSock);
 
     listenSocket.Listen();
     isListening = true;
@@ -182,7 +182,7 @@ void Network::HtmlStats() {
     Files* files = Files::GetInstance();
     std::string memFile = files->GetFile(NETWORK_HTML_FILENAME);
 
-    ofstream oStream(memFile, std::ios::out | std::ios::trunc);
+    std::ofstream oStream(memFile, std::ios::out | std::ios::trunc);
     if (oStream.is_open()) {
         oStream << result;
         oStream.close();
@@ -341,7 +341,7 @@ void Network::ClientAcceptance() {
         try {
             ServerSocketEvent e = listenSocket.CheckEvents();
             if (e == ServerSocketEvent::SOCKET_EVENT_CONNECT) {
-                unique_ptr<Sockets> newClient = listenSocket.Accept();
+                std::unique_ptr<Sockets> newClient = listenSocket.Accept();
 
                  if (newClient != nullptr) {
                      NetworkClient newNcClient(std::move(newClient));
@@ -356,7 +356,7 @@ void Network::ClientAcceptance() {
     }
 }
 
-NetworkClient::NetworkClient(unique_ptr<Sockets> socket) {
+NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) {
     Id= reinterpret_cast<uintptr_t>(&clientSocket);
     InputBuffer = Mem::Allocate(NETWORK_BUFFER_SIZE, __FILE__, __LINE__, "NetworkClient(" + stringulate(Id) + ")\\InputBuffer");
     OutputBuffer = Mem::Allocate(NETWORK_BUFFER_SIZE, __FILE__, __LINE__, "NetworkClient(" + stringulate(Id) + ")\\OutputBuffer");

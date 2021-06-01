@@ -58,12 +58,12 @@ public:
     // -- Methods:
     Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look);
 
-    static shared_ptr<Entity> GetPointer(int id);
-    static shared_ptr<Entity> GetPointer(std::string name);
+    static std::shared_ptr<Entity> GetPointer(int id);
+    static std::shared_ptr<Entity> GetPointer(std::string name);
     static std::string GetDisplayname(int id);
     static void SetDisplayName(int id, std::string prefix, std::string name, std::string suffix);
     static void MessageToClients(int id, const std::string& message);
-    static void Add(shared_ptr<Entity> e);
+    static void Add(std::shared_ptr<Entity> e);
     static void Delete(int id);
 
     void Kill();

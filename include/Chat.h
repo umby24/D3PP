@@ -21,7 +21,7 @@ public:
     static bool StringIV(std::string input);
     static std::string StringGV(std::string input);
     static void NetworkSend2All(int entityId, std::string message);
-    static void HandleIncomingChat(const shared_ptr<NetworkClient> client, std::string input, char playerId);
+    static void HandleIncomingChat(const std::shared_ptr<NetworkClient> client, std::string input, char playerId);
 };
 
 

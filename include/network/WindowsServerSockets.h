@@ -29,7 +29,7 @@ public:
     void Init(int port);
     void Listen();
     ServerSocketEvent CheckEvents();
-    unique_ptr<Sockets> Accept();
+    std::unique_ptr<Sockets> Accept();
     void Unaccept(SOCKET fd);
     void Stop();
 private:

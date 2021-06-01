@@ -79,7 +79,7 @@ void ServerSocket::Stop() {
 
 }
 
-unique_ptr<Sockets> ServerSocket::Accept() {
+std::unique_ptr<Sockets> ServerSocket::Accept() {
     SOCKET newSocket;
     int addrlen = sizeof(struct sockaddr_in);
     newSocket = accept(listenSocket, (struct sockaddr*)&address, (int*)&addrlen);

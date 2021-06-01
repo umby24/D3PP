@@ -20,12 +20,12 @@ void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& clien
     }
 }
 
-void PacketHandlers::HandlePing(const shared_ptr<NetworkClient> &client) {
+void PacketHandlers::HandlePing(const std::shared_ptr<NetworkClient> &client) {
     client->InputAddOffset(1);
     client->Ping = time(nullptr) - client->PingSentTime;
 }
 
-void PacketHandlers::HandleBlockChange(const shared_ptr<NetworkClient> &client) {
+void PacketHandlers::HandleBlockChange(const std::shared_ptr<NetworkClient> &client) {
     client->InputAddOffset(1);
     short X = client->InputReadShort();
     short Z = client->InputReadShort();
@@ -39,7 +39,7 @@ void PacketHandlers::HandleBlockChange(const shared_ptr<NetworkClient> &client) 
     // -- TODO: BuildModeDistrubute
 }
 
-void PacketHandlers::HandlePlayerTeleport(const shared_ptr<NetworkClient> &client) {
+void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &client) {
     // -- CPE :)
     client->InputAddOffset(2);
     short X = client->InputReadShort();
@@ -55,7 +55,7 @@ void PacketHandlers::HandlePlayerTeleport(const shared_ptr<NetworkClient> &clien
         client->player->tEntity->PositionSet(client->player->tEntity->MapID, X/32, Y/32, (Z-51)/32, R*360/256, L*360/256, 1, false);
 }
 
-void PacketHandlers::HandleChatPacket(const shared_ptr<NetworkClient> &client) {
+void PacketHandlers::HandleChatPacket(const std::shared_ptr<NetworkClient> &client) {
     client->InputAddOffset(1);
     char playerId = client->InputReadByte();
     std::string message = client->InputReadString();
@@ -64,14 +64,14 @@ void PacketHandlers::HandleChatPacket(const shared_ptr<NetworkClient> &client) {
     }
 }
 
-void PacketHandlers::HandleExtInfo(const shared_ptr<NetworkClient> &client) {
+void PacketHandlers::HandleExtInfo(const std::shared_ptr<NetworkClient> &client) {
     client->InputAddOffset(1);
 }
 
-void PacketHandlers::HandleExtEntry(const shared_ptr<NetworkClient> &client) {
+void PacketHandlers::HandleExtEntry(const std::shared_ptr<NetworkClient> &client) {
     client->InputAddOffset(1);
 }
 
-void PacketHandlers::HandleCustomBlockSupportLevel(const shared_ptr<NetworkClient> &client) {
+void PacketHandlers::HandleCustomBlockSupportLevel(const std::shared_ptr<NetworkClient> &client) {
     client->InputAddOffset(1);
 }

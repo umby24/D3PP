@@ -26,7 +26,7 @@ void System::Load() {
     std::string filePath = f->GetFile(SYSTEM_FILE_NAME);
     json j;
 
-    ifstream iStream(filePath);
+    std::ifstream iStream(filePath);
 
     if (!iStream.is_open()) {
         Logger::LogAdd(MODULE_NAME, "Failed to load", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
@@ -55,7 +55,7 @@ void System::Save() {
     j["MOTD"] = Motd;
     j["ClickDistance"] = ClickDistance;
 
-    ofstream oStream(blockFile, std::ios::trunc);
+    std::ofstream oStream(blockFile, std::ios::trunc);
 
     if (!oStream.is_open()) {
         Logger::LogAdd(MODULE_NAME, "Failed to save!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);

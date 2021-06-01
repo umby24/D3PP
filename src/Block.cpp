@@ -89,7 +89,7 @@ void Block::Load() {
     std::string filePath = f->GetFile(BLOCK_FILE_NAME);
     json j;
 
-    ifstream iStream(filePath);
+    std::ifstream iStream(filePath);
 
     if (!iStream.is_open()) {
         Logger::LogAdd(MODULE_NAME, "Failed to load blocks!!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
@@ -197,7 +197,7 @@ void Block::Save() {
         };
     }
 
-    ofstream oStream(blockFile, std::ios::trunc);
+    std::ofstream oStream(blockFile, std::ios::trunc);
     oStream << std::setw(4) << j;
     oStream.flush();
     oStream.close();

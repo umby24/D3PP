@@ -168,7 +168,7 @@ public:
 class MapMain : TaskItem {
 public:
     MapMain();
-    shared_ptr<Map> GetPointer(int id);
+    std::shared_ptr<Map> GetPointer(int id);
     int GetMapId();
     static std::string GetUniqueId();
     
@@ -192,7 +192,7 @@ private:
     std::string TempOverviewFilename;
     int LastWriteTime;
     int StatsTimer;
-    std::map<int, shared_ptr<Map>> _maps;
+    std::map<int, std::shared_ptr<Map>> _maps;
     // --
     int mapSettingsLastWriteTime;
     int mapSettingsTimerFileCheck;

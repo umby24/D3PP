@@ -84,7 +84,7 @@ void Chat::NetworkSend2All(int entityId, std::string message) {
     }
 }
 
-void Chat::HandleIncomingChat(const shared_ptr<NetworkClient> client, std::string input, char playerId) {
+void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient> client, std::string input, char playerId) {
     if (input[0] == '/') {
         // -- Do COmmands
     } else if (input[0] == '#') {

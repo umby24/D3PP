@@ -151,7 +151,7 @@ void Mem::HtmlStats() {
     Files* files = Files::GetInstance();
     std::string memFile = files->GetFile(MEM_HTML_NAME);
 
-    ofstream oStream(memFile, std::ios::trunc);
+    std::ofstream oStream(memFile, std::ios::trunc);
     if (oStream.is_open()) {
         oStream << result;
         oStream.close();
