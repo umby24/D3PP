@@ -53,6 +53,7 @@ void PlayerMain::Load() {
         NameVerification = true;
         killMode = KillMode::MAP_SPAWN;
         SaveFile = true;
+        spawnMapId = 0;
         return;
     }
 
@@ -65,6 +66,7 @@ void PlayerMain::Load() {
         NameVerification = true;
         killMode = KillMode::MAP_SPAWN;
         SaveFile = true;
+        spawnMapId = 0;
         return;
     }
     iStream.close();
@@ -83,6 +85,10 @@ void PlayerMain::Load() {
 }
 
 void PlayerMain::MainFunc() {
+    if (SaveFile) {
+        SaveFile = false;
+        Save();
+    }
     time_t modTime = Utils::FileModTime(fileName);
 
     if (modTime != LastFileDate) {

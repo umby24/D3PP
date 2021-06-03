@@ -68,6 +68,7 @@ void Rank::Load() {
 
     if (!iStream.is_open()) {
         Logger::LogAdd(MODULE_NAME, "Failed to load ranks!!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        DefaultRanks();
         return;
     }
 

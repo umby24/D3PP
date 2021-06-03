@@ -59,6 +59,7 @@ void PacketHandlers::HandleChatPacket(const std::shared_ptr<NetworkClient> &clie
     client->InputAddOffset(1);
     char playerId = client->InputReadByte();
     std::string message = client->InputReadString();
+    Utils::TrimString(message);
     if (client->LoggedIn && client->player->tEntity) {
         Chat::HandleIncomingChat(client, message, playerId);
     }

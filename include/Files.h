@@ -25,6 +25,7 @@ class Files
     protected:
         static Files* singleton_;
     private:
+        void LoadDefault();
         std::map<std::string, std::string> files;
         std::map<std::string, std::string> folders;
 };

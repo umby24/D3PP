@@ -1,5 +1,7 @@
 #include "Files.h"
+
 Files* Files::singleton_ = nullptr;;
+const std::string MODULE_NAME = "Files";
 
 Files *Files::GetInstance() {
     if (singleton_ == nullptr) {
@@ -12,8 +14,6 @@ Files::Files()
 {
     //ctor
     Load();
-    //folders = { {"Main", ""}, {"Data", "Data/"}, {"Heartbeat", "Heartbeat/"}};
-    //files = {{"Answer", "[Main][Data]Answer.txt"}, {"Block", "[Main][Data]Block.txt"}};
 }
 
 Files::~Files()
@@ -25,7 +25,7 @@ Files::~Files()
 
 std::string Files::GetFile(std::string name) {
     if (files.find(name) == files.end()) {
-        Logger::LogAdd("Files", "Path to file [" + name + "] not defined", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Path to file [" + name + "] not defined", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
         return "";
     }
 
@@ -40,16 +40,25 @@ std::string Files::GetFile(std::string name) {
 
 std::string Files::GetFolder(std::string name) {
     if (folders.find(name) == folders.end()) {
-        Logger::LogAdd("Files", "Path to folder [" + name + "] not defined", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Path to folder [" + name + "] not defined", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
         return "";
     }
 
     return folders[name];
 }
 
+void Files::LoadDefault() {
+    Logger::LogAdd(MODULE_NAME, "Files.json not found, generating default.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    folders = { {"Main", ""}, {"Data", "Data/"}, {"Heartbeat", "Heartbeat/"}, {"Logs", "Logs/"}, {"HTML", "HTML/"} };
+    files = {{"Answer", "[Main][Data]Answer.txt"}, {"Block", "[Main][Data]Block.txt"}, {"Log", "[Main][Logs]Log_[i].txt"},
+    {"Map_List", "[Main][Data]MapList.txt"}, {"Map_HTML", "[Main][HTML]Maps.html"}};
+}
+
 void Files::Load() {
     if (Utils::FileSize("files.json") == -1) {
-        std::cout << "files.json not found!! Critical Error!!" << std::endl;
+        LoadDefault();
+        Save();
+        return;
     }
 
     json j;

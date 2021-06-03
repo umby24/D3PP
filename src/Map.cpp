@@ -119,8 +119,8 @@ void MapMain::HtmlStats(time_t time_) {
         else
             mapTable += "<td>0 MB (unloaded)</td>\n";
 
-        mapTable += "<td>" + stringulate(m.second->data.PhysicsQueue.size) + "</td>\n";
-        mapTable += "<td>" + stringulate(m.second->data.ChangeQueue.size) + "</td>\n";
+        mapTable += "<td>" + stringulate(m.second->data.PhysicsQueue.size()) + "</td>\n";
+        mapTable += "<td>" + stringulate(m.second->data.ChangeQueue.size()) + "</td>\n";
         if (m.second->data.PhysicsStopped)
             mapTable += "<td><font color=\"#FF0000\">Stopped</font></td>\n";
         else
