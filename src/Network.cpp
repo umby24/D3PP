@@ -22,9 +22,8 @@ Network::Network() {
 
     TaskItem networkEvents;
     networkEvents.Interval = std::chrono::milliseconds(1);
-    networkEvents.Main = [this] { ClientAcceptance(); };
+    networkEvents.Main = [this] { NetworkEvents(); };
     TaskScheduler::RegisterTask("Network_Events", networkEvents);
-    
 
     TaskItem networkOutputSender;
     networkOutputSender.Interval = std::chrono::milliseconds(0);
@@ -40,11 +39,6 @@ Network::Network() {
     networkInputProcessor.Interval = std::chrono::milliseconds(0);
     networkInputProcessor.Main = [this] { NetworkInput(); };
     TaskScheduler::RegisterTask("Network_Input_Do", networkInputProcessor);
-
-    // -- In D3, this is normally performed on the main thread because PureBasic has a non-blocking thread model.
-    // -- However, due to the nature of our socket implementation being blocking and the possiblility
-    // -- of future performance implications, client acceptance will be performed on a separate thread.
-
 }
 
 void Network::Load() {
@@ -95,11 +89,6 @@ void Network::Start() {
 
     listenSocket.Listen();
     isListening = true;
-
-   // std::thread watcher(&Network::ClientAcceptance, this);
-   // std::thread eventThread(&Network::NetworkEvents, this);
-   // swap(watcher, _acceptThread);
-   // swap(eventThread, _eventThread);
 
     Logger::LogAdd(MODULE_NAME, "Network server started on port " + stringulate(this->Port), LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
@@ -210,11 +199,48 @@ void Network::UpdateNetworkStats() {
 }
 
 void Network::NetworkEvents() {
-    // -- Search for incoming connections [Handled in a different thread]
-    // -- search for incoming data from clients
-    while (System::IsRunning) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+watchdog::Watch("Network", "Begin events", 0);
+
+    while (isListening) {
+        ServerSocketEvent e = listenSocket.CheckEvents();
+
+        if (e == ServerSocketEvent::SOCKET_EVENT_CONNECT) { 
+            std::unique_ptr<Sockets> newClient = listenSocket.Accept();
+
+            if (newClient != nullptr) {
+                NetworkClient newNcClient(std::move(newClient));
+                int clientId = newNcClient.Id;
+                _clients.insert(std::make_pair(clientId, std::make_shared<NetworkClient>(std::move(newNcClient))));
+            }
+        } else if (e == ServerSocketEvent::SOCKET_EVENT_DATA) {
+            int clientId = static_cast<int>(listenSocket.GetEventSocket());
+            std::shared_ptr<NetworkClient> client = GetClient(clientId);
+            int dataRead = client->clientSocket->Read(TempBuffer, NETWORK_TEMP_BUFFER_SIZE);
+
+            if (dataRead > 0) {
+                client->InputWriteBuffer(TempBuffer, dataRead);
+                client->DownloadRateCounter += dataRead;
+                DownloadRateCounter += dataRead;
+            } else {
+                DeleteClient(clientId, "Disconnected", true);                        
+                break;
+            }
+
+        } else {
+            break;
+        }
+
     }
+    for(auto const &nc : _clients) {
+        if (nc.second->DisconnectTime > 0 && nc.second->DisconnectTime < time(nullptr)) {
+            DeleteClient(nc.first, "Forced Disconnect", true);
+            nc.second->clientSocket->Disconnect();
+        } else if (nc.second->LastTimeEvent + NETWORK_CLIENT_TIMEOUT < time(nullptr)) {
+            DeleteClient(nc.first, "Timeout", true);
+            nc.second->clientSocket->Disconnect();
+        }
+    }
+    watchdog::Watch("Network", "End Events", 2);
 }
 
 void Network::NetworkOutputSend() {
@@ -254,7 +280,6 @@ void Network::NetworkOutput() {
 
 void Network::NetworkInput() {
     // -- Packet handling
-    watchdog::Watch("Map_Physic", "Begin something", 0);
     for(auto const &nc : _clients) {
         int maxRepeat = 10;
         while (nc.second->InputBufferAvailable >= 1 && maxRepeat > 0) {
@@ -312,52 +337,6 @@ void Network::NetworkInput() {
         } // -- /While
 
     } // -- /For
-    watchdog::Watch("Map_Physic", "end something", 2);
-}
-
-void Network::ClientAcceptance() {
-    watchdog::Watch("Network", "Begin events", 0);
-
-    while (isListening) {
-        ServerSocketEvent e = listenSocket.CheckEvents();
-
-        if (e == ServerSocketEvent::SOCKET_EVENT_CONNECT) { 
-            std::unique_ptr<Sockets> newClient = listenSocket.Accept();
-
-            if (newClient != nullptr) {
-                NetworkClient newNcClient(std::move(newClient));
-                int clientId = newNcClient.Id;
-                _clients.insert(std::make_pair(clientId, std::make_shared<NetworkClient>(std::move(newNcClient))));
-            }
-        } else if (e == ServerSocketEvent::SOCKET_EVENT_DATA) {
-            int clientId = static_cast<int>(listenSocket.GetEventSocket());
-            std::shared_ptr<NetworkClient> client = GetClient(clientId);
-            int dataRead = client->clientSocket->Read(TempBuffer, NETWORK_TEMP_BUFFER_SIZE);
-
-            if (dataRead > 0) {
-                client->InputWriteBuffer(TempBuffer, dataRead);
-                client->DownloadRateCounter += dataRead;
-                DownloadRateCounter += dataRead;
-            } else {
-                DeleteClient(clientId, "Disconnected", true);                        
-                break;
-            }
-
-        } else {
-            break;
-        }
-
-    }
-    for(auto const &nc : _clients) {
-        if (nc.second->DisconnectTime > 0 && nc.second->DisconnectTime < time(nullptr)) {
-            DeleteClient(nc.first, "Forced Disconnect", true);
-            nc.second->clientSocket->Disconnect();
-        } else if (nc.second->LastTimeEvent + NETWORK_CLIENT_TIMEOUT < time(nullptr)) {
-            DeleteClient(nc.first, "Timeout", true);
-            nc.second->clientSocket->Disconnect();
-        }
-    }
-    watchdog::Watch("Network", "End Events", 2);
 }
 
 NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) {
@@ -387,7 +366,6 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) {
 }
 
 NetworkClient::NetworkClient() {
-    Logger::LogAdd("EH", "eh", LogType::NORMAL, "", 0, "");
 }
 
 void NetworkClient::OutputReadBuffer(char* dataBuffer, int size) {

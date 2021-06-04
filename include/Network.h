@@ -107,7 +107,6 @@ private:
     void UpdateNetworkStats();
     void HtmlStats();
     void MainFunc();
-    void ClientAcceptance();
     void NetworkEvents();
     void NetworkOutputSend();
     void NetworkOutput();
@@ -125,8 +124,6 @@ private:
 
     time_t lastModifiedTime;
     bool SaveFile;
-    std::thread _acceptThread;
-    std::thread _eventThread;
 };
 const std::string NETWORK_HTML_FILENAME = "Network_HTML";
 
