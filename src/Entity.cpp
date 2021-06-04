@@ -6,6 +6,21 @@
 const std::string MODULE_NAME = "Entity";
 std::map<int, std::shared_ptr<Entity>> Entity::_entities;
 
+EntityMain::EntityMain() {
+    TaskItem entityMain;
+    entityMain.Interval = std::chrono::milliseconds(100);
+    entityMain.Main = [this] { MainFunc(); };
+    TaskScheduler::RegisterTask("Entity", entityMain);
+}
+
+void EntityMain::MainFunc() {
+    for(auto const &e : Entity::_entities) {
+        e.second->PositionCheck();
+    }
+
+    Entity::Send();
+}
+
 int Entity::GetFreeId() {
     int id = 0;
     bool found = false;
@@ -191,14 +206,6 @@ void Entity::PositionCheck() {
     // -- TODO:
 }
 
-void Entity::MainFunc() {
-    for(auto const &e : _entities) {
-        e.second->PositionCheck();
-    }
-
-    Send();
-}
-
 void Entity::Send() {
     Network *n = Network::GetInstance();
     for(auto const &nc : n->_clients) {
@@ -232,6 +239,9 @@ void Entity::Send() {
         while(true) { // -- stupid.. but a safe way to delete elements =/
             int removed = 0;
             int iterator = 0;
+            if (toRemove.empty())
+                break;
+            
             for(auto const &vEntity : nc.second->player->Entities) {
                 if (vEntity.Id == toRemove.at(0)) {
                     nc.second->player->Entities.erase(nc.second->player->Entities.begin() + iterator);
@@ -240,8 +250,8 @@ void Entity::Send() {
                 }
                 iterator++;
             }
-            if (removed == 0 || toRemove.empty())
-                break;
+
+            if (removed == 0) break;
         }
 
         // -- now loop the global entities list, for creation.
@@ -255,12 +265,16 @@ void Entity::Send() {
                     break;
                 }
             }
+            if (bEntity.first == nc.second->player->tEntity->Id)
+                create = false;
+
             if (create) {
                 EntityShort s;
                 s.Id = bEntity.first;
                 s.ClientId = bEntity.second->ClientId;
                 nc.second->player->Entities.push_back(s); // -- track the new client
                 // -- spawn them :)
+                // -- TODO: CPE Handle Entity..
                 NetworkFunctions::NetworkOutEntityAdd(nc.first, s.ClientId, Entity::GetDisplayname(s.Id), bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
             }
         }

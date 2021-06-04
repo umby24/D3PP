@@ -8,6 +8,7 @@
 #include "System.h"
 #include "Logger.h"
 #include "Block.h"
+#include "Entity.h"
 
 #include "Player_List.h"
 
@@ -27,7 +28,8 @@ int main()
     Player_List *l = Player_List::GetInstance();
     PlayerMain *pm = PlayerMain::GetInstance();
     Network *n = Network::GetInstance();
-
+    EntityMain em;
+    
     TaskScheduler::RunSetupTasks();
     System::IsRunning = true;
     n->Load();

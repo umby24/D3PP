@@ -8,14 +8,14 @@
 #include <string>
 #include <map>
 #include <memory>
+
 #include "Player_List.h"
 #include "Map.h"
+#include "TaskScheduler.h"
 
 class PlayerListEntry;
 class Player;
-// -- Dependencies:
-//-> Player
-//-> Map
+
 struct EntityShort {
     int Id;
     char ClientId;
@@ -70,7 +70,6 @@ public:
     void PositionCheck();
     void PositionSet(int mapId, float x, float y, float z, float rot, float lk, char priority, bool sendOwn);
     static void Send();
-    static void MainFunc();
     static int GetFreeId();
     static int GetFreeIdClient(int mapId);
     void Delete();
@@ -80,4 +79,10 @@ private:
     
 };
 
+class EntityMain : TaskItem {
+    public:
+        EntityMain();
+        void MainFunc();
+    private:
+};
 #endif //D3PP_ENTITY_H
