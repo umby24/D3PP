@@ -20,10 +20,10 @@ Network::Network() {
     networkStats.Main = [this] { UpdateNetworkStats(); };
     TaskScheduler::RegisterTask("Network_Stats", networkStats);
 
-    // TaskItem networkEvents;
-    // networkEvents.Interval = std::chrono::milliseconds(1);
-    // networkEvents.Main = [this] { NetworkEvents(); };
-    // TaskScheduler::RegisterTask("Network_Events", networkEvents);
+    TaskItem networkEvents;
+    networkEvents.Interval = std::chrono::milliseconds(1);
+    networkEvents.Main = [this] { ClientAcceptance(); };
+    TaskScheduler::RegisterTask("Network_Events", networkEvents);
     
 
     TaskItem networkOutputSender;
@@ -96,10 +96,10 @@ void Network::Start() {
     listenSocket.Listen();
     isListening = true;
 
-    std::thread watcher(&Network::ClientAcceptance, this);
-    std::thread eventThread(&Network::NetworkEvents, this);
-    swap(watcher, _acceptThread);
-    swap(eventThread, _eventThread);
+   // std::thread watcher(&Network::ClientAcceptance, this);
+   // std::thread eventThread(&Network::NetworkEvents, this);
+   // swap(watcher, _acceptThread);
+   // swap(eventThread, _eventThread);
 
     Logger::LogAdd(MODULE_NAME, "Network server started on port " + stringulate(this->Port), LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
@@ -213,33 +213,7 @@ void Network::NetworkEvents() {
     // -- Search for incoming connections [Handled in a different thread]
     // -- search for incoming data from clients
     while (System::IsRunning) {
-    watchdog::Watch("Network", "Begin events", 0);
-
-    for(auto const &nc : _clients) {
-        int dataRead = nc.second->clientSocket->Read(TempBuffer, NETWORK_TEMP_BUFFER_SIZE);
-        if (dataRead > 0) {
-            nc.second->InputWriteBuffer(TempBuffer, dataRead);
-            nc.second->DownloadRateCounter += dataRead;
-            DownloadRateCounter += dataRead;
-        } else {
-            DeleteClient(nc.first, "Disconnected", true);
-            
-          //  if (nc.second != nullptr && nc.second->clientSocket != nullptr)
-          //      nc.second->clientSocket->Disconnect();
-            
-            return;
-        }
-
-        if (nc.second->DisconnectTime > 0 && nc.second->DisconnectTime < time(nullptr)) {
-            DeleteClient(nc.first, "Forced Disconnect", true);
-            nc.second->clientSocket->Disconnect();
-        } else if (nc.second->LastTimeEvent + NETWORK_CLIENT_TIMEOUT < time(nullptr)) {
-            DeleteClient(nc.first, "Timeout", true);
-            nc.second->clientSocket->Disconnect();
-        }
-    }
-    watchdog::Watch("Network", "End Events", 2);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
@@ -280,6 +254,7 @@ void Network::NetworkOutput() {
 
 void Network::NetworkInput() {
     // -- Packet handling
+    watchdog::Watch("Map_Physic", "Begin something", 0);
     for(auto const &nc : _clients) {
         int maxRepeat = 10;
         while (nc.second->InputBufferAvailable >= 1 && maxRepeat > 0) {
@@ -337,26 +312,52 @@ void Network::NetworkInput() {
         } // -- /While
 
     } // -- /For
+    watchdog::Watch("Map_Physic", "end something", 2);
 }
 
 void Network::ClientAcceptance() {
-    while (isListening) {
-        try {
-            ServerSocketEvent e = listenSocket.CheckEvents();
-            if (e == ServerSocketEvent::SOCKET_EVENT_CONNECT) {
-                std::unique_ptr<Sockets> newClient = listenSocket.Accept();
+    watchdog::Watch("Network", "Begin events", 0);
 
-                 if (newClient != nullptr) {
-                     NetworkClient newNcClient(std::move(newClient));
-                     int clientId = newNcClient.Id;
-                     _clients.insert(std::make_pair(clientId, std::make_shared<NetworkClient>(std::move(newNcClient))));
-                 }
+    while (isListening) {
+        ServerSocketEvent e = listenSocket.CheckEvents();
+
+        if (e == ServerSocketEvent::SOCKET_EVENT_CONNECT) { 
+            std::unique_ptr<Sockets> newClient = listenSocket.Accept();
+
+            if (newClient != nullptr) {
+                NetworkClient newNcClient(std::move(newClient));
+                int clientId = newNcClient.Id;
+                _clients.insert(std::make_pair(clientId, std::make_shared<NetworkClient>(std::move(newNcClient))));
             }
-        } catch (...) {
-            continue;
+        } else if (e == ServerSocketEvent::SOCKET_EVENT_DATA) {
+            int clientId = static_cast<int>(listenSocket.GetEventSocket());
+            std::shared_ptr<NetworkClient> client = GetClient(clientId);
+            int dataRead = client->clientSocket->Read(TempBuffer, NETWORK_TEMP_BUFFER_SIZE);
+
+            if (dataRead > 0) {
+                client->InputWriteBuffer(TempBuffer, dataRead);
+                client->DownloadRateCounter += dataRead;
+                DownloadRateCounter += dataRead;
+            } else {
+                DeleteClient(clientId, "Disconnected", true);                        
+                break;
+            }
+
+        } else {
+            break;
         }
 
     }
+    for(auto const &nc : _clients) {
+        if (nc.second->DisconnectTime > 0 && nc.second->DisconnectTime < time(nullptr)) {
+            DeleteClient(nc.first, "Forced Disconnect", true);
+            nc.second->clientSocket->Disconnect();
+        } else if (nc.second->LastTimeEvent + NETWORK_CLIENT_TIMEOUT < time(nullptr)) {
+            DeleteClient(nc.first, "Timeout", true);
+            nc.second->clientSocket->Disconnect();
+        }
+    }
+    watchdog::Watch("Network", "End Events", 2);
 }
 
 NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) {
@@ -386,7 +387,7 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) {
 }
 
 NetworkClient::NetworkClient() {
-
+    Logger::LogAdd("EH", "eh", LogType::NORMAL, "", 0, "");
 }
 
 void NetworkClient::OutputReadBuffer(char* dataBuffer, int size) {
@@ -527,6 +528,7 @@ std::string NetworkClient::InputReadString() {
     }
 
     std::string result(tempBuffer, 64);
+    Mem::Free(tempBuffer);
     return result;
 }
 
@@ -576,6 +578,7 @@ void Network::DeleteClient(int clientId, std::string message, bool sendToAll) {
     Mem::Free(_clients[clientId]->OutputBuffer);
     listenSocket.Unaccept(_clients[clientId]->clientSocket->GetSocketFd());
     Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(clientId) + "] [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    _clients[clientId]->clientSocket->Disconnect();
     _clients.erase(clientId);
 }
 

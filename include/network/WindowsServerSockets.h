@@ -32,12 +32,14 @@ public:
     std::unique_ptr<Sockets> Accept();
     void Unaccept(SOCKET fd);
     void Stop();
+    SOCKET GetEventSocket();
 private:
     bool hasInit;
     int listenPort;
     WSADATA wsa;
     SOCKET listenSocket;
     SOCKET clientSockets[MAXIMUM_CONNECTIONS];
+    SOCKET eventSocket;
     struct sockaddr_in server, address;
 
     fd_set readfds;

@@ -107,7 +107,8 @@ ServerSocketEvent ServerSocket::CheckEvents() {
         }
     }
 
-    int activity = select(0, &readfds, NULL, NULL, NULL);
+    struct timeval time = {0, 5};
+    int activity = select(0, &readfds, NULL, NULL, &time);
 
     if (activity == SOCKET_ERROR) {
         
@@ -125,11 +126,16 @@ ServerSocketEvent ServerSocket::CheckEvents() {
     for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
         SOCKET s = clientSockets[i];
         if (FD_ISSET(s, &readfds)) {
+            eventSocket = s;
             return SOCKET_EVENT_DATA;
         }
     }
 
     return SOCKET_EVENT_NONE;
+}
+
+SOCKET ServerSocket::GetEventSocket() {
+    return eventSocket;
 }
 
 void ServerSocket::Unaccept(SOCKET fd) {
