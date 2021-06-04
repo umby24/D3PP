@@ -60,6 +60,7 @@ class CommandMain : TaskItem {
         void MainFunc();
         void CommandDo(const std::shared_ptr<NetworkClient> client, std::string input);
         // --
+        void CommandGlobal();
         void CommandPing();
     private:
 };

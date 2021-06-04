@@ -20,6 +20,15 @@ void CommandMain::Setup() {
     pingCommand.RankShow = 0;
     pingCommand.Function = [this] { CommandMain::CommandPing(); };
     Commands.push_back(pingCommand);
+
+    Command globalCommand;
+    globalCommand.Id = "Global";
+    globalCommand.Name = "global";
+    globalCommand.Internal = true;
+    globalCommand.Rank = 0;
+    globalCommand.RankShow = 0;
+    globalCommand.Function = [this] { CommandMain::CommandGlobal(); };
+    Commands.push_back(globalCommand);
 }
 
 void CommandMain::MainFunc() {
@@ -49,8 +58,13 @@ void CommandMain::CommandDo(const std::shared_ptr<NetworkClient> client, std::st
 
         ParsedOperator[i] = splitString[i];
     }
-
-    ParsedText0 = input.substr(ParsedCommand.size()+1);
+    if (input.size() > ParsedCommand.size())
+        ParsedText0 = input.substr(ParsedCommand.size()+1);
+    else
+    {
+        ParsedText0 = "";
+    }
+    
     bool found = false;
     for(auto cmd : Commands) {
         if (!Utils::InsensitiveCompare(cmd.Name, ParsedCommand))
@@ -74,6 +88,33 @@ void CommandMain::CommandDo(const std::shared_ptr<NetworkClient> client, std::st
     if (!found) {
         NetworkFunctions::SystemMessageNetworkSend(client->Id, "&eCan't find the command '" + ParsedCommand + "'.");
     }
+}
+
+void CommandMain::CommandGlobal() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    if (c == nullptr)
+        return;
+    std::string onString = "on";
+    std::string trueString = "true";
+    std::string offString = "off";
+    std::string falseString = "false";
+    if (Utils::InsensitiveCompare(ParsedOperator[0], onString) || Utils::InsensitiveCompare(ParsedOperator[0], trueString)) {
+        c->GlobalChat = true;
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eGlobal chat is now on by default.");
+    } else if (Utils::InsensitiveCompare(ParsedOperator[0], offString) || Utils::InsensitiveCompare(ParsedOperator[0], falseString)) {
+        c->GlobalChat = false;
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eGlobal chat is now off by default.");
+    } else {
+        c->GlobalChat = !c->GlobalChat;
+        std::string status = (c->GlobalChat ? "on" : "off");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eGlobal chat is now " + status + " by default.");
+    }
+
+    c->player->tEntity->playerList->GlobalChat = c->GlobalChat;
+    Player_List* pl = Player_List::GetInstance();
+    pl->SaveFile = true;
 }
 
 void CommandMain::CommandPing() {
