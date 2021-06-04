@@ -8,12 +8,15 @@ const int MaxStringLength = 65;
 void Chat::HandleChatEscapes(std::string &input, int currentEntityId) {
     Utils::replaceAll(input, "%%", "§");
     for (int i = 0; i < 9; i++) {
-        char toReplace = i;
-        Utils::replaceAll(input, "%" + toReplace, "&" + toReplace);
+        char toReplace[2] = {'%', (char)i};
+        char rplWith[2] = {'&', (char)i};
+        Utils::replaceAll(input, std::string(toReplace), std::string(rplWith));
     }
     for (int i = 97; i < 102; i++) {
-        char toReplace = i;
-        Utils::replaceAll(input, "%" + toReplace, "&" + toReplace);
+        char toReplace[2] = {'%', (char)i};
+        char rplWith[2] = {'&', (char)i};
+        Logger::LogAdd(std::string(toReplace), std::string(rplWith), LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+        Utils::replaceAll(input, std::string(toReplace), std::string(rplWith));
     }
     Utils::replaceAll(input, "§", "%");
     Utils::replaceAll(input, "<br>", "\n");
