@@ -161,9 +161,10 @@ void Chat::NetworkSend2All(int entityId, std::string message) {
 
 void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient> client, std::string input, char playerId) {
     // -- TODO: CPE longer messages
+    CommandMain* cm = CommandMain::GetInstance();
 
     if (input[0] == '/') {
-        // -- Do COmmands
+        cm->CommandDo(client, input.substr(1));
     } else if (input[0] == '#') {
         if (client->GlobalChat)
             NetworkSend2Map(client->player->tEntity->Id, input.substr(1));

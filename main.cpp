@@ -11,6 +11,7 @@
 #include "Entity.h"
 
 #include "Player_List.h"
+#include "Command.h"
 
 using namespace std;
 
@@ -29,6 +30,7 @@ int main()
     PlayerMain *pm = PlayerMain::GetInstance();
     Network *n = Network::GetInstance();
     EntityMain em;
+    CommandMain *cm = CommandMain::GetInstance();
     
     TaskScheduler::RunSetupTasks();
     System::IsRunning = true;
