@@ -42,8 +42,8 @@ void NetworkFunctions::SystemMessageNetworkSend(int clientId, std::string messag
     int lines = Utils::strCount(message, '\n') + 1;
     std::vector<std::string> linev = Utils::splitString(message, '\n');
     // -- emote replace
-    for (auto i = 1; i < lines; i++) {
-        std::string text = linev.at(i-1);
+    for (auto i = 0; i < lines; i++) {
+        std::string text = linev.at(i);
         Utils::padTo(text, 64);
 
         if (!text.empty() && text != blankie) {

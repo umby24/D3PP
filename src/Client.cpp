@@ -10,6 +10,8 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     PlayerMain *pm = PlayerMain::GetInstance();
     Player_List *pl = Player_List::GetInstance();
     MapMain *mm = MapMain::GetInstance();
+    Rank *rm = Rank::GetInstance();
+
     std::shared_ptr<NetworkClient> c = n->GetClient(clientId);
 
     c->player = std::make_unique<Player>();
@@ -34,11 +36,17 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
         preLoginCorrect = false;
         Logger::LogAdd(MODULE_NAME, "Login Failed: Server is full", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         c->Kick("Server is full", true);
+    } else if (mm->GetPointer(pm->spawnMapId) == nullptr) {
+         preLoginCorrect = false;
+        Logger::LogAdd(MODULE_NAME, "Login Failed: Spawnmap invalid", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        c->Kick("&eSpawnmap Invalid", true);
     }
-
+    // -- TODO: Name verification
+    
     if (!preLoginCorrect) {
         return;
     }
+
     PlayerListEntry *entry = pl->GetPointer(c->player->LoginName);
 
     if (entry == nullptr) {
@@ -55,18 +63,23 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     c->GlobalChat = entry->GlobalChat;
     std::shared_ptr<Map> spawnMap = mm->GetPointer(pm->spawnMapId);
     std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(name, pm->spawnMapId, spawnMap->data.SpawnX, spawnMap->data.SpawnY, spawnMap->data.SpawnZ, spawnMap->data.SpawnRot, spawnMap->data.SpawnLook);
+    RankItem currentRank = rm->GetRank(entry->PRank, false);
+
     newEntity->buildMaterial = -1;
     newEntity->playerList = entry;
+    newEntity->model = "default";
+    
     c->player->tEntity = newEntity;
     c->LoggedIn = true;
     Entity::Add(newEntity);
-    Entity::SetDisplayName(newEntity->Id, "", name, "");
+    Entity::SetDisplayName(newEntity->Id, currentRank.Prefix, name, currentRank.Suffix);
+
     Logger::LogAdd(MODULE_NAME, "Player Logged in (IP:" + c->IP + " Name:" + name + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-    NetworkFunctions::SystemMessageNetworkSend2All(-1, "Player '" + Entity::GetDisplayname(newEntity->Id) + "' logged in");
-    newEntity->model = "default";
+    NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(newEntity->Id) + "&e' logged in");
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, pm->WelcomeMessage);
+
     spawnMap->data.Clients += 1;
     pl->SaveFile = true;
-    
 }
 
 void Client::Logout(int clientId, std::string message, bool showtoall) {
@@ -80,7 +93,7 @@ void Client::Logout(int clientId, std::string message, bool showtoall) {
         currentMap->data.Clients -= 1;
 
         if (showtoall && !c->player->LogoutHide) {
-            NetworkFunctions::SystemMessageNetworkSend2All(-1, "Player '" + Entity::GetDisplayname(c->player->tEntity->Id) + "' logged out (" + message + ")");
+            NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(c->player->tEntity->Id) + "&e' logged out (" + message + ")");
         }
         Entity::Delete(c->player->tEntity->Id);
         c->player->tEntity = nullptr;
