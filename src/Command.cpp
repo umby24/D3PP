@@ -112,9 +112,9 @@ void CommandMain::CommandGlobal() {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eGlobal chat is now " + status + " by default.");
     }
 
-    c->player->tEntity->playerList->GlobalChat = c->GlobalChat;
-    Player_List* pl = Player_List::GetInstance();
-    pl->SaveFile = true;
+    c->player->tEntity->playerList->SetGlobal(c->GlobalChat);
+    // Player_List* pl = Player_List::GetInstance();
+    // pl->SaveFile = true;
 }
 
 void CommandMain::CommandPing() {

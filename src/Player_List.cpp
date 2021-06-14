@@ -5,6 +5,13 @@
 const std::string MODULE_NAME = "Player_List";
 Player_List* Player_List::Instance = nullptr;
 
+PlayerListEntry::PlayerListEntry() {
+    MuteTime = 0;
+    Stopped = 0;
+    Banned = false;
+    Save = false;
+}
+
 void Player_List::CloseDatabase() {
     if (dbOpen) {
         dbOpen = false;
@@ -126,34 +133,39 @@ void Player_List::Load() {
 
 void Player_List::Save() {
     OpenDatabase();
+    
     for(auto const &i : _pList) {
         if (!i.Save)
             continue;
+
         sqlite3_stmt *res;
         int rc = sqlite3_prepare_v2(db, REPLACE_SQL.c_str(), -1, &res, nullptr);
         if (rc == SQLITE_OK) {
             sqlite3_bind_int(res, 1, i.Number);
-            sqlite3_bind_text(res, 2, i.Name.c_str(), -1, nullptr);
+            sqlite3_bind_text(res, 2, i.Name.c_str(), i.Name.size(), nullptr);
             sqlite3_bind_int(res, 3, i.PRank);
             sqlite3_bind_int(res, 4, i.LoginCounter);
             sqlite3_bind_int(res, 5, i.KickCounter);
             sqlite3_bind_int(res, 6, i.OntimeCounter);
-            sqlite3_bind_text(res, 7, i.IP.c_str(), -1, nullptr);
+            sqlite3_bind_text(res, 7, i.IP.c_str(), i.IP.size(), nullptr);
             sqlite3_bind_int(res, 8, i.Stopped);
             sqlite3_bind_int(res, 9, i.Banned);
             sqlite3_bind_int(res, 10, i.MuteTime);
-            sqlite3_bind_text(res, 11, i.BanMessage.c_str(), -1, nullptr);
-            sqlite3_bind_text(res, 12, i.KickMessage.c_str(), -1, nullptr);
-            sqlite3_bind_text(res, 13, i.MuteMessage.c_str(), -1, nullptr);
-            sqlite3_bind_text(res, 14, i.RankMessage.c_str(), -1, nullptr);
-            sqlite3_bind_text(res, 15, i.StopMessage.c_str(), -1, nullptr);
+            sqlite3_bind_text(res, 11, i.BanMessage.c_str(), i.BanMessage.size(), nullptr);
+            sqlite3_bind_text(res, 12, i.KickMessage.c_str(), i.KickMessage.size(), nullptr);
+            sqlite3_bind_text(res, 13, i.MuteMessage.c_str(), i.MuteMessage.size(), nullptr);
+            sqlite3_bind_text(res, 14, i.RankMessage.c_str(), i.RankMessage.size(), nullptr);
+            sqlite3_bind_text(res, 15, i.StopMessage.c_str(), i.StopMessage.size(), nullptr);
             sqlite3_bind_int(res, 16, i.GlobalChat);
         }
-        sqlite3_step(res);
+        int dbSaveResult = sqlite3_step(res);
         sqlite3_finalize(res);
-        CloseDatabase();
-        Logger::LogAdd(MODULE_NAME, "Database Saved.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+
+        if (dbSaveResult != SQLITE_DONE)
+            Logger::LogAdd(MODULE_NAME, "Error saving PlayerDB.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     }
+    Logger::LogAdd(MODULE_NAME, "Database Saved.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    CloseDatabase();
 }
 
 PlayerListEntry* Player_List::GetPointer(int playerId) {
@@ -191,6 +203,8 @@ void Player_List::Add(std::string name) {
     newEntry.Number = GetNumber();
     newEntry.Name = name;
     newEntry.PRank = 0;
+    newEntry.MuteTime = 0;
+    newEntry.Stopped = 0;
     newEntry.Save = true;
     newEntry.GlobalChat = true;
     SaveFile = true;

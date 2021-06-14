@@ -18,7 +18,7 @@
 
 
 const std::string CREATE_SQL = "CREATE TABLE Player_List (Number INTEGER PRIMARY KEY, Name TEXT UNIQUE, Rank INTEGER, Counter_Login INTEGER, Counter_Kick INTEGER, Ontime_Counter FLOAT, IP TEXT, Stopped BOOL, Banned BOOL, Time_Muted INTEGER, Message_Ban TEXT, Message_Kick TEXT, Message_Mute TEXT, Message_Rank TEXT, Message_Stop TEXT, Inventory BLOB, Global INTEGER);";
-const std::string REPLACE_SQL = "REPLACE INTO Player_List (Number, Name, Rank, Counter_Login, Counter_Kick, Ontime_Counter, IP, Stopped, Banned, Time_Muted, Message_Ban, Message_Kick, Message_Mute, Message_Rank, Message_Stop, Global) VALUES ('?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?');";
+const std::string REPLACE_SQL = "REPLACE INTO Player_List (Number, Name, Rank, Counter_Login, Counter_Kick, Ontime_Counter, IP, Stopped, Banned, Time_Muted, Message_Ban, Message_Kick, Message_Mute, Message_Rank, Message_Stop, Global) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
 const std::string PLAYERLIST_FILE_NAME = "Playerlist";
 const int NUM_PLAYER_ATTRIBUTES = 5;
@@ -46,7 +46,8 @@ public:
     int NumAttributes[5];
     std::string StrAttributes[5];
     bool GlobalChat;
-
+    PlayerListEntry();
+    
     int GetAttribute(std::string attrName);
     std::string GetAttributeStr(std::string attrName);
 
