@@ -15,7 +15,6 @@ void Chat::HandleChatEscapes(std::string &input, int currentEntityId) {
     for (int i = 97; i < 102; i++) {
         char toReplace[2] = {'%', (char)i};
         char rplWith[2] = {'&', (char)i};
-        Logger::LogAdd(std::string(toReplace), std::string(rplWith), LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
         Utils::replaceAll(input, std::string(toReplace), std::string(rplWith));
     }
     Utils::replaceAll(input, "§", "%");
@@ -177,7 +176,6 @@ void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient> client, std::
     } else if (input[0] == '@') {
         std::vector<std::string> splitString = Utils::splitString(input);
         std::string pmName = splitString[0].substr(1); // -- Trim off the '@'.
-        Logger::LogAdd("Chat", "PMer name is " + pmName, LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
         NetworkSend2Player(client->player->tEntity->Id, input.substr(2+pmName.size()), pmName);
     } 
     else

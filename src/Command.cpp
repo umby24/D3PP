@@ -50,7 +50,6 @@ void CommandMain::CommandDo(const std::shared_ptr<NetworkClient> client, std::st
         return;
     
     ParsedCommand = splitString[0];
-    Logger::LogAdd(MODULE_NAME, "Parsed command is " + ParsedCommand, LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 
     for (int i = 0; i < COMMAND_OPERATORS_MAX; i++) {
         if (i+1 > splitString.size())
@@ -96,10 +95,12 @@ void CommandMain::CommandGlobal() {
 
     if (c == nullptr)
         return;
+
     std::string onString = "on";
     std::string trueString = "true";
     std::string offString = "off";
     std::string falseString = "false";
+
     if (Utils::InsensitiveCompare(ParsedOperator[0], onString) || Utils::InsensitiveCompare(ParsedOperator[0], trueString)) {
         c->GlobalChat = true;
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eGlobal chat is now on by default.");
@@ -113,8 +114,6 @@ void CommandMain::CommandGlobal() {
     }
 
     c->player->tEntity->playerList->SetGlobal(c->GlobalChat);
-    // Player_List* pl = Player_List::GetInstance();
-    // pl->SaveFile = true;
 }
 
 void CommandMain::CommandPing() {
