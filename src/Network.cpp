@@ -361,6 +361,7 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) {
     Ping = 0;
     CustomBlocksLevel = 0;
     GlobalChat = false;
+    //IP = socket->GetSocketIp();
 
     Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
@@ -534,8 +535,8 @@ short NetworkClient::InputReadShort() {
     short result = 0;
 
     if (InputBufferAvailable >= 2) {
-        result |= InputBuffer[InputBufferOffset++];
-        result |= InputBuffer[InputBufferOffset++] << 4;
+        result = InputBuffer[InputBufferOffset++] * 256;
+        result += InputBuffer[InputBufferOffset++]&255;
         InputBufferAvailable -= 2;
 
         if (InputBufferOffset >= NETWORK_BUFFER_SIZE)

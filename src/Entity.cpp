@@ -54,8 +54,11 @@ int Entity::GetFreeIdClient(int mapId) {
         for(auto const &e : _entities) {
             if (e.second->ClientId == id && e.second->MapID == mapId) {
                 found = true;
+            } else {
+                found = false;
                 break;
             }
+
         }
         if (!found) {
             return id;

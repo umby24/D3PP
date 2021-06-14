@@ -46,6 +46,18 @@ bool Sockets::Connect() {
     return true;
 }
 
+std::string Sockets::GetSocketIp() {
+struct sockaddr_in                  address = {0};       
+    socklen_t                           addressLength = sizeof(address);       
+    std::string                              ip;       
+    int                                 port;       
+
+    int result = getpeername ( socketfd , (struct sockaddr*) &address , &addressLength );
+
+    ip = inet_ntoa ( address.sin_addr );  
+    return ip;
+}
+
 void Sockets::Disconnect() {
     if (connected) {
         shutdown(socketfd, SD_SEND);

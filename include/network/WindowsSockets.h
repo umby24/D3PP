@@ -33,6 +33,7 @@ public:
     int Read(char* buffer, int size);
     int Send(char* data, int size);
     SOCKET GetSocketFd();
+    std::string GetSocketIp();
 private:
     bool connected;
     SOCKET socketfd;
