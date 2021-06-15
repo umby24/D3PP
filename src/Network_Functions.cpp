@@ -114,9 +114,9 @@ void NetworkFunctions::NetworkOutEntityAdd(int clientId, char playerId, std::str
     Utils::padTo(name, 64);
     x *= 32;
     y *= 32;
-    z *= 32 + 51;
-    rotation = rotation/360*256;
-    look = look/360*256;
+    z = (z *32) + 51;
+    rotation = rotation/360*256.0;
+    look = look/360*256.0;
     Packets::SendSpawnEntity(clientId, playerId, name, x, y, z, rotation, look);
 }
 
@@ -128,8 +128,8 @@ void NetworkFunctions::NetworkOutEntityPosition(int clientId, char playerId, flo
                                                 float look) {
     x *= 32;
     y *= 32;
-    z *= 32 + 51;
-    rotation = rotation/360*256;
-    look = look/360*256;
+    z = (z * 32) + 51;
+    rotation = rotation/360*256.0;
+    look = look/360*256.0;
     Packets::SendPlayerTeleport(clientId, playerId, x, y, z, rotation, look);
 }

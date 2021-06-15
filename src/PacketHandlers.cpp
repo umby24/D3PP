@@ -52,7 +52,7 @@ void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &
         return;
 
     if (client->player->tEntity->MapID == client->player->MapId)
-        client->player->tEntity->PositionSet(client->player->tEntity->MapID, X/32, Y/32, (Z-51)/32, R*360/256, L*360/256, 1, false);
+        client->player->tEntity->PositionSet(client->player->tEntity->MapID, X/32.0, Y/32.0, (Z-51)/32.0, R*360/256.0, L*360/256.0, 1, false);
 }
 
 void PacketHandlers::HandleChatPacket(const std::shared_ptr<NetworkClient> &client) {
