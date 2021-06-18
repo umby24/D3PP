@@ -222,7 +222,6 @@ int MapMain::Add(int id, short x, short y, short z, std::string name) {
     if (GetPointer(id) != nullptr)
         return -1;
 
-    Logger::LogAdd("MAP DEBUG", "Going to add a map", LogType::NORMAL, "", 0, "");
     Files *f = Files::GetInstance();
 
     shared_ptr<Map> newMap = std::make_shared<Map>();
@@ -230,7 +229,6 @@ int MapMain::Add(int id, short x, short y, short z, std::string name) {
     newMap->data.Data = Mem::Allocate(mapSize, __FILE__, __LINE__, "Map_ID = " + stringulate(id));
     newMap->data.BlockchangeData = Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Blockchange) = " + stringulate(id));
     newMap->data.PhysicData = Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Physics) = " + stringulate(id));
-    Logger::LogAdd("MAP DEBUG", "Created shares and allocs", LogType::NORMAL, "", 0, "");
     newMap->data.ID = id;
     newMap->data.UniqueID = GetUniqueId();
     newMap->data.Name = name;
@@ -248,15 +246,12 @@ int MapMain::Add(int id, short x, short y, short z, std::string name) {
     newMap->data.loading = false;
     newMap->data.Clients = 0;
     newMap->data.LastClient = time(nullptr);
-Logger::LogAdd("MAP DEBUG", "Pre block count", LogType::NORMAL, "", 0, "");
     for(auto i = 1; i < 255; i++)
         newMap->data.blockCounter[i] = 0;
 
     newMap->data.blockCounter[0] = x*y*z;
-    Logger::LogAdd("MAP DEBUG", "post block count", LogType::NORMAL, "", 0, "");
     _maps.insert(std::make_pair(id, newMap));
     SaveFile = true;
-    Logger::LogAdd("MAP DEBUG", "Add complete", LogType::NORMAL, "", 0, "");
     return id;
 }
 
@@ -414,7 +409,6 @@ bool Map::Save(std::string directory) {
 }
 
 void Map::Load(std::string directory) {
-    Logger::LogAdd("MAP DEBUG", "Going to load", LogType::NORMAL, "", 0, "");
     Block* blockMain = Block::GetInstance();
 
     if (directory.empty()) {
@@ -429,7 +423,6 @@ void Map::Load(std::string directory) {
     int mapSize = sizeX * sizeY * sizeZ;
 
     Resize(sizeX, sizeY, sizeZ);
-    Logger::LogAdd("MAP DEBUG", "Map Resized", LogType::NORMAL, "", 0, "");
     data.UniqueID = pLoader.Read("Unique_ID", MapMain::GetUniqueId());
     data.RankBuild = pLoader.Read("Rank_Build", 0);
     data.RankBuild = pLoader.Read("Rank_Join", 0);
@@ -445,7 +438,6 @@ void Map::Load(std::string directory) {
     data.SpawnLook = stof(pLoader.Read("Spawn_Look", "0"));
 
     int dSize = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.Data), mapSize * MAP_BLOCK_ELEMENT_SIZE, directory + MAP_FILENAME_DATA);
-    Logger::LogAdd("MAP DEBUG", "Decompressed", LogType::NORMAL, "", 0, "");
     if (dSize == (mapSize * MAP_BLOCK_ELEMENT_SIZE)) {
         // -- TODO: Clear undo map
         for(int i = 0; i < 255; i++) {
@@ -628,6 +620,96 @@ void Map::Resend() {
         }
     }
     data.ChangeQueue.clear();
+}
+
+void Map::BlockChange(std::shared_ptr<NetworkClient> client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type) {
+    if (client == nullptr || client->player->tEntity == nullptr || client->player->tEntity->playerList == nullptr)
+        return;
+
+    if (client->player->tEntity->playerList->Stopped) {
+        NetworkFunctions::SystemMessageNetworkSend(client->Id, "&eYou are not allowed to build (stopped).");
+        return;
+    }
+    
+    Block* bm = Block::GetInstance();
+
+    if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
+        unsigned char rawBlock = static_cast<unsigned char>(data.Data[MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE)]);
+        unsigned char rawNewType = 0;
+        MapBlock oldType = bm->GetBlock(rawBlock);
+        client->player->tEntity->lastMaterial = type;
+        // -- Map_Block_Get_Rank (RBOX!!)
+        // -- TODO:
+
+        if (mode > 0)
+            rawNewType = type;
+        else
+            rawNewType = oldType.AfterDelete;
+
+        QueueBlockChange(X, Y, Z, 250, -1);
+
+        MapBlock newType = bm->GetBlock(rawNewType);
+        if (client->player->tEntity->playerList->PRank < oldType.RankDelete) {
+            NetworkFunctions::SystemMessageNetworkSend(client->Id, "&eYou are not allowed to delete this block type.");
+            return;
+        } else if (client->player->tEntity->playerList->PRank < newType.RankPlace) {
+            NetworkFunctions::SystemMessageNetworkSend(client->Id, "&eYou are not allowed to build this block type.");
+            return;
+        }
+        BlockChange(client->player->tEntity->playerList->Number, X, Y, Z, rawNewType, true, true, true, 250);
+        // -- PluginEventBlockCreate (one for delete, one for create.)
+
+    }
+}
+
+void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, unsigned short Z, unsigned char type, bool undo, bool physic, bool send, unsigned char priority) {
+    if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
+        Block* bm = Block::GetInstance();
+        int blockOffset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
+        MapBlockData* atLoc = reinterpret_cast<MapBlockData*>(data.Data + blockOffset);
+
+        // -- Plugin Event: Block change
+        MapBlock oldType = bm->GetBlock(atLoc->type);
+        MapBlock newType = bm->GetBlock(type);
+        
+        if (type != atLoc->type && undo) {
+            // -- TODO: Undo_Add()
+        }
+
+        data.blockCounter[atLoc->type]--;
+        data.blockCounter[type]++;
+        atLoc->type = type;
+        atLoc->lastPlayer = playerNumber;
+
+        if (physic) {
+            // -- QueuePhysics
+        }
+        if (oldType.Id != newType.Id && send) {
+            QueueBlockChange(X, Y, Z, priority, oldType.Id);
+        }
+    }
+}
+
+void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z, unsigned char priority, unsigned char oldType) {
+    if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
+        int offset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, 1);
+        bool blockChangeFound = data.BlockchangeData[offset/8] & (1 << (offset % 8));
+        if (!blockChangeFound) {
+            data.BlockchangeData[offset/8] |= (1 << (offset % 8)); // -- Set bitmask
+            MapBlockChanged changeItem { X, Y, Z, priority, oldType};
+            int insertIndex = 0;
+            
+            for(int i = 0; i < data.ChangeQueue.size(); i++) {
+                if (data.ChangeQueue[i].Priority >= priority) {
+                    insertIndex++;
+                    break;
+                }
+                insertIndex++;
+            }
+            // -- This is going to break. Probs need to back it up by 1.
+            data.ChangeQueue.insert(data.ChangeQueue.begin() + insertIndex, changeItem);
+        }
+    }
 }
 
 Map::Map() = default;

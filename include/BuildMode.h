@@ -12,9 +12,11 @@
 #include "Files.h"
 #include "TaskScheduler.h"
 #include "common/PreferenceLoader.h"
+#include "Network.h"
 #include "Utils.h"
 
 const std::string BUILD_MODE_FILE_NAME = "Build_Mode";
+const int BUILD_MODE_BLOCKS_TO_RESEND_SIZE_MAX = 1000;
 
 struct BlockResend {
     int clientId;
@@ -36,13 +38,14 @@ public:
     BuildModeMain();
     static BuildModeMain* GetInstance();
     static BuildModeMain* Instance;
+     void Distribute(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z, bool mode, unsigned char blockType);
 private:
     std::vector<BlockResend> _resendBlocks;
     std::map<std::string, BuildMode> _buildmodes;
 
     void Load();
     void Save();
-    void Distribute(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z, bool mode, unsigned char blockType);
+   
     void Resend(int clientId);
     void SetMode(int clientId, std::string mode);
     void MainFunc();

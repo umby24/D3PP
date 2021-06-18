@@ -70,11 +70,63 @@ void BuildModeMain::Save() {
 }
 
 void BuildModeMain::MainFunc() {
+    if (SaveFile) {
+        SaveFile = false;
+        Save();
+    }
 
+    Files* f = Files::GetInstance();
+    std::string bmFile = f->GetFile(BUILD_MODE_FILE_NAME);
+    time_t modTime = Utils::FileModTime(bmFile);
+
+    if (modTime != LastFileDate) {
+        Load();
+        LastFileDate = modTime;
+    }
+
+    while (_resendBlocks.size() > BUILD_MODE_BLOCKS_TO_RESEND_SIZE_MAX) {
+        _resendBlocks.erase(_resendBlocks.end());
+    }
 }
 
 void BuildModeMain::Distribute(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z, bool mode, unsigned char blockType) {
+    Network* n = Network::GetInstance();
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<NetworkClient> nc = n->GetClient(clientId);
+    if (nc == nullptr)
+        return;
+    
+    if (nc->player->tEntity == nullptr)
+        return;
 
+    std::string buildMode = nc->player->tEntity->BuildMode;
+    
+    if (mapId == -1)
+        mapId = nc->player->tEntity->MapID;
+
+    if (blockType == 1 && nc->player->tEntity->buildMaterial != -1)
+        blockType = nc->player->tEntity->buildMaterial;
+    
+    if (_buildmodes.find(buildMode) == _buildmodes.end()) {
+        nc->player->tEntity->BuildMode = "Normal";
+        Logger::LogAdd(MODULE_NAME, "Could not find build mode '" + buildMode + "'.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        return;
+    }
+
+    std::shared_ptr<Map> playerMap = mm->GetPointer(mapId);
+
+    if (_buildmodes[buildMode].Plugin == "") {
+        playerMap->BlockChange(nc, X, Y, Z, mode, blockType);
+    } else {
+        BlockResend queuedItem;
+        queuedItem.X = X;
+        queuedItem.Y = Y;
+        queuedItem.Z = Z;
+        queuedItem.clientId = clientId;
+        queuedItem.mapId = mapId;
+        _resendBlocks.insert(_resendBlocks.begin(), queuedItem);
+        // -- Lua_Event_Build_Mode()
+    }
 }
 
 void BuildModeMain::Resend(int clientId) {

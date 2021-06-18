@@ -9,7 +9,7 @@
 
 #include "Network.h"
 #include "Logger.h"
-
+#include "BuildMode.h"
 
 class NetworkClient;
 

@@ -235,7 +235,6 @@ void Entity::Send() {
             }
 
             if (shouldDelete) {
-                Logger::LogAdd(MODULE_NAME, "Remove entity " + stringulate(vEntity.ClientId) + "from " + stringulate(nc.first), LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
                 NetworkFunctions::NetworkOutEntityDelete(nc.first, vEntity.ClientId);
                 toRemove.push_back(vEntity.Id);
             }
@@ -280,7 +279,6 @@ void Entity::Send() {
                 nc.second->player->Entities.push_back(s); // -- track the new client
                 // -- spawn them :)
                 // -- TODO: CPE Handle Entity..
-                Logger::LogAdd(MODULE_NAME, "add entity " + stringulate((int)s.ClientId) + "on " + stringulate((int)nc.first), LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
                 NetworkFunctions::NetworkOutEntityAdd(nc.first, s.ClientId, Entity::GetDisplayname(s.Id), bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
             }
         }

@@ -22,6 +22,13 @@
 #include "Utils.h"
 #include "Block.h"
 
+class NetworkClient;
+
+struct MapBlockData {
+    unsigned char type;
+    short lastPlayer;
+    unsigned char metadata;
+};
 
 struct MapBlockDo { // -- Physics Queue Item
     int time;
@@ -156,13 +163,16 @@ public:
     Map();
     MapData data;
     bool Resize(short x, short y, short z);
-
+    void BlockChange(std::shared_ptr<NetworkClient> client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type);
+    void BlockChange (short playerNumber, unsigned short X, unsigned short Y, unsigned short Z, unsigned char type, bool undo, bool physic, bool send, unsigned char priority);
     bool Save(std::string directory);
     void Load(std::string directory);
     void Reload();
     void Unload();
     void Send(int clientId);
     void Resend();
+private:
+    void QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z, unsigned char priority, unsigned char oldType);
 };
 
 class MapMain : TaskItem {

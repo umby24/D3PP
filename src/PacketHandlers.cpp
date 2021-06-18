@@ -11,12 +11,11 @@ void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& clien
     std::string mppass = client->InputReadString();
     char isCpe = client->InputReadByte();
         Utils::TrimString(clientName);
+
     if (!client->LoggedIn && client->DisconnectTime == 0 && isCpe != 66) {
-        Logger::LogAdd("PacketHandler", "Womg, incoming: " + clientName, LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
         Client::Login(client->Id, clientName, mppass, clientVersion);
     } else if (isCpe == 66 && !client->LoggedIn && client->DisconnectTime == 0) {
-        Logger::LogAdd("PacketHandler", "Womg, CPE incoming: " + clientName, LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-        Client::Login(client->Id, clientName, mppass, clientVersion);
+        Client::Login(client->Id, clientName, mppass, clientVersion); // -- CPE capable Client
     }
 }
 
@@ -36,7 +35,8 @@ void PacketHandlers::HandleBlockChange(const std::shared_ptr<NetworkClient> &cli
     if (!client->LoggedIn || !client->player->tEntity)
         return;
 
-    // -- TODO: BuildModeDistrubute
+    BuildModeMain* bmm = BuildModeMain::GetInstance();
+    bmm->Distribute(client->Id, client->player->tEntity->MapID, X, Y, Z, (Mode > 0), Type);
 }
 
 void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &client) {
