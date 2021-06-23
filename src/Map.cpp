@@ -13,23 +13,31 @@ MapMain::MapMain() {
     this->Main = [this] { MainFunc(); };
     this->Interval = std::chrono::seconds(1);
     TaskScheduler::RegisterTask(MODULE_NAME, *this);
+    mbcStarted = false;
 }
 
 void MapMain::MainFunc() {
     Files* f = Files::GetInstance();
     std::string mapListFile = f->GetFile(MAP_LIST_FILE);
     long fileTime = Utils::FileModTime(mapListFile);
+    
+    if (System::IsRunning && mbcStarted == false) {
+        std::thread mbcThread(MapMain::MapBlockchange, this);
+        std::swap(BlockchangeThread, mbcThread);
+        mbcStarted = true;
+    } 
+
     if (LastWriteTime != fileTime) {
         MapListLoad();
     }
     if (SaveFile && SaveFileTimer < time(nullptr)) {
-        SaveFileTimer = time(nullptr) + 5000;
+        SaveFileTimer = time(nullptr) + 5;
         SaveFile = false;
         MapListSave();
     }
     for(auto const &m : _maps) {
 
-        if (m.second->data.SaveInterval > 0 && m.second->data.SaveTime + m.second->data.SaveInterval*60000 < time(nullptr) && m.second->data.loaded) {
+        if (m.second->data.SaveInterval > 0 && m.second->data.SaveTime + m.second->data.SaveInterval*600 < time(nullptr) && m.second->data.loaded) {
             m.second->data.SaveTime = time(nullptr);
             // -- MapActionAddSave
         }
@@ -39,7 +47,7 @@ void MapMain::MainFunc() {
                 m.second->Reload();
             }
         }
-        if (m.second->data.loaded && (time(nullptr) - m.second->data.LastClient) > 20000) {
+        if (m.second->data.loaded && (time(nullptr) - m.second->data.LastClient) > 200) { // -- 3 minutes
             m.second->Unload();
         }
     }
@@ -48,7 +56,7 @@ void MapMain::MainFunc() {
         MapSettingsLoad();
     }
     if (StatsTimer < time(nullptr)) {
-        StatsTimer = time(nullptr) + 5000;
+        StatsTimer = time(nullptr) + 5;
         HtmlStats(time(nullptr));
     }
 }
@@ -58,6 +66,50 @@ MapMain* MapMain::GetInstance() {
         Instance = new MapMain();
 
     return Instance;
+}
+
+void MapMain::MapBlockchange() {
+    clock_t blockChangeTimer = clock();
+
+    while (System::IsRunning) {
+        watchdog::Watch("Map_Blockchanging", "Begin thread-slope", 0);
+        while (blockChangeTimer < clock()) {
+            blockChangeTimer += 100;
+            for(auto const &m : _maps) {
+                if (m.second->data.BlockchangeStopped)
+                    continue;
+                
+                int maxChangedSec = 1100 / 10;
+                int toRemove = 0;
+                for(auto const &chg : m.second->data.ChangeQueue) {
+                    unsigned short x = chg.X;
+                    unsigned short y = chg.Y;
+                    unsigned short z = chg.Z;
+                    short oldMat = chg.OldMaterial;
+                    char priority = chg.Priority;
+                    char currentMat = m.second->GetBlockType(x, y, z);
+                    toRemove++;
+                    int blockChangeOffset = GetMapOffset(x, y, z, m.second->data.SizeX, m.second->data.SizeY, m.second->data.SizeZ, 1);
+                    int bitmaskSize = GetMapSize(m.second->data.SizeX, m.second->data.SizeY, m.second->data.SizeZ, 1);
+                    
+                    if (blockChangeOffset < bitmaskSize) { // -- remove from bitmask
+                        m.second->data.BlockchangeData[blockChangeOffset/8] = m.second->data.BlockchangeData[blockChangeOffset/8] & ~(1 << (blockChangeOffset % 8));
+                    }
+                    if (currentMat != oldMat) {
+                        NetworkFunctions::NetworkOutBlockSet2Map(m.first, x, y, z, currentMat);
+                        maxChangedSec--;
+                        if (maxChangedSec <= 0) {
+                            break;
+                        }
+                    }
+                }
+
+                m.second->data.ChangeQueue.erase(m.second->data.ChangeQueue.begin(), m.second->data.ChangeQueue.begin() + toRemove);
+            }
+        }
+        watchdog::Watch("Map_Blockchanging", "Begin thread-slope", 2);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
 }
 
 shared_ptr<Map> MapMain::GetPointer(int id) {
@@ -244,6 +296,8 @@ int MapMain::Add(int id, short x, short y, short z, std::string name) {
     newMap->data.SpawnZ = z/1.5;
     newMap->data.loaded = true;
     newMap->data.loading = false;
+    newMap->data.BlockchangeStopped = false;
+    newMap->data.PhysicsStopped = false;
     newMap->data.Clients = 0;
     newMap->data.LastClient = time(nullptr);
     for(auto i = 1; i < 255; i++)
@@ -402,7 +456,14 @@ bool Map::Save(std::string directory) {
     configName = directory + MAP_FILENAME_RANK; // -- TODO: Rank boxes
     configName = directory + MAP_FILENAME_TELEPORTER; // -- TODO: Teleporters
     GZIP::GZip_CompressToFile((unsigned char*)data.Data, mapDataSize, "temp.gz");
-    std::filesystem::copy_file("temp.gz", directory + MAP_FILENAME_DATA);
+    try {
+        if (std::filesystem::exists(directory + MAP_FILENAME_DATA))
+            std::filesystem::remove(directory + MAP_FILENAME_DATA);
+
+        std::filesystem::copy("temp.gz", directory + MAP_FILENAME_DATA, std::filesystem::copy_options::overwrite_existing);
+    } catch (std::filesystem::filesystem_error& e) {
+        Logger::LogAdd(MODULE_NAME, "Could not copy mapfile: " + stringulate(e.what()), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+    }
     Logger::LogAdd(MODULE_NAME, "File saved [" + directory + MAP_FILENAME_DATA + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 
     return true;
@@ -475,13 +536,13 @@ void Map::Reload() {
     Block* blockMain = Block::GetInstance();
 
     data.loading = true;
-    int mapSize = data.SizeX + data.SizeY + data.SizeZ;
+    int mapSize = data.SizeX * data.SizeY * data.SizeZ;
     data.Data = Mem::Allocate(mapSize * MAP_BLOCK_ELEMENT_SIZE, __FILE__, __LINE__, "Map_ID = " + stringulate(data.ID));
     data.BlockchangeData = Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Blockchange) = " + stringulate(data.ID));
     data.PhysicData = Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Physics) = " + stringulate(data.ID));
 
     std::string filenameData = data.Directory + MAP_FILENAME_DATA;
-    int unzipResult = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.Data), mapSize * MAP_BLOCK_ELEMENT_SIZE, filenameData);
+    int unzipResult = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.Data), mapSize * MAP_BLOCK_ELEMENT_SIZE, data.Directory + MAP_FILENAME_DATA);
     if (unzipResult > 0) {
     // -- UNDO Clear Map
         for(int i = 0; i < 255; i++) {
@@ -490,15 +551,17 @@ void Map::Reload() {
         for (int iz = 0; iz < data.SizeZ; iz++) {
             for (int iy = 0; iy < data.SizeY; iy++) {
                 for (int ix = 0; ix < data.SizeX; ix++) {
-                    char* point = data.Data + MapMain::GetMapOffset(ix, iy, iz, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
-                    MapBlock b = blockMain->GetBlock(point[0]);
+                    int offset = MapMain::GetMapOffset(ix, iy, iz, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
+                    unsigned char rawBlock = data.Data[offset];
+                    MapBlock b = blockMain->GetBlock(rawBlock);
 
                     if (b.ReplaceOnLoad >= 0)
-                        point[0] = static_cast<char>(b.ReplaceOnLoad);
+                        data.Data[offset] = static_cast<char>(b.ReplaceOnLoad);
 
-                    data.blockCounter[point[0]] += 1;
+                    data.blockCounter[rawBlock] += 1;
 
                     if (b.PhysicsOnLoad) {
+                        
                         // -- map_block_do_add
                     }
                 }
@@ -688,6 +751,24 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
             QueueBlockChange(X, Y, Z, priority, oldType.Id);
         }
     }
+}
+
+unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned short Z) {
+    // if (data.loaded = false && data.loading == false) {
+    //     data.LastClient = time(nullptr);
+    //     Reload();
+    // }
+    // if (data.loading) {
+    //     while (data.loaded == false) {
+    //         std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    //     }
+    // }
+    if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
+        int index = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
+        return data.Data[index];
+    }
+
+    return -1;
 }
 
 void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z, unsigned char priority, unsigned char oldType) {

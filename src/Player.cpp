@@ -97,8 +97,7 @@ void PlayerMain::MainFunc() {
     }
     if (OntimeCounter < time(nullptr)) {
         int difference = time(nullptr) - OntimeCounter;
-        OntimeCounter = time(nullptr) + (1000*10);
-        int seconds = 10+difference*0.001;
+        OntimeCounter = time(nullptr) + (1*10);
 
         // -- TODO: Player_List: Player_Ontime_Counter_Add(seconds);
     }

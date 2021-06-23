@@ -90,6 +90,7 @@ Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rot
     buildMaterial = -1;
     SpawnSelf = false;
     BuildState = 0;
+    BuildMode = "Normal";
 }
 
 std::shared_ptr<Entity> Entity::GetPointer(int id) {
@@ -151,7 +152,7 @@ void Entity::Kill() {
     std::shared_ptr<Map> cm = mm->GetPointer(MapID);
 
     if (timeMessageDeath < time(nullptr)) {
-        timeMessageDeath = time(nullptr) + 2000;
+        timeMessageDeath = time(nullptr) + 2;
         NetworkFunctions::SystemMessageNetworkSend2All(MapID, "&c" + Name + " died.");
         PositionSet(MapID, cm->data.SpawnX, cm->data.SpawnY, cm->data.SpawnZ, cm->data.SpawnRot, cm->data.SpawnLook, 5, true);
     }

@@ -167,6 +167,7 @@ public:
     void BlockChange (short playerNumber, unsigned short X, unsigned short Y, unsigned short Z, unsigned char type, bool undo, bool physic, bool send, unsigned char priority);
     bool Save(std::string directory);
     void Load(std::string directory);
+    unsigned char GetBlockType(unsigned short X, unsigned short Y, unsigned short Z);
     void Reload();
     void Unload();
     void Send(int clientId);
@@ -195,6 +196,7 @@ private:
     std::thread BlockchangeThread;
     std::thread PhysicsThread;
     std::thread ActionThread;
+    bool mbcStarted;
 
     int SaveFileTimer;
     std::string TempFilename;
@@ -213,6 +215,7 @@ private:
     void MapListLoad();
     void MapSettingsSave(); // -- Where are these called from? 
     void MapSettingsLoad();
+    void MapBlockchange();
 };
 
 const std::string MAP_HTML_TEMPLATE = R"(<html>

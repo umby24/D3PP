@@ -15,13 +15,13 @@ void watchdog::Watch(std::string module, std::string message, int state) {
             continue;
         }
 
-        item.Timeout = time(nullptr) - item.WatchTime;
+        item.Timeout = clock() - item.WatchTime;
         if (item.BiggestTimeout < item.Timeout) {
             item.BiggestTimeout = item.Timeout;
             item.BiggestMessage = item.LastMessage;
         }
         item.LastMessage = message;
-        time_t current = time(nullptr);
+        clock_t current = clock();
 
         if (state == 0) {
             item.CpuTime0 = current;
@@ -45,11 +45,11 @@ watchdog *watchdog::GetInstance() {
 }
 
 void watchdog::MainFunc() {
-    time_t timer;
+    clock_t timer;
     while (isRunning) {
         _lock.lock();
-        time_t currentTime = time(nullptr); // -- generationTIme and timer
-        time_t time_ = currentTime - timer;
+        clock_t currentTime = clock(); // -- generationTIme and timer
+        clock_t time_ = currentTime - timer;
         timer = currentTime;
         int i = 0;
         for(auto item : _modules) {
@@ -69,6 +69,7 @@ void watchdog::MainFunc() {
 
 void watchdog::HtmlStats(time_t time_) {
     time_t startTime = time(nullptr);
+    clock_t divTime = clock();
     std::string result = HTML_TEMPLATE;
 
     // -- Module Table Generation
@@ -85,7 +86,7 @@ void watchdog::HtmlStats(time_t time_) {
         modTable += "<td>" + stringulate(item.BiggestTimeout) + "ms (Max. " + stringulate(item.MaxTimeout) + "ms)</td>\n";
         modTable += "<td>" + item.BiggestMessage + "</td>\n";
         modTable += "<td>" + item.LastMessage + "</td>\n";
-        modTable += "<td>" + stringulate((item.CallsPerSecond*1000/time_)) + "/s</td>\n";
+        modTable += "<td>" + stringulate((item.CallsPerSecond*1000/divTime)) + "/s</td>\n";
         modTable += "<td>" + stringulate(item.CpuTime) + "%</td>\n";
         modTable += "</tr>\n";
 
@@ -112,7 +113,7 @@ void watchdog::HtmlStats(time_t time_) {
         oStream << result;
         oStream.close();
     } else {
-        Logger::LogAdd("WAtchdog", "Couldn't open file :<" + memFile, LogType::WARNING, __FILE__, __LINE__, __FUNCTION__ );
+        Logger::LogAdd("Watchdog", "Couldn't open file :<" + memFile, LogType::WARNING, __FILE__, __LINE__, __FUNCTION__ );
     }
 }
 

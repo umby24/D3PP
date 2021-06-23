@@ -271,7 +271,7 @@ void Network::NetworkOutputSend() {
 void Network::NetworkOutput() {
     for (auto const &nc : _clients) {
         if (nc.second->PingTime < time(nullptr))  {
-            nc.second->PingTime = time(nullptr) + 5000;
+            nc.second->PingTime = time(nullptr) + 5;
             nc.second->PingSentTime = time(nullptr);
             nc.second->OutputPing();
         }
@@ -349,7 +349,7 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) {
     OutputBufferAvailable = 0;
     LastTimeEvent = time(nullptr);
     clientSocket = std::move(socket);
-    PingTime = time(nullptr) + 5000;
+    PingTime = time(nullptr) + 5;
     DisconnectTime = 0;
     LoggedIn = false;
     UploadRate = 0;
@@ -433,7 +433,7 @@ void NetworkClient::Kick(std::string message, bool hide) {
     NetworkFunctions::SystemRedScreen(this->Id, message);
 
     if (DisconnectTime == 0) {
-        DisconnectTime = time(nullptr) + 1000;
+        DisconnectTime = time(nullptr) + 1;
         LoggedIn = false;
         player->LogoutHide = hide;
         Logger::LogAdd(MODULE_NAME, "Client Kicked [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);

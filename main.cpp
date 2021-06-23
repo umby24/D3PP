@@ -9,6 +9,7 @@
 #include "Logger.h"
 #include "Block.h"
 #include "Entity.h"
+#include "BuildMode.h"
 
 #include "Player_List.h"
 #include "Command.h"
@@ -31,6 +32,12 @@ int main()
     Network *n = Network::GetInstance();
     EntityMain em;
     CommandMain *cm = CommandMain::GetInstance();
+    BuildModeMain *bmm = BuildModeMain::GetInstance();
+    
+    clock_t derp = clock();
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    clock_t derp2 = clock();
+    std::cout << derp2-derp << std::endl; // -- ~ 16.
     
     TaskScheduler::RunSetupTasks();
     System::IsRunning = true;
