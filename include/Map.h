@@ -180,6 +180,7 @@ class MapMain : TaskItem {
 public:
     MapMain();
     std::shared_ptr<Map> GetPointer(int id);
+    std::shared_ptr<Map> GetPointer(std::string name);
     int GetMapId();
     static std::string GetUniqueId();
     

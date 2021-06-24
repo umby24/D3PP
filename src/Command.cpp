@@ -29,6 +29,15 @@ void CommandMain::Setup() {
     globalCommand.RankShow = 0;
     globalCommand.Function = [this] { CommandMain::CommandGlobal(); };
     Commands.push_back(globalCommand);
+
+    Command changeMapCommand;
+    changeMapCommand.Id = "Map";
+    changeMapCommand.Name = "map";
+    changeMapCommand.Internal = true;
+    changeMapCommand.Rank = 0;
+    changeMapCommand.RankShow = 0;
+    changeMapCommand.Function = [this] { CommandMain::CommandChangeMap(); };
+    Commands.push_back(changeMapCommand);
 }
 
 void CommandMain::MainFunc() {
@@ -124,4 +133,21 @@ void CommandMain::CommandPing() {
         return;
 
     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eYour ping is " + stringulate(c->Ping) + "ms.");
+}
+
+void CommandMain::CommandChangeMap() {
+     Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    if (c == nullptr)
+        return;
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> mi = mm->GetPointer(ParsedText0);
+    if (mi != nullptr) {
+        c->player->tEntity->PositionSet(mi->data.ID, mi->data.SpawnX, mi->data.SpawnY, mi->data.SpawnZ, mi->data.SpawnRot, mi->data.SpawnLook, 255, true);
+
+    } else {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find map '" + ParsedText0 + "'.");
+    }
 }

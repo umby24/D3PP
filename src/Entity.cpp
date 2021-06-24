@@ -158,14 +158,14 @@ void Entity::Kill() {
     }
 }
 
-void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float lk, char priority, bool sendOwn) {
+void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float lk, unsigned char priority, bool sendOwn) {
     MapMain* mm = MapMain::GetInstance();
     if (SendPos <= priority) {
         if (mapId != MapID) { // -- Changing map
             std::shared_ptr<Map> nm = mm->GetPointer(mapId);
             if (playerList == nullptr || playerList->PRank >= nm->data.RankJoin) {
                 std::string entityName = GetDisplayname(Id);
-                std::string mapChangeMessage = "Player '" + entityName + "' changed to map '" + nm->data.Name + "'";
+                std::string mapChangeMessage = "&ePlayer '" + entityName + "&e' changed to map '" + nm->data.Name + "'";
                 NetworkFunctions::SystemMessageNetworkSend2All(MapID, mapChangeMessage);
                 NetworkFunctions::SystemMessageNetworkSend2All(mapId, mapChangeMessage);
                 nm->data.Clients += 1;
@@ -180,6 +180,8 @@ void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float 
                 Rotation = rot;
                 Look = lk;
                 ClientId = GetFreeIdClient(mapId);
+                if (sendOwn)
+                    SendPosOwn = true;
             } else {
                 MessageToClients(Id, "You are not allowed to join map '" + nm->data.Name + "'");
             }

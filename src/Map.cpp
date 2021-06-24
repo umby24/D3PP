@@ -119,6 +119,18 @@ shared_ptr<Map> MapMain::GetPointer(int id) {
     return nullptr;
 }
 
+shared_ptr<Map> MapMain::GetPointer(std::string name) {
+    shared_ptr<Map> result = nullptr;
+    for (auto const &mi : _maps) {
+        if (Utils::InsensitiveCompare(mi.second->data.Name, name)) {
+            result = mi.second;
+            break;
+        }
+    }
+    
+    return result;
+}
+
 int MapMain::GetMapId() {
     int result = 0;
 

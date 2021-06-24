@@ -68,7 +68,7 @@ public:
 
     void Kill();
     void PositionCheck();
-    void PositionSet(int mapId, float x, float y, float z, float rot, float lk, char priority, bool sendOwn);
+    void PositionSet(int mapId, float x, float y, float z, float rot, float lk, unsigned char priority, bool sendOwn);
     static void Send();
     static int GetFreeId();
     static int GetFreeIdClient(int mapId);
