@@ -26,7 +26,7 @@ MapBlock Block::GetBlock(int id) {
     if (!hasLoaded)
         Load();
 
-    if (id >= 0 && id <= 255)
+    if (id >= 0 && id < 255)
         return Blocks[id];
 
     MapBlock result {-1};

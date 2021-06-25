@@ -22,6 +22,11 @@ int MainVersion = 1018;
 
 int main()
 {
+    std::set_terminate([](){ 
+        std::cout << "Unhandled exception" << std::endl; std::abort();
+    }
+    );
+
     srand(time(nullptr));
     Logger::LogAdd("Main", "====== Welcome to D3PP =====", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     Block *b = Block::GetInstance();
