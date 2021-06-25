@@ -202,15 +202,42 @@ void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float 
 }
 
 void Entity::PositionCheck() {
+    MapMain* mm = MapMain::GetInstance();
+    Block* bm = Block::GetInstance();
     int mapId = MapID;
     float x = round(X);
     float y = round(Y);
     float z = round(Z);
-    // -- if mapselect
+    std::shared_ptr<Map> theMap = mm->GetPointer(mapId);
+    
+    if (theMap == nullptr) {
+        return;
+    }
     // -- do a teleporter check..
-    //else.. set them to a functional map
+    for(auto const &tp : theMap->data.Teleporter) {
+        if (x >= tp.second.X0 && x <= tp.second.X1 && y >= tp.second.Y0 && y<= tp.second.Y1 && z>= tp.second.Z0 && z <= tp.second.Z1) {
+            int destMapId = MapID;
+            
+            if (!tp.second.DestMapUniqueId.empty()) {
+                std::shared_ptr<Map> mapInstance = mm->GetPointerUniqueId(tp.second.DestMapUniqueId);
+                if (mapInstance != nullptr) {
+                    destMapId = mapInstance->data.ID;
+                }
+            } else if (tp.second.DestMapId != -1) {
+                destMapId = tp.second.DestMapId;
+            }
+
+            PositionSet(destMapId, tp.second.DestX, tp.second.DestY, tp.second.DestZ, tp.second.DestRot, tp.second.DestLook, 10, true);
+            break;
+        }
+    }
+
     // -- check if the block we're touching is a killing block, if so call kill.
-    // -- TODO:
+    for (int i = 0; i < 2; i++) {
+        unsigned char blockType = theMap->GetBlockType(x, y, z+i);
+        if (bm->GetBlock(blockType).Kills)
+            Kill();
+    }
 }
 
 void Entity::Send() {

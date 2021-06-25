@@ -131,6 +131,18 @@ shared_ptr<Map> MapMain::GetPointer(std::string name) {
     return result;
 }
 
+std::shared_ptr<Map> MapMain::GetPointerUniqueId(std::string uniqueId) {
+    shared_ptr<Map> result = nullptr;
+    for (auto const &mi : _maps) {
+        if (Utils::InsensitiveCompare(mi.second->data.UniqueID, uniqueId)) {
+            result = mi.second;
+            break;
+        }
+    }
+    
+    return result;
+}
+
 int MapMain::GetMapId() {
     int result = 0;
 
@@ -539,7 +551,43 @@ void Map::Load(std::string directory) {
     }
 
     // -- Load RankBox file
+    PreferenceLoader rBoxLoader(MAP_FILENAME_RANK, directory);
+    rBoxLoader.LoadFile();
+    for (auto const &fi : rBoxLoader.SettingsDictionary) {
+        rBoxLoader.SelectGroup(fi.first);
+        MapRankElement mre;
+        mre.X0 = rBoxLoader.Read("X_0", 0);
+        mre.Y0 = rBoxLoader.Read("Y_0", 0);
+        mre.Z0 = rBoxLoader.Read("Z_0", 0);
+        mre.X1 = rBoxLoader.Read("X_1", 0);
+        mre.Y1 = rBoxLoader.Read("Y_1", 0);
+        mre.Z1 = rBoxLoader.Read("Z_1", 0);
+        mre.Rank = rBoxLoader.Read("Rank", 0);
+        data.RankBoxes.push_back(mre);
+    }
     // -- Load Teleporter file
+    PreferenceLoader tpLoader(MAP_FILENAME_TELEPORTER, directory);
+    tpLoader.LoadFile();
+    for (auto const &tp : tpLoader.SettingsDictionary) {
+        tpLoader.SelectGroup(tp.first);
+        MapTeleporterElement tpe;
+        tpe.Id = tp.first;
+        tpe.X0 = tpLoader.Read("X_0", 0);
+        tpe.Y0 = tpLoader.Read("Y_0", 0);
+        tpe.Z0 = tpLoader.Read("Z_0", 0);
+        tpe.X1 = tpLoader.Read("X_1", 0);
+        tpe.Y1 = tpLoader.Read("Y_1", 0);
+        tpe.Z1 = tpLoader.Read("Z_1", 0);
+
+        tpe.DestMapUniqueId = tpLoader.Read("Dest_Map_Unique_ID", "");
+        tpe.DestMapId = tpLoader.Read("Dest_Map_ID", -1);
+        tpe.DestX = tpLoader.Read("Dest_X", -1);
+        tpe.DestY = tpLoader.Read("Dest_Y", -1);
+        tpe.DestZ = tpLoader.Read("Dest_Z", -1);
+        tpe.DestRot = tpLoader.Read("Dest_Rot", 0);
+        tpe.DestLook = tpLoader.Read("Dest_Look", 0);
+        data.Teleporter.insert(std::make_pair(tpe.Id, tpe));
+    }
 }
 
 void Map::Reload() {

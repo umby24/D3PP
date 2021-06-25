@@ -181,6 +181,7 @@ public:
     MapMain();
     std::shared_ptr<Map> GetPointer(int id);
     std::shared_ptr<Map> GetPointer(std::string name);
+    std::shared_ptr<Map> GetPointerUniqueId(std::string uniqueId);
     int GetMapId();
     static std::string GetUniqueId();
     
