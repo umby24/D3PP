@@ -13,7 +13,7 @@
 #include "Network_Functions.h"
 #include "Command.h"
 
-const std::regex AllowedRegexp("[^A-Za-z0-9!\\^\\~$%&/()=?{}\t\\[\\]\\\\ ,\\\";.:\\-_#'+*<>|@]|&.$|&.(&.)");
+const std::regex AllowedRegexp("[^A-Za-z0-9!\\^\\~$%&/()=?{}\t\\[\\]\\\\ ,\\\";.:\\-_#'+*<>|@\n]|&.$|&.(&.)");
 class NetworkClient;
 
 class Chat {

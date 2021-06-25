@@ -45,7 +45,7 @@ void NetworkFunctions::SystemMessageNetworkSend(int clientId, std::string messag
     for (auto i = 0; i < lines; i++) {
         std::string text = linev.at(i);
         Utils::padTo(text, 64);
-
+        
         if (!text.empty() && text != blankie) {
             Packets::SendChatMessage(clientId, text, type);
         }

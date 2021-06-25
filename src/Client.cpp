@@ -140,7 +140,7 @@ void Client::LoginThread() {
             
             NetworkFunctions::SystemLoginScreen(clientId, sMain->ServerName, motd, ri.OnClient);
             sendMap->Send(clientId);
-
+            
             nc.second->player->tEntity->SpawnSelf = true;
             
             for(auto const &pe : nc.second->player->Entities) {

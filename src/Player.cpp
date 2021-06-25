@@ -98,8 +98,13 @@ void PlayerMain::MainFunc() {
     if (OntimeCounter < time(nullptr)) {
         int difference = time(nullptr) - OntimeCounter;
         OntimeCounter = time(nullptr) + (1*10);
+        Player_List* pll = Player_List::GetInstance();
 
-        // -- TODO: Player_List: Player_Ontime_Counter_Add(seconds);
+        for(auto &pli : pll->_pList) {
+            if (pli.Online) {
+                pli.OntimeCounter += difference;
+            }
+        }
     }
 }
 

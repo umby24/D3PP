@@ -44,8 +44,8 @@ std::string Chat::StringMultiline(std::string input) {
                 bool doubleBreak = false;
                 for(auto k = i-5; k >= 2; --k) {
                     if (input.substr(k, 1) == " ") {
-                        result += input.substr(0, k) + "&3>>\n&3>>";
-                        maxLength = 61;
+                        result += input.substr(0, k) + "&3>>\n&3>>&f";
+                        maxLength = 59;
                         for (int j = k-1; j >= 1; j--) {
                             if (input.substr(j, 1) == "&") {
                                 result += input.substr(j, 2);
@@ -62,8 +62,8 @@ std::string Chat::StringMultiline(std::string input) {
                     break;
 
 
-                result += input.substr(0, i-5) + "&3>>\n&3>>";
-                maxLength = 61;
+                result += input.substr(0, i-5) + "&3>>\n&3>>&f";
+                maxLength = 59;
                 for (int j = i-5; j >= 1; j--) {
                     if (input.substr(j, 1) == "&") {
                         result += input.substr(j, 2);

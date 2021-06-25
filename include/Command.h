@@ -17,6 +17,7 @@ class Network;
 class NetworkClient;
 
 const int COMMAND_OPERATORS_MAX = 5;
+const std::string COMMAND_FILENAME = "Command";
 
 struct CommandGroup {
     std::string Name;
@@ -57,9 +58,15 @@ class CommandMain : TaskItem {
 
         CommandMain();
         void Setup();
+        void Load();
+        void Save();
         void MainFunc();
         void CommandDo(const std::shared_ptr<NetworkClient> client, std::string input);
         // --
+        void CommandCommands();
+        void CommandHelp();
+        void CommandPlayers();
+        void CommandPlayerInfo();
         void CommandGlobal();
         void CommandPing();
         void CommandChangeMap();
