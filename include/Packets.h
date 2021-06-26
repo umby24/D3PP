@@ -8,6 +8,8 @@
 #include <string>
 #include "Network.h"
 
+class NetworkClient;
+
 class Packets {
 public:
     static void SendClientHandshake(int clientId, char protocolVersion, std::string serverName, std::string serverMotd, char userType);
@@ -21,10 +23,10 @@ public:
     static void SendChatMessage(int clientId, std::string message, char location);
     static void SendDisconnect(int clientId, std::string reason);
     // -- CPE:
-    static void SendExtInfo();
-    static void SendExtEntry();
+    static void SendExtInfo(std::shared_ptr<NetworkClient> client, std::string serverName, int extensionCount);
+    static void SendExtEntry(std::shared_ptr<NetworkClient> client, std::string extensionName, int versionNumber);
     static void SendClickDistance();
-    static void SendCustomBlockSupportLevel();
+    static void SendCustomBlockSupportLevel(std::shared_ptr<NetworkClient> client, unsigned char supportLevel);
     static void SendHoldThis();
     static void SendTextHotkeys();
     static void SendExtAddPlayerName();

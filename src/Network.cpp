@@ -345,6 +345,7 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) {
     OutputBuffer = Mem::Allocate(NETWORK_BUFFER_SIZE, __FILE__, __LINE__, "NetworkClient(" + stringulate(Id) + ")\\OutputBuffer");
     InputBufferAvailable = 0;
     InputBufferOffset = 0;
+    CustomExtensions = 0;
     OutputBufferOffset = 0;
     OutputBufferAvailable = 0;
     LastTimeEvent = time(nullptr);
@@ -481,6 +482,9 @@ void NetworkClient::OutputWriteInt(int value) {
 }
 
 void NetworkClient::OutputWriteString(std::string value) {
+    if (value.size() < 64) {
+        Utils::padTo(value, 64);
+    }
     const char *meh = value.c_str();
     OutputWriteBlob(meh, value.size());
 }
@@ -499,6 +503,27 @@ void NetworkClient::OutputWriteBlob(const char *data, int dataSize) {
     }
 }
 
+int NetworkClient::InputReadInt() {
+    int result = 0;
+
+    if (InputBufferAvailable >= 4) {
+        //__builtin_bswap32
+        result = InputBuffer[InputBufferOffset++] << 24;
+        result |= (InputBuffer[InputBufferOffset++] <<  16) & 0x00ff0000;
+        result |= (InputBuffer[InputBufferOffset++] <<  8) & 0x0000ff00;
+        result |= (InputBuffer[InputBufferOffset++]) & 0x000000ff;
+
+        InputBufferAvailable -= 4;
+
+        if (InputBufferOffset >= NETWORK_BUFFER_SIZE)
+            InputBufferOffset -= NETWORK_BUFFER_SIZE;
+
+        return result;
+    }
+
+    return -1;
+}
+
 std::string NetworkClient::InputReadString() {
     char* tempBuffer = Mem::Allocate(64, __FILE__, __LINE__, "Temp_Buffer");
 
@@ -508,6 +533,7 @@ std::string NetworkClient::InputReadString() {
 
     std::string result(tempBuffer, 64);
     Mem::Free(tempBuffer);
+    Utils::TrimString(result);
     return result;
 }
 

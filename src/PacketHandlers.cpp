@@ -14,8 +14,9 @@ void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& clien
 
     if (!client->LoggedIn && client->DisconnectTime == 0 && isCpe != 66) {
         Client::Login(client->Id, clientName, mppass, clientVersion);
-    } else if (isCpe == 66 && !client->LoggedIn && client->DisconnectTime == 0) {
-        Client::Login(client->Id, clientName, mppass, clientVersion); // -- CPE capable Client
+    } else if (isCpe == 66 && !client->LoggedIn && client->DisconnectTime == 0) { // -- CPE capable Client
+        Logger::LogAdd("Network", "CPE Client Detected", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+        Client::LoginCpe(client->Id, clientName, mppass, clientVersion); 
     }
 }
 
@@ -67,12 +68,35 @@ void PacketHandlers::HandleChatPacket(const std::shared_ptr<NetworkClient> &clie
 
 void PacketHandlers::HandleExtInfo(const std::shared_ptr<NetworkClient> &client) {
     client->InputAddOffset(1);
+    
+    std::string appName = client->InputReadString();
+    short extensions = client->InputReadShort();
+    client->CPE = true;
+    
+    if (extensions == 0) {
+        CPE::PreLoginExtensions(client);
+    }
+    
+    client->CustomExtensions = extensions;
+    Logger::LogAdd("CPE", "Client supports " + stringulate(extensions) + " extensions", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void PacketHandlers::HandleExtEntry(const std::shared_ptr<NetworkClient> &client) {
     client->InputAddOffset(1);
+    std::string extName = client->InputReadString();
+    int extVersion = client->InputReadInt();
+    client->CustomExtensions--;
+    client->Extensions.insert(std::make_pair(extName, extVersion));
+    if (client->CustomExtensions == 0) {
+        CPE::PreLoginExtensions(client);
+    }
 }
 
 void PacketHandlers::HandleCustomBlockSupportLevel(const std::shared_ptr<NetworkClient> &client) {
     client->InputAddOffset(1);
+    unsigned char supportLevel = client->InputReadByte();
+    client->CustomBlocksLevel = supportLevel;
+
+    Logger::LogAdd("CPE", "CPE Process complete.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Client::Login(client->Id, client->player->LoginName, client->player->MPPass, client->player->ClientVersion);
 }

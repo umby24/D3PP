@@ -10,6 +10,7 @@
 #include "Network.h"
 #include "Logger.h"
 #include "BuildMode.h"
+#include "CPE.h"
 
 class NetworkClient;
 

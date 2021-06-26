@@ -75,6 +75,7 @@ public:
     int PingTime;
     bool LoggedIn;
     bool CPE;
+    int CustomExtensions;
     int CustomBlocksLevel;
     bool GlobalChat;
     std::unique_ptr<Sockets> clientSocket;

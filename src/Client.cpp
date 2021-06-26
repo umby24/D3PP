@@ -83,6 +83,23 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     pl->SaveFile = true;
 }
 
+void Client::LoginCpe(int clientId, std::string name, std::string mppass, char version) {
+    Network *n = Network::GetInstance();
+    PlayerMain *pm = PlayerMain::GetInstance();
+    Player_List *pl = Player_List::GetInstance();
+    MapMain *mm = MapMain::GetInstance();
+    Rank *rm = Rank::GetInstance();
+
+    std::shared_ptr<NetworkClient> c = n->GetClient(clientId);
+
+    c->player = std::make_unique<Player>();
+    c->player->LoginName = name;
+    c->player->MPPass = mppass;
+    c->player->ClientVersion = version;
+    Packets::SendExtInfo(c, "D3PP Server Alpha", 1);
+    Packets::SendExtEntry(c, "CustomBlocks", 1);
+}
+
 void Client::Logout(int clientId, std::string message, bool showtoall) {
     Network *n = Network::GetInstance();
     MapMain *mm = MapMain::GetInstance();

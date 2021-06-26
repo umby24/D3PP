@@ -91,3 +91,19 @@ void Packets::SendDisconnect(int clientId, std::string reason) {
     c->OutputWriteString(std::move(reason));
 }
 
+void Packets::SendExtInfo(std::shared_ptr<NetworkClient> client, std::string serverName, int extensionCount) {
+    client->OutputWriteByte(16);
+    client->OutputWriteString(std::move(serverName));
+    client->OutputWriteShort(extensionCount);
+}
+
+void Packets::SendExtEntry(std::shared_ptr<NetworkClient> client, std::string extensionName, int versionNumber) {
+    client->OutputWriteByte(17);
+    client->OutputWriteString(std::move(extensionName));
+    client->OutputWriteInt(versionNumber);
+}
+
+void Packets::SendCustomBlockSupportLevel(std::shared_ptr<NetworkClient> client, unsigned char supportLevel) {
+    client->OutputWriteByte(19);
+    client->OutputWriteByte(supportLevel);
+}
