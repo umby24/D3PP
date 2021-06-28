@@ -309,7 +309,27 @@ void CommandMain::CommandHelp() {
 }
 
 void CommandMain::CommandPlayers() {
-    
+     Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlayers:");
+    std::string textToSend = "";
+
+     for(auto const &nc : nm->_clients) {
+         if (nc.second != nullptr && nc.second->player != nullptr && nc.second->player->tEntity->playerList != nullptr) {
+             std::string playerName = Entity::GetDisplayname(nc.second->player->tEntity->Id);
+
+            std::string toAdd = playerName + " &c| ";
+            if (64 - textToSend.size() >= toAdd.size()) {
+                textToSend += toAdd;
+            } else {
+                NetworkFunctions::SystemMessageNetworkSend(c->Id, textToSend);
+                textToSend = toAdd;
+            }
+         }
+     }
+     if (textToSend.size() > 0) {
+         NetworkFunctions::SystemMessageNetworkSend(c->Id, textToSend);
+     }
 }
 
 void CommandMain::CommandPlayerInfo() {

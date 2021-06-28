@@ -39,11 +39,6 @@ int main()
     CommandMain *cm = CommandMain::GetInstance();
     BuildModeMain *bmm = BuildModeMain::GetInstance();
     
-    clock_t derp = clock();
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    clock_t derp2 = clock();
-    std::cout << derp2-derp << std::endl; // -- ~ 16.
-    
     TaskScheduler::RunSetupTasks();
     System::IsRunning = true;
     n->Load();
