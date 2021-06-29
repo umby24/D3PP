@@ -40,6 +40,8 @@ void PreferenceLoader::LoadFile_() {
             continue;
         }
 
+        Utils::TrimString(thisLine);
+
         if ((thisLine[0] == '[') && thisLine[thisLine.size()-1] == ']') {
             std::string groupName = thisLine.substr(1, thisLine.size() - 2);
             while (SettingsDictionary.find(groupName) != SettingsDictionary.end()) {

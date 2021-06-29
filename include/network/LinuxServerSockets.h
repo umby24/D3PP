@@ -30,6 +30,7 @@ public:
     void Listen();
     ServerSocketEvent CheckEvents();
     std::unique_ptr<Sockets> Accept();
+    int GetEventSocket();
     void Unaccept(int fd);
     void Stop();
 private:
@@ -37,6 +38,7 @@ private:
     int listenPort;
     int listenSocket;
     int clientSockets[MAXIMUM_CONNECTIONS];
+    int eventSocket;
     struct sockaddr_in server, address;
 
     fd_set readfds;

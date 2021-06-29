@@ -22,7 +22,7 @@ void MapMain::MainFunc() {
     long fileTime = Utils::FileModTime(mapListFile);
     
     if (System::IsRunning && mbcStarted == false) {
-        std::thread mbcThread(MapMain::MapBlockchange, this);
+        std::thread mbcThread([this]() {this->MapBlockchange(); });
         std::swap(BlockchangeThread, mbcThread);
         mbcStarted = true;
     } 

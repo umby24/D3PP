@@ -99,9 +99,12 @@ int Utils::RandomNumber(int max) {
 }
 
 void Utils::TrimString(std::string &input) {
+    if (input.empty())
+        return;
+
     while (input[0] == ' ')
         input = input.substr(1);
 
-    while (input[input.size()-1] == ' ' || input[input.size()-1] == '\r' || input[input.size()-1] == '\n')
+    while (input.size() > 0 && (input[input.size()-1] == ' ' || input[input.size()-1] == '\r' || input[input.size()-1] == '\n'))
         input = input.substr(0, input.size() - 1);
 }

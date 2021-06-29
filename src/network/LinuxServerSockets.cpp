@@ -68,7 +68,7 @@ void ServerSocket::Stop() {
 
 }
 
-unique_ptr<Sockets> ServerSocket::Accept() {
+std::unique_ptr<Sockets> ServerSocket::Accept() {
     int newSocket;
     int addrlen = sizeof(struct sockaddr_in);
     newSocket = accept(listenSocket, (struct sockaddr*)&address, (socklen_t *) &addrlen);
@@ -89,6 +89,7 @@ ServerSocketEvent ServerSocket::CheckEvents() {
     FD_ZERO(&readfds);
     FD_SET(listenSocket, &readfds);
     int maxFd = listenSocket;
+
     for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
         if (clientSockets[i] > 0) {
             if (clientSockets[i] > maxFd)
@@ -96,8 +97,8 @@ ServerSocketEvent ServerSocket::CheckEvents() {
             FD_SET(clientSockets[i], &readfds);
         }
     }
-
-    int activity = select(maxFd+1, &readfds, NULL, NULL, NULL);
+    struct timeval time = {0, 5};
+    int activity = select(maxFd+1, &readfds, NULL, NULL, &time);
 
     if (activity == -1) {
         Logger::LogAdd("ServerSocket", "Some error occured calling select.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
@@ -112,6 +113,7 @@ ServerSocketEvent ServerSocket::CheckEvents() {
     for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
         int s = clientSockets[i];
         if (FD_ISSET(s, &readfds)) {
+            eventSocket = s;
             return SOCKET_EVENT_DATA;
         }
     }
@@ -126,4 +128,9 @@ void ServerSocket::Unaccept(int fd) {
         }
     }
 }
+
+int ServerSocket::GetEventSocket() {
+    return eventSocket;
+}
+
 #endif
