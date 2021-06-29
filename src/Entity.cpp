@@ -7,10 +7,9 @@ const std::string MODULE_NAME = "Entity";
 std::map<int, std::shared_ptr<Entity>> Entity::_entities;
 
 EntityMain::EntityMain() {
-    TaskItem entityMain;
-    entityMain.Interval = std::chrono::milliseconds(100);
-    entityMain.Main = [this] { MainFunc(); };
-    TaskScheduler::RegisterTask("Entity", entityMain);
+    this->Interval = std::chrono::milliseconds(100);
+    this->Main = [this] { MainFunc(); };
+    TaskScheduler::RegisterTask("Entity", *this);
 }
 
 void EntityMain::MainFunc() {

@@ -7,6 +7,10 @@ const std::string MODULE_NAME = "Block";
 Block* Block::Instance = nullptr;
 
 Block::Block() {
+    SaveFile = false;
+    hasLoaded = false;
+    LastFileDate = 0;
+
     for(auto i = 0; i < 255; i++) { // -- Pre-pop..
         struct MapBlock shell;
         shell.Id = i;

@@ -65,12 +65,16 @@ bool GZIP::GZip_CompressToFile(unsigned char *input, int inputLen, std::string f
     compressed = new unsigned char[inputLen];
     int compResult = GZip_Compress(compressed, inputLen, input, inputLen);
 
-    if (compResult == -1)
+    if (compResult == -1) {
+        delete[] compressed;
         return false;
+    }
 
     std::ofstream wf(filename, std::ios::out | std::ios::binary);
     wf.write((char *)compressed, compResult);
     wf.close();
+
+    delete[] compressed;
 
     return true;
 }
@@ -86,8 +90,11 @@ int GZIP::GZip_DecompressFromFile(unsigned char *output, int outputLen, std::str
 
     int decompResult = GZip_Decompress(output, outputLen, (unsigned char*)data, fileSize);
 
-    if (decompResult == -1)
+    if (decompResult == -1) {
+        delete[] data;
         return 0;
+    }
 
+    delete[] data;
     return decompResult;
 }

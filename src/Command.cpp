@@ -4,18 +4,21 @@ const std::string MODULE_NAME = "Command";
 CommandMain* CommandMain::Instance = nullptr;
 
 CommandMain::CommandMain() {
-    TaskItem thisItem;
-    thisItem.Setup = [this] { Setup(); };
-    thisItem.Main = [this] { MainFunc(); };
-    thisItem.Interval = std::chrono::seconds(1);
-    TaskScheduler::RegisterTask("Commands", thisItem);
+    this->Setup = [this] { Init(); };
+    this->Main = [this] { MainFunc(); };
+    this->Interval = std::chrono::seconds(1);
+    SaveFile = false;
+    FileDateLast = 0;
+    CommandClientId = -1;
+    TaskScheduler::RegisterTask("Commands", *this);
 }
 
-void CommandMain::Setup() {
+void CommandMain::Init() {
     Command listCommands;
     listCommands.Id = "List-Commands";
     listCommands.Name = "commands";
     listCommands.Internal = true;
+    listCommands.Hidden = false;
     listCommands.Rank = 0;
     listCommands.RankShow = 0;
     listCommands.Function = [this] { CommandMain::CommandCommands(); };
@@ -25,6 +28,7 @@ void CommandMain::Setup() {
     helpCommand.Id = "Command-Help";
     helpCommand.Name = "cmdhelp";
     helpCommand.Internal = true;
+    helpCommand.Hidden = false;
     helpCommand.Rank = 0;
     helpCommand.RankShow = 0;
     helpCommand.Function = [this] { CommandMain::CommandHelp(); };
@@ -34,6 +38,7 @@ void CommandMain::Setup() {
     listPlayers.Id = "List-Players";
     listPlayers.Name = "players";
     listPlayers.Internal = true;
+    listPlayers.Hidden = false;
     listPlayers.Rank = 0;
     listPlayers.RankShow = 0;
     listPlayers.Function = [this] { CommandMain::CommandPlayers(); };
@@ -43,6 +48,7 @@ void CommandMain::Setup() {
     pInfoCmd.Id = "Player-Info";
     pInfoCmd.Name = "pinfo";
     pInfoCmd.Internal = true;
+    pInfoCmd.Hidden = false;
     pInfoCmd.Rank = 0;
     pInfoCmd.RankShow = 0;
     pInfoCmd.Function = [this] { CommandMain::CommandPlayerInfo(); };
@@ -52,6 +58,7 @@ void CommandMain::Setup() {
     pingCommand.Id = "Ping";
     pingCommand.Name = "ping";
     pingCommand.Internal = true;
+    pingCommand.Hidden = false;
     pingCommand.Rank = 0;
     pingCommand.RankShow = 0;
     pingCommand.Function = [this] { CommandMain::CommandPing(); };
@@ -61,6 +68,7 @@ void CommandMain::Setup() {
     globalCommand.Id = "Global";
     globalCommand.Name = "global";
     globalCommand.Internal = true;
+    globalCommand.Hidden = false;
     globalCommand.Rank = 0;
     globalCommand.RankShow = 0;
     globalCommand.Function = [this] { CommandMain::CommandGlobal(); };
@@ -70,6 +78,7 @@ void CommandMain::Setup() {
     changeMapCommand.Id = "Map";
     changeMapCommand.Name = "map";
     changeMapCommand.Internal = true;
+    changeMapCommand.Hidden = false;
     changeMapCommand.Rank = 0;
     changeMapCommand.RankShow = 0;
     changeMapCommand.Function = [this] { CommandMain::CommandChangeMap(); };
@@ -109,7 +118,7 @@ void CommandMain::Load() {
         bool found = false;
 
         for(auto &cmd : Commands) {
-            if (cmd.Id == si.first && cmd.Hidden == false) {
+            if (cmd.Id == si.first && !cmd.Hidden) {
                 found = true;
                 pl.SelectGroup(si.first);
                 cmd.Name = pl.Read("Name", "");

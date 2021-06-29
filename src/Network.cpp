@@ -8,6 +8,15 @@ Network* Network::singleton_ = nullptr;
 
 Network::Network() {
     TempBuffer = Mem::Allocate(NETWORK_TEMP_BUFFER_SIZE, __FILE__, __LINE__, "Network\\TempBuffer");
+    isListening = false;
+    TimerRate = 0;
+    UploadRate = 0;
+    UploadRateCounter = 0;
+    DownloadRate = 0;
+    DownloadRateCounter = 0;
+    Port = 25565;
+    lastModifiedTime = 0;
+    SaveFile = false;
 
     TaskItem networkMain;
     networkMain.Interval = std::chrono::seconds(1);
@@ -478,7 +487,7 @@ void NetworkClient::OutputWriteInt(int value) {
     OutputBuffer[location++] = (unsigned char) (value >> 16);
     OutputBuffer[location++] = (unsigned char) (value >> 8);
     OutputBuffer[location++] = (unsigned char) value;
-    OutputBufferAvailable += 2;
+    OutputBufferAvailable += 4;
 }
 
 void NetworkClient::OutputWriteString(std::string value) {

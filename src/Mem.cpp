@@ -10,7 +10,7 @@ const std::string MODULE_NAME = "Mem";
 Mem::Mem() {
     this->Interval = std::chrono::milliseconds(10000);
     this->Main = [this] { MainFunc(); };
-
+    MemoryUsage = 0;
     TaskScheduler::RegisterTask("Mem", *this);
 }
 
@@ -55,7 +55,7 @@ void Mem::Free(char *memory) {
     int i = 0;
     for(auto item : m->_elements) {
         if (item.Memory == memory) {
-            delete memory;
+            delete[] memory;
             found = true;
             m->MemoryUsage -= item.Size;
             m->_elements.erase(m->_elements.begin() + i);

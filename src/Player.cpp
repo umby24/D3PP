@@ -38,7 +38,20 @@ PlayerMain::PlayerMain() {
     this->Setup = [this] { Load(); };
     this->Main= [this] { MainFunc(); };
     this->Teardown = [this] { Save(); };
-
+    MaxPlayers = 32;
+    NameVerification = true;
+    killMode = KillMode::MAP_SPAWN;
+    killMapId = 0;
+    WelcomeMessage = "";
+    killSpawnX = 0;
+    killSpawnY = 0;
+    killSpawnZ = 0;
+    killSpawnRot = 0;
+    killSpawnLook = 0;
+    spawnMapId = 0;
+    SaveFile = false;
+    LastFileDate = 0;
+    OntimeCounter = 0;
     TaskScheduler::RegisterTask(MODULE_NAME, *this);
 }
 

@@ -69,16 +69,23 @@ Sockets::~Sockets()
 {
     //dtor
     Disconnect();
-    freeaddrinfo(host_info_list);
+    if (host_info_list != nullptr)
+        freeaddrinfo(host_info_list);
 }
 
 Sockets::Sockets() {
-
+ connected = false;
+ status = 0;
+ socketfd = -1;
+ host_info_list = nullptr;
+ m_Counter = 0;
 }
 
 Sockets::Sockets(int acceptfd) {
     socketfd = acceptfd;
     connected = true;
+    status = 0;
+    host_info_list = nullptr;
 }
 
 #endif

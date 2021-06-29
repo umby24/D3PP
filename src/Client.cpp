@@ -98,6 +98,7 @@ void Client::LoginCpe(int clientId, std::string name, std::string mppass, char v
     c->player->ClientVersion = version;
     Packets::SendExtInfo(c, "D3PP Server Alpha", 1);
     Packets::SendExtEntry(c, "CustomBlocks", 1);
+    Logger::LogAdd(MODULE_NAME, "LoginCPE complete", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void Client::Logout(int clientId, std::string message, bool showtoall) {

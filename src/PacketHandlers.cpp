@@ -85,6 +85,7 @@ void PacketHandlers::HandleExtEntry(const std::shared_ptr<NetworkClient> &client
     client->InputAddOffset(1);
     std::string extName = client->InputReadString();
     int extVersion = client->InputReadInt();
+    Logger::LogAdd("DEBUG", "Got ExtEntry", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     client->CustomExtensions--;
     client->Extensions.insert(std::make_pair(extName, extVersion));
     if (client->CustomExtensions == 0) {

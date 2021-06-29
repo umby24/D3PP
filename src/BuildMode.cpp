@@ -7,6 +7,7 @@ const std::string MODULE_NAME = "BuildMode";
 BuildModeMain::BuildModeMain() {
     SaveFile = false;
     hasLoaded = false;
+    LastFileDate = 0;
 
     this->Interval = std::chrono::seconds(1);
     this->Setup = [this] { Load(); };

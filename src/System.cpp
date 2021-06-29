@@ -17,6 +17,8 @@ System::System() {
     ServerName = "D3PP Server";
     Motd = "&cWelcome to D3PP!";
     ClickDistance = 160;
+    SaveFile = false;
+    lastModified = 0;
 
     TaskScheduler::RegisterTask(MODULE_NAME, *this);
 }

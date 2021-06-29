@@ -10,6 +10,13 @@ PlayerListEntry::PlayerListEntry() {
     Stopped = 0;
     Banned = false;
     Save = false;
+    Number = 0;
+    OntimeCounter = 0;
+    Online = 0;
+    LoginCounter = 0;
+    KickCounter = 0;
+    PRank = 0;
+    GlobalChat = false;
 }
 
 void Player_List::CloseDatabase() {
@@ -60,7 +67,9 @@ Player_List::Player_List() {
     this->Main = [this] { MainFunc(); };
     this->Teardown = [this] { Save(); };
     this->Interval = std::chrono::minutes(2);
-
+    SaveFile = false;
+    db = nullptr;
+    LastFileTime = 0;
     TaskScheduler::RegisterTask(MODULE_NAME, *this);
 }
 

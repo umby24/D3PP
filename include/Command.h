@@ -26,7 +26,6 @@ struct CommandGroup {
 
 class Command {
     public:
-
         std::string Id;
         std::string Name;
         std::string Group;
@@ -57,7 +56,7 @@ class CommandMain : TaskItem {
         static CommandMain* Instance;
 
         CommandMain();
-        void Setup();
+        void Init();
         void Load();
         void Save();
         void MainFunc();

@@ -13,6 +13,14 @@ MapMain::MapMain() {
     this->Main = [this] { MainFunc(); };
     this->Interval = std::chrono::seconds(1);
     TaskScheduler::RegisterTask(MODULE_NAME, *this);
+    LastWriteTime = 0;
+    SaveFile = false;
+    SaveFileTimer = 0;
+    mapSettingsLastWriteTime = 0;
+    mapSettingsMaxChangesSec = 1100;
+    mapSettingsTimerFileCheck = 0;
+    StatsTimer = 0;
+
     mbcStarted = false;
 }
 
@@ -377,9 +385,10 @@ bool Map::Resize(short x, short y, short z) {
         for (auto ix = 0; ix < copyAreaX; ix++) {
             for(auto iy = 0; iy < copyAreaY; iy++) {
                 for (auto iz = 0; iz < copyAreaZ; iz++) {
-                    char* pointerOld = data.Data + MapMain::GetMapOffset(ix, iy, iz, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
-                    char* pointerNew = newMapData + MapMain::GetMapOffset(ix, iy, iz, x, y, z, MAP_BLOCK_ELEMENT_SIZE);
-                    data.blockCounter[(int)*pointerOld] ++;
+                    char* pointerOld = (&data.Data[MapMain::GetMapOffset(ix, iy, iz, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE)]);
+                    char* pointerNew = &newMapData[MapMain::GetMapOffset(ix, iy, iz, x, y, z, MAP_BLOCK_ELEMENT_SIZE)];
+                    data.blockCounter[(int)((unsigned char)(*pointerOld))] ++;
+
                     memcpy(pointerNew, pointerOld, MAP_BLOCK_ELEMENT_SIZE);
                 }
             }
@@ -853,4 +862,20 @@ void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z,
     }
 }
 
-Map::Map() = default;
+Map::Map() {
+    data.SaveInterval = 0;
+    data.UniqueID = "";
+    data.Name = "";
+    data.Directory = "";
+    data.RankBuild = 0;
+    data.RankJoin = 0;
+    data.RankShow = 0;
+    data.SizeX = 0;
+    data.SizeY = 0;
+    data.SizeZ = 0;
+    data.loaded = false;
+    data.loading = false;
+    data.overviewType = OverviewType::Isomap;
+    data.PhysicsStopped = false;
+    data.BlockchangeStopped = false;
+}
