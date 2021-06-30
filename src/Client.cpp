@@ -62,7 +62,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
          preLoginCorrect = false;
         Logger::LogAdd(MODULE_NAME, "Login Failed: Spawnmap invalid", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         c->Kick("&eSpawnmap Invalid", true);
-    } else if (pm->NameVerification && (!hbm->VerifyName(name, mppass))) {
+    } else if (pm->NameVerification && c->IP != "127.0.0.1" && (!hbm->VerifyName(name, mppass))) {
         preLoginCorrect = false;
         Logger::LogAdd(MODULE_NAME, "Login Failed: failed name verification", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         c->Kick("&eName verification failed", true);

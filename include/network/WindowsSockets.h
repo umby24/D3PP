@@ -25,7 +25,7 @@ class Sockets
 {
 public:
     Sockets();
-    Sockets(SOCKET accept);
+    Sockets(SOCKET accept, std::string clientIp);
     Sockets(std::string address, std::string port);
     virtual ~Sockets();
     bool Connect();
@@ -34,9 +34,11 @@ public:
     int Send(char* data, int size);
     SOCKET GetSocketFd();
     std::string GetSocketIp();
+    void SetSocketIp(std::string toSet);
 private:
     bool connected;
     SOCKET socketfd;
+    std::string ip;
     struct addrinfo host_info;
     struct addrinfo *host_info_list;
 };

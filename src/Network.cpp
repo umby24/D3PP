@@ -392,7 +392,7 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) {
     Ping = 0;
     CustomBlocksLevel = 0;
     GlobalChat = false;
-    //IP = socket->GetSocketIp();
+    IP = clientSocket->GetSocketIp();
 
     Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }

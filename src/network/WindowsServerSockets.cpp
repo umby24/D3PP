@@ -92,7 +92,7 @@ std::unique_ptr<Sockets> ServerSocket::Accept() {
         }
     }
 
-    return std::make_unique<Sockets>(newSocket);
+    return std::make_unique<Sockets>(newSocket, inet_ntoa(address.sin_addr));
 }
 
 ServerSocketEvent ServerSocket::CheckEvents() {

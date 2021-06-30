@@ -46,15 +46,11 @@ bool Sockets::Connect() {
     return true;
 }
 
+void Sockets::SetSocketIp(std::string toSet) {
+    ip = toSet;
+}
+
 std::string Sockets::GetSocketIp() {
-struct sockaddr_in                  address = {0};       
-    socklen_t                           addressLength = sizeof(address);       
-    std::string                              ip;       
-    int                                 port;       
-
-    int result = getpeername ( socketfd , (struct sockaddr*) &address , &addressLength );
-
-    ip = inet_ntoa ( address.sin_addr );  
     return ip;
 }
 
@@ -94,9 +90,10 @@ Sockets::~Sockets()
     //WSACleanup();
 }
 
-Sockets::Sockets(SOCKET accept) {
+Sockets::Sockets(SOCKET accept, std::string clientIp) {
     socketfd = accept;
     connected = true;
+    ip = clientIp;
 }
 
 Sockets::Sockets() {
