@@ -12,8 +12,9 @@
 #include <ws2tcpip.h>
 #include <ws2def.h>
 #include <stdio.h>
-#include "../Logger.h"
-#include "WindowsSockets.h"
+#include <memory>
+
+class Sockets;
 
 enum ServerSocketEvent {
     SOCKET_EVENT_NONE,

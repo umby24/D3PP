@@ -3,6 +3,16 @@
 //
 
 #include "Chat.h"
+#include "Network.h"
+#include "Player.h"
+#include "Player_List.h"
+#include "Entity.h"
+#include "Network_Functions.h"
+#include "Command.h"
+
+#include "Logger.h"
+#include "Utils.h"
+
 const int MaxStringLength = 65;
 
 void Chat::HandleChatEscapes(std::string &input, int currentEntityId) {

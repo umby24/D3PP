@@ -3,6 +3,20 @@
 //
 
 #include "Entity.h"
+
+#include "Block.h"
+
+#include "Network.h"
+#include "Player.h"
+#include "Player_List.h"
+
+#include "Map.h"
+#include "Network_Functions.h"
+#include "Logger.h"
+#include "Utils.h"
+
+
+
 const std::string MODULE_NAME = "Entity";
 std::map<int, std::shared_ptr<Entity>> Entity::_entities;
 

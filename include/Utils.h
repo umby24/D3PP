@@ -2,21 +2,9 @@
 #define UTILS_H
 
 #include <string>
-#include <algorithm>
-#include <ctime>
+#include <vector>
+#include <iomanip>
 #include <sstream>
-#include <filesystem>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <random>
-#ifndef WIN32
-#include <unistd.h>
-#endif // WIN32
-
-#ifdef WIN32
-#define stat _stat
-#endif // WIN32
 
 template<typename ValueType>
 std::string stringulate(ValueType v)

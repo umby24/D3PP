@@ -3,6 +3,9 @@
 //
 
 #include "TaskScheduler.h"
+#include "Utils.h"
+#include "Logger.h"
+
 const std::string MODULE_NAME = "Task Scheduler";
 std::map<std::string, TaskItem> TaskScheduler::_tasks;
 std::mutex TaskScheduler::_taskLock;

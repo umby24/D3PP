@@ -6,12 +6,6 @@
 #define D3PP_NETWORK_FUNCTIONS_H
 #include <string>
 
-#include "Chat.h"
-#include "Utils.h"
-#include "Packets.h"
-#include "Network.h"
-#include "Block.h"
-
 class NetworkFunctions {
 public:
     static void SystemLoginScreen(int clientId, std::string message0, std::string message1, char opMode);

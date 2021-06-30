@@ -4,14 +4,8 @@
 
 #ifndef D3PP_CLIENT_H
 #define D3PP_CLIENT_H
+
 #include <string>
-#include "Network.h"
-#include "Player.h"
-#include "Network_Functions.h"
-#include "Map.h"
-#include "watchdog.h"
-#include "System.h"
-#include "Heartbeat.h"
 
 class Client {
 public:

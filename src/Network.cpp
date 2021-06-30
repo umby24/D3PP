@@ -3,6 +3,26 @@
 //
 
 #include "Network.h"
+#include <iomanip>
+
+#ifndef __linux__
+#include "network/WindowsServerSockets.h"
+#include "network/WindowsSockets.h"
+#else
+#include "network/LinuxServerSockets.h"
+#endif
+
+#include "PacketHandlers.h"
+#include "Entity.h"
+#include "Player.h"
+#include "Mem.h"
+#include "Files.h"
+#include "watchdog.h"
+#include "Network_Functions.h"
+#include "Client.h"
+#include "Logger.h"
+#include "Utils.h"
+
 const std::string MODULE_NAME = "Network";
 Network* Network::singleton_ = nullptr;
 
@@ -93,10 +113,11 @@ void Network::Start() {
     if (isListening)
         Stop();
 
-    ServerSocket mSock(this->Port);
-    std::swap(listenSocket, mSock);
+    if (listenSocket == nullptr) {
+        listenSocket = std::make_unique<ServerSocket>(this->Port);
+    }
 
-    listenSocket.Listen();
+    listenSocket->Listen();
     isListening = true;
 
     Logger::LogAdd(MODULE_NAME, "Network server started on port " + stringulate(this->Port), LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
@@ -115,7 +136,7 @@ void Network::Stop() {
         DeleteClient(id, "Client Disconnected", true);
     }
 
-    listenSocket.Stop();
+    listenSocket->Stop();
     isListening = false;
     Logger::LogAdd(MODULE_NAME, "Network server stopped", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
@@ -211,10 +232,10 @@ void Network::NetworkEvents() {
 watchdog::Watch("Network", "Begin events", 0);
 
     while (isListening) {
-        ServerSocketEvent e = listenSocket.CheckEvents();
+        ServerSocketEvent e = listenSocket->CheckEvents();
 
         if (e == ServerSocketEvent::SOCKET_EVENT_CONNECT) { 
-            std::unique_ptr<Sockets> newClient = listenSocket.Accept();
+            std::unique_ptr<Sockets> newClient = listenSocket->Accept();
 
             if (newClient != nullptr) {
                 NetworkClient newNcClient(std::move(newClient));
@@ -222,7 +243,7 @@ watchdog::Watch("Network", "Begin events", 0);
                 _clients.insert(std::make_pair(clientId, std::make_shared<NetworkClient>(std::move(newNcClient))));
             }
         } else if (e == ServerSocketEvent::SOCKET_EVENT_DATA) {
-            int clientId = static_cast<int>(listenSocket.GetEventSocket());
+            int clientId = static_cast<int>(listenSocket->GetEventSocket());
             std::shared_ptr<NetworkClient> client = GetClient(clientId);
             int dataRead = client->clientSocket->Read(TempBuffer, NETWORK_TEMP_BUFFER_SIZE);
 
@@ -590,7 +611,7 @@ void Network::DeleteClient(int clientId, std::string message, bool sendToAll) {
     Client::Logout(clientId, message, sendToAll);
     Mem::Free(_clients[clientId]->InputBuffer);
     Mem::Free(_clients[clientId]->OutputBuffer);
-    listenSocket.Unaccept(_clients[clientId]->clientSocket->GetSocketFd());
+    listenSocket->Unaccept(_clients[clientId]->clientSocket->GetSocketFd());
     Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(clientId) + "] [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     _clients[clientId]->clientSocket->Disconnect();
     _clients.erase(clientId);

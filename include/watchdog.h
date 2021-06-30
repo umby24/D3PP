@@ -9,8 +9,7 @@
 #include <mutex>
 #include <thread>
 #include <fstream>
-#include "Files.h"
-#include "Utils.h"
+
 #include "TaskScheduler.h"
 
 const std::string WATCHDOG_HTML_NAME = "Watchdog_HTML";

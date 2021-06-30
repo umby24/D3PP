@@ -3,6 +3,12 @@
 //
 
 #include "Mem.h"
+#include <math.h>
+
+#include "Files.h"
+#include "Logger.h"
+#include "Utils.h"
+
 Mem* Mem::singleton_ = nullptr;
 std::mutex Mem::_lock;
 const std::string MODULE_NAME = "Mem";

@@ -3,6 +3,12 @@
 //
 
 #include "Network_Functions.h"
+#include "Chat.h"
+#include "Utils.h"
+#include "Packets.h"
+#include "Network.h"
+#include "Block.h"
+#include "Player.h"
 
 static std::shared_ptr<NetworkClient> GetPlayer(int id) {
     auto network = Network::GetInstance();

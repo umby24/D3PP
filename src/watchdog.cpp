@@ -3,6 +3,10 @@
 //
 
 #include "watchdog.h"
+#include "Files.h"
+#include "Utils.h"
+#include "Logger.h"
+
 watchdog* watchdog::singleton_ = nullptr;
 
 void watchdog::Watch(std::string module, std::string message, int state) {

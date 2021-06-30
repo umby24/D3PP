@@ -6,7 +6,7 @@
 #define D3PP_PACKETS_H
 
 #include <string>
-#include "Network.h"
+#include <memory>
 
 class NetworkClient;
 

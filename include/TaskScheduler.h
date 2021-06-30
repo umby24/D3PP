@@ -9,11 +9,7 @@
 #include <map>
 #include <chrono>
 #include <mutex>
-
-#include "Utils.h"
-#include "Logger.h"
-
-class Logger;
+#include <functional>
 
 class TaskItem {
 public:

@@ -1,4 +1,12 @@
 #include "BuildMode.h"
+#include "Files.h"
+#include "common/PreferenceLoader.h"
+#include "Network.h"
+#include "Player.h"
+#include "Entity.h"
+#include "Map.h"
+#include "Logger.h"
+#include "Utils.h"
 
 BuildModeMain* BuildModeMain::Instance = nullptr;
 

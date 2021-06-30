@@ -4,12 +4,10 @@
 
 #ifndef D3PP_HEARTBEAT_H
 #define D3PP_HEARTBEAT_H
+#include <string>
+#include <chrono>
 
-#include "System.h"
 #include "TaskScheduler.h"
-#include "Network.h"
-#include "network/httplib.h"
-#include "digestpp/digestpp.hpp"
 #include "json.hpp"
 
 const char *const CLASSICUBE_NET_URL = "http://www.classicube.net";

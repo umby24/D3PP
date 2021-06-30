@@ -3,6 +3,13 @@
 //
 
 #include "Player.h"
+#include <iomanip>
+#include "Entity.h"
+#include "Files.h"
+#include "Player_List.h"
+#include "Logger.h"
+#include "Utils.h"
+
 const std::string MODULE_NAME = "Player";
 PlayerMain* PlayerMain::Instance = nullptr;
 

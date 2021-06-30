@@ -3,6 +3,13 @@
 //
 
 #include "Block.h"
+
+#include "common/PreferenceLoader.h"
+#include "TaskScheduler.h"
+#include "Utils.h"
+#include "Files.h"
+#include "Logger.h"
+
 const std::string MODULE_NAME = "Block";
 Block* Block::Instance = nullptr;
 

@@ -8,10 +8,9 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <memory>
 
 #include "TaskScheduler.h"
-#include "Network.h"
-#include "Utils.h"
 
 class Network;
 class NetworkClient;

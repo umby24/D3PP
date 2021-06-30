@@ -9,11 +9,8 @@
 #include <vector>
 #include <map>
 
-#include "Files.h"
 #include "TaskScheduler.h"
-#include "common/PreferenceLoader.h"
-#include "Network.h"
-#include "Utils.h"
+
 
 const std::string BUILD_MODE_FILE_NAME = "Build_Mode";
 const int BUILD_MODE_BLOCKS_TO_RESEND_SIZE_MAX = 1000;

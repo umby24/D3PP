@@ -3,6 +3,8 @@
 //
 
 #include <Packets.h>
+#include "Network.h"
+
 static std::shared_ptr<NetworkClient> GetPlayer(int id) {
     auto network = Network::GetInstance();
     auto result = network->GetClient(id);

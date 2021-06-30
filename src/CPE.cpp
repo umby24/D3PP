@@ -1,5 +1,10 @@
 #include "CPE.h"
 
+#include "Client.h"
+#include "Player.h"
+#include "Network.h"
+#include "Packets.h"
+
 void CPE::PreLoginExtensions(std::shared_ptr<NetworkClient> client) {
     if (client->Extensions.find("ClickDistance") != client->Extensions.end()) {
         // -- do click distance things

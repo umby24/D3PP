@@ -2,6 +2,17 @@
 // Created by Wande on 3/22/2021.
 //
 #include "Player_List.h"
+
+#include "Network.h"
+#include "Logger.h"
+#include "Files.h"
+#include "Rank.h"
+#include "Player.h"
+#include "Network_Functions.h"
+#include "Entity.h"
+#include "TaskScheduler.h"
+#include "Utils.h"
+
 const std::string MODULE_NAME = "Player_List";
 Player_List* Player_List::Instance = nullptr;
 

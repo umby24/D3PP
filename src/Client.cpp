@@ -3,6 +3,27 @@
 //
 
 #include "Client.h"
+
+#include <memory>
+
+#include "Rank.h"
+#include "Logger.h"
+#include "Chat.h"
+#include "Utils.h"
+
+#include "Network.h"
+#include "Player.h"
+#include "Player_List.h"
+#include "Entity.h"
+
+#include "Network_Functions.h"
+#include "Packets.h"
+
+#include "Map.h"
+#include "watchdog.h"
+#include "System.h"
+#include "Heartbeat.h"
+
 const std::string MODULE_NAME = "Client";
 
 void Client::Login(int clientId, std::string name, std::string mppass, char version) {

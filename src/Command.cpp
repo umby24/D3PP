@@ -1,5 +1,16 @@
 #include "Command.h"
 
+#include "common/PreferenceLoader.h"
+#include "Network.h"
+#include "Player.h"
+#include "Player_List.h"
+#include "Entity.h"
+#include "Map.h"
+#include "Network_Functions.h"
+#include "Logger.h"
+#include "Files.h"
+#include "Utils.h"
+
 const std::string MODULE_NAME = "Command";
 CommandMain* CommandMain::Instance = nullptr;
 

@@ -4,6 +4,11 @@
 
 #include "compression.h"
 
+#include <zlib.h>
+#include <fstream>
+#include "Logger.h"
+#include "Utils.h"
+
 int GZIP::GZip_Decompress(unsigned char *output, int outputLen, unsigned char *input, int inputLen) {
     z_stream asdf;
     asdf.zalloc = Z_NULL;

@@ -6,17 +6,16 @@
 #define D3PP_BLOCK_H
 #include <string>
 #include <vector>
-#include <filesystem>
+#include <time.h>
 
-#include "common/PreferenceLoader.h"
 #include "TaskScheduler.h"
 #include "json.hpp"
-#include "Utils.h"
-#include "Files.h"
+
 
 using json = nlohmann::json;
-
+class TaskItem;
 const std::string BLOCK_FILE_NAME = "Block";
+
 enum PhysicsType {
     OFF = 0,
     ORIGINAL_SAND = 10,

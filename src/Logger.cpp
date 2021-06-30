@@ -1,4 +1,10 @@
 #include "Logger.h"
+#include <iostream>
+#include <iomanip>
+#include <chrono>
+
+#include "Utils.h"
+#include "Files.h"
 
 Logger* Logger::singleton_ = nullptr;
 

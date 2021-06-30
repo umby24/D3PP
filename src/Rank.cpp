@@ -3,6 +3,12 @@
 //
 
 #include "Rank.h"
+#include <iomanip>
+
+#include "Utils.h"
+#include "Files.h"
+#include "Logger.h"
+
 const std::string MODULE_NAME = "Rank";
 Rank* Rank::Instance = nullptr;
 

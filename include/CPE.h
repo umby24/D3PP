@@ -1,12 +1,7 @@
 #ifndef D3PP_CPE_H
 #define D3PP_CPE_H
 
-#include <vector>
-#include <map>
-#include <string>
-
-#include "Network.h"
-#include "Packets.h"
+#include <memory>
 
 class NetworkClient;
 

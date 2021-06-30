@@ -7,7 +7,10 @@
 #include "watchdog.h"
 #include "System.h"
 #include "Logger.h"
+#include "Client.h"
+
 #include "Block.h"
+#include "Player.h"
 #include "Entity.h"
 #include "BuildMode.h"
 #include "Heartbeat.h"

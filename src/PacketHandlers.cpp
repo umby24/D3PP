@@ -4,6 +4,16 @@
 
 #include "PacketHandlers.h"
 
+#include "Chat.h"
+#include "Network.h"
+#include "Client.h"
+#include "Player.h"
+#include "Entity.h"
+#include "Logger.h"
+#include "BuildMode.h"
+#include "CPE.h"
+#include "Utils.h"
+
 void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& client) {
     client->InputAddOffset(1);
     char clientVersion = client->InputReadByte();

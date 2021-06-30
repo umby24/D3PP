@@ -2,11 +2,8 @@
 #define LOGGER_H
 
 #include <string>
-#include <iostream>
 #include <fstream>
 #include <vector>
-#include "Utils.h"
-#include "Files.h"
 
 const int LOG_FILE_SIZE_MAX = 1000000;
 const int LOG_SIZE_MAX = 1000;

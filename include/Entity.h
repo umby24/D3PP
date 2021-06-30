@@ -9,8 +9,6 @@
 #include <map>
 #include <memory>
 
-#include "Player_List.h"
-#include "Map.h"
 #include "TaskScheduler.h"
 
 class PlayerListEntry;

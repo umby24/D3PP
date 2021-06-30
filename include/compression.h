@@ -5,10 +5,6 @@
 #ifndef D3PP_COMPRESSION_H
 #define D3PP_COMPRESSION_H
 #include <string>
-#include <zlib.h>
-#include <fstream>
-
-#include "Logger.h"
 
 class GZIP {
 public:

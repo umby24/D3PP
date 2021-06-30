@@ -4,6 +4,17 @@
 
 #include "Heartbeat.h"
 
+
+#include "System.h"
+#include "TaskScheduler.h"
+#include "Network.h"
+#include "Player.h"
+#include "network/httplib.h"
+#include "digestpp/digestpp.hpp"
+#include "Files.h"
+#include "Utils.h"
+#include "Logger.h"
+
 const std::string MODULE_NAME = "Heartbeat";
 Heartbeat* Heartbeat::Instance = nullptr;
 
