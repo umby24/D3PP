@@ -333,7 +333,7 @@ void PlayerListEntry::SetRank(int rank, const std::string &reason) {
     }
 }
 
-void PlayerListEntry::Kick(std::string reason, int count, bool log, bool show) {
+void PlayerListEntry::Kick(const std::string &reason, int count, bool log, bool show) {
     bool found = false;
     Network* ni = Network::GetInstance();
 
@@ -366,17 +366,74 @@ void PlayerListEntry::SetGlobal(bool globalChat) {
 }
 
 void PlayerListEntry::Mute(int minutes, std::string reason) {
-
+    if (minutes <= 0) {
+        minutes = 999999;
+    }
+    MuteTime = time(nullptr) + (minutes * 60);
+    MuteMessage = reason;
+    Save = true;
+    Player_List *i = Player_List::GetInstance();
+    i->SaveFile = true;
+    std::string playerName = GetDisplayName();
+    NetworkFunctions::SystemMessageNetworkSend2All(-1, "&cPlayer '" + playerName + "'&c was muted. (" + reason + ")");
+    Logger::LogAdd(MODULE_NAME, "Player muted: " + Name + " [" + reason + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void PlayerListEntry::Unmute() {
-
+    MuteTime = time(nullptr) - 10;
+    Save = true;
+    Player_List *i = Player_List::GetInstance();
+    i->SaveFile = true;
+    std::string playerName = GetDisplayName();
+    NetworkFunctions::SystemMessageNetworkSend2All(-1, "&cPlayer '" + playerName + "'&c was unmuted.");
+    Logger::LogAdd(MODULE_NAME, "Player unmuted: " + Name, LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void PlayerListEntry::Stop(std::string reason) {
-
+    Stopped = true;
+    StopMessage = reason;
+    Save = true;
+    Player_List *i = Player_List::GetInstance();
+    i->SaveFile = true;
+    std::string playerName = GetDisplayName();
+    NetworkFunctions::SystemMessageNetworkSend2All(-1, "&cPlayer '" + playerName + "'&c was stopped. (" + reason + ")");
+    Logger::LogAdd(MODULE_NAME, "Player stopped: " + Name + " [" + reason + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void PlayerListEntry::Unstop() {
+    Stopped = false;
+    Save = true;
+    Player_List *i = Player_List::GetInstance();
+    i->SaveFile = true;
+    std::string playerName = GetDisplayName();
+    NetworkFunctions::SystemMessageNetworkSend2All(-1, "&cPlayer '" + playerName + "'&c was unstopped.");
+    Logger::LogAdd(MODULE_NAME, "Player unstopped: " + Name, LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+}
 
+void PlayerListEntry::Ban(std::string reason) {
+    Banned = true;
+    BanMessage = reason;
+    Save = true;
+    Player_List *i = Player_List::GetInstance();
+    i->SaveFile = true;
+    std::string playerName = GetDisplayName();
+    NetworkFunctions::SystemMessageNetworkSend2All(-1, "&cPlayer '" + playerName + "'&c was banned. (" + reason + ")");
+    Logger::LogAdd(MODULE_NAME, "Player banned: " + Name + " [" + reason + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Kick(reason, 1, true, false);
+}
+
+std::string PlayerListEntry::GetDisplayName() {
+    Rank* rm = Rank::GetInstance();
+    RankItem ri = rm->GetRank(PRank, false);
+    return ri.Prefix + Name + ri.Suffix;
+}
+
+void PlayerListEntry::Unban() {
+    Banned = false;
+    Save = true;
+    Player_List *i = Player_List::GetInstance();
+    i->SaveFile = true;
+    std::string playerName = GetDisplayName();
+    NetworkFunctions::SystemMessageNetworkSend2All(-1, "&cPlayer '" + playerName + "'&c was unbanned.");
+    Logger::LogAdd(MODULE_NAME, "Player unbanned: " + Name, LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }

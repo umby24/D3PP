@@ -47,7 +47,8 @@ public:
     std::string StrAttributes[5];
     bool GlobalChat;
     PlayerListEntry();
-    
+
+    std::string GetDisplayName();
     int GetAttribute(std::string attrName);
     std::string GetAttributeStr(std::string attrName);
 
@@ -55,8 +56,9 @@ public:
     void SetAttribute(std::string attrName, std::string value);
 
     void SetRank(int rank, const std::string &reason);
-    void Kick(std::string reason, int count, bool log, bool show);
+    void Kick(const std::string &reason, int count, bool log, bool show);
     void Ban(std::string reason);
+    void Unban();
     void Mute(int minutes, std::string reason);
     void Unmute();
     void Stop(std::string reason);

@@ -368,8 +368,6 @@ void CommandMain::CommandGlobal() {
         std::string status = (c->GlobalChat ? "on" : "off");
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eGlobal chat is now " + status + " by default.");
     }
-
-    c->player->tEntity->playerList->SetGlobal(c->GlobalChat);
 }
 
 void CommandMain::CommandPing() {
