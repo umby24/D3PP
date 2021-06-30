@@ -6,6 +6,7 @@
 #include "Player_List.h"
 #include "Entity.h"
 #include "Map.h"
+#include "Rank.h"
 #include "Network_Functions.h"
 #include "Logger.h"
 #include "Files.h"
@@ -353,7 +354,36 @@ void CommandMain::CommandPlayers() {
 }
 
 void CommandMain::CommandPlayerInfo() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    Player_List* pll = Player_List::GetInstance();
+    Rank* rm = Rank::GetInstance();
 
+    PlayerListEntry* ple = pll->GetPointer(ParsedOperator[1]);
+    if (ple == nullptr) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[1] + "'");
+        return;
+    }
+    RankItem ri = rm->GetRank(ple->PRank, false);
+    std::string textTosend = "&ePlayer Info: <br>";
+    textTosend += "&eNumber: " + stringulate(ple->Number) + "<br>";
+    textTosend += "&eName: " + ple->GetDisplayName() + "<br>";
+    textTosend += "&eRank: " + ri.Name + " (" + stringulate(ple->PRank) + ")<br>";
+    textTosend += "&eIP: " + ple->IP + "<br>";
+    textTosend += "&eOntime: " + stringulate(ple->OntimeCounter/3600.0) + "h<br>";
+    textTosend += "&eLogins: " + stringulate(ple->LoginCounter) + "<br>";
+    textTosend += "&eKicks: " + stringulate(ple->KickCounter) + "<br>";
+    
+    if (ple->Banned) {
+        textTosend += "&4Player is banned<br>";
+    }
+    if (ple->Stopped) {
+        textTosend += "&4Player is stopped<br>";
+    }
+    if (ple->MuteTime > time(nullptr)) {
+        textTosend += "&4Player is muted<br>";
+    }
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, textTosend);
 }
 
 void CommandMain::CommandGlobal() {

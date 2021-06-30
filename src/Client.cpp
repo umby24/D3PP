@@ -86,6 +86,11 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     entry->LoginCounter++;
     entry->IP = c->IP;
     entry->Save = true;
+    
+    if (entry->OntimeCounter < 0) {
+        entry->OntimeCounter = 0;
+    }
+
     c->GlobalChat = entry->GlobalChat;
     std::shared_ptr<Map> spawnMap = mm->GetPointer(pm->spawnMapId);
     std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(name, pm->spawnMapId, spawnMap->data.SpawnX, spawnMap->data.SpawnY, spawnMap->data.SpawnZ, spawnMap->data.SpawnRot, spawnMap->data.SpawnLook);

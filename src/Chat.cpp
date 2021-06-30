@@ -39,7 +39,7 @@ std::string Chat::StringMultiline(std::string input) {
     while (!input.empty()) {
         for(auto i = 1; i < maxLength + 1; i++) {
             if (input.substr(i, 1) == "\n") {
-                result += input.substr(0, i);
+                result += input.substr(0, i+1);
                 input = input.substr(i+1);
                 break;
             }
