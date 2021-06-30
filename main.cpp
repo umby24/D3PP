@@ -10,6 +10,7 @@
 #include "Block.h"
 #include "Entity.h"
 #include "BuildMode.h"
+#include "Heartbeat.h"
 
 #include "Player_List.h"
 #include "Command.h"
@@ -38,7 +39,8 @@ int main()
     EntityMain em;
     CommandMain *cm = CommandMain::GetInstance();
     BuildModeMain *bmm = BuildModeMain::GetInstance();
-    
+    Heartbeat* hb = Heartbeat::GetInstance();
+
     TaskScheduler::RunSetupTasks();
     System::IsRunning = true;
     n->Load();
@@ -47,7 +49,7 @@ int main()
     
     std::thread mainThread(mainLoop);
     std::thread clientLoginThread(Client::LoginThread);
-    
+
     MainConsole();
 
     TaskScheduler::RunTeardownTasks();

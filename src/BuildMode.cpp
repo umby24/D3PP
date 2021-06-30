@@ -119,7 +119,7 @@ void BuildModeMain::Distribute(int clientId, int mapId, unsigned short X, unsign
     if (_buildmodes[buildMode].Plugin == "") {
         playerMap->BlockChange(nc, X, Y, Z, mode, blockType);
     } else {
-        BlockResend queuedItem;
+        BlockResend queuedItem{};
         queuedItem.X = X;
         queuedItem.Y = Y;
         queuedItem.Z = Z;

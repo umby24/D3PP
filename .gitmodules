@@ -1,0 +1,3 @@
+[submodule "include/digestpp"]
+	path = include/digestpp
+	url = https://github.com/kerukuro/digestpp

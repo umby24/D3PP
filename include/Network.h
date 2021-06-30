@@ -101,6 +101,8 @@ public:
     static Network* singleton_;
     std::shared_ptr<NetworkClient> GetClient(int id);
     std::map<int, std::shared_ptr<NetworkClient>> _clients;
+
+    int Port;
 protected:
     void DeleteClient(int clientId, std::string message, bool sendToAll);
 
@@ -121,7 +123,7 @@ private:
     int DownloadRate;
     int UploadRateCounter;
     int DownloadRateCounter;
-    int Port;
+
 
     time_t lastModifiedTime;
     bool SaveFile;

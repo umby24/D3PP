@@ -11,6 +11,7 @@
 #include "Map.h"
 #include "watchdog.h"
 #include "System.h"
+#include "Heartbeat.h"
 
 class Client {
 public:

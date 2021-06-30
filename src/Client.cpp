@@ -11,6 +11,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     Player_List *pl = Player_List::GetInstance();
     MapMain *mm = MapMain::GetInstance();
     Rank *rm = Rank::GetInstance();
+    Heartbeat* hbm = Heartbeat::GetInstance();
 
     std::shared_ptr<NetworkClient> c = n->GetClient(clientId);
 
@@ -40,8 +41,11 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
          preLoginCorrect = false;
         Logger::LogAdd(MODULE_NAME, "Login Failed: Spawnmap invalid", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         c->Kick("&eSpawnmap Invalid", true);
+    } else if (pm->NameVerification && (!hbm->VerifyName(name, mppass))) {
+        preLoginCorrect = false;
+        Logger::LogAdd(MODULE_NAME, "Login Failed: failed name verification", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        c->Kick("&eName verification failed", true);
     }
-    // -- TODO: Name verification
     
     if (!preLoginCorrect) {
         return;
