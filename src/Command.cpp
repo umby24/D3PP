@@ -96,6 +96,16 @@ void CommandMain::Init() {
     changeMapCommand.Function = [this] { CommandMain::CommandChangeMap(); };
     Commands.push_back(changeMapCommand);
 
+    Command changeRankCommand;
+    changeRankCommand.Id = "Set-Rank";
+    changeRankCommand.Name = "setrank";
+    changeRankCommand.Internal = true;
+    changeRankCommand.Hidden = false;
+    changeRankCommand.Rank = 0;
+    changeRankCommand.RankShow = 0;
+    changeRankCommand.Function = [this] { CommandMain::CommandChangeRank(); };
+    Commands.push_back(changeRankCommand);
+
     Load();
 }
 
@@ -384,6 +394,35 @@ void CommandMain::CommandPlayerInfo() {
         textTosend += "&4Player is muted<br>";
     }
     NetworkFunctions::SystemMessageNetworkSend(c->Id, textTosend);
+}
+
+void CommandMain::CommandChangeRank() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    Player_List* pll = Player_List::GetInstance();
+    Rank* rm = Rank::GetInstance();
+
+    std::string playerName = ParsedOperator[1];
+    int rankVal = std::stoi(ParsedOperator[2]);
+    std::string reason = ParsedText2;
+
+    if (rankVal >= -32768 && rankVal <= 32767) {
+        PlayerListEntry* ple = pll->GetPointer(ParsedOperator[1]);
+        if (ple == nullptr) {
+            NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[1] + "'");
+            return;
+        }
+        if (c->player->tEntity->playerList->PRank <= ple->PRank) {
+            NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't modify the rank of someone higher than you");
+            return;
+        }
+        if (c->player->tEntity->playerList->PRank <= rankVal) {
+            NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't set a rank higher than your own");
+            return;
+        }
+        ple->SetRank(rankVal, reason);
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlayers rank was updated.");
+    }
 }
 
 void CommandMain::CommandGlobal() {

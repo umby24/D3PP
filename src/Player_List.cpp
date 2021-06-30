@@ -339,7 +339,7 @@ void PlayerListEntry::SetRank(int rank, const std::string &reason) {
         if (nc.second->player && nc.second->player->tEntity && nc.second->player->tEntity->playerList && nc.second->player->tEntity->playerList->Number == Number) {
             RankItem ri = r->GetRank(rank, false);
             Entity::SetDisplayName(nc.second->player->tEntity->Id, ri.Prefix, this->Name, ri.Suffix);
-            NetworkFunctions::SystemMessageNetworkSend(nc.first, "Your rank has been changed to '" + ri.Name + "' (" + reason + ")");
+            NetworkFunctions::SystemMessageNetworkSend(nc.first, "&eYour rank has been changed to '" + ri.Name + "' (" + reason + ")");
         }
     }
 }

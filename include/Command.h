@@ -68,6 +68,7 @@ class CommandMain : TaskItem {
         void CommandGlobal();
         void CommandPing();
         void CommandChangeMap();
+        void CommandChangeRank();
     private:
 };
 
