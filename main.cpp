@@ -17,6 +17,7 @@
 
 #include "Player_List.h"
 #include "Command.h"
+#include "plugins/LuaPlugin.h"
 
 using namespace std;
 
@@ -43,7 +44,8 @@ int main()
     CommandMain *cm = CommandMain::GetInstance();
     BuildModeMain *bmm = BuildModeMain::GetInstance();
     Heartbeat* hb = Heartbeat::GetInstance();
-
+    LuaPlugin* llll = LuaPlugin::GetInstance();
+    
     TaskScheduler::RunSetupTasks();
     System::IsRunning = true;
     n->Load();
