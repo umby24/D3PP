@@ -106,6 +106,16 @@ void CommandMain::Init() {
     changeRankCommand.Function = [this] { CommandMain::CommandChangeRank(); };
     Commands.push_back(changeRankCommand);
 
+    Command mapSaveCommand;
+    mapSaveCommand.Id = "Map-Save";
+    mapSaveCommand.Name = "mapsave";
+    mapSaveCommand.Internal = true;
+    mapSaveCommand.Hidden = false;
+    mapSaveCommand.Rank = 0;
+    mapSaveCommand.RankShow = 0;
+    mapSaveCommand.Function = [this] { CommandMain::CommandSaveMap(); };
+    Commands.push_back(mapSaveCommand);
+
     Load();
 }
 
@@ -461,7 +471,7 @@ void CommandMain::CommandPing() {
 }
 
 void CommandMain::CommandChangeMap() {
-     Network* nm = Network::GetInstance();
+    Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
 
     if (c == nullptr)
@@ -475,4 +485,26 @@ void CommandMain::CommandChangeMap() {
     } else {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find map '" + ParsedText0 + "'.");
     }
+}
+
+void CommandMain::CommandSaveMap() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    if (c == nullptr)
+        return;
+
+    MapMain* mm = MapMain::GetInstance();
+    Files* fm = Files::GetInstance();
+    std::string mapDirectory = "";
+
+    if (ParsedText0 != "") {
+        mapDirectory = fm->GetFolder("Maps") + ParsedText0;
+        if (mapDirectory.substr(mapDirectory.size()-2, 1) != "/") {
+            mapDirectory += "/";
+        }
+    }
+
+    mm->AddSaveAction(CommandClientId, c->player->MapId, mapDirectory);
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eSave Queued.");
 }

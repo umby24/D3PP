@@ -69,6 +69,7 @@ class CommandMain : TaskItem {
         void CommandPing();
         void CommandChangeMap();
         void CommandChangeRank();
+        void CommandSaveMap();
     private:
 };
 

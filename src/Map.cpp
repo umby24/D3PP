@@ -39,6 +39,7 @@ MapMain::MapMain() {
     StatsTimer = 0;
 
     mbcStarted = false;
+    maStarted = false;
 }
 
 void MapMain::MainFunc() {
@@ -51,6 +52,12 @@ void MapMain::MainFunc() {
         std::swap(BlockchangeThread, mbcThread);
         mbcStarted = true;
     } 
+    
+    if (System::IsRunning && maStarted == false) {
+        std::thread maThread([this]() {this->ActionProcessor(); });
+        std::swap(ActionThread, maThread);
+        maStarted = true;
+    }
 
     if (LastWriteTime != fileTime) {
         MapListLoad();
@@ -64,7 +71,7 @@ void MapMain::MainFunc() {
 
         if (m.second->data.SaveInterval > 0 && m.second->data.SaveTime + m.second->data.SaveInterval*600 < time(nullptr) && m.second->data.loaded) {
             m.second->data.SaveTime = time(nullptr);
-            // -- MapActionAddSave
+            AddSaveAction(0, m.first, "");
         }
         if (m.second->data.Clients > 0) {
             m.second->data.LastClient = time(nullptr);
@@ -184,31 +191,45 @@ void MapMain::ActionProcessor() {
 
             switch(item.Action) {
                 case MapAction::SAVE:
+                    watchdog::Watch("Map_Action", "Begin map-save", 1);
                     trigMap->Save(item.Directory);
                     if (item.ClientID > 0) {
                         NetworkFunctions::SystemMessageNetworkSend(item.ClientID, "&eMap Saved.");
                     }
+                    watchdog::Watch("Map_Action", "End map-save", 1);
                     // -- TODO: Map_Overview_Save
                     break;
                 case MapAction::LOAD:
+                    watchdog::Watch("Map_Action", "Begin map-load", 1);
                     trigMap->Load(item.Directory);
                     if (item.ClientID > 0) {
                         NetworkFunctions::SystemMessageNetworkSend(item.ClientID, "&eMap Loaded.");
                     }
+                    watchdog::Watch("Map_Action", "end map-load", 1);
                     break;
                 case MapAction::FILL:
-                    
+                    watchdog::Watch("Map_Action", "Begin map-fill", 1);
+                    trigMap->Fill(item.FunctionName, item.ArgumentString);
+                    if (item.ClientID > 0) {
+                        NetworkFunctions::SystemMessageNetworkSend(item.ClientID, "&eMap Filled.");
+                    }
+                    watchdog::Watch("Map_Action", "end map-load", 1);
+                    break;
                 case MapAction::RESIZE:
+                    watchdog::Watch("Map_Action", "Begin map-resize", 1);
                     trigMap->Resize(item.X, item.Y, item.Z);
                     if (item.ClientID > 0) {
                         NetworkFunctions::SystemMessageNetworkSend(item.ClientID, "&eMap Resized.");
                     }
+                    watchdog::Watch("Map_Action", "end map-resize", 1);
                     break;
                 case MapAction::DELETE:
+                    watchdog::Watch("Map_Action", "Begin map-delete", 1);
                     Delete(item.MapID);
                      if (item.ClientID > 0) {
                         NetworkFunctions::SystemMessageNetworkSend(item.ClientID, "&eMap Deleted.");
                     }
+                    watchdog::Watch("Map_Action", "end map-delete", 1);
                 break;
             }
         }
@@ -424,7 +445,7 @@ void MapMain::MapListLoad() {
         bool mapDelete = (pl.Read("Delete", 0) == 1);
         bool mapReload = (pl.Read("Reload", 0) == 1);
         if (mapDelete) {
-            // -- MapActionAddDelete
+            AddDeleteAction(0, mapId);
         } else {
             shared_ptr<Map> mapPtr = GetPointer(mapId);
             if (mapPtr == nullptr) {
@@ -433,10 +454,8 @@ void MapMain::MapListLoad() {
                 mapPtr = GetPointer(mapId);
             }
             mapPtr->data.Directory = directory;
-            //mapPtr->Load("");
             if ((mapReload)) {
-                mapPtr->Load("");
-                // -- MapActionAddLoad
+                AddLoadAction(0, mapId, "");
             }
         }
     }
@@ -504,7 +523,43 @@ void MapMain::Delete(int id) {
 }
 
 void MapMain::MapSettingsLoad() {
+    Files* fm = Files::GetInstance();
+    std::string mapSettingsFile = fm->GetFile("Map_Settings");
+    json j;
+    std::ifstream iStream(mapSettingsFile);
+    if (!iStream.is_open()) {
+        Logger::LogAdd(MODULE_NAME, "Failed to load Map settings, generating...", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        MapSettingsSave();
+        return;
+    }
 
+    try {
+        iStream >> j;
+    } catch (int exception) {
+        return;
+    }
+    iStream.close();
+
+    mapSettingsMaxChangesSec = j["Max_Changes_s"];
+    LastMapSettingsTime = Utils::FileModTime(mapSettingsFile);
+
+    Logger::LogAdd(MODULE_NAME, "File Loaded", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+}
+
+void MapMain::MapSettingsSave() {
+    Files* fm = Files::GetInstance();
+    std::string hbSettingsFile = fm->GetFile("Map_Settings");
+    json j;
+    j["Max_Changes_s"] = mapSettingsMaxChangesSec;
+
+    std::ofstream ofstream(hbSettingsFile);
+
+    ofstream << std::setw(4) << j;
+    ofstream.flush();
+    ofstream.close();
+
+    mapSettingsLastWriteTime = Utils::FileModTime(hbSettingsFile);
+    Logger::LogAdd(MODULE_NAME, "File Saved [" + hbSettingsFile + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 bool Map::Resize(short x, short y, short z) {
@@ -580,6 +635,34 @@ bool Map::Resize(short x, short y, short z) {
         mm->SaveFile = true;
     }
     return result;
+}
+
+void Map::Fill(std::string functionName, std::string paramString) {
+    if (!data.loaded) {
+        Reload();
+    }
+
+    for(auto i = 1; i < 256; i++) {
+        data.blockCounter[i] = 0;
+    }
+    data.blockCounter[0] = data.SizeX * data.SizeY * data.SizeZ;
+
+    for(auto x = 0; x < data.SizeX; x++) { // -- Clear the map
+        for (auto y = 0; y <data.SizeY; y++) {
+            for (auto z = 0; z < data.SizeZ; z++) {
+                MapBlockData* point = (MapBlockData*)(data.Data + MapMain::GetMapOffset(x, y, z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE));
+                point->type = 0;
+                point->metadata = 0;
+                point->lastPlayer = -1;
+            }
+        }
+    }
+    data.UniqueID = MapMain::GetUniqueId();
+    data.RankBoxes.clear();
+    data.Teleporter.clear();
+    // -- Call Lua Function!
+    Resend();
+    Logger::LogAdd(MODULE_NAME, "Map '" + data.Name + "' filled.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 bool Map::Save(std::string directory) {
@@ -1006,7 +1089,6 @@ void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z,
                 }
                 insertIndex++;
             }
-            // -- This is going to break. Probs need to back it up by 1.
             data.ChangeQueue.insert(data.ChangeQueue.begin() + insertIndex, changeItem);
         }
     }

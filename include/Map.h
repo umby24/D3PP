@@ -176,6 +176,7 @@ public:
     Map();
     MapData data;
     bool Resize(short x, short y, short z);
+    void Fill(std::string functionName, std::string paramString);
     void BlockChange(std::shared_ptr<NetworkClient> client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type);
     void BlockChange (short playerNumber, unsigned short X, unsigned short Y, unsigned short Z, unsigned char type, bool undo, bool physic, bool send, unsigned char priority);
     bool Save(std::string directory);
@@ -220,13 +221,15 @@ private:
     std::thread PhysicsThread;
     std::thread ActionThread;
     bool mbcStarted;
-
+    bool maStarted;
+    
     int SaveFileTimer;
     std::string TempFilename;
     int TempId;
     std::string TempOverviewFilename;
     int LastWriteTime;
     int StatsTimer;
+    time_t LastMapSettingsTime;
     std::vector<MapActionItem> _mapActions;
     std::map<int, std::shared_ptr<Map>> _maps;
     // --
