@@ -93,6 +93,139 @@ MapMain* MapMain::GetInstance() {
     return Instance;
 }
 
+void MapMain::AddSaveAction(int clientId, int mapId, std::string directory) {
+    int newActionId = GetMaxActionId();
+    bool found = false;
+    for(auto const &act : _mapActions) {
+        if (act.MapID == mapId && act.Action == MapAction::SAVE && act.Directory == directory) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        MapActionItem newAction {newActionId, clientId, mapId, MapAction::SAVE, "", directory};
+        _mapActions.push_back(newAction);
+    }
+}
+
+void MapMain::AddLoadAction(int clientId, int mapId, std::string directory) {
+    int newActionId = GetMaxActionId();
+    bool found = false;
+    for(auto const &act : _mapActions) {
+        if (act.MapID == mapId && act.Action == MapAction::LOAD && act.Directory == directory) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        MapActionItem newAction {newActionId, clientId, mapId, MapAction::LOAD, "", directory};
+        _mapActions.push_back(newAction);
+    }
+}
+
+void MapMain::AddResizeAction(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z) {
+    int newActionId = GetMaxActionId();
+    bool found = false;
+    for(auto const &act : _mapActions) {
+        if (act.MapID == mapId && act.Action == MapAction::RESIZE) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        MapActionItem newAction {newActionId, clientId, mapId, MapAction::RESIZE, "", "", X, Y, Z};
+        _mapActions.push_back(newAction);
+    }
+}
+
+void MapMain::AddFillAction(int clientId, int mapId, std::string functionName, std::string argString) {
+    int newActionId = GetMaxActionId();
+    bool found = false;
+    for(auto const &act : _mapActions) {
+        if (act.MapID == mapId && act.Action == MapAction::FILL) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        MapActionItem newAction {newActionId, clientId, mapId, MapAction::FILL, functionName, "", 0, 0, 0, argString};
+        _mapActions.push_back(newAction);
+    }
+}
+
+void MapMain::AddDeleteAction(int clientId, int mapId) {
+    int newActionId = GetMaxActionId();
+    bool found = false;
+    for(auto const &act : _mapActions) {
+        if (act.MapID == mapId && act.Action == MapAction::DELETE) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        MapActionItem newAction {newActionId, clientId, mapId, MapAction::DELETE};
+        _mapActions.push_back(newAction);
+    }
+}
+
+void MapMain::ActionProcessor() {
+    while (System::IsRunning) {
+        watchdog::Watch("Map_Action", "Begin thread-slope", 0);
+        if (_mapActions.size() > 0) {
+            MapActionItem item = _mapActions.at(0);
+            _mapActions.erase(_mapActions.begin());
+
+            std::shared_ptr<Map> trigMap = GetPointer(item.MapID);
+
+            switch(item.Action) {
+                case MapAction::SAVE:
+                    trigMap->Save(item.Directory);
+                    if (item.ClientID > 0) {
+                        NetworkFunctions::SystemMessageNetworkSend(item.ClientID, "&eMap Saved.");
+                    }
+                    // -- TODO: Map_Overview_Save
+                    break;
+                case MapAction::LOAD:
+                    trigMap->Load(item.Directory);
+                    if (item.ClientID > 0) {
+                        NetworkFunctions::SystemMessageNetworkSend(item.ClientID, "&eMap Loaded.");
+                    }
+                    break;
+                case MapAction::FILL:
+                    
+                case MapAction::RESIZE:
+                    trigMap->Resize(item.X, item.Y, item.Z);
+                    if (item.ClientID > 0) {
+                        NetworkFunctions::SystemMessageNetworkSend(item.ClientID, "&eMap Resized.");
+                    }
+                    break;
+                case MapAction::DELETE:
+                    Delete(item.MapID);
+                     if (item.ClientID > 0) {
+                        NetworkFunctions::SystemMessageNetworkSend(item.ClientID, "&eMap Deleted.");
+                    }
+                break;
+            }
+        }
+        watchdog::Watch("Map_Action", "End thread-slope", 2);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
+int MapMain::GetMaxActionId() {
+    int result = 0;
+    for(auto const &action : _mapActions) {
+        if (result <= action.ID)
+            result = action.ID + 1;
+    }
+    return result;
+}
+
 void MapMain::MapBlockchange() {
     clock_t blockChangeTimer = clock();
 

@@ -16,6 +16,26 @@
 #include "TaskScheduler.h"
 
 class NetworkClient;
+enum MapAction {
+    SAVE = 0,
+    LOAD,
+    RESIZE = 5,
+    FILL,
+    DELETE = 10,
+};
+
+struct MapActionItem {
+    int ID;
+    int ClientID;
+    int MapID;
+    MapAction Action;
+    std::string FunctionName;
+    std::string Directory;
+    unsigned short X;
+    unsigned short Y;
+    unsigned short Z;
+    std::string ArgumentString;
+};
 
 struct MapBlockData {
     unsigned char type;
@@ -185,6 +205,14 @@ public:
     static int GetMapSize(int x, int y, int z, int blockSize) { return (x * y * z) * blockSize; }
     static int GetMapOffset(int x, int y, int z, int sizeX, int sizeY, int sizeZ, int blockSize) { return (x + y * sizeX + z * sizeX * sizeY) * blockSize;}
     void MainFunc();
+    
+    void AddSaveAction(int clientId, int mapId, std::string directory);
+    void AddLoadAction(int clientId, int mapId, std::string directory);
+    void AddResizeAction(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z);
+    void AddFillAction(int clientId, int mapId, std::string functionName, std::string argString);
+    void AddDeleteAction(int clientId, int mapId);
+
+    void ActionProcessor();
     bool SaveFile;
 private:
     static MapMain* Instance;
@@ -199,12 +227,14 @@ private:
     std::string TempOverviewFilename;
     int LastWriteTime;
     int StatsTimer;
+    std::vector<MapActionItem> _mapActions;
     std::map<int, std::shared_ptr<Map>> _maps;
     // --
     int mapSettingsLastWriteTime;
     int mapSettingsTimerFileCheck;
     int mapSettingsMaxChangesSec;
 
+    int GetMaxActionId();
     void HtmlStats(time_t time_);
     void MapListSave();
     void MapListLoad();
