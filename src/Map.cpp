@@ -52,7 +52,7 @@ void MapMain::MainFunc() {
         std::swap(BlockchangeThread, mbcThread);
         mbcStarted = true;
     } 
-    
+
     if (System::IsRunning && maStarted == false) {
         std::thread maThread([this]() {this->ActionProcessor(); });
         std::swap(ActionThread, maThread);
@@ -266,7 +266,7 @@ void MapMain::MapBlockchange() {
                     unsigned short z = chg.Z;
                     short oldMat = chg.OldMaterial;
                     char priority = chg.Priority;
-                    char currentMat = m.second->GetBlockType(x, y, z);
+                    unsigned char currentMat = m.second->GetBlockType(x, y, z);
                     toRemove++;
                     int blockChangeOffset = GetMapOffset(x, y, z, m.second->data.SizeX, m.second->data.SizeY, m.second->data.SizeZ, 1);
                     int bitmaskSize = GetMapSize(m.second->data.SizeX, m.second->data.SizeY, m.second->data.SizeZ, 1);
@@ -286,7 +286,7 @@ void MapMain::MapBlockchange() {
                 m.second->data.ChangeQueue.erase(m.second->data.ChangeQueue.begin(), m.second->data.ChangeQueue.begin() + toRemove);
             }
         }
-        watchdog::Watch("Map_Blockchanging", "Begin thread-slope", 2);
+        watchdog::Watch("Map_Blockchanging", "End thread-slope", 2);
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
@@ -541,9 +541,9 @@ void MapMain::MapSettingsLoad() {
     iStream.close();
 
     mapSettingsMaxChangesSec = j["Max_Changes_s"];
-    LastMapSettingsTime = Utils::FileModTime(mapSettingsFile);
+    mapSettingsLastWriteTime = Utils::FileModTime(mapSettingsFile);
 
-    Logger::LogAdd(MODULE_NAME, "File Loaded", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File Loaded [" + mapSettingsFile + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void MapMain::MapSettingsSave() {
@@ -1011,8 +1011,6 @@ void Map::BlockChange(std::shared_ptr<NetworkClient> client, unsigned short X, u
         else
             rawNewType = oldType.AfterDelete;
 
-        QueueBlockChange(X, Y, Z, 250, -1);
-
         MapBlock newType = bm->GetBlock(rawNewType);
         if (client->player->tEntity->playerList->PRank < oldType.RankDelete) {
             NetworkFunctions::SystemMessageNetworkSend(client->Id, "&eYou are not allowed to delete this block type.");
@@ -1022,6 +1020,7 @@ void Map::BlockChange(std::shared_ptr<NetworkClient> client, unsigned short X, u
             return;
         }
         BlockChange(client->player->tEntity->playerList->Number, X, Y, Z, rawNewType, true, true, true, 250);
+        QueueBlockChange(X, Y, Z, 250, -1);
         // -- PluginEventBlockCreate (one for delete, one for create.)
 
     }
@@ -1031,7 +1030,7 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
     if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
         Block* bm = Block::GetInstance();
         int blockOffset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
-        MapBlockData* atLoc = reinterpret_cast<MapBlockData*>(data.Data + blockOffset);
+        MapBlockData* atLoc = (MapBlockData*)(data.Data + blockOffset);
 
         // -- Plugin Event: Block change
         MapBlock oldType = bm->GetBlock(atLoc->type);
@@ -1066,8 +1065,10 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
     //     }
     // }
     if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
-        int index = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
-        return data.Data[index];
+        
+        MapBlockData* stuff = (MapBlockData*)(data.Data + MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE));
+        
+        return stuff->type;
     }
 
     return -1;

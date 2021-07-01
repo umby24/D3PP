@@ -70,6 +70,8 @@ class CommandMain : TaskItem {
         void CommandChangeMap();
         void CommandChangeRank();
         void CommandSaveMap();
+        void CommandGetRank();
+        void CommandSetMaterial();
     private:
 };
 

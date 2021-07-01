@@ -13,8 +13,8 @@ public:
     static void SystemMessageNetworkSend(int clientId, std::string message, int type = 0);
     static void SystemMessageNetworkSend2All(int mapId, std::string message, int type = 0);
     // -- Map
-    static void NetworkOutBlockSet(int clientId, short x, short y, short z, char type);
-    static void NetworkOutBlockSet2Map(int mapId, short x, short y, short z, char type);
+    static void NetworkOutBlockSet(int clientId, short x, short y, short z, unsigned char type);
+    static void NetworkOutBlockSet2Map(int mapId, short x, short y, short z, unsigned char type);
     // -- Player
     static void NetworkOutEntityAdd(int clientId, char playerId, std::string name, float x, float y, float z, float rotation, float look);
     static void NetworkOutEntityDelete(int clientId, char playerId);

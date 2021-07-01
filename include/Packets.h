@@ -16,7 +16,7 @@ public:
     static void SendMapInit(int clientId);
     static void SendMapData(int clientId, short chunkSize, char* data, char percentComplete);
     static void SendMapFinalize(int clientId, short sizeX, short sizeY, short sizeZ);
-    static void SendBlockChange(int clientId, short x, short y, short z, char type);
+    static void SendBlockChange(int clientId, short x, short y, short z, unsigned char type);
     static void SendSpawnEntity(int clientId, char playerId, std::string name, short x, short y, short z, char rotation, char look);
     static void SendPlayerTeleport(int clientId, char playerId, short x, short y, short z, char rotation, char look);
     static void SendDespawnEntity(int clientId, char playerId);

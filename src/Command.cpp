@@ -5,6 +5,7 @@
 #include "Player.h"
 #include "Player_List.h"
 #include "Entity.h"
+#include "Block.h"
 #include "Map.h"
 #include "Rank.h"
 #include "Network_Functions.h"
@@ -115,6 +116,26 @@ void CommandMain::Init() {
     mapSaveCommand.RankShow = 0;
     mapSaveCommand.Function = [this] { CommandMain::CommandSaveMap(); };
     Commands.push_back(mapSaveCommand);
+
+    Command getRankCommand;
+    getRankCommand.Id = "Get-Rank";
+    getRankCommand.Name = "getrank";
+    getRankCommand.Internal = true;
+    getRankCommand.Hidden = false;
+    getRankCommand.Rank = 0;
+    getRankCommand.RankShow = 0;
+    getRankCommand.Function = [this] { CommandMain::CommandGetRank(); };
+    Commands.push_back(getRankCommand);
+
+    Command setMaterialCommand;
+    setMaterialCommand.Id = "Material";
+    setMaterialCommand.Name = "material";
+    setMaterialCommand.Internal = true;
+    setMaterialCommand.Hidden = false;
+    setMaterialCommand.Rank = 0;
+    setMaterialCommand.RankShow = 0;
+    setMaterialCommand.Function = [this] { CommandMain::CommandSetMaterial(); };
+    Commands.push_back(setMaterialCommand);
 
     Load();
 }
@@ -507,4 +528,48 @@ void CommandMain::CommandSaveMap() {
 
     mm->AddSaveAction(CommandClientId, c->player->MapId, mapDirectory);
     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eSave Queued.");
+}
+
+void CommandMain::CommandGetRank() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    Player_List* pll = Player_List::GetInstance();
+    Rank* rm = Rank::GetInstance();
+    PlayerListEntry* ple;
+    
+    if (ParsedOperator[1].empty()) {
+        ple = c->player->tEntity->playerList;
+    } else {
+        ple = pll->GetPointer(ParsedOperator[1]);
+    }
+    
+    if (ple == nullptr) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[1] + "'");
+        return;
+    }
+
+    RankItem ri = rm->GetRank(ple->PRank, false);
+    std::string textTosend = "&ePlayer '" + ple->Name + "' is ranked '" + ri.Prefix + ri.Name + ri.Suffix + "'.";
+
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, textTosend);
+}
+
+void CommandMain::CommandSetMaterial() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    Block* bm = Block::GetInstance();
+
+    if (ParsedText0.empty()) {
+        c->player->tEntity->buildMaterial = -1;
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eMaterial reset.");
+        return;
+    }
+
+    MapBlock b = bm->GetBlock(ParsedText0);
+    if (b.Id == -1) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a block called '" + ParsedText0 + "'.");
+        return;
+    }
+    c->player->tEntity->buildMaterial = b.Id;
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eYour build material is now " + b.Name);
 }

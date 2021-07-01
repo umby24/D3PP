@@ -41,7 +41,7 @@ void Packets::SendMapFinalize(int clientId, short sizeX, short sizeY, short size
     c->OutputWriteShort(sizeY);
 }
 
-void Packets::SendBlockChange(int clientId, short x, short y, short z, char type) {
+void Packets::SendBlockChange(int clientId, short x, short y, short z, unsigned char type) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
     c->OutputWriteByte(6);
     c->OutputWriteShort(x);

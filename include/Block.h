@@ -51,6 +51,7 @@ class Block : TaskItem {
 public:
     Block();
     MapBlock GetBlock(int id);
+    MapBlock GetBlock(std::string name);
     void Save();
     static Block* GetInstance();
 protected:

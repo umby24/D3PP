@@ -81,7 +81,7 @@ void NetworkFunctions::SystemMessageNetworkSend2All(int mapId, std::string messa
     }
 }
 
-void NetworkFunctions::NetworkOutBlockSet(int clientId, short x, short y, short z, char type) {
+void NetworkFunctions::NetworkOutBlockSet(int clientId, short x, short y, short z, unsigned char type) {
     Network* n = Network::GetInstance();
     Block* b = Block::GetInstance();
     MapBlock mb = b->GetBlock(type);
@@ -96,21 +96,21 @@ void NetworkFunctions::NetworkOutBlockSet(int clientId, short x, short y, short 
     }
 }
 
-void NetworkFunctions::NetworkOutBlockSet2Map(int mapId, short x, short y, short z, char type) {
+void NetworkFunctions::NetworkOutBlockSet2Map(int mapId, short x, short y, short z, unsigned char type) {
     Network* n = Network::GetInstance();
     Block* b = Block::GetInstance();
     MapBlock mb = b->GetBlock(type);
+
     for(auto const &nc : n->_clients) {
         if (nc.second->player->MapId != mapId || !nc.second->LoggedIn)
             continue;
 
+        int onClient = mb.OnClient;
         if (mb.CpeLevel > nc.second->CustomBlocksLevel) {
-            type = mb.CpeReplace;
-        } else {
-            type = mb.OnClient;
+            onClient = mb.CpeReplace;
         }
 
-        Packets::SendBlockChange(nc.first, x, y, z, type);
+        Packets::SendBlockChange(nc.first, x, y, z, onClient);
     }
 }
 

@@ -44,6 +44,22 @@ MapBlock Block::GetBlock(int id) {
     return result;
 }
 
+MapBlock Block::GetBlock(std::string name) {
+    if (!hasLoaded)
+        Load();
+
+    MapBlock result {-1};
+
+    for(auto i = 0; i < 255; i++) {
+        if (Utils::InsensitiveCompare(Blocks[i].Name, name)) {
+            result = Blocks[i];
+            break;
+        }
+    }
+    
+    return result;
+}
+
 void Block::LoadOld() {
     if (Utils::FileSize("Data/Block.txt") == -1)
         return;
@@ -115,7 +131,7 @@ void Block::Load() {
     iStream.close();
 
     for(auto &item : j) {
-        struct MapBlock loadedItem;
+        struct MapBlock loadedItem {-1, };
         if (item["Id"].is_number()) {
             loadedItem.Id = item["Id"];
             loadedItem.Name = item["Name"];

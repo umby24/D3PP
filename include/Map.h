@@ -39,8 +39,8 @@ struct MapActionItem {
 
 struct MapBlockData {
     unsigned char type;
-    short lastPlayer;
     unsigned char metadata;
+    short lastPlayer;
 };
 
 struct MapBlockDo { // -- Physics Queue Item
@@ -54,7 +54,7 @@ struct MapBlockChanged {
     unsigned short X;
     unsigned short Y;
     unsigned short Z;
-    char Priority;
+    unsigned char Priority;
     short OldMaterial;
 };
 
@@ -222,14 +222,14 @@ private:
     std::thread ActionThread;
     bool mbcStarted;
     bool maStarted;
-    
+
     int SaveFileTimer;
     std::string TempFilename;
     int TempId;
     std::string TempOverviewFilename;
     int LastWriteTime;
     int StatsTimer;
-    time_t LastMapSettingsTime;
+
     std::vector<MapActionItem> _mapActions;
     std::map<int, std::shared_ptr<Map>> _maps;
     // --
