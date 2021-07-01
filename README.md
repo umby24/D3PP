@@ -4,21 +4,39 @@ The [D3classic](https://github.com/umby24/D3classic) server, ported to C++.
 
 Porting it for better maintainability and for fun.
 
+## Roadmap
+ - Port the primary server functionality (See issue #1)
+ - First pass refactor
+ - Bring up to date with latest CPE
+ - Second pass refactor
+ - Bring in lesser used features if requested
+
+## Not slated to port
+
+Currently there are a few parts of the existing D3 server that I'm not planning to port. Those are:
+ - Map Overview Images
+ - Multi-Language support
+ - Building text from a font .png file
+ - External C/C++ Plugins
+
+If you would like those reach out to let me know, and of course Pull Requests are welcome if you would like to contribute.
+
 ## Compiling on Windows
 
 1. Install VSCode, msys2 (x64)
 2. Install the winpthread library (pacman -S mingw-w64-clang-x86_64-libwinpthread-git)
 3. Install the dev zlib library (pacman -S zlib-devel)
 4. Install the CMake Library (pacman -S mingw-w64-x86_64-cmake)
-5. Add msys mingw64 to your PATH.
-6. Open VSCode, install the CMake Tools and C++ Plugins.
-7. Open the command pallet (ctrl+shift-p), go to preferences: open settings.json, and enter the following (replacing for your path if different);
+5. Install the Lua Library (pacman -S mingw-w64-x86_64-lua)
+6. Add msys mingw64 to your PATH.
+7. Open VSCode, install the CMake Tools and C++ Plugins.
+8. Open the command pallet (ctrl+shift-p), go to preferences: open settings.json, and enter the following (replacing for your path if different);
 ```
     "cmake.cmakePath": "C:\\msys64\\mingw64\\bin\\cmake.exe",
     "cmake.mingwSearchDirs": ["C:\\msys64\\mingw64\\bin"],
     "cmake.generator": "MinGW Makefiles",
 ```
-8. Restart VS code
-9.  Clone the repo and open it
-10. Configure your C++ kits to GCC/Mingw32 (may require a manual scan)
-11. Press the build button!
+9. Restart VS code
+10.  Clone the repo and open it
+11. Configure your C++ kits to GCC/Mingw32 (may require a manual scan)
+12. Press the build button!
