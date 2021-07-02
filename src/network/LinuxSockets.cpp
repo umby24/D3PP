@@ -8,6 +8,7 @@
 Sockets::Sockets(std::string address, std::string port)
 {
     //ctor
+    socketIp = "";
     memset(&host_info, 0, sizeof host_info);
     host_info.ai_family = AF_UNSPEC;     // IPv4 or IPv6
     host_info.ai_socktype = SOCK_STREAM; // TCP
@@ -79,13 +80,23 @@ Sockets::Sockets() {
  socketfd = -1;
  host_info_list = nullptr;
  m_Counter = 0;
+ socketIp = "";
 }
 
 Sockets::Sockets(int acceptfd) {
     socketfd = acceptfd;
     connected = true;
     status = 0;
+    socketIp = "";
     host_info_list = nullptr;
+}
+
+std::string Sockets::GetSocketIp() {
+    return socketIp;
+}
+
+void Sockets::SetSocketIp(std::string toSet) {
+    socketIp = toSet;
 }
 
 #endif
