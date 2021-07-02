@@ -489,6 +489,8 @@ void CommandMain::CommandPing() {
         return;
 
     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eYour ping is " + stringulate(c->Ping) + "ms.");
+    MapMain* mm = MapMain::GetInstance();
+    mm->AddFillAction(CommandClientId, c->player->MapId, "terrabyte", "");
 }
 
 void CommandMain::CommandChangeMap() {

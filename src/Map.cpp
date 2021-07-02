@@ -20,6 +20,7 @@
 #include "Entity.h"
 #include "Player.h"
 #include "Player_List.h"
+#include "plugins/LuaPlugin.h"
 
 using namespace std;
 
@@ -660,7 +661,10 @@ void Map::Fill(std::string functionName, std::string paramString) {
     data.UniqueID = MapMain::GetUniqueId();
     data.RankBoxes.clear();
     data.Teleporter.clear();
-    // -- Call Lua Function!
+
+    LuaPlugin* lp = LuaPlugin::GetInstance();
+    lp->TriggerMapFill(data.ID, data.SizeX, data.SizeY, data.SizeZ, "Mapfill_" + functionName, paramString);
+
     Resend();
     Logger::LogAdd(MODULE_NAME, "Map '" + data.Name + "' filled.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
