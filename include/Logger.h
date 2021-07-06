@@ -22,7 +22,7 @@ struct LogMessage {
     int Line;
     std::string Procedure;
     LogType Type;
-    long Time;
+    time_t Time;
 };
 
 class Logger

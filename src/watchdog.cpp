@@ -49,7 +49,8 @@ watchdog *watchdog::GetInstance() {
 }
 
 void watchdog::MainFunc() {
-    clock_t timer;
+    clock_t timer = 0;
+
     while (isRunning) {
         _lock.lock();
         clock_t currentTime = clock(); // -- generationTIme and timer
@@ -104,7 +105,7 @@ void watchdog::HtmlStats(time_t time_) {
     time_t finishTime = time(nullptr);
     long duration = finishTime - startTime;
     char buffer[255];
-    strftime(buffer, sizeof(buffer), "%H:%M:%S  %m-%d-%Y", localtime(reinterpret_cast<const time_t *>(&finishTime)));
+//    strftime(buffer, sizeof(buffer), "%H:%M:%S  %m-%d-%Y", localtime(reinterpret_cast<const time_t *>(&finishTime)));
     std::string meh(buffer);
     Utils::replaceAll(result, "[GEN_TIME]", stringulate(duration));
     Utils::replaceAll(result, "[GEN_TIMESTAMP]", meh);

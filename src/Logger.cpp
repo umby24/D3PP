@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
+#include <mutex>
 
 #include "Utils.h"
 #include "Files.h"
@@ -38,7 +39,18 @@ void Logger::FileWrite() {
 
     char buffer[255];
     struct LogMessage last = Messages[Messages.size() - 1];
-    strftime(buffer, sizeof(buffer), "%m-%d-%Y_%H:%M:%S", localtime(reinterpret_cast<const time_t *>(&last.Time)));
+    std::tm bt {};
+#if defined(__unix__)
+    localtime_r(&last.Time, &bt);
+#elif defined(_MSC_VER)
+    localtime_s(&bt, (const time_t*)&last.Time);
+#else
+    static std::mutex mtx;
+    std::lock_guard<std::mutex> lock(mtx);
+    bt = *std::localtime((const time_t*)(&last.Time));
+#endif
+
+    strftime(buffer, sizeof(buffer), "%m-%d-%Y_%H:%M:%S", &bt);
     fileStream << buffer << ">";
     fileStream << last.File << std::setw(15) << " | ";
     fileStream << last.Line << std::setw(4) << " | ";
