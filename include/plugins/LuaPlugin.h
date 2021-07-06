@@ -22,6 +22,7 @@ public:
     static LuaPlugin* Instance;
     static LuaPlugin* GetInstance();
     void TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, std::string function, std::string args);
+    void TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, std::string function);
 private:
     lua_State* state;
     std::map<std::string, LuaFile> _files;
@@ -33,6 +34,8 @@ private:
     // -- Lua interface functions :)
     int LuaMapBlockChange(lua_State *L);
     int LuaMapBlockGetType(lua_State *L);
+    int LuaMapBlockGetPlayer(lua_State *L);
     int LuaMessageToAll(lua_State *L);
+
 };
 #endif

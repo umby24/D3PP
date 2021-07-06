@@ -177,16 +177,20 @@ public:
     MapData data;
     bool Resize(short x, short y, short z);
     void Fill(std::string functionName, std::string paramString);
+    void BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1, unsigned short Z1, bool undo, bool physic, unsigned char priority);
     void BlockChange(std::shared_ptr<NetworkClient> client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type);
     void BlockChange (short playerNumber, unsigned short X, unsigned short Y, unsigned short Z, unsigned char type, bool undo, bool physic, bool send, unsigned char priority);
+    void ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z);
     bool Save(std::string directory);
     void Load(std::string directory);
     unsigned char GetBlockType(unsigned short X, unsigned short Y, unsigned short Z);
+    unsigned short GetBlockPlayer(unsigned short X, unsigned short Y, unsigned short Z);
     void Reload();
     void Unload();
     void Send(int clientId);
     void Resend();
 private:
+    void QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z);
     void QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z, unsigned char priority, unsigned char oldType);
 };
 
@@ -222,6 +226,7 @@ private:
     std::thread ActionThread;
     bool mbcStarted;
     bool maStarted;
+    bool phStarted;
 
     int SaveFileTimer;
     std::string TempFilename;
@@ -239,11 +244,15 @@ private:
 
     int GetMaxActionId();
     void HtmlStats(time_t time_);
+
     void MapListSave();
     void MapListLoad();
-    void MapSettingsSave(); // -- Where are these called from? 
+
+    void MapSettingsSave();
     void MapSettingsLoad();
-    void MapBlockchange();
+
+    void MapBlockChange();
+    void MapBlockPhysics();
 };
 
 const std::string MAP_HTML_TEMPLATE = R"(<html>

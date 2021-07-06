@@ -53,6 +53,7 @@ void LuaPlugin::BindFunctions() {
     lua_register(state, "Map_Block_Change", &dispatch<&LuaPlugin::LuaMapBlockChange>);
     lua_register(state, "Map_Block_Get_Type", &dispatch<&LuaPlugin::LuaMapBlockGetType>);
     lua_register(state, "System_Message_Network_Send_2_All", &dispatch<&LuaPlugin::LuaMessageToAll>);
+    lua_register(state, "Map_Block_Get_Player_Last", &dispatch<&LuaPlugin::LuaMapBlockGetPlayer>);
 }
 
 void LuaPlugin::Init() {
@@ -187,3 +188,41 @@ void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, std::
         lua_pcall(state, 5, 0, 0);
     }
 }
+
+void LuaPlugin::TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, std::string function) {
+    lua_getglobal(state, function.c_str());
+    if (lua_isfunction(state, -1)) {
+        lua_pushinteger(state, mapId);
+        lua_pushinteger(state, X);
+        lua_pushinteger(state, Y);
+        lua_pushinteger(state, Z);
+        lua_pcall(state, 4, 0, 0);
+    }
+}
+
+
+int LuaPlugin::LuaMapBlockGetPlayer(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 4) {
+        Logger::LogAdd("Lua", "LuaError: Map_Block_Get_Player_Last called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    int X = lua_tointeger(L, 2);
+    int Y = lua_tointeger(L, 3);
+    int Z = lua_tointeger(L, 4);
+
+    int result = -1;
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map != nullptr) {
+        result = map->GetBlockPlayer(X, Y, Z);
+    }
+
+    lua_pushinteger(L, result);
+    return 1;
+}
+
