@@ -759,8 +759,8 @@ bool Map::Save(std::string directory) {
         oStream << "D_Light = " << data.dlight << endl;
         oStream << "Custom_Appearance = " << data.CustomAppearance << endl;
         oStream << "Custom_Texture_Url = " << data.CustomURL << endl;
-        oStream << "Custom_Side_Block = " << data.SideBlock << endl;
-        oStream << "Custom_Edge_Block = " << data.EdgeBlock << endl;
+        oStream << "Custom_Side_Block = " << (int)data.SideBlock << endl;
+        oStream << "Custom_Edge_Block = " << (int)data.EdgeBlock << endl;
         oStream << "Custom_Side_Level = " << data.SideLevel << endl;
         oStream << "Allow_Flying = " << data.Flying << endl;
         oStream << "Allow_Noclip = " << data.NoClip << endl;

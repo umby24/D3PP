@@ -79,6 +79,12 @@ void Physics::BlockPhysics21(std::shared_ptr<Map> physMap, int x, int y, int z) 
     }
     // -- This is a flood-search algorithm..
     char BlockFillArray[Physics_Fill_X][Physics_Fill_Y];
+    for(auto px = 0; px < Physics_Fill_X; px++) {
+        for (int py = 0; py < Physics_Fill_Y; ++py) {
+            BlockFillArray[px][py] = 0;
+        }
+    }
+
     _blockFill.clear();
     BlockFillPhysics item {x, y, z};
     _blockFill.push_back(item);
@@ -91,7 +97,7 @@ void Physics::BlockPhysics21(std::shared_ptr<Map> physMap, int x, int y, int z) 
 
         if (physMap->GetBlockType(pointed.X, pointed.Y, pointed.Z-1) == 0) {
             found = true;
-            physMap->BlockMove(pointed.X, pointed.Y, pointed.Z, pointed.X, pointed.Y, pointed.Z-1, true, true, 1);
+            physMap->BlockMove(x, y, z, pointed.X, pointed.Y, pointed.Z-1, true, true, 1);
         } else {
             if (physMap->GetBlockType(pointed.X+1, pointed.Y, pointed.Z) == 0 && BlockFillArray[pointed.X + 1][pointed.Y] == 0) {
                 BlockFillArray[pointed.X + 1][pointed.Y] = 1;
