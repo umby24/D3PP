@@ -66,17 +66,18 @@ int Entity::GetFreeIdClient(int mapId) {
     for (id = 0; id < 128; id++) {
         for(auto const &e : _entities) {
             if (e.second->ClientId == id && e.second->MapID == mapId) {
+                found = true;
                 continue;
-            } else {
-                found = false;
-                break;
             }
-
         }
+
         if (!found) {
             return id;
+        } else {
+            found = false; // -- try again
         }
     }
+
     Logger::LogAdd(MODULE_NAME, "No free map clientID", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__ );
     return -1;
 }
