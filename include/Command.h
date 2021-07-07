@@ -60,7 +60,16 @@ class CommandMain : TaskItem {
         void Save();
         void MainFunc();
         void CommandDo(const std::shared_ptr<NetworkClient> client, std::string input);
-        // --
+        // -- Administrative
+        void CommandKick();
+        void CommandBan();
+        void CommandUnban();
+        void CommandStop();
+        void CommandUnStop();
+        void CommandMute();
+        void CommandUnmute();
+
+        // -- General
         void CommandCommands();
         void CommandHelp();
         void CommandPlayers();
@@ -69,9 +78,14 @@ class CommandMain : TaskItem {
         void CommandPing();
         void CommandChangeMap();
         void CommandChangeRank();
+
+        // -- Map Modifiers
         void CommandSaveMap();
         void CommandGetRank();
+
+        // -- Build tools
         void CommandSetMaterial();
+        void CommandMaterials();
     private:
 };
 

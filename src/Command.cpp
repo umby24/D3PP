@@ -27,6 +27,76 @@ CommandMain::CommandMain() {
 }
 
 void CommandMain::Init() {
+    Command kickCommand;
+    kickCommand.Id = "Kick";
+    kickCommand.Name = "kick";
+    kickCommand.Internal = true;
+    kickCommand.Hidden = false;
+    kickCommand.Rank = 0;
+    kickCommand.RankShow = 0;
+    kickCommand.Function = [this] { CommandMain::CommandKick(); };
+    Commands.push_back(kickCommand);
+
+    Command banCommand;
+    banCommand.Id = "Ban";
+    banCommand.Name = "ban";
+    banCommand.Internal = true;
+    banCommand.Hidden = false;
+    banCommand.Rank = 0;
+    banCommand.RankShow = 0;
+    banCommand.Function = [this] { CommandMain::CommandBan(); };
+    Commands.push_back(banCommand);
+
+    Command unbanCommand;
+    unbanCommand.Id = "Un-Ban";
+    unbanCommand.Name = "unban";
+    unbanCommand.Internal = true;
+    unbanCommand.Hidden = false;
+    unbanCommand.Rank = 0;
+    unbanCommand.RankShow = 0;
+    unbanCommand.Function = [this] { CommandMain::CommandUnban(); };
+    Commands.push_back(unbanCommand);
+
+    Command stopcmd;
+    stopcmd.Id = "Stop-Player";
+    stopcmd.Name = "stop";
+    stopcmd.Internal = true;
+    stopcmd.Hidden = false;
+    stopcmd.Rank = 0;
+    stopcmd.RankShow = 0;
+    stopcmd.Function = [this] { CommandMain::CommandStop(); };
+    Commands.push_back(stopcmd);
+
+    Command unstopCmd;
+    unstopCmd.Id = "Un-Stop";
+    unstopCmd.Name = "unstop";
+    unstopCmd.Internal = true;
+    unstopCmd.Hidden = false;
+    unstopCmd.Rank = 0;
+    unstopCmd.RankShow = 0;
+    unstopCmd.Function = [this] { CommandMain::CommandUnStop(); };
+    Commands.push_back(unstopCmd);
+
+    Command muteCmd;
+    muteCmd.Id = "Mute-Player";
+    muteCmd.Name = "mute";
+    muteCmd.Internal = true;
+    muteCmd.Hidden = false;
+    muteCmd.Rank = 0;
+    muteCmd.RankShow = 0;
+    muteCmd.Function = [this] { CommandMain::CommandMute(); };
+    Commands.push_back(muteCmd);
+
+    Command unMuteCmd;
+    unMuteCmd.Id = "Unmute-Player";
+    unMuteCmd.Name = "unmute";
+    unMuteCmd.Internal = true;
+    unMuteCmd.Hidden = false;
+    unMuteCmd.Rank = 0;
+    unMuteCmd.RankShow = 0;
+    unMuteCmd.Function = [this] { CommandMain::CommandUnmute(); };
+    Commands.push_back(unMuteCmd);
+
     Command listCommands;
     listCommands.Id = "List-Commands";
     listCommands.Name = "commands";
@@ -136,6 +206,16 @@ void CommandMain::Init() {
     setMaterialCommand.RankShow = 0;
     setMaterialCommand.Function = [this] { CommandMain::CommandSetMaterial(); };
     Commands.push_back(setMaterialCommand);
+
+    Command materialList;
+    materialList.Id = "List-Materials";
+    materialList.Name = "materials";
+    materialList.Internal = true;
+    materialList.Hidden = false;
+    materialList.Rank = 0;
+    materialList.RankShow = 0;
+    materialList.Function = [this] { CommandMain::CommandMaterials(); };
+    Commands.push_back(materialList);
 
     Load();
 }
@@ -261,8 +341,9 @@ void CommandMain::CommandDo(const std::shared_ptr<NetworkClient> client, std::st
             ParsedOperator[i] = "";
             break;
         }
-
-        ParsedOperator[i] = splitString[i];
+        if (i+1 < splitString.size()) {
+            ParsedOperator[i] = splitString[i + 1];
+        }
     }
 
     if (input.size() > ParsedCommand.size())
@@ -271,7 +352,13 @@ void CommandMain::CommandDo(const std::shared_ptr<NetworkClient> client, std::st
     {
         ParsedText0 = "";
     }
-    
+
+    if (ParsedText0.find(' ') > 0) {
+        ParsedText1 = ParsedText0.substr(ParsedText0.find(' ')+1);
+    } else {
+        ParsedText1 = "";
+    }
+
     bool found = false;
     for(auto cmd : Commands) {
         if (!Utils::InsensitiveCompare(cmd.Name, ParsedCommand))
@@ -304,7 +391,7 @@ void CommandMain::CommandCommands() {
     if (c == nullptr)
         return;
 
-    std::string groupName = ParsedOperator[1];
+    std::string groupName = ParsedOperator[0];
     short playerRank = c->player->tEntity->playerList->PRank;
     std::string allString = "all";
 
@@ -356,7 +443,7 @@ void CommandMain::CommandHelp() {
 
     bool found = false;
     for(auto cmd : Commands) {
-        if (!Utils::InsensitiveCompare(cmd.Name, ParsedOperator[1]))
+        if (!Utils::InsensitiveCompare(cmd.Name, ParsedOperator[0]))
             continue;
 
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCommand Help:");
@@ -366,7 +453,7 @@ void CommandMain::CommandHelp() {
     }
 
     if (!found) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find command '" + ParsedOperator[1] + "'");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find command '" + ParsedOperator[0] + "'");
     }
 }
 
@@ -400,9 +487,9 @@ void CommandMain::CommandPlayerInfo() {
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
 
-    PlayerListEntry* ple = pll->GetPointer(ParsedOperator[1]);
+    PlayerListEntry* ple = pll->GetPointer(ParsedOperator[0]);
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[1] + "'");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
         return;
     }
     RankItem ri = rm->GetRank(ple->PRank, false);
@@ -433,14 +520,14 @@ void CommandMain::CommandChangeRank() {
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
 
-    std::string playerName = ParsedOperator[1];
-    int rankVal = std::stoi(ParsedOperator[2]);
+    std::string playerName = ParsedOperator[0];
+    int rankVal = std::stoi(ParsedOperator[1]);
     std::string reason = ParsedText2;
 
     if (rankVal >= -32768 && rankVal <= 32767) {
-        PlayerListEntry* ple = pll->GetPointer(ParsedOperator[1]);
+        PlayerListEntry* ple = pll->GetPointer(ParsedOperator[0]);
         if (ple == nullptr) {
-            NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[1] + "'");
+            NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
             return;
         }
         if (c->player->tEntity->playerList->PRank <= ple->PRank) {
@@ -539,14 +626,14 @@ void CommandMain::CommandGetRank() {
     Rank* rm = Rank::GetInstance();
     PlayerListEntry* ple;
     
-    if (ParsedOperator[1].empty()) {
+    if (ParsedOperator[0].empty()) {
         ple = c->player->tEntity->playerList;
     } else {
-        ple = pll->GetPointer(ParsedOperator[1]);
+        ple = pll->GetPointer(ParsedOperator[0]);
     }
     
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[1] + "'");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
         return;
     }
 
@@ -574,4 +661,171 @@ void CommandMain::CommandSetMaterial() {
     }
     c->player->tEntity->buildMaterial = b.Id;
     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eYour build material is now " + b.Name);
+}
+
+void CommandMain::CommandKick() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    Player_List* pll = Player_List::GetInstance();
+    PlayerListEntry* ple;
+
+    ple = pll->GetPointer(ParsedOperator[0]);
+    if (ple == nullptr) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        return;
+    }
+    std::string kickReason = (ParsedText1.empty() ? "&eYou were kicked." : ParsedText1);
+
+    if (c->player->tEntity->playerList->PRank > ple->PRank) {
+        ple->Kick(kickReason, ple->KickCounter+1, true, true);
+    } else {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't kick someone ranked higher than you.");
+        return;
+    }
+}
+
+void CommandMain::CommandBan() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    Player_List* pll = Player_List::GetInstance();
+    PlayerListEntry* ple;
+
+    ple = pll->GetPointer(ParsedOperator[0]);
+    if (ple == nullptr) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        return;
+    }
+    std::string banReason = (ParsedText1.empty() ? "&eYou were banned." : ParsedText1);
+    if (c->player->tEntity->playerList->PRank > ple->PRank) {
+        ple->Ban(banReason);
+    } else {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't ban someone ranked higher than you.");
+        return;
+    }
+}
+
+void CommandMain::CommandUnban() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    Player_List* pll = Player_List::GetInstance();
+    PlayerListEntry* ple;
+
+    ple = pll->GetPointer(ParsedOperator[0]);
+    if (ple == nullptr) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        return;
+    }
+    if (c->player->tEntity->playerList->PRank > ple->PRank) {
+        ple->Unban();
+    } else {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't ban someone ranked higher than you.");
+        return;
+    }
+}
+
+void CommandMain::CommandStop() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    Player_List* pll = Player_List::GetInstance();
+    PlayerListEntry* ple;
+
+    ple = pll->GetPointer(ParsedOperator[0]);
+    if (ple == nullptr) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        return;
+    }
+    std::string stopReason = (ParsedText1.empty() ? "&eYou were stopped." : ParsedText1);
+    if (c->player->tEntity->playerList->PRank > ple->PRank) {
+        ple->Stop(stopReason);
+    } else {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't stop someone ranked higher than you.");
+        return;
+    }
+}
+
+void CommandMain::CommandUnStop() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    Player_List* pll = Player_List::GetInstance();
+    PlayerListEntry* ple;
+
+    ple = pll->GetPointer(ParsedOperator[0]);
+    if (ple == nullptr) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        return;
+    }
+    if (c->player->tEntity->playerList->PRank > ple->PRank) {
+        ple->Unstop();
+    } else {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't stop someone ranked higher than you.");
+        return;
+    }
+}
+
+void CommandMain::CommandMute() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    Player_List* pll = Player_List::GetInstance();
+    PlayerListEntry* ple;
+
+    ple = pll->GetPointer(ParsedOperator[0]);
+    if (ple == nullptr) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        return;
+    }
+    if ((ParsedOperator[1].empty())) {
+        ParsedOperator[1] = "99999";
+    }
+
+    if (c->player->tEntity->playerList->PRank > ple->PRank) {
+        ple->Mute(stoi(ParsedOperator[1]), "Muted by " + c->player->LoginName);
+    } else {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't mute someone ranked higher than you.");
+        return;
+    }
+}
+
+void CommandMain::CommandUnmute() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    Player_List* pll = Player_List::GetInstance();
+    Rank* rm = Rank::GetInstance();
+    PlayerListEntry* ple;
+
+    ple = pll->GetPointer(ParsedOperator[0]);
+    if (ple == nullptr) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        return;
+    }
+    if (c->player->tEntity->playerList->PRank > ple->PRank) {
+        ple->Unmute();
+    }else {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't unmute someone ranked higher than you.");
+        return;
+    }
+}
+
+void CommandMain::CommandMaterials() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eMaterials:");
+    Block* bm = Block::GetInstance();
+    std::string toSend = "";
+    for (int i = 0; i < 255; ++i) {
+        MapBlock block = bm->GetBlock(i);
+        std::string toAdd = "";
+        if (block.Special && block.RankPlace <= c->player->tEntity->playerList->PRank) {
+            toAdd += "&e" + block.Name + " &f| ";
+            if (64 - toSend.size() >= toAdd.size())
+                toSend += toAdd;
+            else {
+                NetworkFunctions::SystemMessageNetworkSend(c->Id, toSend);
+                toSend = toAdd;
+            }
+
+        }
+    }
+    if (!toSend.empty()) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, toSend);
+    }
 }
