@@ -77,7 +77,7 @@ void Physics::BlockPhysics21(std::shared_ptr<Map> physMap, int x, int y, int z) 
         physMap->BlockMove(x, y, z, x, y, z-1, true, true, 1);
         return;
     }
-
+    // -- This is a flood-search algorithm..
     char BlockFillArray[Physics_Fill_X][Physics_Fill_Y];
     _blockFill.clear();
     BlockFillPhysics item {x, y, z};

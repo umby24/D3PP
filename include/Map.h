@@ -189,7 +189,12 @@ public:
     void Unload();
     void Send(int clientId);
     void Resend();
+    std::mutex BlockChangeMutex;
+protected:
+
 private:
+
+
     void QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z);
     void QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z, unsigned char priority, unsigned char oldType);
 };

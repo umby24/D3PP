@@ -264,10 +264,10 @@ watchdog::Watch("Network", "Begin events", 0);
     for(auto const &nc : _clients) {
         if (nc.second->DisconnectTime > 0 && nc.second->DisconnectTime < time(nullptr)) {
             DeleteClient(nc.first, "Forced Disconnect", true);
-            nc.second->clientSocket->Disconnect();
+            break;
         } else if (nc.second->LastTimeEvent + NETWORK_CLIENT_TIMEOUT < time(nullptr)) {
             DeleteClient(nc.first, "Timeout", true);
-            nc.second->clientSocket->Disconnect();
+            break;
         }
     }
     watchdog::Watch("Network", "End Events", 2);

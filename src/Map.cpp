@@ -268,12 +268,13 @@ void MapMain::MapBlockChange() {
                 
                 int maxChangedSec = 1100 / 10;
                 int toRemove = 0;
+                m.second->BlockChangeMutex.lock();
                 for(auto const &chg : m.second->data.ChangeQueue) {
                     unsigned short x = chg.X;
                     unsigned short y = chg.Y;
                     unsigned short z = chg.Z;
                     short oldMat = chg.OldMaterial;
-                    char priority = chg.Priority;
+                    unsigned char priority = chg.Priority;
                     unsigned char currentMat = m.second->GetBlockType(x, y, z);
                     toRemove++;
                     int blockChangeOffset = GetMapOffset(x, y, z, m.second->data.SizeX, m.second->data.SizeY, m.second->data.SizeZ, 1);
@@ -292,6 +293,7 @@ void MapMain::MapBlockChange() {
                 }
 
                 m.second->data.ChangeQueue.erase(m.second->data.ChangeQueue.begin(), m.second->data.ChangeQueue.begin() + toRemove);
+                m.second->BlockChangeMutex.unlock();
             }
         }
         watchdog::Watch("Map_Blockchanging", "End thread-slope", 2);
@@ -317,7 +319,7 @@ void MapMain::MapBlockPhysics() {
             while (!map.second->data.PhysicsQueue.empty()) {
                 MapBlockDo item = map.second->data.PhysicsQueue.at(0);
                 if (item.time < clock()) {
-                    map.second->data.PhysicsQueue.pop_back();
+                    map.second->data.PhysicsQueue.erase(map.second->data.PhysicsQueue.begin());
                     int offset = MapMain::GetMapOffset(item.X, item.Y, item.Z, map.second->data.SizeX, map.second->data.SizeY, map.second->data.SizeZ, 1);
 
                     map.second->data.PhysicData[offset/8] = map.second->data.PhysicData[offset/8] & ~(1 << (offset % 8)); // -- Set bitmask
@@ -1120,7 +1122,12 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
     //     }
     // }
     if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
-        
+        int oneOffset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
+        int twoOffset = ((Y*data.SizeZ+Z)*data.SizeX+X)*MAP_BLOCK_ELEMENT_SIZE;
+        int threeOffset = ((Z*data.SizeY+Y)*data.SizeX+X)*MAP_BLOCK_ELEMENT_SIZE;
+        if (oneOffset != threeOffset)
+            std::cout<< (int)(data.Data[oneOffset]) << "vs " << (int)(data.Data[threeOffset]) << std::endl;
+
         auto* stuff = (MapBlockData*)(data.Data + MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE));
         
         return stuff->type;
@@ -1134,6 +1141,7 @@ void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z,
         int offset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, 1);
         bool blockChangeFound = data.BlockchangeData[offset/8] & (1 << (offset % 8));
         if (!blockChangeFound) {
+            BlockChangeMutex.lock();
             data.BlockchangeData[offset/8] |= (1 << (offset % 8)); // -- Set bitmask
             MapBlockChanged changeItem { X, Y, Z, priority, oldType};
             int insertIndex = 0;
@@ -1146,6 +1154,7 @@ void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z,
                 insertIndex++;
             }
             data.ChangeQueue.insert(data.ChangeQueue.begin() + insertIndex, changeItem);
+            BlockChangeMutex.unlock();
         }
     }
 }
@@ -1227,7 +1236,7 @@ void Map::QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z
         return;
 
     int offset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, 1);
-    bool physItemFound = data.PhysicData[offset/8] & (1 << (offset % 8));
+    bool physItemFound = (data.PhysicData[offset/8] & (1 << (offset % 8)) != 0);
 
     if (!physItemFound) {
         auto* mapBlockData= (MapBlockData*) (data.Data + MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE));
