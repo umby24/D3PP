@@ -804,9 +804,9 @@ void Map::Load(std::string directory) {
     Resize(sizeX, sizeY, sizeZ);
     data.UniqueID = pLoader.Read("Unique_ID", MapMain::GetUniqueId());
     data.RankBuild = pLoader.Read("Rank_Build", 0);
-    data.RankBuild = pLoader.Read("Rank_Join", 0);
-    data.RankBuild = pLoader.Read("Rank_Show", 0);
-    data.RankBuild = pLoader.Read("Physic_Stopped", 0);
+    data.RankJoin = pLoader.Read("Rank_Join", 0);
+    data.RankShow = pLoader.Read("Rank_Show", 0);
+    data.PhysicsStopped = pLoader.Read("Physic_Stopped", 0);
     data.MotdOverride = pLoader.Read("MOTD_Override", "");
     data.SaveInterval = pLoader.Read("Save_Intervall", 10);
     data.overviewType = static_cast<OverviewType>(pLoader.Read("Overview_Type", 2));
@@ -1054,8 +1054,7 @@ void Map::BlockChange(std::shared_ptr<NetworkClient> client, unsigned short X, u
         unsigned char rawNewType = 0;
         MapBlock oldType = bm->GetBlock(rawBlock);
         client->player->tEntity->lastMaterial = type;
-        // -- Map_Block_Get_Rank (RBOX!!)
-        // -- TODO:
+        int blockRank = BlockGetRank(X, Y, Z);
 
         if (mode > 0)
             rawNewType = type;
@@ -1063,13 +1062,21 @@ void Map::BlockChange(std::shared_ptr<NetworkClient> client, unsigned short X, u
             rawNewType = oldType.AfterDelete;
 
         MapBlock newType = bm->GetBlock(rawNewType);
+
         if (client->player->tEntity->playerList->PRank < oldType.RankDelete) {
             NetworkFunctions::SystemMessageNetworkSend(client->Id, "&eYou are not allowed to delete this block type.");
+            NetworkFunctions::NetworkOutBlockSet(client->Id, X, Y, Z, oldType.OnClient);
             return;
         } else if (client->player->tEntity->playerList->PRank < newType.RankPlace) {
             NetworkFunctions::SystemMessageNetworkSend(client->Id, "&eYou are not allowed to build this block type.");
+            NetworkFunctions::NetworkOutBlockSet(client->Id, X, Y, Z, oldType.OnClient);
+            return;
+        } else if (client->player->tEntity->playerList->PRank < blockRank) {
+            NetworkFunctions::SystemMessageNetworkSend(client->Id, "&eYou are not allowed to build here.");
+            NetworkFunctions::NetworkOutBlockSet(client->Id, X, Y, Z, oldType.OnClient);
             return;
         }
+
         BlockChange(client->player->tEntity->playerList->Number, X, Y, Z, rawNewType, true, true, true, 250);
         QueueBlockChange(X, Y, Z, 250, -1);
         // -- PluginEventBlockCreate (one for delete, one for create.)
@@ -1291,4 +1298,18 @@ void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
             QueueBlockPhysics(X, Y, Z);
         }
     }
+}
+
+int Map::BlockGetRank(unsigned short X, unsigned short Y, unsigned short Z) {
+    int result = data.RankBuild;
+
+    for(auto const &r : data.RankBoxes) {
+        bool matches = (X >= r.X0 && X < r.X1 && Y >= r.Y0 && Y < r.Y1 && Z >= r.Z0 && Z < r.Z1);
+
+        if (r.Rank > result && matches) {
+            result = r.Rank;
+        }
+    }
+
+    return result;
 }

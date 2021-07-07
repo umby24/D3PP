@@ -1,3 +1,4 @@
+#include <Block.h>
 #include "BuildMode.h"
 #include "Files.h"
 #include "common/PreferenceLoader.h"
@@ -7,6 +8,7 @@
 #include "Map.h"
 #include "Logger.h"
 #include "Utils.h"
+#include "Network_Functions.h"
 
 BuildModeMain* BuildModeMain::Instance = nullptr;
 
@@ -139,9 +141,36 @@ void BuildModeMain::Distribute(int clientId, int mapId, unsigned short X, unsign
 }
 
 void BuildModeMain::Resend(int clientId) {
+    std::vector<int> toRemove;
+    MapMain* mapMain= MapMain::GetInstance();
 
+    for(auto i = 0; i< _resendBlocks.size(); i++) {
+        if (_resendBlocks.at(i).clientId != clientId)
+            continue;
+
+        BlockResend toResend = _resendBlocks.at(i);
+
+        std::shared_ptr<Map> thisMap = mapMain->GetPointer(toResend.mapId);
+        if (thisMap != nullptr) {
+            int blockType = thisMap->GetBlockType(toResend.X, toResend.Y, toResend.Z);
+            NetworkFunctions::NetworkOutBlockSet(clientId, toResend.X, toResend.Y, toResend.Z, blockType);
+        }
+        _resendBlocks.erase(_resendBlocks.begin() + i);
+        if (i != 0)
+            i--;
+    }
 }
 
 void BuildModeMain::SetMode(int clientId, std::string mode) {
+    Network* nm = Network::GetInstance();
 
+    for(auto const &c : nm->_clients) {
+        if (c.first == clientId) {
+            if (c.second->player && c.second->player->tEntity) {
+                c.second->player->tEntity->BuildMode = mode;
+                Resend(clientId);
+                break;
+            }
+        }
+    }
 }
