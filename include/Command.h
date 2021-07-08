@@ -68,6 +68,10 @@ class CommandMain : TaskItem {
         void CommandUnStop();
         void CommandMute();
         void CommandUnmute();
+        void CommandServerInfo();
+        void CommandLogLast();
+        void CommandWatchdog();
+        void CommandGetRank();
 
         // -- General
         void CommandCommands();
@@ -77,15 +81,42 @@ class CommandMain : TaskItem {
         void CommandGlobal();
         void CommandPing();
         void CommandChangeMap();
+
+        void CommandListMaps();
         void CommandChangeRank();
+        void CommandTeleport();
+        void CommandBring();
 
         // -- Map Modifiers
         void CommandSaveMap();
-        void CommandGetRank();
+        void CommandLoadMap();
+        void CommandResizeMap();
+        void CommandRenameMap();
+        void CommandDeleteMap();
+        void CommandAddMap();
+        void CommandMapFill();
+        void CommandMapBlockCount();
+        void CommandMapRankBuildSet();
+        void CommandMapRankJoinSet();
+        void CommandMapRankShowSet();
+        void CommandStopPhysics();
+        void CommandStartPhysics();
+        void CommandSetSpawn();
+        void CommandSetKilLSpawn();
+        void CommandTeleporters();
+        void CommandDeleteTeleporter();
+        void CommandMapInfo();
 
         // -- Build tools
         void CommandSetMaterial();
         void CommandMaterials();
+        void CommandPlace();
+        void CommandUndoTime();
+        void CommandUndoPlayer();
+        void CommandUndo();
+        void CommandUserMaps();
+
+
     private:
 };
 

@@ -11,6 +11,8 @@
 #include "Network_Functions.h"
 #include "Logger.h"
 #include "Files.h"
+#include "System.h"
+#include "Mem.h"
 #include "Utils.h"
 
 const std::string MODULE_NAME = "Command";
@@ -216,6 +218,36 @@ void CommandMain::Init() {
     materialList.RankShow = 0;
     materialList.Function = [this] { CommandMain::CommandMaterials(); };
     Commands.push_back(materialList);
+
+    Command mapList;
+    mapList.Id = "List-Maps";
+    mapList.Name = "maps";
+    mapList.Internal = true;
+    mapList.Hidden = false;
+    mapList.Rank = 0;
+    mapList.RankShow = 0;
+    mapList.Function = [this] { CommandMain::CommandListMaps(); };
+    Commands.push_back(mapList);
+
+    Command serverInfo;
+    serverInfo.Id = "Server-Info";
+    serverInfo.Name = "serverinfo";
+    serverInfo.Internal = true;
+    serverInfo.Hidden = false;
+    serverInfo.Rank = 0;
+    serverInfo.RankShow = 0;
+    serverInfo.Function = [this] { CommandMain::CommandServerInfo(); };
+    Commands.push_back(serverInfo);
+
+    Command logCommand;
+    logCommand.Id = "Log";
+    logCommand.Name = "log";
+    logCommand.Internal = true;
+    logCommand.Hidden = false;
+    logCommand.Rank = 0;
+    logCommand.RankShow = 0;
+    logCommand.Function = [this] { CommandMain::CommandLogLast(); };
+    Commands.push_back(logCommand);
 
     Load();
 }
@@ -827,5 +859,70 @@ void CommandMain::CommandMaterials() {
     }
     if (!toSend.empty()) {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, toSend);
+    }
+}
+
+void CommandMain::CommandListMaps() {
+    Network* nm = Network::GetInstance();
+    MapMain* mapMain = MapMain::GetInstance();
+
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eMaps:");
+    std::string toSend = "";
+    for(auto const &map : mapMain->_maps) {
+        std::string toAdd = "";
+        if (map.second->data.RankShow <= c->player->tEntity->playerList->PRank) {
+            toAdd += "&e" + map.second->data.Name + " &f| ";
+            if (64 - toSend.size() >= toAdd.size())
+                toSend += toAdd;
+            else {
+                NetworkFunctions::SystemMessageNetworkSend(c->Id, toSend);
+                toSend = toAdd;
+            }
+
+        }
+    }
+    if (!toSend.empty()) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, toSend);
+    }
+}
+
+void CommandMain::CommandServerInfo() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::string serverRunTime = stringulate(time(nullptr) - System::startTime / 120.0);
+
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eServer Info:");
+#ifdef __linux__
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Linux (x64)");
+#else
+#ifdef MSVC
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Windows [MSVC] (x86)");
+#else
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Windows (x64)");
+#endif
+#endif
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eRun time: " + serverRunTime + "h");
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eServer Memory Allocations: " + stringulate(Mem::MemoryUsage / 4096) + " MB");
+}
+
+void CommandMain::CommandLogLast() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    int numLines = 10;
+
+    if (!ParsedOperator[0].empty()) {
+        numLines = stoi(ParsedOperator[0]);
+    }
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eLog:");
+    Logger* logMain = Logger::GetInstance();
+    if (numLines > logMain->Messages.size()) {
+        numLines = logMain->Messages.size();
+    }
+    int logSize = logMain->Messages.size();
+    for(int i = 0; i< numLines; i++) {
+        LogMessage message = logMain->Messages.at(logSize-i-1);
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, " " + message.Message);
     }
 }

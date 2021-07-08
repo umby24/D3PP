@@ -33,6 +33,7 @@ public:
     Mem();
     static char* Allocate(long size, std::string File, int line, std::string Message);
     static void Free(char* memory);
+    static long MemoryUsage;
 protected:
     static Mem* GetInstance();
     static Mem* singleton_;
@@ -43,7 +44,7 @@ private:
     void MainFunc();
     void HtmlStats();
 
-    long MemoryUsage;
+
     static std::mutex _lock;
 
     std::vector<MemUsageChronic> _chronics;

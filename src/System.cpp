@@ -11,6 +11,7 @@
 const std::string MODULE_NAME = "System";
 System* System::Instance_ = nullptr;
 bool System::IsRunning = false;
+time_t System::startTime = time(nullptr);
 
 System::System() {
     this->Interval = std::chrono::seconds(2);

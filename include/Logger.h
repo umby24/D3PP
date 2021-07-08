@@ -31,16 +31,18 @@ class Logger
         Logger();
         virtual ~Logger();
         static void LogAdd(std::string module, std::string message, LogType type, std::string file, int line, std::string procedure);
+        static Logger* GetInstance();
+        std::vector<LogMessage> Messages;
     protected:
         void Add(struct LogMessage message);
-        static Logger* GetInstance();
+
         static Logger* singleton_;
     private:
         int Timer;
         bool SaveFile;
         std::string Filename;
         bool GuiOutput;
-        std::vector<LogMessage> Messages;
+
         std::ofstream fileStream;
 
         void SizeCheck();

@@ -224,6 +224,7 @@ public:
 
     void ActionProcessor();
     bool SaveFile;
+    std::map<int, std::shared_ptr<Map>> _maps;
 private:
     static MapMain* Instance;
     std::thread BlockchangeThread;
@@ -241,7 +242,7 @@ private:
     int StatsTimer;
 
     std::vector<MapActionItem> _mapActions;
-    std::map<int, std::shared_ptr<Map>> _maps;
+
     // --
     int mapSettingsLastWriteTime;
     int mapSettingsTimerFileCheck;

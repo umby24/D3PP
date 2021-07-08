@@ -48,6 +48,7 @@ int main()
     
     TaskScheduler::RunSetupTasks();
     System::IsRunning = true;
+    System::startTime = time(nullptr);
     n->Load();
     n->Save();
     n->Start();

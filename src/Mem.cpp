@@ -10,6 +10,7 @@
 #include "Utils.h"
 
 Mem* Mem::singleton_ = nullptr;
+long Mem::MemoryUsage = 0;
 std::mutex Mem::_lock;
 const std::string MODULE_NAME = "Mem";
 
@@ -47,7 +48,7 @@ char* Mem::Allocate(long size, std::string File, int line, std::string Message) 
 
     struct MemElement newElement { mem, size, File, line, Message};
     instance->_elements.push_back(newElement);
-    instance->MemoryUsage += size;
+    Mem::MemoryUsage += size;
     _lock.unlock();
 
     return mem;
@@ -63,7 +64,7 @@ void Mem::Free(char *memory) {
         if (item.Memory == memory) {
             delete[] memory;
             found = true;
-            m->MemoryUsage -= item.Size;
+            Mem::MemoryUsage -= item.Size;
             m->_elements.erase(m->_elements.begin() + i);
             break;
         }

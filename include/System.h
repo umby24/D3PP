@@ -12,10 +12,12 @@
 using json = nlohmann::json;
 
 const std::string SYSTEM_FILE_NAME = "System";
+const float SYSTEM_VERSION_NUMBER = 0.01;
 
 class System : TaskItem {
 public:
     static bool IsRunning;
+    static time_t startTime;
     static System* GetInstance();
     static System* Instance_;
     std::string ServerName;
