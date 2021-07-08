@@ -22,6 +22,7 @@
 #include "Player_List.h"
 #include "plugins/LuaPlugin.h"
 #include "Physics.h"
+#include "Undo.h"
 
 using namespace std;
 
@@ -205,7 +206,6 @@ void MapMain::ActionProcessor() {
                         NetworkFunctions::SystemMessageNetworkSend(item.ClientID, "&eMap Saved.");
                     }
                     watchdog::Watch("Map_Action", "End map-save", 1);
-                    // -- TODO: Map_Overview_Save
                     break;
                 case MapAction::LOAD:
                     watchdog::Watch("Map_Action", "Begin map-load", 1);
@@ -818,7 +818,7 @@ void Map::Load(std::string directory) {
 
     int dSize = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.Data), mapSize * MAP_BLOCK_ELEMENT_SIZE, directory + MAP_FILENAME_DATA);
     if (dSize == (mapSize * MAP_BLOCK_ELEMENT_SIZE)) {
-        // -- TODO: Clear undo map
+        Undo::ClearMap(data.ID);
         for(int i = 0; i < 255; i++) {
             data.blockCounter[i] = 0;
         }
@@ -898,7 +898,7 @@ void Map::Reload() {
     std::string filenameData = data.Directory + MAP_FILENAME_DATA;
     int unzipResult = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.Data), mapSize * MAP_BLOCK_ELEMENT_SIZE, data.Directory + MAP_FILENAME_DATA);
     if (unzipResult > 0) {
-    // -- UNDO Clear Map
+        Undo::ClearMap(data.ID);
         for(int i = 0; i < 255; i++) {
             data.blockCounter[i] = 0;
         }
@@ -1095,7 +1095,7 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
         MapBlock newType = bm->GetBlock(type);
         
         if (type != atLoc->type && undo) {
-            // -- TODO: Undo_Add()
+            Undo::Add(playerNumber, data.ID, X, Y, Z, oldType.Id, atLoc->lastPlayer);
         }
 
         data.blockCounter[atLoc->type]--;
@@ -1119,22 +1119,17 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
 }
 
 unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned short Z) {
-    // if (data.loaded = false && data.loading == false) {
-    //     data.LastClient = time(nullptr);
-    //     Reload();
-    // }
-    // if (data.loading) {
-    //     while (data.loaded == false) {
-    //         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    //     }
-    // }
+     if (data.loaded == false && !data.loading) {
+         data.LastClient = time(nullptr);
+         Reload();
+     }
+     if (data.loading) {
+         while (data.loaded == false) {
+             std::this_thread::sleep_for(std::chrono::milliseconds(100));
+         }
+     }
     if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
         int oneOffset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
-        int twoOffset = ((Y*data.SizeZ+Z)*data.SizeX+X)*MAP_BLOCK_ELEMENT_SIZE;
-        int threeOffset = ((Z*data.SizeY+Y)*data.SizeX+X)*MAP_BLOCK_ELEMENT_SIZE;
-        if (oneOffset != threeOffset)
-            std::cout<< (int)(data.Data[oneOffset]) << "vs " << (int)(data.Data[threeOffset]) << std::endl;
-
         auto* stuff = (MapBlockData*)(data.Data + MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE));
         
         return stuff->type;
@@ -1197,7 +1192,11 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
         int oldType1 = blockdata1->type;
 
         if (undo) {
+            if (blockdata0->type != 0)
+                Undo::Add(blockdata0->lastPlayer, data.ID, X0, Y0, Z0, blockdata0->type, blockdata0->lastPlayer);
 
+            if (blockdata1->type != blockdata0->type)
+                Undo::Add(blockdata0->lastPlayer, data.ID, X1, Y1, Z1, blockdata1->type, blockdata1->lastPlayer);
         }
 
         blockdata1->type = blockdata0->type;

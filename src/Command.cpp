@@ -14,6 +14,7 @@
 #include "System.h"
 #include "Mem.h"
 #include "Utils.h"
+#include "Undo.h"
 
 const std::string MODULE_NAME = "Command";
 CommandMain* CommandMain::Instance = nullptr;
@@ -218,6 +219,37 @@ void CommandMain::Init() {
     materialList.RankShow = 0;
     materialList.Function = [this] { CommandMain::CommandMaterials(); };
     Commands.push_back(materialList);
+
+    Command undoTime;
+    undoTime.Id = "Undo-Time";
+    undoTime.Name = "undotime";
+    undoTime.Internal = true;
+    undoTime.Hidden = false;
+    undoTime.Rank = 0;
+    undoTime.RankShow = 0;
+    undoTime.Function = [this] { CommandMain::CommandUndoTime(); };
+    Commands.push_back(undoTime);
+
+    Command undoPLayer;
+    undoPLayer.Id = "Undo-Player";
+    undoPLayer.Name = "undoplayer";
+    undoPLayer.Internal = true;
+    undoPLayer.Hidden = false;
+    undoPLayer.Rank = 0;
+    undoPLayer.RankShow = 0;
+    undoPLayer.Function = [this] { CommandMain::CommandUndoPlayer(); };
+    Commands.push_back(undoPLayer);
+
+    Command undoCmd;
+    undoCmd.Id = "Undo";
+    undoCmd.Name = "undo";
+    undoCmd.Internal = true;
+    undoCmd.Hidden = false;
+    undoCmd.Rank = 0;
+    undoCmd.RankShow = 0;
+    undoCmd.Function = [this] { CommandMain::CommandUndo(); };
+    Commands.push_back(undoCmd);
+
 
     Command mapList;
     mapList.Id = "List-Maps";
@@ -925,4 +957,62 @@ void CommandMain::CommandLogLast() {
         LogMessage message = logMain->Messages.at(logSize-i-1);
         NetworkFunctions::SystemMessageNetworkSend(c->Id, " " + message.Message);
     }
+}
+
+void CommandMain::CommandUndoTime() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    int timeAmount = 60;
+
+    if (!ParsedOperator[0].empty()) {
+        timeAmount = stoi(ParsedOperator[0]);
+    }
+    if (timeAmount > 3600)
+        timeAmount = 3600;
+    time_t doTime = time(nullptr) - timeAmount;
+    Undo::UndoTime(c->player->MapId, doTime);
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eBlockchanges undone.");
+}
+
+void CommandMain::CommandUndoPlayer() {
+    Network* nm = Network::GetInstance();
+    Player_List* playerList= Player_List::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    PlayerListEntry* entry= playerList->GetPointer(ParsedOperator[0]);
+    if (entry == nullptr) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find a player named '" + ParsedOperator[0] + "'.");
+        return;
+    }
+
+    int timeAmount = 60;
+
+    if (!ParsedOperator[1].empty()) {
+        timeAmount = stoi(ParsedOperator[1]);
+    }
+    if (timeAmount > 3600)
+        timeAmount = 3600;
+
+    time_t doTime = time(nullptr) - timeAmount;
+    Undo::UndoPlayer(c->player->MapId, entry->Number, doTime);
+
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eBlockchanges undone.");
+}
+
+void CommandMain::CommandUndo() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    int timeAmount = 60;
+
+    if (!ParsedOperator[0].empty()) {
+        timeAmount = stoi(ParsedOperator[0]);
+    }
+    if (timeAmount > 3600)
+        timeAmount = 3600;
+
+    time_t doTime = time(nullptr) - timeAmount;
+    Undo::UndoPlayer(c->player->MapId, c->player->tEntity->playerList->Number, doTime);
+
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eBlockchanges undone.");
 }
