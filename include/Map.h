@@ -105,7 +105,7 @@ struct MapData {
     std::string UniqueID;
     std::string Name;
     int SaveInterval;
-    int SaveTime;
+    time_t SaveTime;
     std::string Directory;
     OverviewType overviewType;
     unsigned short SizeX;
@@ -133,7 +133,7 @@ struct MapData {
     std::string MotdOverride;
     bool loading;
     bool loaded;
-    int LastClient;
+    time_t LastClient;
     int Clients;
     // -- CPE..
     int SkyColor;
@@ -176,9 +176,9 @@ public:
     Map();
     MapData data;
     bool Resize(short x, short y, short z);
-    void Fill(std::string functionName, std::string paramString);
+    void Fill(const std::string& functionName, std::string paramString);
     void BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1, unsigned short Z1, bool undo, bool physic, unsigned char priority);
-    void BlockChange(std::shared_ptr<NetworkClient> client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type);
+    void BlockChange(const std::shared_ptr<NetworkClient>& client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type);
     void BlockChange (short playerNumber, unsigned short X, unsigned short Y, unsigned short Z, unsigned char type, bool undo, bool physic, bool send, unsigned char priority);
     void ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z);
     bool Save(std::string directory);
@@ -208,7 +208,7 @@ public:
     int GetMapId();
     static std::string GetUniqueId();
     
-    int Add(int id, short x, short y, short z, std::string name);
+    int Add(int id, short x, short y, short z, const std::string& name);
     void Delete(int id);
     static MapMain* GetInstance();
     std::string GetMapMOTDOverride(int mapId);
@@ -216,8 +216,8 @@ public:
     static int GetMapOffset(int x, int y, int z, int sizeX, int sizeY, int sizeZ, int blockSize) { return (x + y * sizeX + z * sizeX * sizeY) * blockSize;}
     void MainFunc();
     
-    void AddSaveAction(int clientId, int mapId, std::string directory);
-    void AddLoadAction(int clientId, int mapId, std::string directory);
+    void AddSaveAction(int clientId, int mapId, const std::string& directory);
+    void AddLoadAction(int clientId, int mapId, const std::string& directory);
     void AddResizeAction(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z);
     void AddFillAction(int clientId, int mapId, std::string functionName, std::string argString);
     void AddDeleteAction(int clientId, int mapId);
@@ -234,12 +234,12 @@ private:
     bool maStarted;
     bool phStarted;
 
-    int SaveFileTimer;
+    time_t SaveFileTimer;
     std::string TempFilename;
     int TempId;
     std::string TempOverviewFilename;
     int LastWriteTime;
-    int StatsTimer;
+    time_t StatsTimer;
 
     std::vector<MapActionItem> _mapActions;
 

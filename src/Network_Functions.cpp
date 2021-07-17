@@ -96,7 +96,7 @@ void NetworkFunctions::NetworkOutBlockSet(int clientId, short x, short y, short 
     }
 }
 
-void NetworkFunctions::NetworkOutBlockSet2Map(int mapId, short x, short y, short z, unsigned char type) {
+void NetworkFunctions::NetworkOutBlockSet2Map(int mapId, unsigned short x, unsigned short y, unsigned short z, unsigned char type) {
     Network* n = Network::GetInstance();
     Block* b = Block::GetInstance();
     MapBlock mb = b->GetBlock(type);

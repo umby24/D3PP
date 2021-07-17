@@ -43,9 +43,9 @@ public:
     int timeMessageOther;
     std::string lastPrivateMessage;
     // --
-    char heldBlock;
+    unsigned heldBlock;
     std::string model;
-    char lastMaterial;
+    unsigned lastMaterial;
     short buildMaterial;
     std::string BuildMode;
     char BuildState;

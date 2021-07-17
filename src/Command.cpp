@@ -15,6 +15,7 @@
 #include "Mem.h"
 #include "Utils.h"
 #include "Undo.h"
+#include "plugins/LuaPlugin.h"
 
 const std::string MODULE_NAME = "Command";
 CommandMain* CommandMain::Instance = nullptr;
@@ -281,6 +282,36 @@ void CommandMain::Init() {
     logCommand.Function = [this] { CommandMain::CommandLogLast(); };
     Commands.push_back(logCommand);
 
+    Command tpCommand;
+    tpCommand.Id = "Teleport";
+    tpCommand.Name = "tp";
+    tpCommand.Internal = true;
+    tpCommand.Hidden = false;
+    tpCommand.Rank = 0;
+    tpCommand.RankShow = 0;
+    tpCommand.Function = [this] { CommandMain::CommandTeleport(); };
+    Commands.push_back(tpCommand);
+
+    Command bringCommand;
+    bringCommand.Id = "Bring";
+    bringCommand.Name = "bring";
+    bringCommand.Internal = true;
+    bringCommand.Hidden = false;
+    bringCommand.Rank = 0;
+    bringCommand.RankShow = 0;
+    bringCommand.Function = [this] { CommandMain::CommandBring(); };
+    Commands.push_back(bringCommand);
+
+    Command mfillCommand;
+    mfillCommand.Id = "Map-Fill";
+    mfillCommand.Name = "mapfill";
+    mfillCommand.Internal = true;
+    mfillCommand.Hidden = false;
+    mfillCommand.Rank = 0;
+    mfillCommand.RankShow = 0;
+    mfillCommand.Function = [this] { CommandMain::CommandMapFill(); };
+    Commands.push_back(mfillCommand);
+
     Load();
 }
 
@@ -437,6 +468,11 @@ void CommandMain::CommandDo(const std::shared_ptr<NetworkClient> client, std::st
             }
             if (!cmd.Plugin.empty()) {
                 // -- Run plugin based command
+                LuaPlugin* lm = LuaPlugin::GetInstance();
+                std::string functionName = cmd.Plugin;
+                Utils::replaceAll(functionName, "Lua:", "");
+                lm->TriggerCommand(functionName, client->Id, ParsedCommand, ParsedText0, ParsedText1, ParsedOperator[0], ParsedOperator[1], ParsedOperator[2], ParsedOperator[3], ParsedOperator[4]);
+
             } else if (cmd.Function != NULL) {
                 cmd.Function();
             }
@@ -1015,4 +1051,43 @@ void CommandMain::CommandUndo() {
     Undo::UndoPlayer(c->player->MapId, c->player->tEntity->playerList->Number, doTime);
 
     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eBlockchanges undone.");
+}
+
+void CommandMain::CommandTeleport() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator[0]);
+
+    if (entry == nullptr) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find a player named '" + ParsedOperator[0] + "'.");
+        return;
+    }
+
+    c->player->tEntity->PositionSet(entry->MapID, entry->X, entry->Y, entry->Z, entry->Rotation, entry->Look, 10, true);
+}
+
+void CommandMain::CommandBring() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator[0]);
+    if (entry == nullptr) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find a player named '" + ParsedOperator[0] + "'.");
+        return;
+    }
+
+    entry->PositionSet(c->player->tEntity->MapID, c->player->tEntity->X, c->player->tEntity->Y, c->player->tEntity->Z, c->player->tEntity->Rotation, c->player->tEntity->Look, 10, true);
+}
+
+void CommandMain::CommandMapFill() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    if (!ParsedOperator[0].empty()) {
+        MapMain* mapMain = MapMain::GetInstance();
+        mapMain->AddFillAction(c->Id, c->player->MapId, ParsedOperator[0], ParsedText1);
+    } else {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease define a function.");
+    }
 }

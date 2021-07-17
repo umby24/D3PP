@@ -4,6 +4,8 @@
 
 #include "Map.h"
 
+#include <utility>
+
 #include "Files.h"
 #include "Network.h"
 #include "System.h"
@@ -41,8 +43,10 @@ MapMain::MapMain() {
     mapSettingsTimerFileCheck = 0;
     StatsTimer = 0;
 
+    phStarted = false;
     mbcStarted = false;
     maStarted = false;
+    TempId = 0;
 }
 
 void MapMain::MainFunc() {
@@ -109,7 +113,7 @@ MapMain* MapMain::GetInstance() {
     return Instance;
 }
 
-void MapMain::AddSaveAction(int clientId, int mapId, std::string directory) {
+void MapMain::AddSaveAction(int clientId, int mapId, const std::string& directory) {
     int newActionId = GetMaxActionId();
     bool found = false;
     for(auto const &act : _mapActions) {
@@ -125,7 +129,7 @@ void MapMain::AddSaveAction(int clientId, int mapId, std::string directory) {
     }
 }
 
-void MapMain::AddLoadAction(int clientId, int mapId, std::string directory) {
+void MapMain::AddLoadAction(int clientId, int mapId, const std::string& directory) {
     int newActionId = GetMaxActionId();
     bool found = false;
     for(auto const &act : _mapActions) {
@@ -160,6 +164,7 @@ void MapMain::AddResizeAction(int clientId, int mapId, unsigned short X, unsigne
 void MapMain::AddFillAction(int clientId, int mapId, std::string functionName, std::string argString) {
     int newActionId = GetMaxActionId();
     bool found = false;
+
     for(auto const &act : _mapActions) {
         if (act.MapID == mapId && act.Action == MapAction::FILL) {
             found = true;
@@ -168,7 +173,7 @@ void MapMain::AddFillAction(int clientId, int mapId, std::string functionName, s
     }
 
     if (!found) {
-        MapActionItem newAction {newActionId, clientId, mapId, MapAction::FILL, functionName, "", 0, 0, 0, argString};
+        MapActionItem newAction {newActionId, clientId, mapId, MapAction::FILL, std::move(functionName), "", 0, 0, 0, argString};
         _mapActions.push_back(newAction);
     }
 }
@@ -176,6 +181,7 @@ void MapMain::AddFillAction(int clientId, int mapId, std::string functionName, s
 void MapMain::AddDeleteAction(int clientId, int mapId) {
     int newActionId = GetMaxActionId();
     bool found = false;
+
     for(auto const &act : _mapActions) {
         if (act.MapID == mapId && act.Action == MapAction::DELETE) {
             found = true;
@@ -192,7 +198,8 @@ void MapMain::AddDeleteAction(int clientId, int mapId) {
 void MapMain::ActionProcessor() {
     while (System::IsRunning) {
         watchdog::Watch("Map_Action", "Begin thread-slope", 0);
-        if (_mapActions.size() > 0) {
+
+        if (!_mapActions.empty()) {
             MapActionItem item = _mapActions.at(0);
             _mapActions.erase(_mapActions.begin());
 
@@ -394,8 +401,9 @@ std::string MapMain::GetUniqueId() {
 }
 
 std::string MapMain::GetMapMOTDOverride(int mapId) {
-    std::string result = "";
+    std::string result;
     shared_ptr<Map> mapPtr = GetPointer(mapId);
+
     if (mapPtr == nullptr)
         return result;
     
@@ -440,7 +448,7 @@ void MapMain::HtmlStats(time_t time_) {
     Utils::replaceAll(result, "[MAP_TABLE]", mapTable);
 
     time_t finishTime = time(nullptr);
-    long duration = finishTime - startTime;
+    time_t duration = finishTime - startTime;
     char buffer[255];
     strftime(buffer, sizeof(buffer), "%H:%M:%S  %m-%d-%Y", localtime(reinterpret_cast<const time_t *>(&finishTime)));
     std::string meh(buffer);
@@ -514,7 +522,7 @@ void MapMain::MapListLoad() {
     Logger::LogAdd(MODULE_NAME, "File loaded. [" + fName + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
-int MapMain::Add(int id, short x, short y, short z, std::string name) {
+int MapMain::Add(int id, short x, short y, short z, const std::string& name) {
     if (id == -1)
         id = GetMapId();
 
@@ -686,7 +694,7 @@ bool Map::Resize(short x, short y, short z) {
     return result;
 }
 
-void Map::Fill(std::string functionName, std::string paramString) {
+void Map::Fill(const std::string& functionName, std::string paramString) {
     if (!data.loaded) {
         Reload();
     }
@@ -711,7 +719,7 @@ void Map::Fill(std::string functionName, std::string paramString) {
     data.Teleporter.clear();
 
     LuaPlugin* lp = LuaPlugin::GetInstance();
-    lp->TriggerMapFill(data.ID, data.SizeX, data.SizeY, data.SizeZ, "Mapfill_" + functionName, paramString);
+    lp->TriggerMapFill(data.ID, data.SizeX, data.SizeY, data.SizeZ, "Mapfill_" + functionName, std::move(paramString));
 
     Resend();
     Logger::LogAdd(MODULE_NAME, "Map '" + data.Name + "' filled.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
@@ -849,7 +857,7 @@ void Map::Load(std::string directory) {
     rBoxLoader.LoadFile();
     for (auto const &fi : rBoxLoader.SettingsDictionary) {
         rBoxLoader.SelectGroup(fi.first);
-        MapRankElement mre;
+        MapRankElement mre{};
         mre.X0 = rBoxLoader.Read("X_0", 0);
         mre.Y0 = rBoxLoader.Read("Y_0", 0);
         mre.Z0 = rBoxLoader.Read("Z_0", 0);
@@ -864,7 +872,7 @@ void Map::Load(std::string directory) {
     tpLoader.LoadFile();
     for (auto const &tp : tpLoader.SettingsDictionary) {
         tpLoader.SelectGroup(tp.first);
-        MapTeleporterElement tpe;
+        MapTeleporterElement tpe{};
         tpe.Id = tp.first;
         tpe.X0 = tpLoader.Read("X_0", 0);
         tpe.Y0 = tpLoader.Read("Y_0", 0);
@@ -997,7 +1005,7 @@ void Map::Send(int clientId) {
         int bytesInBlock = bytes2Send;
         if (bytesInBlock > 1024)
             bytesInBlock = 1024;
-        Packets::SendMapData(clientId, bytesInBlock, tempBuf2 + bytesSent, bytesSent*100/compressedSize);
+        Packets::SendMapData(clientId, bytesInBlock, tempBuf2 + bytesSent, bytesSent*100.0/compressedSize);
         bytesSent += bytesInBlock;
         bytes2Send -= bytesInBlock;
     }
@@ -1038,7 +1046,7 @@ void Map::Resend() {
     data.ChangeQueue.clear();
 }
 
-void Map::BlockChange(std::shared_ptr<NetworkClient> client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type) {
+void Map::BlockChange(const std::shared_ptr<NetworkClient>& client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type) {
     if (client == nullptr || client->player->tEntity == nullptr || client->player->tEntity->playerList == nullptr)
         return;
 
@@ -1050,7 +1058,7 @@ void Map::BlockChange(std::shared_ptr<NetworkClient> client, unsigned short X, u
     Block* bm = Block::GetInstance();
 
     if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
-        unsigned char rawBlock = static_cast<unsigned char>(data.Data[MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE)]);
+        auto rawBlock = static_cast<unsigned char>(data.Data[MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE)]);
         unsigned char rawNewType = 0;
         MapBlock oldType = bm->GetBlock(rawBlock);
         client->player->tEntity->lastMaterial = type;
@@ -1119,12 +1127,12 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
 }
 
 unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned short Z) {
-     if (data.loaded == false && !data.loading) {
+     if (!data.loaded && !data.loading) {
          data.LastClient = time(nullptr);
          Reload();
      }
      if (data.loading) {
-         while (data.loaded == false) {
+         while (!data.loaded) {
              std::this_thread::sleep_for(std::chrono::milliseconds(100));
          }
      }
@@ -1148,8 +1156,8 @@ void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z,
             MapBlockChanged changeItem { X, Y, Z, priority, oldType};
             int insertIndex = 0;
             
-            for(int i = 0; i < data.ChangeQueue.size(); i++) {
-                if (data.ChangeQueue[i].Priority >= priority) {
+            for(auto & i : data.ChangeQueue) {
+                if (i.Priority >= priority) {
                     insertIndex++;
                     break;
                 }
@@ -1185,8 +1193,8 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
     bool isSecondInBounds = (X1 >= 0 && X1 < data.SizeX && Y1 >= 0 && Y1 < data.SizeY && Z1 >= 0 && Z1 < data.SizeZ);
 
     if (isFirstInBounds && isSecondInBounds) {
-        MapBlockData* blockdata0 = (MapBlockData*)(data.Data + MapMain::GetMapOffset(X0, Y0, Z0, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE));
-        MapBlockData* blockdata1 = (MapBlockData*)(data.Data + MapMain::GetMapOffset(X1, Y1, Z1, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE));
+        auto* blockdata0 = (MapBlockData*)(data.Data + MapMain::GetMapOffset(X0, Y0, Z0, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE));
+        auto* blockdata1 = (MapBlockData*)(data.Data + MapMain::GetMapOffset(X1, Y1, Z1, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE));
 
         int oldType0 = blockdata0->type;
         int oldType1 = blockdata1->type;
