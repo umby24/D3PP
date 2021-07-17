@@ -801,7 +801,9 @@ void Map::Load(std::string directory) {
     if (directory.empty()) {
         directory = data.Directory;
     }
-
+    if (!std::filesystem::exists(directory)) {
+        return;
+    }
     PreferenceLoader pLoader(MAP_FILENAME_CONFIG, directory);
     pLoader.LoadFile();
     int sizeX = pLoader.Read("Size_X", 0);

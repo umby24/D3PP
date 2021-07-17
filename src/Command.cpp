@@ -302,6 +302,26 @@ void CommandMain::Init() {
     bringCommand.Function = [this] { CommandMain::CommandBring(); };
     Commands.push_back(bringCommand);
 
+    Command mLoadCommand;
+    mLoadCommand.Id = "Map-Load";
+    mLoadCommand.Name = "mapload";
+    mLoadCommand.Internal = true;
+    mLoadCommand.Hidden = false;
+    mLoadCommand.Rank = 0;
+    mLoadCommand.RankShow = 0;
+    mLoadCommand.Function = [this] { CommandMain::CommandLoadMap(); };
+    Commands.push_back(mLoadCommand);
+
+    Command mResizeCmd;
+    mResizeCmd.Id = "Map-Resize";
+    mResizeCmd.Name = "mapresize";
+    mResizeCmd.Internal = true;
+    mResizeCmd.Hidden = false;
+    mResizeCmd.Rank = 0;
+    mResizeCmd.RankShow = 0;
+    mResizeCmd.Function = [this] { CommandMain::CommandResizeMap(); };
+    Commands.push_back(mResizeCmd);
+
     Command mfillCommand;
     mfillCommand.Id = "Map-Fill";
     mfillCommand.Name = "mapfill";
@@ -432,10 +452,7 @@ void CommandMain::CommandDo(const std::shared_ptr<NetworkClient> client, std::st
     ParsedCommand = splitString[0];
 
     for (int i = 0; i < COMMAND_OPERATORS_MAX; i++) {
-        if (i+1 > splitString.size()) {
-            ParsedOperator[i] = "";
-            break;
-        }
+        ParsedOperator[i] = "";
         if (i+1 < splitString.size()) {
             ParsedOperator[i] = splitString[i + 1];
         }
@@ -1090,4 +1107,49 @@ void CommandMain::CommandMapFill() {
     } else {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease define a function.");
     }
+}
+
+void CommandMain::CommandLoadMap() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    Files* fm = Files::GetInstance();
+    std::string mapDirectory = "";
+
+    if (!ParsedOperator[0].empty()) {
+        mapDirectory = fm->GetFolder("Maps") + ParsedOperator[0];
+    }
+
+    MapMain* mapMain = MapMain::GetInstance();
+    mapMain->AddLoadAction(CommandClientId, c->player->MapId, mapDirectory);
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eLoad added to queue.");
+}
+
+void CommandMain::CommandResizeMap() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    if (ParsedOperator[0].empty() || ParsedOperator[1].empty() || ParsedOperator[2].empty()) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an X, Y, and Z value.");
+        return;
+    }
+    int X = 0;
+    int Y = 0;
+    int Z = 0;
+
+    try {
+        X = stoi(ParsedOperator[0]);
+        Y = stoi(ParsedOperator[1]);
+        Z= stoi(ParsedOperator[2]);
+    } catch (const std::exception &ex) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer X, Y, and Z value.");
+        return;
+    } catch (...) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer X, Y, and Z value.");
+        return;
+    }
+
+    MapMain* mapMain = MapMain::GetInstance();
+    mapMain->AddResizeAction(CommandClientId, c->player->MapId, X, Y, Z);
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eResize added to queue.");
 }
