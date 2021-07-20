@@ -17,7 +17,7 @@ class Sockets
 {
     public:
         Sockets();
-        Sockets(int acceptfd);
+        Sockets(int acceptfd, std::string clientIp);
         Sockets(std::string address, std::string port);
         virtual ~Sockets();
         bool Connect();

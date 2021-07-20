@@ -3,7 +3,10 @@
 //
 
 #include "network/LinuxServerSockets.h"
+
 #ifdef __linux__
+#include "arpa/inet.h"
+
 const std::string MODULE_NAME = "ServerSocket";
 
 ServerSocket::ServerSocket() {
@@ -79,7 +82,7 @@ std::unique_ptr<Sockets> ServerSocket::Accept() {
         }
     }
 
-    return std::make_unique<Sockets>(newSocket);
+    return std::make_unique<Sockets>(newSocket, inet_ntoa(address.sin_addr));
 }
 
 ServerSocketEvent ServerSocket::CheckEvents() {

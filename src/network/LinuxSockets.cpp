@@ -83,12 +83,13 @@ Sockets::Sockets() {
  socketIp = "";
 }
 
-Sockets::Sockets(int acceptfd) {
+Sockets::Sockets(int acceptfd, std::string clientIp) {
     socketfd = acceptfd;
     connected = true;
     status = 0;
     socketIp = "";
     host_info_list = nullptr;
+    socketIp = clientIp;
 }
 
 std::string Sockets::GetSocketIp() {
