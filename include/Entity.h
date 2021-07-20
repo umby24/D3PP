@@ -4,6 +4,7 @@
 
 #ifndef D3PP_ENTITY_H
 #define D3PP_ENTITY_H
+#define Client_Player_Buildmode_Variables 5
 
 #include <string>
 #include <map>
@@ -13,6 +14,15 @@
 
 class PlayerListEntry;
 class Player;
+
+struct BuildVariable {
+    unsigned short X;
+    unsigned short Y;
+    unsigned short Z;
+    float Float;
+    std::string String;
+    int Long;
+};
 
 struct EntityShort {
     int Id;
@@ -49,7 +59,7 @@ public:
     short buildMaterial;
     std::string BuildMode;
     char BuildState;
-    // -- array of build variables
+    BuildVariable variables[Client_Player_Buildmode_Variables];
     std::string ChatBuffer;
     bool SpawnSelf;
 

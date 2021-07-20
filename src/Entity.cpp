@@ -82,7 +82,7 @@ int Entity::GetFreeIdClient(int mapId) {
     return -1;
 }
 
-Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look) {
+Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look) : variables{} {
     Prefix = "";
     Name = name;
     Suffix = "";
@@ -105,6 +105,7 @@ Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rot
     SpawnSelf = false;
     BuildState = 0;
     BuildMode = "Normal";
+    playerList = nullptr;
 }
 
 std::shared_ptr<Entity> Entity::GetPointer(int id) {

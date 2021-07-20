@@ -14,6 +14,12 @@ BuildModeMain* BuildModeMain::Instance = nullptr;
 
 const std::string MODULE_NAME = "BuildMode";
 
+std::shared_ptr<NetworkClient> getClientById(int clientId) {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+    return nc;
+}
+
 BuildModeMain::BuildModeMain() {
     SaveFile = false;
     hasLoaded = false;
@@ -162,15 +168,203 @@ void BuildModeMain::Resend(int clientId) {
 }
 
 void BuildModeMain::SetMode(int clientId, std::string mode) {
-    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = getClientById(clientId);
 
-    for(auto const &c : nm->_clients) {
-        if (c.first == clientId) {
-            if (c.second->player && c.second->player->tEntity) {
-                c.second->player->tEntity->BuildMode = mode;
-                Resend(clientId);
-                break;
-            }
-        }
+    if (c->player && c->player->tEntity) {
+        c->player->tEntity->BuildMode = mode;
+        Resend(clientId);
     }
+}
+
+
+
+void BuildModeMain::SetState(int clientId, char state) {
+    std::shared_ptr<NetworkClient> nc = getClientById(clientId);
+
+    if (nc == nullptr)
+        return;
+
+    if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+        return;
+
+    nc->player->tEntity->BuildState = state;
+}
+
+char BuildModeMain::GetState(int clientId) {
+    char result = -1;
+
+    std::shared_ptr<NetworkClient> nc = getClientById(clientId);
+    if (nc == nullptr)
+        return result;
+
+    if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+        return result;
+
+    result = nc->player->tEntity->BuildState;
+    return result;
+}
+
+void BuildModeMain::SetCoordinate(int clientId, int index, unsigned short X, unsigned short Y, unsigned short Z) {
+    std::shared_ptr<NetworkClient> nc = getClientById(clientId);
+
+    if (nc == nullptr)
+        return;
+
+    if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+        return;
+
+    if (index > Client_Player_Buildmode_Variables)
+        return;
+
+    nc->player->tEntity->variables[index].X = X;
+    nc->player->tEntity->variables[index].Y = Y;
+    nc->player->tEntity->variables[index].Z = Z;
+}
+
+unsigned short BuildModeMain::GetCoordinateX(int clientId, int index) {
+    unsigned short result = 0;
+    std::shared_ptr<NetworkClient> nc = getClientById(clientId);
+
+    if (nc == nullptr)
+        return result;
+
+    if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+        return result;
+
+    if (index > Client_Player_Buildmode_Variables)
+        return result;
+
+    result = nc->player->tEntity->variables[index].X;
+    return result;
+}
+
+unsigned short BuildModeMain::GetCoordinateY(int clientId, int index) {
+    unsigned short result = 0;
+    std::shared_ptr<NetworkClient> nc = getClientById(clientId);
+
+    if (nc == nullptr)
+        return result;
+
+    if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+        return result;
+
+    if (index > Client_Player_Buildmode_Variables)
+        return result;
+
+    result = nc->player->tEntity->variables[index].Y;
+    return result;
+}
+
+unsigned short BuildModeMain::GetCoordinateZ(int clientId, int index) {
+    unsigned short result = 0;
+    std::shared_ptr<NetworkClient> nc = getClientById(clientId);
+
+    if (nc == nullptr)
+        return result;
+
+    if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+        return result;
+
+    if (index > Client_Player_Buildmode_Variables)
+        return result;
+
+    result = nc->player->tEntity->variables[index].Z;
+    return result;
+}
+
+void BuildModeMain::SetInt(int clientId, int index, int val) {
+    std::shared_ptr<NetworkClient> nc = getClientById(clientId);
+
+    if (nc == nullptr)
+        return;
+
+    if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+        return;
+
+    if (index > Client_Player_Buildmode_Variables)
+        return;
+
+    nc->player->tEntity->variables[index].Long = val;
+}
+
+int BuildModeMain::GetInt(int clientId, int index) {
+    int result = -1;
+    std::shared_ptr<NetworkClient> nc = getClientById(clientId);
+
+    if (nc == nullptr)
+        return result;
+
+    if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+        return result;
+
+    if (index > Client_Player_Buildmode_Variables)
+        return result;
+
+    result = nc->player->tEntity->variables[index].Long;
+    return result;
+}
+
+void BuildModeMain::SetFloat(int clientId, int index, float val) {
+    std::shared_ptr<NetworkClient> nc = getClientById(clientId);
+
+    if (nc == nullptr)
+        return;
+
+    if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+        return;
+
+    if (index > Client_Player_Buildmode_Variables)
+        return;
+
+    nc->player->tEntity->variables[index].Float = val;
+}
+
+float BuildModeMain::GetFloat(int clientId, int index) {
+    float result = -1;
+    std::shared_ptr<NetworkClient> nc = getClientById(clientId);
+
+    if (nc == nullptr)
+        return result;
+
+    if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+        return result;
+
+    if (index > Client_Player_Buildmode_Variables)
+        return result;
+
+    result = nc->player->tEntity->variables[index].Float;
+
+    return result;
+}
+
+void BuildModeMain::SetString(int clientId, int index, std::string val) {
+    std::shared_ptr<NetworkClient> nc = getClientById(clientId);
+
+    if (nc == nullptr)
+        return;
+
+    if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+        return;
+
+    if (index > Client_Player_Buildmode_Variables)
+        return;
+
+    nc->player->tEntity->variables[index].String = val;
+}
+
+std::string BuildModeMain::GetString(int clientId, int index) {
+    std::string result = "";
+    std::shared_ptr<NetworkClient> nc = getClientById(clientId);
+
+    if (nc == nullptr)
+        return result;
+
+    if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+        return result;
+
+    if (index > Client_Player_Buildmode_Variables)
+        return result;
+
+    result = nc->player->tEntity->variables[index].String;
+    return result;
 }
