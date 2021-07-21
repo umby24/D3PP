@@ -109,3 +109,124 @@ void Packets::SendCustomBlockSupportLevel(std::shared_ptr<NetworkClient> client,
     client->OutputWriteByte(19);
     client->OutputWriteByte(supportLevel);
 }
+
+void Packets::SendClickDistance(std::shared_ptr<NetworkClient> client, short distance) {
+    client->OutputWriteByte(18);
+    client->OutputWriteShort(distance);
+}
+
+void Packets::SendHoldThis(std::shared_ptr<NetworkClient> client, unsigned char block, bool preventChange) {
+    client->OutputWriteByte(20);
+    client->OutputWriteByte(block);
+    client->OutputWriteByte(preventChange);
+}
+
+void Packets::SendTextHotkeys(std::shared_ptr<NetworkClient> client, std::string label, std::string action, int keyCode,
+                              char modifier) {
+    client->OutputWriteByte(21);
+    client->OutputWriteString(label);
+    client->OutputWriteString(action);
+    client->OutputWriteInt(keyCode);
+    client->OutputWriteByte(modifier);
+}
+
+void Packets::SendExtAddPlayerName(std::shared_ptr<NetworkClient> client, short nameId, std::string playerName,
+                                   std::string listName, std::string groupName, char groupRank) {
+    client->OutputWriteByte(22);
+    client->OutputWriteShort(nameId);
+    client->OutputWriteString(playerName);
+    client->OutputWriteString(listName);
+    client->OutputWriteString(groupName);
+    client->OutputWriteByte(groupRank);
+}
+
+void Packets::SendExtRemovePlayerName(std::shared_ptr<NetworkClient> client, short nameId) {
+    client->OutputWriteByte(24);
+    client->OutputWriteShort(nameId);
+}
+
+void Packets::SendSetEnvironmentColors(std::shared_ptr<NetworkClient> client, char type, short red, short green,
+                                       short blue) {
+    client->OutputWriteByte(25);
+    client->OutputWriteByte(type);
+    client->OutputWriteShort(red);
+    client->OutputWriteShort(green);
+    client->OutputWriteShort(blue);
+}
+
+void Packets::SendSelectionBoxAdd(std::shared_ptr<NetworkClient> client, unsigned char selectionId, std::string label,
+                                  short startX, short startY, short startZ, short endX, short endY, short endZ,
+                                  short red, short green, short blue, short opacity) {
+    client->OutputWriteByte(26);
+    client->OutputWriteByte(selectionId);
+    client->OutputWriteString(label);
+    client->OutputWriteShort(startX);
+    client->OutputWriteShort(startZ);
+    client->OutputWriteShort(startY);
+    client->OutputWriteShort(endX);
+    client->OutputWriteShort(endZ);
+    client->OutputWriteShort(endY);
+    client->OutputWriteShort(red);
+    client->OutputWriteShort(green);
+    client->OutputWriteShort(blue);
+    client->OutputWriteShort(opacity);
+}
+
+void Packets::SendSelectionBoxDelete(std::shared_ptr<NetworkClient> client, unsigned char selectionId) {
+    client->OutputWriteByte(27);
+    client->OutputWriteByte(selectionId);
+}
+
+void Packets::SendBlockPermissions(std::shared_ptr<NetworkClient> client, unsigned char blockId, bool canPlace,
+                                   bool canDelete) {
+    client->OutputWriteByte(28);
+    client->OutputWriteByte(blockId);
+    client->OutputWriteByte(canPlace);
+    client->OutputWriteByte(canDelete);
+}
+
+void Packets::SendChangeModel(std::shared_ptr<NetworkClient> client, unsigned char entityId, std::string modelName) {
+    client->OutputWriteByte(29);
+    client->OutputWriteByte(entityId);
+    client->OutputWriteString(modelName);
+}
+
+void Packets::SendEnvMapAppearance(std::shared_ptr<NetworkClient> client, std::string url, unsigned char sideBlock,
+                                   unsigned char edgeBlock, short sideLevel) {
+    client->OutputWriteByte(30);
+    client->OutputWriteString(url);
+    client->OutputWriteByte(sideBlock);
+    client->OutputWriteByte(edgeBlock);
+    client->OutputWriteShort(sideLevel);
+}
+
+void Packets::SendSetWeather(std::shared_ptr<NetworkClient> client, unsigned char weatherType) {
+    client->OutputWriteByte(31);
+    client->OutputWriteByte(weatherType);
+}
+
+void
+Packets::SendHackControl(std::shared_ptr<NetworkClient> client, bool flying, bool noClip, bool speeding, bool respawn,
+                         bool thirdPerson, short jumpHeight) {
+    client->OutputWriteByte(32);
+    client->OutputWriteByte(flying);
+    client->OutputWriteByte(noClip);
+    client->OutputWriteByte(speeding);
+    client->OutputWriteByte(respawn);
+    client->OutputWriteByte(thirdPerson);
+    client->OutputWriteShort(jumpHeight);
+}
+
+void Packets::SendExtAddEntity2(std::shared_ptr<NetworkClient> client, unsigned char entityId, std::string name,
+                                std::string skin, short X, short Y, short Z, unsigned char rotation,
+                                unsigned char look) {
+    client->OutputWriteByte(33);
+    client->OutputWriteByte(entityId);
+    client->OutputWriteString(name);
+    client->OutputWriteString(skin);
+    client->OutputWriteShort(X);
+    client->OutputWriteShort(Z);
+    client->OutputWriteShort(Y);
+    client->OutputWriteByte(rotation);
+    client->OutputWriteByte(look);
+}

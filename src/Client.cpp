@@ -24,6 +24,8 @@
 #include "System.h"
 #include "Heartbeat.h"
 
+#include "CPE.h"
+
 const std::string MODULE_NAME = "Client";
 
 void Client::Login(int clientId, std::string name, std::string mppass, char version) {
@@ -115,10 +117,6 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 
 void Client::LoginCpe(int clientId, std::string name, std::string mppass, char version) {
     Network *n = Network::GetInstance();
-    PlayerMain *pm = PlayerMain::GetInstance();
-    Player_List *pl = Player_List::GetInstance();
-    MapMain *mm = MapMain::GetInstance();
-    Rank *rm = Rank::GetInstance();
 
     std::shared_ptr<NetworkClient> c = n->GetClient(clientId);
 
@@ -126,8 +124,21 @@ void Client::LoginCpe(int clientId, std::string name, std::string mppass, char v
     c->player->LoginName = name;
     c->player->MPPass = mppass;
     c->player->ClientVersion = version;
-    Packets::SendExtInfo(c, "D3PP Server Alpha", 1);
-    Packets::SendExtEntry(c, "CustomBlocks", 1);
+    Packets::SendExtInfo(c, "D3PP Server Alpha", 14);
+    Packets::SendExtEntry(c, CUSTOM_BLOCKS_EXT_NAME, 1);
+    Packets::SendExtEntry(c, HELDBLOCK_EXT_NAME, 1);
+    Packets::SendExtEntry(c, CLICK_DISTANCE_EXT_NAME, 1);
+    Packets::SendExtEntry(c, CHANGE_MODEL_EXT_NAME, 1);
+    Packets::SendExtEntry(c, EXT_PLAYER_LIST_EXT_NAME, 2);
+    Packets::SendExtEntry(c, EXT_WEATHER_CONTROL_EXT_NAME, 1);
+    Packets::SendExtEntry(c, ENV_APPEARANCE_EXT_NAME, 1);
+    Packets::SendExtEntry(c, MESSAGE_TYPES_EXT_NAME, 1);
+    Packets::SendExtEntry(c, BLOCK_PERMISSIONS_EXT_NAME, 1);
+    Packets::SendExtEntry(c, ENV_COLORS_EXT_NAME, 1);
+    Packets::SendExtEntry(c, HOTKEY_EXT_NAME, 1);
+    Packets::SendExtEntry(c, HACKCONTROL_EXT_NAME, 1);
+    Packets::SendExtEntry(c, SELECTION_CUBOID_EXT_NAME, 1);
+    Packets::SendExtEntry(c, LONG_MESSAGES_EXT_NAME, 1);
     Logger::LogAdd(MODULE_NAME, "LoginCPE complete", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 

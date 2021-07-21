@@ -25,20 +25,20 @@ public:
     // -- CPE:
     static void SendExtInfo(std::shared_ptr<NetworkClient> client, std::string serverName, int extensionCount);
     static void SendExtEntry(std::shared_ptr<NetworkClient> client, std::string extensionName, int versionNumber);
-    static void SendClickDistance();
+    static void SendClickDistance(std::shared_ptr<NetworkClient> client, short distance);
     static void SendCustomBlockSupportLevel(std::shared_ptr<NetworkClient> client, unsigned char supportLevel);
-    static void SendHoldThis();
-    static void SendTextHotkeys();
-    static void SendExtAddPlayerName();
-    static void SendExtRemovePlayerName();
-    static void SendSetEnvironmentColors();
-    static void SendSelectionBoxAdd();
-    static void SendSelectionBoxDelete();
-    static void SendBlockPermissions();
-    static void SendChangeModel();
-    static void SendEnvMapAppearance();
-    static void SendSetWeather();
-    static void SendHackControl();
-    static void SendExtAddEntity2();
+    static void SendHoldThis(std::shared_ptr<NetworkClient> client, unsigned char block, bool preventChange);
+    static void SendTextHotkeys(std::shared_ptr<NetworkClient> client, std::string label, std::string action, int keyCode, char modifier);
+    static void SendExtAddPlayerName(std::shared_ptr<NetworkClient> client, short nameId, std::string playerName, std::string listName, std::string groupName, char groupRank);
+    static void SendExtRemovePlayerName(std::shared_ptr<NetworkClient> client, short nameId);
+    static void SendSetEnvironmentColors(std::shared_ptr<NetworkClient> client, char type, short red, short green, short blue);
+    static void SendSelectionBoxAdd(std::shared_ptr<NetworkClient> client, unsigned char selectionId, std::string label, short startX, short startY, short startZ, short endX, short endY, short endZ, short red, short green, short blue, short opacity);
+    static void SendSelectionBoxDelete(std::shared_ptr<NetworkClient> client, unsigned char selectionId);
+    static void SendBlockPermissions(std::shared_ptr<NetworkClient> client, unsigned char blockId, bool canPlace, bool canDelete);
+    static void SendChangeModel(std::shared_ptr<NetworkClient> client, unsigned char entityId, std::string modelName);
+    static void SendEnvMapAppearance(std::shared_ptr<NetworkClient> client, std::string url, unsigned char sideBlock, unsigned char edgeBlock, short sideLevel);
+    static void SendSetWeather(std::shared_ptr<NetworkClient> client, unsigned char weatherType);
+    static void SendHackControl(std::shared_ptr<NetworkClient> client, bool flying, bool noClip, bool speeding, bool respawn, bool thirdPerson, short jumpHeight);
+    static void SendExtAddEntity2(std::shared_ptr<NetworkClient> client, unsigned char entityId, std::string name, std::string skin, short X, short Y, short Z, unsigned char rotation, unsigned char look);
 };
 #endif //D3PP_PACKETS_H
