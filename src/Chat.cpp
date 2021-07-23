@@ -12,7 +12,7 @@
 
 #include "Logger.h"
 #include "Utils.h"
-
+#include "CPE.h"
 const int MaxStringLength = 65;
 
 void Chat::HandleChatEscapes(std::string &input, int currentEntityId) {
@@ -172,7 +172,15 @@ void Chat::NetworkSend2All(int entityId, std::string message) {
 }
 
 void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient> client, std::string input, char playerId) {
-    // -- TODO: CPE longer messages
+    if (CPE::GetClientExtVersion(client, LONG_MESSAGES_EXT_NAME) == 1){
+        if (playerId == 1) {
+            client->player->tEntity->ChatBuffer += input;
+            return;
+        } else {
+            input = client->player->tEntity->ChatBuffer + input;
+            client->player->tEntity->ChatBuffer = "";
+        }
+    }
     CommandMain* cm = CommandMain::GetInstance();
 
     if (input[0] == '/') {

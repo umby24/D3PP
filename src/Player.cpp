@@ -152,12 +152,10 @@ int PlayerMain::GetFreeNameId() {
 
         if (found)
             id++;
-
         else {
             return id;
         }
     }
-
 }
 
 Player::Player() {

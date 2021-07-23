@@ -52,7 +52,16 @@ void PacketHandlers::HandleBlockChange(const std::shared_ptr<NetworkClient> &cli
 
 void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &client) {
     // -- CPE :)
-    client->InputAddOffset(2);
+    if (CPE::GetClientExtVersion(client, HELDBLOCK_EXT_NAME) == 1) {
+        client->InputAddOffset(1);
+        if (client->player->tEntity != nullptr)
+            client->player->tEntity->heldBlock = client->InputReadByte();
+        else
+            client->InputAddOffset(1);
+    } else {
+        client->InputAddOffset(2);
+    }
+
     unsigned short X = (unsigned short)client->InputReadShort();
     unsigned short Z = (unsigned short)client->InputReadShort();
     unsigned short Y = (unsigned short)client->InputReadShort();
