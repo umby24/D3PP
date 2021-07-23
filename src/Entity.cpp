@@ -14,8 +14,8 @@
 #include "Network_Functions.h"
 #include "Logger.h"
 #include "Utils.h"
-
-
+#include "CPE.h"
+#include "Packets.h"
 
 const std::string MODULE_NAME = "Entity";
 std::map<int, std::shared_ptr<Entity>> Entity::_entities;
@@ -318,13 +318,13 @@ void Entity::Send() {
                 create = false;
 
             if (create) {
-                EntityShort s;
+                EntityShort s{};
                 s.Id = bEntity.first;
                 s.ClientId = bEntity.second->ClientId;
                 nc.second->player->Entities.push_back(s); // -- track the new client
                 // -- spawn them :)
-                // -- TODO: CPE Handle Entity..
                 NetworkFunctions::NetworkOutEntityAdd(nc.first, s.ClientId, Entity::GetDisplayname(s.Id), bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
+                CPE::PostEntityActions(nc.second, bEntity.second);
             }
         }
     }
@@ -376,4 +376,27 @@ void Entity::Delete() {
 
 void Entity::Add(std::shared_ptr<Entity> e) {
     _entities.insert(std::make_pair(e->Id, e));
+}
+
+void Entity::SetModel(std::string modelName) {
+    Network* nm = Network::GetInstance();
+
+    model = modelName;
+    std::shared_ptr<NetworkClient> myClient = nullptr;
+    for(auto const &nc : nm->_clients) {
+        if (!nc.second->LoggedIn)
+            continue;
+
+        if (CPE::GetClientExtVersion(nc.second, CHANGE_MODEL_EXT_NAME) <= 0 || nc.second->player->MapId != MapID)
+            continue;
+
+        if (nc.second->player->tEntity->Id == Id) {
+            myClient = nc.second;
+            continue;
+        }
+        Packets::SendChangeModel(nc.second, this->ClientId, model);
+    }
+    if (myClient != nullptr) {
+        Packets::SendChangeModel(myClient, -1, model);
+    }
 }

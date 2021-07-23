@@ -4,6 +4,7 @@
 
 #include "Player.h"
 #include <iomanip>
+#include <Network.h>
 #include "Entity.h"
 #include "Files.h"
 #include "Player_List.h"
@@ -135,10 +136,35 @@ PlayerMain *PlayerMain::GetInstance() {
     return Instance;
 }
 
+int PlayerMain::GetFreeNameId() {
+    Network* nm = Network::GetInstance();
+    int id = 0;
+    bool found = false;
+    while (true) {
+        found = false;
+        for(auto const &nc: nm->_clients) {
+            if (!nc.second->LoggedIn)
+                continue;
+
+            if (nc.second->player->NameId == id)
+                found = true;
+        }
+
+        if (found)
+            id++;
+
+        else {
+            return id;
+        }
+    }
+
+}
+
 Player::Player() {
     ClientVersion = 0;
     MapId = -1;
     timeDeathMessage = 0;
     timeBuildMessage = 0;
     LogoutHide = false;
+    NameId = PlayerMain::GetFreeNameId();
 }

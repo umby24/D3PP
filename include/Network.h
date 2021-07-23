@@ -9,6 +9,7 @@
 #define NETWORK_BUFFER_SIZE 3000000
 #define NETWORK_PACKET_SIZE 1400
 #define NETWORK_CLIENT_TIMEOUT 30
+#define MAX_SELECTION_BOXES 255
 
 #include <string>
 #include <map>
@@ -71,12 +72,16 @@ public:
     std::unique_ptr<Player> player;
 
     std::map<std::string, int> Extensions;
-    std::vector<bool> Selections;
+    unsigned char Selections[MAX_SELECTION_BOXES];
     void OutputWriteByte(char value);
     void OutputWriteShort(short value);
     void OutputWriteInt(int value);
     void OutputWriteString(std::string value);
     void OutputWriteBlob(const char* data, int dataSize);
+
+    void HoldThis(unsigned char blockType, bool canChange);
+    void CreateSelection(unsigned char selectionId, std::string label, short startX, short startY, short startZ, short endX, short endY, short endZ, short red, short green, short blue, short opacity);
+    void DeleteSelection(unsigned char selectionId);
 };
 
 class Network {

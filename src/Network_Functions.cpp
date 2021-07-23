@@ -9,6 +9,7 @@
 #include "Network.h"
 #include "Block.h"
 #include "Player.h"
+#include "CPE.h"
 
 static std::shared_ptr<NetworkClient> GetPlayer(int id) {
     auto network = Network::GetInstance();
@@ -116,14 +117,20 @@ void NetworkFunctions::NetworkOutBlockSet2Map(int mapId, unsigned short x, unsig
 
 void NetworkFunctions::NetworkOutEntityAdd(int clientId, char playerId, std::string name, float x, float y, float z,
                                            float rotation, float look) {
-    // -- TODO: ExtPlayerList2
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(clientId);
+
     Utils::padTo(name, 64);
     x *= 32;
     y *= 32;
     z = (z *32) + 51;
     rotation = rotation/360*256.0;
     look = look/360*256.0;
-    Packets::SendSpawnEntity(clientId, playerId, name, x, y, z, rotation, look);
+    if (CPE::GetClientExtVersion(c, EXT_PLAYER_LIST_EXT_NAME) < 2) {
+        Packets::SendSpawnEntity(clientId, playerId, name, x, y, z, rotation, look);
+    } else {
+        Packets::SendExtAddEntity2(c, playerId, name, name, x, y, z, rotation, look);
+    }
 }
 
 void NetworkFunctions::NetworkOutEntityDelete(int clientId, char playerId) {

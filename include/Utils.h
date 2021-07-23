@@ -30,6 +30,9 @@ class Utils
         static int strCount(std::string input, char search);
         static std::vector<std::string> splitString(std::string input, const char splitChar = ' ');
         static void TrimString(std::string &input);
+        static short RedVal(int colorVal);
+        static short GreenVal(int colorVal);
+        static short BlueVal(int colorVal);
 protected:
 
     private:

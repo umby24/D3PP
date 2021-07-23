@@ -22,6 +22,8 @@
 #include "Client.h"
 #include "Logger.h"
 #include "Utils.h"
+#include "CPE.h"
+#include "Packets.h"
 
 const std::string MODULE_NAME = "Network";
 Network* Network::singleton_ = nullptr;
@@ -369,7 +371,7 @@ void Network::NetworkInput() {
     } // -- /For
 }
 
-NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) {
+NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) : Selections{} {
     Id= static_cast<int>(socket->GetSocketFd());
     InputBuffer = Mem::Allocate(NETWORK_BUFFER_SIZE, __FILE__, __LINE__, "NetworkClient(" + stringulate(Id) + ")\\InputBuffer");
     OutputBuffer = Mem::Allocate(NETWORK_BUFFER_SIZE, __FILE__, __LINE__, "NetworkClient(" + stringulate(Id) + ")\\OutputBuffer");
@@ -397,7 +399,7 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) {
     Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
-NetworkClient::NetworkClient() {
+NetworkClient::NetworkClient() : Selections{} {
 }
 
 void NetworkClient::OutputReadBuffer(char* dataBuffer, int size) {
@@ -601,6 +603,49 @@ short NetworkClient::InputReadShort() {
     }
 
     return -1;
+}
+
+void NetworkClient::HoldThis(unsigned char blockType, bool canChange) {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+    if (CPE::GetClientExtVersion(selfPointer, HELDBLOCK_EXT_NAME) != 1) {
+        return;
+    }
+    if (blockType > 49 && CPE::GetClientExtVersion(selfPointer, CUSTOM_BLOCKS_EXT_NAME) <= 0) {
+        return;
+    }
+    Packets::SendHoldThis(selfPointer, blockType, canChange);
+}
+
+void NetworkClient::CreateSelection(unsigned char selectionId, std::string label, short startX, short startY, short startZ, short endX, short endY, short endZ, short red, short green, short blue, short opacity) {
+    if (startX > endX || startY > endY || startZ > endZ)
+        return;
+
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+
+    if (CPE::GetClientExtVersion(selfPointer, SELECTION_CUBOID_EXT_NAME) <= 0)
+        return;
+
+    if (Selections[selectionId] > 0)
+        return;
+
+    Selections[selectionId] = 1;
+    Packets::SendSelectionBoxAdd(selfPointer, selectionId, label, startX, startY, startZ, endX, endY, endZ, red, green, blue, opacity);
+}
+
+void NetworkClient::DeleteSelection(unsigned char selectionId) {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+
+    if (CPE::GetClientExtVersion(selfPointer, SELECTION_CUBOID_EXT_NAME) <= 0)
+        return;
+
+    if (Selections[selectionId] <= 0)
+        return;
+
+    Selections[selectionId] = 0;
+    Packets::SendSelectionBoxDelete(selfPointer, selectionId);
 }
 
 void Network::DeleteClient(int clientId, std::string message, bool sendToAll) {

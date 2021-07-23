@@ -25,6 +25,7 @@
 #include "plugins/LuaPlugin.h"
 #include "Physics.h"
 #include "Undo.h"
+#include "CPE.h"
 
 using namespace std;
 
@@ -825,6 +826,24 @@ void Map::Load(std::string directory) {
     data.SpawnZ = stof(pLoader.Read("Spawn_Z", "0"));
     data.SpawnRot = stof(pLoader.Read("Spawn_Rot", "0"));
     data.SpawnLook = stof(pLoader.Read("Spawn_Look", "0"));
+    data.ColorsSet = (pLoader.Read("Colors_Set", 0) > 0);
+    data.SkyColor = pLoader.Read("Sky_Color", -1);
+    data.CloudColor = pLoader.Read("Cloud_Color", -1);
+    data.FogColor = pLoader.Read("Fog_Color", -1);
+    data.alight = pLoader.Read("A_Light", -1);
+    data.dlight = pLoader.Read("D_Light", -1);
+    data.CustomAppearance = (pLoader.Read("Custom_Appearance", 0) > 0);
+    data.CustomURL = pLoader.Read("Custom_Texture_Url", "");
+    data.SideLevel = pLoader.Read("Custom_Side_Level", -1);
+    data.EdgeBlock = pLoader.Read("Custom_Edge_Block", -1);
+    data.SideBlock = pLoader.Read("Custom_Side_Block", -1);
+    data.Flying = (pLoader.Read("Allow_Flying", 1) > 0);
+    data.NoClip = (pLoader.Read("Allow_Noclip", 1) > 0);
+    data.Speeding = (pLoader.Read("Allow_Fastwalk", 1) > 0);
+    data.SpawnControl = (pLoader.Read("Allow_Respawn", 1) > 0);
+    data.ThirdPerson = (pLoader.Read("Allow_Thirdperson", 1) > 0);
+    data.Weather = (pLoader.Read("Allow_Weatherchange", 1) > 0);
+    data.JumpHeight = pLoader.Read("Jumpheight", -1);
 
     int dSize = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.Data), mapSize * MAP_BLOCK_ELEMENT_SIZE, directory + MAP_FILENAME_DATA);
     if (dSize == (mapSize * MAP_BLOCK_ELEMENT_SIZE)) {
@@ -897,6 +916,7 @@ void Map::Load(std::string directory) {
 void Map::Reload() {
     if (data.loaded)
         return;
+
     Block* blockMain = Block::GetInstance();
 
     data.loading = true;
@@ -1013,7 +1033,7 @@ void Map::Send(int clientId) {
     }
 
     Packets::SendMapFinalize(clientId, data.SizeX, data.SizeY, data.SizeZ);
-    // -- TODO: CPE::AfterMapActions();
+    CPE::AfterMapActions(nc);
     Mem::Free(tempBuf2);
 }
 

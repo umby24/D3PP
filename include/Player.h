@@ -39,7 +39,7 @@ public:
     int killSpawnLook;
     int spawnMapId;
     static PlayerMain* GetInstance();
-
+    static int GetFreeNameId();
 private:
     static PlayerMain* Instance;
     bool SaveFile;

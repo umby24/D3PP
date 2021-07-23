@@ -77,6 +77,7 @@ public:
     void Kill();
     void PositionCheck();
     void PositionSet(int mapId, float x, float y, float z, float rot, float lk, unsigned char priority, bool sendOwn);
+    void SetModel(std::string modelName);
     static void Send();
     static int GetFreeId();
     static int GetFreeIdClient(int mapId);

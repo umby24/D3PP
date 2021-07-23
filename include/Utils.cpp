@@ -126,3 +126,15 @@ void Utils::TrimString(std::string &input) {
     while (input.size() > 0 && (input[input.size()-1] == ' ' || input[input.size()-1] == '\r' || input[input.size()-1] == '\n'))
         input = input.substr(0, input.size() - 1);
 }
+
+short Utils::RedVal(int colorVal) {
+    return (colorVal & 0x0000FF);
+}
+
+short Utils::GreenVal(int colorVal) {
+    return (colorVal & 0x00FF00) >> 8;
+}
+
+short Utils::BlueVal(int colorVal) {
+    return (colorVal & 0xFF0000) >> 16;
+}

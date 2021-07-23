@@ -155,6 +155,12 @@ void Client::Logout(int clientId, std::string message, bool showtoall) {
         if (showtoall && !c->player->LogoutHide) {
             NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(c->player->tEntity->Id) + "&e' logged out (" + message + ")");
         }
+        for(auto const &nc : n->_clients) {
+            if (CPE::GetClientExtVersion(nc.second, EXT_PLAYER_LIST_EXT_NAME) > 0) {
+                Packets::SendExtRemovePlayerName(nc.second, c->player->NameId);
+            }
+        }
+
         Entity::Delete(c->player->tEntity->Id);
         c->player->tEntity = nullptr;
     }
