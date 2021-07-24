@@ -576,7 +576,7 @@ void MapMain::Delete(int id) {
     if (mp->data.Clients > 0) {
         for(auto const &nc : nm->_clients) {
             if (nc.second->LoggedIn && nc.second->player->tEntity != nullptr&& nc.second->player->tEntity->MapID == id) {
-                nc.second->player->tEntity->PositionSet(0, 0, 0, 0, 0, 0, 0, true);
+                nc.second->player->tEntity->PositionSet(0, 0, 0, 0, 0, 0, 4, true);
             }
         }
     }
