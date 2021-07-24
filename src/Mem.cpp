@@ -42,6 +42,7 @@ int Mem::GetPageFileUsage() {
 
 char* Mem::Allocate(long size, std::string File, int line, std::string Message) {
     char* mem = new char[size];
+    memset(mem, 0, size);
     _lock.lock();
 
     Mem* instance = GetInstance();

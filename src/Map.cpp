@@ -572,6 +572,14 @@ void MapMain::Delete(int id) {
     shared_ptr<Map> mp = GetPointer(id);
     if (mp == nullptr)
         return;
+    Network* nm = Network::GetInstance();
+    if (mp->data.Clients > 0) {
+        for(auto const &nc : nm->_clients) {
+            if (nc.second->LoggedIn && nc.second->player->tEntity != nullptr&& nc.second->player->tEntity->MapID == id) {
+                nc.second->player->tEntity->PositionSet(0, 0, 0, 0, 0, 0, 0, true);
+            }
+        }
+    }
 
     Mem::Free(mp->data.Data);
     Mem::Free(mp->data.BlockchangeData);
@@ -1207,6 +1215,16 @@ Map::Map() {
     data.overviewType = OverviewType::Isomap;
     data.PhysicsStopped = false;
     data.BlockchangeStopped = false;
+    data.CustomAppearance = false;
+    data.ColorsSet = false;
+    data.SkyColor = -1;
+    data.CloudColor = -1;
+    data.FogColor = -1;
+    data.alight = -1;
+    data.dlight = -1;
+    data.SideBlock = 0;
+    data.EdgeBlock = 0;
+    data.SideLevel = 64;
 }
 
 void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1,

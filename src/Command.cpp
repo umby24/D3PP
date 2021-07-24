@@ -332,6 +332,155 @@ void CommandMain::Init() {
     mfillCommand.Function = [this] { CommandMain::CommandMapFill(); };
     Commands.push_back(mfillCommand);
 
+    Command mRename;
+    mRename.Id = "Map-Rename";
+    mRename.Name = "maprename";
+    mRename.Internal = true;
+    mRename.Hidden = false;
+    mRename.Rank = 0;
+    mRename.RankShow = 0;
+    mRename.Function = [this] { CommandMain::CommandRenameMap(); };
+    Commands.push_back(mRename);
+
+    Command mDelete;
+    mDelete.Id = "Map-Delete";
+    mDelete.Name = "mapdelete";
+    mDelete.Internal = true;
+    mDelete.Hidden = false;
+    mDelete.Rank = 0;
+    mDelete.RankShow = 0;
+    mDelete.Function = [this] { CommandMain::CommandDeleteMap(); };
+    Commands.push_back(mDelete);
+
+    Command mAdd;
+    mAdd.Id = "Map-Add";
+    mAdd.Name = "mapadd";
+    mAdd.Internal = true;
+    mAdd.Hidden = false;
+    mAdd.Rank = 0;
+    mAdd.RankShow = 0;
+    mAdd.Function = [this] { CommandMain::CommandAddMap(); };
+    Commands.push_back(mAdd);
+
+    Command mrbs;
+    mrbs.Id = "Map_Rank_Build_Set";
+    mrbs.Name = "mapbuildrank";
+    mrbs.Internal = true;
+    mrbs.Hidden = false;
+    mrbs.Rank = 0;
+    mrbs.RankShow = 0;
+    mrbs.Function = [this] { CommandMain::CommandMapRankBuildSet(); };
+    Commands.push_back(mrbs);
+
+    Command mrss;
+    mrss.Id = "Map_Rank_Show_Set";
+    mrss.Name = "mapshowrank";
+    mrss.Internal = true;
+    mrss.Hidden = false;
+    mrss.Rank = 0;
+    mrss.RankShow = 0;
+    mrss.Function = [this] { CommandMain::CommandMapRankShowSet(); };
+    Commands.push_back(mrss);
+
+    Command mrjs;
+    mrjs.Id = "Map_Rank_Join_Set";
+    mrjs.Name = "mapjoinrank";
+    mrjs.Internal = true;
+    mrjs.Hidden = false;
+    mrjs.Rank = 0;
+    mrjs.RankShow = 0;
+    mrjs.Function = [this] { CommandMain::CommandMapRankJoinSet(); };
+    Commands.push_back(mrjs);
+
+    Command mStopPhys;
+    mStopPhys.Id = "Map_Physic_Stop";
+    mStopPhys.Name = "pstop";
+    mStopPhys.Internal = true;
+    mStopPhys.Hidden = false;
+    mStopPhys.Rank = 0;
+    mStopPhys.RankShow = 0;
+    mStopPhys.Function = [this] { CommandMain::CommandStopPhysics(); };
+    Commands.push_back(mStopPhys);
+
+    Command mStartPhys;
+    mStartPhys.Id = "Map_Physic_Start";
+    mStartPhys.Name = "pstart";
+    mStartPhys.Internal = true;
+    mStartPhys.Hidden = false;
+    mStartPhys.Rank = 0;
+    mStartPhys.RankShow = 0;
+    mStartPhys.Function = [this] { CommandMain::CommandStartPhysics(); };
+    Commands.push_back(mStartPhys);
+
+    Command mSetSpawn;
+    mSetSpawn.Id = "Set-Spawn";
+    mSetSpawn.Name = "setspawn";
+    mSetSpawn.Internal = true;
+    mSetSpawn.Hidden = false;
+    mSetSpawn.Rank = 0;
+    mSetSpawn.RankShow = 0;
+    mSetSpawn.Function = [this] { CommandMain::CommandSetSpawn(); };
+    Commands.push_back(mSetSpawn);
+
+    Command mSetKillSpawn;
+    mSetKillSpawn.Id = "Set-Killspawn";
+    mSetKillSpawn.Name = "setkillspawn";
+    mSetKillSpawn.Internal = true;
+    mSetKillSpawn.Hidden = false;
+    mSetKillSpawn.Rank = 0;
+    mSetKillSpawn.RankShow = 0;
+    mSetKillSpawn.Function = [this] { CommandMain::CommandSetKilLSpawn(); };
+    Commands.push_back(mSetKillSpawn);
+
+    Command mTeleporters;
+    mTeleporters.Id = "List-Teleporters";
+    mTeleporters.Name = "teleporters";
+    mTeleporters.Internal = true;
+    mTeleporters.Hidden = false;
+    mTeleporters.Rank = 0;
+    mTeleporters.RankShow = 0;
+    mTeleporters.Function = [this] { CommandMain::CommandTeleporters(); };
+    Commands.push_back(mTeleporters);
+
+    Command cDeleteTp;
+    cDeleteTp.Id = "Delete-Teleporterbox";
+    cDeleteTp.Name = "deltp";
+    cDeleteTp.Internal = true;
+    cDeleteTp.Hidden = false;
+    cDeleteTp.Rank = 0;
+    cDeleteTp.RankShow = 0;
+    cDeleteTp.Function = [this] { CommandMain::CommandDeleteTeleporter(); };
+    Commands.push_back(cDeleteTp);
+
+    Command mapInfo;
+    mapInfo.Id = "Map-Info";
+    mapInfo.Name = "mapinfo";
+    mapInfo.Internal = true;
+    mapInfo.Hidden = false;
+    mapInfo.Rank = 0;
+    mapInfo.RankShow = 0;
+    mapInfo.Function = [this] { CommandMain::CommandMapInfo(); };
+    Commands.push_back(mapInfo);
+
+    Command usermaps;
+    usermaps.Id = "List-Usermaps";
+    usermaps.Name = "usermaps";
+    usermaps.Internal = true;
+    usermaps.Hidden = false;
+    usermaps.Rank = 0;
+    usermaps.RankShow = 0;
+    usermaps.Function = [this] { CommandMain::CommandUserMaps(); };
+    Commands.push_back(usermaps);
+
+    Command placeCmd;
+    placeCmd.Id = "Place";
+    placeCmd.Name = "place";
+    placeCmd.Internal = true;
+    placeCmd.Hidden = false;
+    placeCmd.Rank = 0;
+    placeCmd.RankShow = 0;
+    placeCmd.Function = [this] { CommandMain::CommandPlace(); };
+    Commands.push_back(placeCmd);
     Load();
 }
 
@@ -1152,4 +1301,297 @@ void CommandMain::CommandResizeMap() {
     MapMain* mapMain = MapMain::GetInstance();
     mapMain->AddResizeAction(CommandClientId, c->player->MapId, X, Y, Z);
     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eResize added to queue.");
+}
+
+void CommandMain::CommandRenameMap() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    if (ParsedText0.empty()) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide a new name.");
+        return;
+    }
+    MapMain* mapMain = MapMain::GetInstance();
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
+    cMap->data.Name = ParsedText0;
+    mapMain->SaveFile = true;
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eMap Renamed.");
+}
+
+void CommandMain::CommandDeleteMap() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    MapMain* mapMain = MapMain::GetInstance();
+    mapMain->AddDeleteAction(CommandClientId, c->player->MapId);
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eDelete Queued.");
+}
+
+void CommandMain::CommandAddMap() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    if (ParsedText0.empty()) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide a name for the map.");
+        return;
+    }
+    MapMain* mapMain = MapMain::GetInstance();
+    int newMapId = mapMain->GetMapId();
+    mapMain->Add(newMapId, 64, 64, 64, ParsedText0);
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eMap created.");
+}
+
+void CommandMain::CommandMapRankBuildSet() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    if (ParsedOperator[0].empty()) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide a rank value.");
+        return;
+    }
+    int mapBuildRank = 0;
+
+    try {
+        mapBuildRank = stoi(ParsedOperator[0]);
+    } catch (const std::exception &ex) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer value.");
+        return;
+    } catch (...) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer value.");
+        return;
+    }
+    MapMain* mapMain = MapMain::GetInstance();
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
+    cMap->data.RankBuild = mapBuildRank;
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eRank updated.");
+}
+
+void CommandMain::CommandMapRankJoinSet() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    if (ParsedOperator[0].empty()) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide a rank value.");
+        return;
+    }
+    int mapJoinRank = 0;
+
+    try {
+        mapJoinRank = stoi(ParsedOperator[0]);
+    } catch (const std::exception &ex) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer value.");
+        return;
+    } catch (...) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer value.");
+        return;
+    }
+    MapMain* mapMain = MapMain::GetInstance();
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
+    cMap->data.RankJoin = mapJoinRank;
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eRank updated.");
+}
+
+void CommandMain::CommandMapRankShowSet() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    if (ParsedOperator[0].empty()) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide a rank value.");
+        return;
+    }
+    int mapShowRank = 0;
+
+    try {
+        mapShowRank = stoi(ParsedOperator[0]);
+    } catch (const std::exception &ex) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer value.");
+        return;
+    } catch (...) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer value.");
+        return;
+    }
+    MapMain* mapMain = MapMain::GetInstance();
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
+    cMap->data.RankShow = mapShowRank;
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eRank updated.");
+}
+
+void CommandMain::CommandStopPhysics() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    MapMain* mapMain = MapMain::GetInstance();
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
+    cMap->data.PhysicsStopped = true;
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePhysics stopped.");
+}
+
+void CommandMain::CommandStartPhysics() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    MapMain* mapMain = MapMain::GetInstance();
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
+    cMap->data.PhysicsStopped = false;
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePhysics started.");
+}
+
+void CommandMain::CommandSetSpawn() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    MapMain* mapMain = MapMain::GetInstance();
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
+    cMap->data.SpawnX = c->player->tEntity->X;
+    cMap->data.SpawnY = c->player->tEntity->Y;
+    cMap->data.SpawnZ = c->player->tEntity->Z;
+    cMap->data.SpawnRot = c->player->tEntity->Rotation;
+    cMap->data.SpawnLook = c->player->tEntity->Look;
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eSpawn updated.");
+}
+
+void CommandMain::CommandSetKilLSpawn() {
+    Network* nm = Network::GetInstance();
+
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    MapMain* mapMain = MapMain::GetInstance();
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
+    cMap->data.SpawnX = c->player->tEntity->X;
+    cMap->data.SpawnY = c->player->tEntity->Y;
+    cMap->data.SpawnZ = c->player->tEntity->Z;
+    cMap->data.SpawnRot = c->player->tEntity->Rotation;
+    cMap->data.SpawnLook = c->player->tEntity->Look;
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eKill Spawn updated.");
+}
+
+void CommandMain::CommandTeleporters() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    MapMain* mapMain = MapMain::GetInstance();
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
+
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eTeleporters:");
+    std::string text;
+    for(auto const &tp : cMap->data.Teleporter) {
+        std::string textAdd = "&e" + tp.first + " &f| ";
+        if (64 - text.size() >= textAdd.size())
+            text+= textAdd;
+        else {
+            NetworkFunctions::SystemMessageNetworkSend(c->Id, text);
+            text= textAdd;
+        }
+    }
+    if (!text.empty()) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, text);
+    }
+}
+
+void CommandMain::CommandDeleteTeleporter() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+
+    if (ParsedText0.empty()) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide a name for the teleporter to delete.");
+        return;
+    }
+    MapMain* mapMain = MapMain::GetInstance();
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
+    bool tpFound = cMap->data.Teleporter.find(ParsedText0) != cMap->data.Teleporter.end();
+    if (tpFound) {
+        cMap->data.Teleporter.erase(ParsedText0);
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eTeleporter deleted.");
+    } else {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eTeleporter not found.");
+    }
+}
+
+void CommandMain::CommandMapInfo() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    MapMain* mapMain = MapMain::GetInstance();
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
+    std::string textToSend = "&eMapInfo:<br>";
+    textToSend += "&eName: " + cMap->data.Name + "<br>";
+    textToSend += "&eId: " + stringulate(cMap->data.ID) + "<br>";
+    textToSend += "&eUnique ID: " + cMap->data.UniqueID + "<br>";
+    textToSend += "&eDirectory: " + cMap->data.Directory + "<br>";
+    textToSend += "&ePreview type: " + stringulate(cMap->data.overviewType) + "<br>";
+    textToSend += "&eSize: " + stringulate(cMap->data.SizeX)  + "x" + stringulate(cMap->data.SizeY)  + "x" + stringulate(cMap->data.SizeZ) + "<br>";
+    int dataSize = mapMain->GetMapSize(cMap->data.SizeX, cMap->data.SizeY, cMap->data.SizeZ, 4);
+    int bitmaskSize = mapMain->GetMapSize(cMap->data.SizeX, cMap->data.SizeY, cMap->data.SizeZ, 1) / 8;
+
+    textToSend += "&eMem usage: " + stringulate((dataSize + bitmaskSize + bitmaskSize)/1000000.0) + "MB <br>";
+    textToSend += "&eRanks: Build: " + stringulate(cMap->data.RankBuild) + " Join: " + stringulate(cMap->data.RankJoin) + " Show: " + stringulate(cMap->data.RankShow) + " <br>";
+    textToSend += "&ePhysics Queue: " + stringulate(cMap->data.PhysicsQueue.size());
+    if (cMap->data.PhysicsStopped) {
+        textToSend += "&cPhysics Stopped&f<br>";
+    } else {
+        textToSend += "<br>";
+    }
+    textToSend += "&eBlocksend Queue: " + stringulate(cMap->data.ChangeQueue.size());
+    if (cMap->data.BlockchangeStopped) {
+        textToSend += "&Block Changes Stopped&f<br>";
+    } else {
+        textToSend += "<br>";
+    }
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, textToSend);
+}
+
+void CommandMain::CommandPlace() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    MapMain* mapMain = MapMain::GetInstance();
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
+
+    float X = roundf(c->player->tEntity->X);
+    float Y = roundf(c->player->tEntity->Y);
+    float Z = roundf(c->player->tEntity->Z)-1;
+    if (X< 0) X = 0;
+    if (Y< 0) Y= 0;
+    if (Z< 0) Z= 0;
+    if (X>cMap->data.SizeX-1) X = cMap->data.SizeX-1;
+    if (Y>cMap->data.SizeY-1) Y = cMap->data.SizeY-1;
+    if (Z>cMap->data.SizeZ-1) Z = cMap->data.SizeZ-1;
+
+    bool found = false;
+    unsigned char blockToPlace = 0;
+    if (ParsedText0.empty()) {
+        blockToPlace = c->player->tEntity->lastMaterial;
+        found = true;
+    } else {
+        Block* bm = Block::GetInstance();
+        MapBlock block = bm->GetBlock(ParsedText0);
+        if (block.Id != -1) {
+            found = true;
+            blockToPlace = block.Id;
+        }
+    }
+
+    if (found) {
+        cMap->BlockChange(c, X, Y, Z, 1, blockToPlace);
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eBlock placed.");
+    } else {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a block called '" + ParsedText0 + "'.");
+    }
+}
+
+void CommandMain::CommandUserMaps() {
+    Files* fm = Files::GetInstance();
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::string usermapDirectory = fm->GetFolder("Usermaps");
+
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUsermaps:");
+    std::string textToSend = "";
+
+    if (std::filesystem::is_directory(usermapDirectory)) {
+        for (const auto &entry : std::filesystem::directory_iterator(usermapDirectory)) {
+            std::string fileName = entry.path().filename().string();
+
+            if (fileName.length() < 3)
+                continue;
+
+            if (fileName.substr(fileName.length() - 4) == ".map") {
+                textToSend += "&e" + fileName + " &f| ";
+            }
+        }
+    }
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, textToSend);
 }

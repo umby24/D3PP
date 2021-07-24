@@ -186,7 +186,8 @@ void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float 
                 nm->data.Clients += 1;
                 int oldMapId = MapID;
                 std::shared_ptr<Map> om = mm->GetPointer(oldMapId);
-                om->data.Clients -= 1;
+                if (om!= nullptr)
+                    om->data.Clients -= 1;
 
                 MapID = mapId;
                 X = x;
@@ -198,19 +199,22 @@ void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float 
                 if (sendOwn)
                     SendPosOwn = true;
             } else {
-                MessageToClients(Id, "You are not allowed to join map '" + nm->data.Name + "'");
+                MessageToClients(Id, "&eYou are not allowed to join map '" + nm->data.Name + "'");
             }
         } else {
-            if (sendOwn || !SendPosOwn) {
-                X = x;
-                Y = y;
-                Z = z;
-                if (Rotation != rot)
-                    Rotation = rot;
-                Look = lk;
-                SendPos = priority;
-                if (sendOwn)
-                    SendPosOwn = true;
+            std::shared_ptr<Map> om = mm->GetPointer(MapID);
+            if (om != nullptr) {
+                if (sendOwn || !SendPosOwn) {
+                    X = x;
+                    Y = y;
+                    Z = z;
+                    if (Rotation != rot)
+                        Rotation = rot;
+                    Look = lk;
+                    SendPos = priority;
+                    if (sendOwn)
+                        SendPosOwn = true;
+                }
             }
         }
     }

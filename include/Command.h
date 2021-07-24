@@ -70,7 +70,6 @@ class CommandMain : TaskItem {
         void CommandUnmute();
         void CommandServerInfo();
         void CommandLogLast();
-        void CommandWatchdog();
         void CommandGetRank();
 
         // -- General
@@ -115,7 +114,7 @@ class CommandMain : TaskItem {
         void CommandUndoPlayer();
         void CommandUndo();
         void CommandUserMaps();
-
+        // -- Commands not ported: Player Attribute Get, map directory rename, map blocks count, set/delete/bring/tp to location, time.
 
     private:
 };
