@@ -79,6 +79,20 @@ void LuaPlugin::BindFunctions() {
     lua_register(state, "Entity_Get_Table", &dispatch<&LuaPlugin::LuaEntityGetTable>);
     lua_register(state, "Entity_Add", &dispatch<&LuaPlugin::LuaEntityAdd>);
     lua_register(state, "Entity_Delete", &dispatch<&LuaPlugin::LuaEntityDelete>);
+    lua_register(state, "Entity_Get_Player", &dispatch<&LuaPlugin::LuaEntityGetPlayer>);
+    lua_register(state, "Entity_Get_Map_ID", &dispatch<&LuaPlugin::LuaEntityGetMapId>);
+    lua_register(state, "Entity_Get_X", &dispatch<&LuaPlugin::LuaEntityGetX>);
+    lua_register(state, "Entity_Get_Y", &dispatch<&LuaPlugin::LuaEntityGetY>);
+    lua_register(state, "Entity_Get_Z", &dispatch<&LuaPlugin::LuaEntityGetZ>);
+    lua_register(state, "Entity_Get_Rotation", &dispatch<&LuaPlugin::LuaEntityGetRotation>);
+    lua_register(state, "Entity_Get_Look", &dispatch<&LuaPlugin::LuaEntityGetLook>);
+    lua_register(state, "Entity_Resend", &dispatch<&LuaPlugin::LuaEntityResend>);
+    lua_register(state, "Entity_Message_2_Clients", &dispatch<&LuaPlugin::LuaEntityMessage2Clients>);
+    lua_register(state, "Entity_Displayname_Get", &dispatch<&LuaPlugin::LuaEntityDisplaynameGet>);
+    lua_register(state, "Entity_Displayname_Set", &dispatch<&LuaPlugin::LuaEntityDisplaynameSet>);
+    lua_register(state, "Entity_Position_Set", &dispatch<&LuaPlugin::LuaEntityPositionSet>);
+    lua_register(state, "Entity_Kill", &dispatch<&LuaPlugin::LuaEntityKill>);
+
     // -- Map Functions:
     lua_register(state, "Map_Block_Change", &dispatch<&LuaPlugin::LuaMapBlockChange>);
     lua_register(state, "Map_Block_Change_Client", &dispatch<&LuaPlugin::LuaMapBlockChangeClient>);
