@@ -77,9 +77,9 @@ void Logger::Add(struct LogMessage message) {
         else
             Utils::padTo(message.File, 15);
 
-        std::cout << message.File << "| ";
-        std::cout << message.Module << ": ";
-        std::cout << message.Message << std::endl;
+        std::cout << "\x1B[37m" << message.File << "| ";
+        std::cout << "\x1B[33m" << message.Module << ": ";
+        std::cout << "\x1B[97m" << message.Message << std::endl;
     }
 }
 

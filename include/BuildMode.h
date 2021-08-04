@@ -49,6 +49,9 @@ public:
      float GetFloat(int clientId, int index);
      void SetString(int clientId, int index, std::string val);
      std::string GetString(int clientId, int index);
+
+    void SetMode(int clientId, std::string mode);
+
 private:
     std::vector<BlockResend> _resendBlocks;
     std::map<std::string, BuildMode> _buildmodes;
@@ -57,7 +60,7 @@ private:
     void Save();
    
     void Resend(int clientId);
-    void SetMode(int clientId, std::string mode);
+
     void MainFunc();
     bool SaveFile;
     bool hasLoaded;

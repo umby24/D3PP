@@ -24,6 +24,7 @@ public:
     void TriggerCommand(std::string function, int clientId, std::string parsedCmd, std::string text0, std::string text1, std::string op1, std::string op2, std::string op3, std::string op4, std::string op5);
     void TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, std::string function, std::string args);
     void TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, std::string function);
+    void TriggerBuildMode(std::string function, int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char block);
 private:
     lua_State* state;
     std::map<std::string, LuaFile> _files;
@@ -41,6 +42,18 @@ private:
     int LuaClientGetLoggedIn(lua_State *L);
     int LuaClientGetEntity(lua_State *L);
     // -- Build Mode
+    int LuaBuildModeSet(lua_State *L);
+    int LuaBuildModeGet(lua_State *L);
+    int LuaBuildModeStateSet(lua_State *L);
+    int LuaBuildModeStateGet(lua_State *L);
+    int LuaBuildModeCoordinateSet(lua_State *L);
+    int LuaBuildModeCoordinateGet(lua_State *L);
+    int LuaBuildModeLongSet(lua_State *L);
+    int LuaBuildModeLongGet(lua_State *L);
+    int LuaBuildModeFloatSet(lua_State *L);
+    int LuaBuildModeFloatGet(lua_State *L);
+    int LuaBuildModeStringSet(lua_State *L);
+    int LuaBuildModeStringGet(lua_State *L);
     // -- Build Functions
     // -- Entity Functions
     int LuaEntityGetTable(lua_State *L);
@@ -60,12 +73,91 @@ private:
     int LuaEntityPositionSet(lua_State *L);
     int LuaEntityKill(lua_State *L);
     // -- Player Functions
+    int LuaPlayerGetTable(lua_State *L);
+    int LuaPlayerGetPrefix(lua_State *L);
+    int LuaPlayerGetName(lua_State *L);
+    int LuaPlayerGetSuffix(lua_State *L);
+    int LuaPlayerGetIp(lua_State *L);
+    int LuaPlayerGetRank(lua_State *L);
+    int LuaPlayerGetOnline(lua_State *L);
+    int LuaPlayerGetOntime(lua_State *L);
+    int LuaPlayerGetMuteTime(lua_State *L);
+    int LuaPlayerSetRank(lua_State *L);
+    int LuaPlayerKick(lua_State *L);
+    int LuaPlayerBan(lua_State *L);
+    int LuaPlayerUnban(lua_State *L);
+    int LuaPlayerStop(lua_State *L);
+    int LuaPlayerUnstop(lua_State *L);
+    int LuaPlayerMute(lua_State *L);
+    int LuaPlayerUnmute(lua_State *L);
     // -- Map functions
+    int LuaMapGetTable(lua_State *L);
     int LuaMapBlockChange(lua_State *L);
+    int LuaMapBlockChangeClient(lua_State *L);
+    int LuaMapBlockChangePlayer(lua_State *L);
+    int LuaMapBlockMove(lua_State *L);
+    int LuaMapBlockSend(lua_State *L);
     int LuaMapBlockGetType(lua_State *L);
+    int LuaMapBlockGetRank(lua_State *L);
     int LuaMapBlockGetPlayer(lua_State *L);
+    int LuaMapGetName(lua_State *L);
+    int LuaMapGetUniqueId(lua_State *L);
+    int LuaMapGetDirectory(lua_State *L);
+    int LuaMapGetRankBuild(lua_State *L);
+    int LuaMapGetRankShow(lua_State *L);
+    int LuaMapGetRankJoin(lua_State *L);
+    int LuaMapGetDimensions(lua_State *L);
+    // -- Block functions
+    int LuaBlockGetTable(lua_State *L);
+    int LuaBlockGetName(lua_State *L);
+    int LuaBlockGetRankPlace(lua_State *L);
+    int LuaBlockGetRankDelete(lua_State *L);
+    int LuaBlockGetClientType(lua_State *L);
+    // -- Rank functions
+    int LuaRankGetTable(lua_State *L);
+    int LuaRankAdd(lua_State *L);
+    int LuaRankDelete(lua_State *L);
+    int LuaRankGetName(lua_State *L);
+    int LuaRankGetPrefix(lua_State *L);
+    int LuaRankGetSuffix(lua_State *L);
+    int LuaRankGetRoot(lua_State *L);
+    // -- Portal functions
+    int LuaTeleporterGetTable(lua_State *L);
+    int LuaTeleporterGetBox(lua_State *L);
+    int LuaTeleporterGetDestination(lua_State *L);
+    int LuaTeleporterAdd(lua_State *L);
+    int LuaTeleporterDelete(lua_State *L);
+    // -- System Functions
     int LuaMessageToAll(lua_State *L);
     int LuaMessage(lua_State *L);
+    // -- Language
+    int LuaLanguageGet(lua_State *L);
+    // -- Files
+    int LuaFileGet(lua_State *L);
+    int LuaFolderGet(lua_State *L);
+    // -- Event
+    int LuaEventAdd(lua_State *L);
+    int LuaEventDelete(lua_State *L);
+    // -- CPE Functions
+    int LuaServerGetExtensions(lua_State *L);
+    int LuaServerGetExtension(lua_State *L);
+    int LuaClientGetExtensions(lua_State *L);
+    int LuaClientGetExtension(lua_State *L);
+    int LuaSelectionCuboidAdd(lua_State *L);
+    int LuaSelectionCuboidDelete(lua_State *L);
+    int LuaGetHeldBlock(lua_State *L);
+    int LuaSetHeldBlock(lua_State *L);
+    int LuaChangeModel(lua_State *L);
+    int LuaSetWeather(lua_State *L);
+    int LuaMapSetEnvColors(lua_State *L);
+    int LuaClientSetBlockPermissions(lua_State *L);
+    int LuaMapEnvSet(lua_State *L);
+    int LuaClientHackcontrolSend(lua_State *L);
+    int LuaHotkeyAdd(lua_State *L);
+    int LuaHotkeyRemove(lua_State *L);
+    int LuaMapHackcontrolSet(lua_State *L);
+
+    // -- Event executors
 
 };
 #endif

@@ -404,3 +404,7 @@ void Entity::SetModel(std::string modelName) {
         Packets::SendChangeModel(myClient, -1, model);
     }
 }
+
+void Entity::Resend(int id) {
+    resend = true;
+}

@@ -9,6 +9,8 @@
 #include "Network.h"
 #include "Player.h"
 #include "Entity.h"
+#include "BuildMode.h"
+#include "Player_List.h"
 
 LuaPlugin* LuaPlugin::Instance = nullptr;
 
@@ -60,17 +62,32 @@ void LuaPlugin::BindFunctions() {
     lua_register(state, "Client_Get_Login_Name", &dispatch<&LuaPlugin::LuaClientGetLoginName>);
     lua_register(state, "Client_Get_Logged_In", &dispatch<&LuaPlugin::LuaClientGetLoggedIn>);
     lua_register(state, "Client_Get_Entity", &dispatch<&LuaPlugin::LuaClientGetEntity>);
+    // -- Build Mode Functions
+    lua_register(state, "Build_Mode_Set", &dispatch<&LuaPlugin::LuaBuildModeSet>);
+    lua_register(state, "Build_Mode_Get", &dispatch<&LuaPlugin::LuaBuildModeGet>);
+    lua_register(state, "Build_Mode_State_Set", &dispatch<&LuaPlugin::LuaBuildModeStateSet>);
+    lua_register(state, "Build_Mode_State_Get", &dispatch<&LuaPlugin::LuaBuildModeStateGet>);
+    lua_register(state, "Build_Mode_Coordinate_Set", &dispatch<&LuaPlugin::LuaBuildModeCoordinateSet>);
+    lua_register(state, "Build_Mode_Coordinate_Get", &dispatch<&LuaPlugin::LuaBuildModeCoordinateGet>);
+    lua_register(state, "Build_Mode_Long_Set", &dispatch<&LuaPlugin::LuaBuildModeLongSet>);
+    lua_register(state, "Build_Mode_Long_Get", &dispatch<&LuaPlugin::LuaBuildModeLongGet>);
+    lua_register(state, "Build_Mode_Float_Set", &dispatch<&LuaPlugin::LuaBuildModeFloatSet>);
+    lua_register(state, "Build_Mode_Float_Get", &dispatch<&LuaPlugin::LuaBuildModeFloatGet>);
+    lua_register(state, "Build_Mode_String_Set", &dispatch<&LuaPlugin::LuaBuildModeStringSet>);
+    lua_register(state, "Build_Mode_String_Get", &dispatch<&LuaPlugin::LuaBuildModeStringGet>);
     // -- Entity Functions:
     lua_register(state, "Entity_Get_Table", &dispatch<&LuaPlugin::LuaEntityGetTable>);
     lua_register(state, "Entity_Add", &dispatch<&LuaPlugin::LuaEntityAdd>);
     lua_register(state, "Entity_Delete", &dispatch<&LuaPlugin::LuaEntityDelete>);
     // -- Map Functions:
     lua_register(state, "Map_Block_Change", &dispatch<&LuaPlugin::LuaMapBlockChange>);
+    lua_register(state, "Map_Block_Change_Client", &dispatch<&LuaPlugin::LuaMapBlockChangeClient>);
     lua_register(state, "Map_Block_Get_Type", &dispatch<&LuaPlugin::LuaMapBlockGetType>);
     lua_register(state, "Map_Block_Get_Player_Last", &dispatch<&LuaPlugin::LuaMapBlockGetPlayer>);
     // -- System Functions
     lua_register(state, "System_Message_Network_Send_2_All", &dispatch<&LuaPlugin::LuaMessageToAll>);
     lua_register(state, "System_Message_Network_Send", &dispatch<&LuaPlugin::LuaMessage>);
+    lua_register(state, "Lang_Get", &dispatch<&LuaPlugin::LuaLanguageGet>);
 }
 
 void LuaPlugin::Init() {
@@ -150,6 +167,36 @@ int LuaPlugin::LuaMapBlockChange(lua_State *L) {
 
     return 0;
 }
+
+int LuaPlugin::LuaMapBlockChangeClient(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 7) {
+        Logger::LogAdd("Lua", "LuaError: Map_Block_Change_Client called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int clientId = lua_tointeger(L, 1);
+    int mapId = lua_tointeger(L, 2);
+    int X = lua_tointeger(L, 3);
+    int Y = lua_tointeger(L, 4);
+    int Z = lua_tointeger(L, 5);
+    unsigned char mode = lua_tointeger(L, 6);
+    unsigned char type = lua_tointeger(L, 7);
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> client = nm->GetClient(clientId);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (client == nullptr || map== nullptr) {
+        return 0;
+    }
+
+    map->BlockChange(client, X, Y, Z, mode, type);
+    return 0;
+}
+
 
 int LuaPlugin::LuaMapBlockGetType(lua_State *L) {
     int nArgs = lua_gettop(L);
@@ -272,6 +319,23 @@ void LuaPlugin::TriggerCommand(std::string function, int clientId, std::string p
         lua_pushstring(state, op4.c_str());
         lua_pushstring(state, op5.c_str());
         if (lua_pcall(state, 9, 0, 0)) {
+            bail(state, "Failed to run command.");
+        }
+    }
+}
+
+void LuaPlugin::TriggerBuildMode(std::string function, int clientId, int mapId, unsigned short X, unsigned short Y,
+                                 unsigned short Z, unsigned char mode, unsigned char block) {
+    lua_getglobal(state, function.c_str());
+    if (lua_isfunction(state, -1)) {
+        lua_pushinteger(state, clientId);
+        lua_pushinteger(state, mapId);
+        lua_pushinteger(state, X);
+        lua_pushinteger(state, Y);
+        lua_pushinteger(state, Z);
+        lua_pushinteger(state, mode);
+        lua_pushinteger(state, block);
+        if (lua_pcall(state, 7, 0, 0)) {
             bail(state, "Failed to run command.");
         }
     }
@@ -482,6 +546,491 @@ int LuaPlugin::LuaEntityDelete(lua_State *L) {
 
     return 0;
 }
+
+int LuaPlugin::LuaBuildModeSet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Build_Mode_Set called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int clientId = lua_tointeger(L, 1);
+    std::string buildMode(lua_tostring(L, 2));
+
+    BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
+    buildModeMain->SetMode(clientId, buildMode);
+
+    return 0;
+}
+
+int LuaPlugin::LuaBuildModeGet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Build_Mode_Get called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int clientId = lua_tointeger(L, 1);
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> networkClient= nm->GetClient(clientId);
+
+    if (networkClient != nullptr) {
+        std::string clientBuildMode = networkClient->player->tEntity->BuildMode;
+        lua_pushstring(L, clientBuildMode.c_str());
+    } else {
+        lua_pushstring(L, "");
+    }
+
+    return 1;
+}
+
+int LuaPlugin::LuaBuildModeStateSet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Build_Mode_State_Set called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int clientId = lua_tointeger(L, 1);
+    int buildState = lua_tointeger(L, 2);
+
+    BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
+    buildModeMain->SetState(clientId, buildState);
+
+    return 0;
+}
+
+int LuaPlugin::LuaBuildModeStateGet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Build_Mode_State_Get called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int clientId = lua_tointeger(L, 1);
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> networkClient= nm->GetClient(clientId);
+
+    if (networkClient != nullptr) {
+        lua_pushinteger(L, networkClient->player->tEntity->BuildState);
+    } else {
+        lua_pushinteger(L, -1);
+    }
+
+    return 1;
+}
+
+int LuaPlugin::LuaBuildModeCoordinateSet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 5) {
+        Logger::LogAdd("Lua", "LuaError: Build_Mode_Coordinate_Set called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int clientId = lua_tointeger(L, 1);
+    int index = lua_tointeger(L, 2);
+    float X = lua_tonumber(L, 3);
+    float Y = lua_tonumber(L, 4);
+    float Z = lua_tonumber(L, 5);
+
+    BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
+    buildModeMain->SetCoordinate(clientId, index, X, Y, Z);
+
+    return 0;
+}
+
+int LuaPlugin::LuaBuildModeCoordinateGet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Build_Mode_Coordinate_Get called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int clientId = lua_tointeger(L, 1);
+    int index = lua_tointeger(L, 2);
+    int X = -1;
+    int Y = -1;
+    int Z = -1;
+
+    BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
+    X = buildModeMain->GetCoordinateX(clientId, index);
+    Y = buildModeMain->GetCoordinateX(clientId, index);
+    Z = buildModeMain->GetCoordinateX(clientId, index);
+
+    lua_pushinteger(L, X);
+    lua_pushinteger(L, Y);
+    lua_pushinteger(L, Z);
+
+    return 3;
+}
+
+int LuaPlugin::LuaBuildModeLongSet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 3) {
+        Logger::LogAdd("Lua", "LuaError: Build_Mode_Long_Set called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int clientId = lua_tointeger(L, 1);
+    int index = lua_tointeger(L, 2);
+    int X = lua_tonumber(L, 3);
+
+    BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
+    buildModeMain->SetInt(clientId, index, X);
+
+    return 0;
+}
+
+int LuaPlugin::LuaBuildModeLongGet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Build_Mode_Long_Get called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int clientId = lua_tointeger(L, 1);
+    int index = lua_tointeger(L, 2);
+    int val = -1;
+
+    BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
+    val = buildModeMain->GetInt(clientId, index);
+
+    lua_pushinteger(L, val);
+    return 1;
+}
+
+int LuaPlugin::LuaBuildModeFloatSet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 3) {
+        Logger::LogAdd("Lua", "LuaError: Build_Mode_float_Set called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int clientId = lua_tointeger(L, 1);
+    int index = lua_tointeger(L, 2);
+    float X = lua_tonumber(L, 3);
+
+    BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
+    buildModeMain->SetFloat(clientId, index, X);
+    return 0;
+}
+
+int LuaPlugin::LuaBuildModeFloatGet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Build_Mode_Float_Get called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int clientId = lua_tointeger(L, 1);
+    int index = lua_tointeger(L, 2);
+    float val = -1;
+
+    BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
+    val = buildModeMain->GetFloat(clientId, index);
+
+    lua_pushnumber(L, val);
+    return 1;
+}
+
+int LuaPlugin::LuaBuildModeStringSet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 3) {
+        Logger::LogAdd("Lua", "LuaError: Build_Mode_String_Set called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int clientId = lua_tointeger(L, 1);
+    int index = lua_tointeger(L, 2);
+    std::string val(lua_tostring(L, 3));
+
+    BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
+    buildModeMain->SetString(clientId, index, val);
+
+    return 0;
+}
+
+int LuaPlugin::LuaBuildModeStringGet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Build_Mode_String_Get called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int clientId = lua_tointeger(L, 1);
+    int index = lua_tointeger(L, 2);
+    std::string val = "";
+
+    BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
+    val = buildModeMain->GetString(clientId, index);
+
+    lua_pushstring(L, val.c_str());
+    return 1;
+}
+
+int LuaPlugin::LuaLanguageGet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs < 2) {
+        Logger::LogAdd("Lua", "LuaError: Lang_Get called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    std::string language(lua_tostring(L, 1));
+    std::string input(lua_tostring(L, 2));
+//    if (n)
+//    std::string Field0(lua_tostring(L, 3));
+//    std::string Field1(lua_tostring(L, 4));
+//    std::string Field2(lua_tostring(L, 5));
+//    std::string Field3(lua_tostring(L, 6));
+
+    lua_pushstring(L, input.c_str());
+    return 1;
+}
+
+int LuaPlugin::LuaEntityGetPlayer(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: ENTITY_GET_PLAYER called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int entityId = lua_tointeger(L, 1);
+    int result = -1;
+    std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
+    if (foundEntity != nullptr) {
+        result = foundEntity->playerList->Number;
+    }
+
+    lua_pushinteger(L, result);
+    return 1;
+}
+
+int LuaPlugin::LuaEntityGetMapId(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: ENTITY_GET_Map_Id called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int entityId = lua_tointeger(L, 1);
+    int result = -1;
+    std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
+    if (foundEntity != nullptr) {
+        result = foundEntity->MapID;
+    }
+
+    lua_pushinteger(L, result);
+    return 1;
+}
+
+int LuaPlugin::LuaEntityGetX(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: ENTITY_GET_X called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int entityId = lua_tointeger(L, 1);
+    float result = -1;
+    std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
+    if (foundEntity != nullptr) {
+        result = foundEntity->X;
+    }
+
+    lua_pushnumber(L, result);
+    return 1;
+}
+
+int LuaPlugin::LuaEntityGetY(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: ENTITY_GET_Y called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int entityId = lua_tointeger(L, 1);
+    float result = -1;
+    std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
+    if (foundEntity != nullptr) {
+        result = foundEntity->Y;
+    }
+
+    lua_pushnumber(L, result);
+    return 1;
+}
+
+int LuaPlugin::LuaEntityGetZ(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: ENTITY_GET_Z called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int entityId = lua_tointeger(L, 1);
+    float result = -1;
+    std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
+    if (foundEntity != nullptr) {
+        result = foundEntity->Z;
+    }
+
+    lua_pushnumber(L, result);
+    return 1;
+}
+
+int LuaPlugin::LuaEntityGetRotation(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: ENTITY_GET_Rotation called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int entityId = lua_tointeger(L, 1);
+    float result = -1;
+    std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
+    if (foundEntity != nullptr) {
+        result = foundEntity->Rotation;
+    }
+
+    lua_pushnumber(L, result);
+    return 1;
+}
+
+int LuaPlugin::LuaEntityGetLook(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: ENTITY_GET_Look called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int entityId = lua_tointeger(L, 1);
+    float result = -1;
+    std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
+    if (foundEntity != nullptr) {
+        result = foundEntity->Look;
+    }
+
+    lua_pushnumber(L, result);
+    return 1;
+}
+
+int LuaPlugin::LuaEntityResend(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Entity_Resend called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int entityId = lua_tointeger(L, 1);
+    std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
+
+    if (foundEntity != nullptr) {
+        foundEntity->Resend(entityId);
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaEntityMessage2Clients(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Entity_Message_2_Clients called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int entityid = lua_tointeger(L, 1);
+    std::string message(lua_tostring(L, 2));
+
+    Entity::MessageToClients(entityid, message);
+    return 0;
+}
+
+int LuaPlugin::LuaEntityDisplaynameGet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: ENTITY_displayname_get called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int entityId = lua_tointeger(L, 1);
+    std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
+
+    if (foundEntity != nullptr) {
+        std::string prefix(lua_tostring(L, 2));
+        std::string displayName(lua_tostring(L, 3));
+        std::string suffix(lua_tostring(L, 4));
+
+        lua_pushstring(L, foundEntity->Prefix.c_str());
+        lua_pushstring(L, foundEntity->Name.c_str());
+        lua_pushstring(L, foundEntity->Suffix.c_str());
+    }
+
+    return 3;
+}
+
+int LuaPlugin::LuaEntityDisplaynameSet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 4) {
+        Logger::LogAdd("Lua", "LuaError: ENTITY_displayname_set called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int entityId = lua_tointeger(L, 1);
+    std::string prefix(lua_tostring(L, 2));
+    std::string displayName(lua_tostring(L, 3));
+    std::string suffix(lua_tostring(L, 4));
+
+    std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
+
+    if (foundEntity != nullptr) {
+        Entity::SetDisplayName(entityId, prefix, displayName, suffix);
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaEntityPositionSet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 7) {
+        Logger::LogAdd("Lua", "LuaError: ENTITY_Position_Set called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int entityId = lua_tointeger(L, 1);
+    int mapId = lua_tointeger(L, 2);
+    float X = lua_tonumber(L, 3);
+    float Y = lua_tonumber(L, 4);
+    float Z = lua_tonumber(L, 5);
+    float rotation = lua_tonumber(L, 6);
+    float look = lua_tonumber(L, 7);
+
+    std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
+    if (foundEntity != nullptr) {
+        foundEntity->PositionSet(mapId, X, Y, Z, rotation, look, 10, true);
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaEntityKill(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: ENTITY_Kill called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int entityId = lua_tointeger(L, 1);
+    std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
+
+    if (foundEntity != nullptr) {
+        foundEntity->Kill();
+    }
+
+    return 0;
+}
+
+
+
 
 
 

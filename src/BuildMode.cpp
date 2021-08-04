@@ -1,4 +1,5 @@
 #include <Block.h>
+#include <plugins/LuaPlugin.h>
 #include "BuildMode.h"
 #include "Files.h"
 #include "common/PreferenceLoader.h"
@@ -58,7 +59,7 @@ void BuildModeMain::Load() {
         BuildMode newBm;
         newBm.ID = item.first;
         newBm.Name = pl.Read("Name", "-");
-        newBm.Plugin = pl.Read("Lua_Function", "");
+        newBm.Plugin = pl.Read("Plugin", "");
 
         _buildmodes.insert(std::make_pair(item.first, newBm));
     }
@@ -78,7 +79,7 @@ void BuildModeMain::Save() {
     for (auto const &item : _buildmodes) {
         pl.SelectGroup(item.first);
         pl.Write("Name", item.second.Name);
-        pl.Write("Lua_Function", item.second.Plugin);
+        pl.Write("Plugin", item.second.Plugin);
     }
 
     pl.SaveFile();
@@ -142,6 +143,10 @@ void BuildModeMain::Distribute(int clientId, int mapId, unsigned short X, unsign
         queuedItem.clientId = clientId;
         queuedItem.mapId = mapId;
         _resendBlocks.insert(_resendBlocks.begin(), queuedItem);
+        std::string pluginName = _buildmodes[buildMode].Plugin;
+        Utils::replaceAll(pluginName, "Lua:", "");
+        LuaPlugin* luaMain = LuaPlugin::GetInstance();
+        luaMain->TriggerBuildMode(pluginName, clientId, mapId, X, Y, Z, mode, blockType);
         // -- Lua_Event_Build_Mode()
     }
 }
