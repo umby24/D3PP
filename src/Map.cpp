@@ -1360,3 +1360,26 @@ int Map::BlockGetRank(unsigned short X, unsigned short Y, unsigned short Z) {
 
     return result;
 }
+
+void Map::SetRankBox(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1,
+                     unsigned short Z1, short rank) {
+
+    for(auto i = 0; i < data.RankBoxes.size(); i++) {
+        auto item = data.RankBoxes.at(i);
+        if (item.X0 >= X0 && item.X1 <= X1 && item.Y0 >= Y0 && item.Y1 <= Y1 && item.Z0 >= Z0 && item.Z1 <= Z1) {
+            data.RankBoxes.erase(data.RankBoxes.begin() + i);
+            i--;
+        }
+    }
+
+    MapRankElement mre{};
+    mre.Rank = rank;
+    mre.X0 = X0;
+    mre.Y0 = Y0;
+    mre.Z0 = Z0;
+
+    mre.Z1 = Z1;
+    mre.Y1 = Y1;
+    mre.X1 = X1;
+    data.RankBoxes.push_back(mre);
+}

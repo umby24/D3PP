@@ -185,6 +185,7 @@ public:
     void Load(std::string directory);
     unsigned char GetBlockType(unsigned short X, unsigned short Y, unsigned short Z);
     unsigned short GetBlockPlayer(unsigned short X, unsigned short Y, unsigned short Z);
+    void SetRankBox(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1, unsigned short Z1, short rank);
     void Reload();
     void Unload();
     void Send(int clientId);
