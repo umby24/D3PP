@@ -55,6 +55,10 @@ private:
     int LuaBuildModeStringSet(lua_State *L);
     int LuaBuildModeStringGet(lua_State *L);
     // -- Build Functions
+    int LuaBuildLinePlayer(lua_State *L);
+    int LuaBuildBoxPlayer(lua_State *L);
+    int LuaBuildSpherePlayer(lua_State *L);
+    int LuaBuildRankBox(lua_State *L);
     // -- Entity Functions
     int LuaEntityGetTable(lua_State *L);
     int LuaEntityAdd(lua_State *L);

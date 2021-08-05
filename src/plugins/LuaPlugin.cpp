@@ -11,6 +11,7 @@
 #include "Entity.h"
 #include "BuildMode.h"
 #include "Player_List.h"
+#include "Build.h"
 
 LuaPlugin* LuaPlugin::Instance = nullptr;
 
@@ -75,6 +76,11 @@ void LuaPlugin::BindFunctions() {
     lua_register(state, "Build_Mode_Float_Get", &dispatch<&LuaPlugin::LuaBuildModeFloatGet>);
     lua_register(state, "Build_Mode_String_Set", &dispatch<&LuaPlugin::LuaBuildModeStringSet>);
     lua_register(state, "Build_Mode_String_Get", &dispatch<&LuaPlugin::LuaBuildModeStringGet>);
+    // -- build functions
+    lua_register(state, "Build_Line_Player", &dispatch<&LuaPlugin::LuaBuildLinePlayer>);
+    lua_register(state, "Build_Box_Player", &dispatch<&LuaPlugin::LuaBuildBoxPlayer>);
+    lua_register(state, "Build_Sphere_Player", &dispatch<&LuaPlugin::LuaBuildSpherePlayer>);
+    lua_register(state, "Build_Rank_Box", &dispatch<&LuaPlugin::LuaBuildRankBox>);
     // -- Entity Functions:
     lua_register(state, "Entity_Get_Table", &dispatch<&LuaPlugin::LuaEntityGetTable>);
     lua_register(state, "Entity_Add", &dispatch<&LuaPlugin::LuaEntityAdd>);
@@ -1039,6 +1045,106 @@ int LuaPlugin::LuaEntityKill(lua_State *L) {
     if (foundEntity != nullptr) {
         foundEntity->Kill();
     }
+
+    return 0;
+}
+
+int LuaPlugin::LuaBuildLinePlayer(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 12) {
+        Logger::LogAdd("Lua", "LuaError: Build_Line_Player called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int playerNumber = lua_tointeger(L, 1);
+    int mapId = lua_tointeger(L, 2);
+    int x0 = lua_tointeger(L, 3);
+    int y0 = lua_tointeger(L, 4);
+    int z0 = lua_tointeger(L, 5);
+    int x1 = lua_tointeger(L, 6);
+    int y1 = lua_tointeger(L, 7);
+    int z1 = lua_tointeger(L, 8);
+
+    short material = lua_tointeger(L, 9);
+    unsigned char priority = lua_tointeger(L, 10);
+    bool undo = (lua_tointeger(L, 11) > 0);
+    bool physics = lua_toboolean(L, 12);
+
+    Build::BuildLinePlayer(playerNumber, mapId, x0, y0, z0, x1, y1, z1, material, priority, undo, physics);
+    return 0;
+}
+
+int LuaPlugin::LuaBuildBoxPlayer(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 14) {
+        Logger::LogAdd("Lua", "LuaError: Build_Box_Player called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+    int mapId = lua_tointeger(L, 2);
+    int x0 = lua_tointeger(L, 3);
+    int y0 = lua_tointeger(L, 4);
+    int z0 = lua_tointeger(L, 5);
+    int x1 = lua_tointeger(L, 6);
+    int y1 = lua_tointeger(L, 7);
+    int z1 = lua_tointeger(L, 8);
+
+    short material = lua_tointeger(L, 9);
+    short replaceMaterial = lua_tointeger(L, 10);
+    bool hollow = (lua_tointeger(L, 11) > 0);
+    unsigned char priority = lua_tointeger(L, 12);
+    bool undo = (lua_tointeger(L, 13) > 0);
+    bool physics = lua_toboolean(L, 14);
+
+    Build::BuildBoxPlayer(playerNumber, mapId, x0, y0, z0, x1, y1, z1, material, replaceMaterial, hollow, priority, undo, physics);
+    return 0;
+}
+
+int LuaPlugin::LuaBuildSpherePlayer(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 12) {
+        Logger::LogAdd("Lua", "LuaError: Build_Sphere_Player called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int playerNumber = lua_tointeger(L, 1);
+    int mapId = lua_tointeger(L, 2);
+    int x = lua_tointeger(L, 3);
+    int y = lua_tointeger(L, 4);
+    int z = lua_tointeger(L, 5);
+    float radius = lua_tonumber(L, 6);
+    short material = lua_tointeger(L, 7);
+    short replaceMaterial = lua_tointeger(L, 8);
+    bool hollow = (lua_tointeger(L, 9) > 0);
+    unsigned char priority = lua_tointeger(L, 10);
+    bool undo = (lua_tointeger(L, 11) > 0);
+    bool physics = lua_toboolean(L, 12);
+
+    Build::BuildSpherePlayer(playerNumber, mapId, x, y, z, radius, material, replaceMaterial, hollow, priority, undo, physics);
+
+    return 0;
+}
+
+int LuaPlugin::LuaBuildRankBox(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 9) {
+        Logger::LogAdd("Lua", "LuaError: Build_Rank_Box called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int mapId = lua_tointeger(L, 1);
+    int X0 = lua_tointeger(L, 2);
+    int Y0 = lua_tointeger(L, 3);
+    int Z0 = lua_tointeger(L, 4);
+    int X1 = lua_tointeger(L, 5);
+    int Y1 = lua_tointeger(L, 6);
+    int Z1 = lua_tointeger(L, 7);
+    int Rank = lua_tointeger(L, 8);
+    int MaxRank = lua_tointeger(L, 9);
+
+    Build::BuildRankBox(mapId, X0, Y0, Z0, X1, Y1, Z1, Rank, MaxRank);
 
     return 0;
 }
