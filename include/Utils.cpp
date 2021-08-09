@@ -85,10 +85,10 @@ int Utils::strCount(std::string input, char search) {
    return result;
 }
 void Utils::padTo(std::string &str, const size_t num, const char paddingChar) {
-
         if(num > str.size())
             str.insert(str.size(), num - str.size(), paddingChar);
-
+        else if (str.size() > num)
+            str = str.substr(0, num);
 }
 
 std::vector<std::string> Utils::splitString(std::string input, const char splitChar) {

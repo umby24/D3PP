@@ -4,6 +4,7 @@
 
 #include <Packets.h>
 #include "Network.h"
+#include "Utils.h"
 
 static std::shared_ptr<NetworkClient> GetPlayer(int id) {
     auto network = Network::GetInstance();
@@ -15,6 +16,8 @@ void Packets::SendClientHandshake(int clientId, char protocolVersion, std::strin
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
     c->OutputWriteByte(0);
     c->OutputWriteByte(protocolVersion);
+    if (serverName.size() != 64) Utils::padTo(serverName, 64);
+    if (serverMotd.size() != 64) Utils::padTo(serverName, 64);
     c->OutputWriteString(std::move(serverName));
     c->OutputWriteString(std::move(serverMotd));
     c->OutputWriteByte(userType);
@@ -55,6 +58,7 @@ void Packets::SendSpawnEntity(int clientId, char playerId, std::string name, sho
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
     c->OutputWriteByte(7);
     c->OutputWriteByte(playerId);
+    if (name.size() != 64) Utils::padTo(name, 64);
     c->OutputWriteString(std::move(name));
     c->OutputWriteShort(x);
     c->OutputWriteShort(z);
@@ -84,23 +88,27 @@ void Packets::SendChatMessage(int clientId, std::string message, char location) 
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
     c->OutputWriteByte(13);
     c->OutputWriteByte(location);
+    if (message.size() != 64) Utils::padTo(message, 64);
     c->OutputWriteString(std::move(message));
 }
 
 void Packets::SendDisconnect(int clientId, std::string reason) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
     c->OutputWriteByte(14);
+    if (reason.size() != 64) Utils::padTo(reason, 64);
     c->OutputWriteString(std::move(reason));
 }
 
 void Packets::SendExtInfo(std::shared_ptr<NetworkClient> client, std::string serverName, int extensionCount) {
     client->OutputWriteByte(16);
+    if (serverName.size() != 64) Utils::padTo(serverName, 64);
     client->OutputWriteString(std::move(serverName));
     client->OutputWriteShort(extensionCount);
 }
 
 void Packets::SendExtEntry(std::shared_ptr<NetworkClient> client, std::string extensionName, int versionNumber) {
     client->OutputWriteByte(17);
+    if (extensionName.size() != 64) Utils::padTo(extensionName, 64);
     client->OutputWriteString(std::move(extensionName));
     client->OutputWriteInt(versionNumber);
 }
@@ -124,6 +132,8 @@ void Packets::SendHoldThis(std::shared_ptr<NetworkClient> client, unsigned char 
 void Packets::SendTextHotkeys(std::shared_ptr<NetworkClient> client, std::string label, std::string action, int keyCode,
                               char modifier) {
     client->OutputWriteByte(21);
+    if (label.size() != 64) Utils::padTo(label, 64);
+    if (action.size() != 64) Utils::padTo(action, 64);
     client->OutputWriteString(label);
     client->OutputWriteString(action);
     client->OutputWriteInt(keyCode);
@@ -134,6 +144,9 @@ void Packets::SendExtAddPlayerName(std::shared_ptr<NetworkClient> client, short 
                                    std::string listName, std::string groupName, char groupRank) {
     client->OutputWriteByte(22);
     client->OutputWriteShort(nameId);
+    if (playerName.size() != 64) Utils::padTo(playerName, 64);
+    if (listName.size() != 64) Utils::padTo(listName, 64);
+    if (groupName.size() != 64) Utils::padTo(groupName, 64);
     client->OutputWriteString(playerName);
     client->OutputWriteString(listName);
     client->OutputWriteString(groupName);
@@ -159,6 +172,7 @@ void Packets::SendSelectionBoxAdd(std::shared_ptr<NetworkClient> client, unsigne
                                   short red, short green, short blue, short opacity) {
     client->OutputWriteByte(26);
     client->OutputWriteByte(selectionId);
+    if (label.size() != 64) Utils::padTo(label, 64);
     client->OutputWriteString(label);
     client->OutputWriteShort(startX);
     client->OutputWriteShort(startZ);
@@ -188,12 +202,14 @@ void Packets::SendBlockPermissions(std::shared_ptr<NetworkClient> client, unsign
 void Packets::SendChangeModel(std::shared_ptr<NetworkClient> client, unsigned char entityId, std::string modelName) {
     client->OutputWriteByte(29);
     client->OutputWriteByte(entityId);
+    if (modelName.size() != 64) Utils::padTo(modelName, 64);
     client->OutputWriteString(modelName);
 }
 
 void Packets::SendEnvMapAppearance(std::shared_ptr<NetworkClient> client, std::string url, unsigned char sideBlock,
                                    unsigned char edgeBlock, short sideLevel) {
     client->OutputWriteByte(30);
+    if (url.size() != 64) Utils::padTo(url, 64);
     client->OutputWriteString(url);
     client->OutputWriteByte(sideBlock);
     client->OutputWriteByte(edgeBlock);
@@ -222,6 +238,8 @@ void Packets::SendExtAddEntity2(std::shared_ptr<NetworkClient> client, unsigned 
                                 unsigned char look) {
     client->OutputWriteByte(33);
     client->OutputWriteByte(entityId);
+    if (name.size() != 64) Utils::padTo(name, 64);
+    if (skin.size() != 64) Utils::padTo(skin, 64);
     client->OutputWriteString(name);
     client->OutputWriteString(skin);
     client->OutputWriteShort(X);
