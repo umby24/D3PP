@@ -120,6 +120,7 @@ struct MapData {
     char* Data; // -- Map data
     char* PhysicData; // -- Physics state, (1 Byte -> 8 blocks)
     char* BlockchangeData; // -- Blockchange state (1 byte -> 8 blocks)
+    std::recursive_mutex physicsQueueMutex;
     std::vector<MapBlockDo> PhysicsQueue;
     std::vector<MapBlockChanged> ChangeQueue;
     std::vector<UndoStep> UndoCache;

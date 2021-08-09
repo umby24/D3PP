@@ -674,8 +674,8 @@ int LuaPlugin::LuaBuildModeCoordinateGet(lua_State *L) {
 
     BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
     X = buildModeMain->GetCoordinateX(clientId, index);
-    Y = buildModeMain->GetCoordinateX(clientId, index);
-    Z = buildModeMain->GetCoordinateX(clientId, index);
+    Y = buildModeMain->GetCoordinateY(clientId, index);
+    Z = buildModeMain->GetCoordinateZ(clientId, index);
 
     lua_pushinteger(L, X);
     lua_pushinteger(L, Y);

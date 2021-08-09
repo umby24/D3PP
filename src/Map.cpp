@@ -321,6 +321,8 @@ void MapMain::MapBlockPhysics() {
             if (map.second->data.PhysicsStopped)
                 continue;
 
+            const std::lock_guard<std::recursive_mutex> pqlock(map.second->data.physicsQueueMutex);
+
             std::sort(map.second->data.PhysicsQueue.begin(), map.second->data.PhysicsQueue.end(), comparePhysicsTime);
             watchdog::Watch("Map_Physic", "After: std::sort", 1);
             int counter = 0;
@@ -1303,8 +1305,11 @@ void Map::QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z
         if (blockPhysics > 0 || !physPlugin.empty()) {
             data.PhysicData[offset/8] |= (1 << (offset % 8)); // -- Set bitmask
             int physTime = clock() + blockEntry.PhysicsTime + Utils::RandomNumber(blockEntry.PhysicsRandom);
+            const std::lock_guard<std::recursive_mutex> pqLock(data.physicsQueueMutex);
+
             MapBlockDo physicItem { physTime, X, Y, Z};
             data.PhysicsQueue.push_back(physicItem);
+
         }
     }
 }

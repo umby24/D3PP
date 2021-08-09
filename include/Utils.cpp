@@ -84,6 +84,7 @@ int Utils::strCount(std::string input, char search) {
 
    return result;
 }
+
 void Utils::padTo(std::string &str, const size_t num, const char paddingChar) {
         if(num > str.size())
             str.insert(str.size(), num - str.size(), paddingChar);
