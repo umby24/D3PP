@@ -111,6 +111,24 @@ private:
     int LuaMapGetRankShow(lua_State *L);
     int LuaMapGetRankJoin(lua_State *L);
     int LuaMapGetDimensions(lua_State *L);
+    int LuaMapGetSpawn(lua_State *L);
+    int LuaMapGetSaveInterval(lua_State *L);
+    int LuaMapSetName(lua_State *L);
+    int LuaMapSetDirectory(lua_State *L);
+    int LuaMapSetRankBuild(lua_State *L);
+    int LuaMapSetRankJoin(lua_State *L);
+    int LuaMapSetRankShow(lua_State *L);
+    int LuaMapSetSpawn(lua_State *L);
+    int LuaMapSetSaveInterval(lua_State *L);
+    int LuaMapAdd(lua_State *L);
+    int LuaMapActionAddResize(lua_State *L);
+    int LuaMapActionAddFill(lua_State *L);
+    int LuaMapActionAddSave(lua_State *L);
+    int LuaMapActionAddDelete(lua_State *L);
+    int LuaMapResend(lua_State *L);
+    int LuaMapExport(lua_State *L);
+    int LuaMapExportGetSize(lua_State *L);
+    int LuaMapImportPlayer(lua_State *L);
     // -- Block functions
     int LuaBlockGetTable(lua_State *L);
     int LuaBlockGetName(lua_State *L);
@@ -162,6 +180,28 @@ private:
     int LuaMapHackcontrolSet(lua_State *L);
 
     // -- Event executors
-
+    void LuaDoEventTimer();
+    void LuaDoEventClientAdd();
+    void LuaDoEventClientDelete();
+    void LuaDoEventClientLogin();
+    void LuaDoEventClientLogout();
+    void LuaDoEventEntityAdd();
+    void LuaDoEventEntityDelete();
+    void LuaDoEventEntityPositionSet();
+    void LuaDoEventEntityDie();
+    void LuaDoEventMapAdd();
+    void LuaDoEventMapActionDelete();
+    void LuaDoEventMapActionResize();
+    void LuaDoEventMapActionFill();
+    void LuaDoEventMapActionSave();
+    void LuaDoEventMapActionLoad();
+    void LuaDoEventMapBlockChange();
+    void LuaDoEventMapBlockChangeClient();
+    void LuaDoEventMapBlockCHangePlayer();
+    void LuaDoEventChatMap();
+    void LuaDoEventChatAll();
+    void LuaDoEventChatPrivate();
+    void LuaDoEventEntityMapChange();
 };
+
 #endif
