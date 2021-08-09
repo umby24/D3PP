@@ -12,6 +12,7 @@
 #include "BuildMode.h"
 #include "Player_List.h"
 #include "Build.h"
+#include "Rank.h"
 
 LuaPlugin* LuaPlugin::Instance = nullptr;
 
@@ -98,7 +99,24 @@ void LuaPlugin::BindFunctions() {
     lua_register(state, "Entity_Displayname_Set", &dispatch<&LuaPlugin::LuaEntityDisplaynameSet>);
     lua_register(state, "Entity_Position_Set", &dispatch<&LuaPlugin::LuaEntityPositionSet>);
     lua_register(state, "Entity_Kill", &dispatch<&LuaPlugin::LuaEntityKill>);
-
+    // -- Player functions:
+    lua_register(state, "Player_Get_Table", &dispatch<&LuaPlugin::LuaPlayerGetTable>);
+    lua_register(state, "Player_Get_Prefix", &dispatch<&LuaPlugin::LuaPlayerGetPrefix>);
+    lua_register(state, "Player_Get_Name", &dispatch<&LuaPlugin::LuaPlayerGetName>);
+    lua_register(state, "Player_Get_Suffix", &dispatch<&LuaPlugin::LuaPlayerGetSuffix>);
+    lua_register(state, "Player_Get_IP", &dispatch<&LuaPlugin::LuaPlayerGetIp>);
+    lua_register(state, "Player_Get_Rank", &dispatch<&LuaPlugin::LuaPlayerGetRank>);
+    lua_register(state, "Player_Get_Online", &dispatch<&LuaPlugin::LuaPlayerGetOnline>);
+    lua_register(state, "Player_Get_Ontime", &dispatch<&LuaPlugin::LuaPlayerGetOntime>);
+    lua_register(state, "Player_Get_Mute_Time", &dispatch<&LuaPlugin::LuaPlayerGetMuteTime>);
+    lua_register(state, "Player_Set_Rank", &dispatch<&LuaPlugin::LuaPlayerSetRank>);
+    lua_register(state, "Player_Kick", &dispatch<&LuaPlugin::LuaPlayerKick>);
+    lua_register(state, "Player_Ban", &dispatch<&LuaPlugin::LuaPlayerBan>);
+    lua_register(state, "Player_Unban", &dispatch<&LuaPlugin::LuaPlayerUnban>);
+    lua_register(state, "Player_Stop", &dispatch<&LuaPlugin::LuaPlayerStop>);
+    lua_register(state, "Player_Unstop", &dispatch<&LuaPlugin::LuaPlayerUnstop>);
+    lua_register(state, "Player_Mute", &dispatch<&LuaPlugin::LuaPlayerMute>);
+    lua_register(state, "Player_Unmute", &dispatch<&LuaPlugin::LuaPlayerUnmute>);
     // -- Map Functions:
     lua_register(state, "Map_Block_Change", &dispatch<&LuaPlugin::LuaMapBlockChange>);
     lua_register(state, "Map_Block_Change_Client", &dispatch<&LuaPlugin::LuaMapBlockChangeClient>);
@@ -1148,6 +1166,385 @@ int LuaPlugin::LuaBuildRankBox(lua_State *L) {
 
     return 0;
 }
+
+int LuaPlugin::LuaPlayerGetTable(lua_State *L) {
+    Player_List* pll = Player_List::GetInstance();
+    int numEntities = pll->_pList.size();
+    int index = 1;
+
+    lua_newtable(L);
+
+    if (numEntities > 0) {
+        for (auto const &e :  pll->_pList) {
+            lua_pushinteger(L, index++);
+            lua_pushinteger(L, e.Number);
+            lua_settable(L, -3);
+        }
+    }
+
+    lua_pushinteger(L, numEntities);
+
+    return 2;
+}
+
+int LuaPlugin::LuaPlayerGetPrefix(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Player_Get_Prefix called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+    Player_List* pll = Player_List::GetInstance();
+    Rank* rm = Rank::GetInstance();
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    std::string result = "";
+
+    if (ple != nullptr) {
+        RankItem ri = rm->GetRank(ple->PRank, false);
+        result = ri.Prefix;
+    }
+
+    lua_pushstring(L, result.c_str());
+    return 1;
+}
+
+int LuaPlugin::LuaPlayerGetName(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Player_Get_Name called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+    Player_List* pll = Player_List::GetInstance();
+
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    std::string result = "";
+
+    if (ple != nullptr) {
+
+        result = ple->Name;
+    }
+
+    lua_pushstring(L, result.c_str());
+    return 1;
+}
+
+int LuaPlugin::LuaPlayerGetSuffix(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Player_Get_Suffix called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+    Player_List* pll = Player_List::GetInstance();
+    Rank* rm = Rank::GetInstance();
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    std::string result = "";
+
+    if (ple != nullptr) {
+        RankItem ri = rm->GetRank(ple->PRank, false);
+        result = ri.Suffix;
+    }
+
+    lua_pushstring(L, result.c_str());
+    return 1;
+}
+int LuaPlugin::LuaPlayerGetIp(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Player_Get_Ip called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+    Player_List* pll = Player_List::GetInstance();
+
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    std::string result = "";
+
+    if (ple != nullptr) {
+        result = ple->IP;
+    }
+
+    lua_pushstring(L, result.c_str());
+    return 1;
+}
+
+int LuaPlugin::LuaPlayerGetOntime(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Player_Get_Ontime called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+    Player_List* pll = Player_List::GetInstance();
+
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    int result = -1;
+
+    if (ple != nullptr) {
+        result = ple->OntimeCounter;
+    }
+
+    lua_pushinteger(L, result);
+    return 1;
+}
+
+int LuaPlugin::LuaPlayerGetRank(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Player_Get_Rank called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+    Player_List* pll = Player_List::GetInstance();
+
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    int result = -1;
+
+    if (ple != nullptr) {
+        result = ple->PRank;
+    }
+
+    lua_pushinteger(L, result);
+    return 1;
+}
+
+int LuaPlugin::LuaPlayerGetOnline(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Player_Get_Online called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+    Player_List* pll = Player_List::GetInstance();
+
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    int result = 0;
+
+    if (ple != nullptr) {
+        result = ple->Online;
+    }
+
+    lua_pushinteger(L, result);
+    return 1;
+}
+
+int LuaPlugin::LuaPlayerGetMuteTime(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Player_Get_Mute_Time called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+    Player_List* pll = Player_List::GetInstance();
+
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    int result = -1;
+
+    if (ple != nullptr) {
+        result = ple->MuteTime;
+    }
+
+    lua_pushinteger(L, result);
+    return 1;
+}
+
+int LuaPlugin::LuaPlayerSetRank(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 3) {
+        Logger::LogAdd("Lua", "LuaError: Player_Set_Rank called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+    int rankNumber = lua_tointeger(L, 2);
+    std::string reason(lua_tostring(L, 3));
+
+    Player_List* pll = Player_List::GetInstance();
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+
+    if (ple != nullptr) {
+        ple->SetRank(rankNumber, reason);
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaPlayerKick(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs > 2) {
+        Logger::LogAdd("Lua", "LuaError: Player_Kick called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+    std::string reason(lua_tostring(L, 2));
+    int count = 0;
+    bool log = true;
+    bool show = true;
+
+    if (nArgs >= 3)
+        count = lua_tonumber(L, 3);
+
+    if (nArgs >= 4)
+        log = (lua_tonumber(L, 4) > 0);
+
+    if (nArgs >= 5)
+        show = (lua_tonumber(L, 5) > 0);
+
+    Player_List* pll = Player_List::GetInstance();
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+
+    if (ple != nullptr) {
+        ple->Kick(reason, count, log, show);
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaPlayerBan(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Player_Ban called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+    std::string reason(lua_tostring(L, 2));
+
+    Player_List* pll = Player_List::GetInstance();
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+
+    if (ple != nullptr) {
+        ple->Ban(reason);
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaPlayerUnban(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Player_Unban called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+
+    Player_List* pll = Player_List::GetInstance();
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+
+    if (ple != nullptr) {
+        ple->Unban();
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaPlayerStop(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Player_Stop called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+    std::string reason(lua_tostring(L, 2));
+
+    Player_List* pll = Player_List::GetInstance();
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+
+    if (ple != nullptr) {
+        ple->Stop(reason);
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaPlayerUnstop(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Player_Unstop called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+
+    Player_List* pll = Player_List::GetInstance();
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+
+    if (ple != nullptr) {
+        ple->Unstop();
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaPlayerMute(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 3) {
+        Logger::LogAdd("Lua", "LuaError: Player_Mute called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+    int minutes = lua_tointeger(L, 2);
+    std::string reason(lua_tostring(L, 3));
+
+    Player_List* pll = Player_List::GetInstance();
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+
+    if (ple != nullptr) {
+        ple->Mute(minutes, reason);
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaPlayerUnmute(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Player_Unmute called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerNumber = lua_tointeger(L, 1);
+
+    Player_List* pll = Player_List::GetInstance();
+    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+
+    if (ple != nullptr) {
+        ple->Unmute();
+    }
+
+    return 0;
+}
+
+
 
 
 
