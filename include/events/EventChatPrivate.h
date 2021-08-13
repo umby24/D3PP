@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTCHATPRIVATE_H
 #define D3PP_EVENTCHATPRIVATE_H
+#include "EventSystem.h"
 class EventChatPrivate : public Event { // -- lol apparently never used in d3..
 public:
     EventChatPrivate();

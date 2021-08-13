@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTENTITYPOSITIONSET_H
 #define D3PP_EVENTENTITYPOSITIONSET_H
+#include "EventSystem.h"
 class EventEntityPositionSet : public Event {
 public:
     EventEntityPositionSet();

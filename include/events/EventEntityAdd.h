@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTENTITYADD_H
 #define D3PP_EVENTENTITYADD_H
+#include "EventSystem.h"
 class EventEntityAdd : public Event {
 public:
     EventEntityAdd();

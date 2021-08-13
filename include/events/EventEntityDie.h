@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTENTITYDIE_H
 #define D3PP_EVENTENTITYDIE_H
+#include "EventSystem.h"
 class EventEntityDie : public Event {
 public:
     EventEntityDie();

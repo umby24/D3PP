@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTENTITYDELETE_H
 #define D3PP_EVENTENTITYDELETE_H
+#include "EventSystem.h"
 class EventEntityDelete: public Event {
 public:
     EventEntityDelete();

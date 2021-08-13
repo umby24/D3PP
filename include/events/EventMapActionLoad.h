@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTMAPACTIONLOAD_H
 #define D3PP_EVENTMAPACTIONLOAD_H
+#include "EventSystem.h"
 class EventMapActionLoad : public Event {
 public:
     EventMapActionLoad();

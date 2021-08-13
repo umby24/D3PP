@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTMAPACTIONFILL_H
 #define D3PP_EVENTMAPACTIONFILL_H
+#include "EventSystem.h"
 class EventMapActionFill : public Event {
 public:
     EventMapActionFill();

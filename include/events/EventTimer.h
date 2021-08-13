@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTTIMER_H
 #define D3PP_EVENTTIMER_H
+#include "EventSystem.h"
 class EventTimer : public Event {
 public:
     EventTimer();

@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTENTITYMAPCHANGE_H
 #define D3PP_EVENTENTITYMAPCHANGE_H
+#include "EventSystem.h"
 class EventEntityMapChange : public Event {
 public:
     EventEntityMapChange();

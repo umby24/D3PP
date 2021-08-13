@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTMAPACTIONSAVE_H
 #define D3PP_EVENTMAPACTIONSAVE_H
+#include "EventSystem.h"
 class EventMapActionSave : public Event {
 public:
     EventMapActionSave();

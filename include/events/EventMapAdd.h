@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTMAPADD_H
 #define D3PP_EVENTMAPADD_H
+#include "EventSystem.h"
 class EventMapAdd : public Event {
 public:
     EventMapAdd();

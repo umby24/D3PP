@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTCLIENTDELETE_H
 #define D3PP_EVENTCLIENTDELETE_H
+#include "EventSystem.h"
 class EventClientDelete : public Event {
 public:
     EventClientDelete();

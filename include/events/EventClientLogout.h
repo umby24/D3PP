@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTCLIENTLOGOUT_H
 #define D3PP_EVENTCLIENTLOGOUT_H
+#include "EventSystem.h"
 class EventClientLogout : public Event {
 public:
     EventClientLogout();

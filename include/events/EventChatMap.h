@@ -4,6 +4,8 @@
 
 #ifndef D3PP_EVENTCHATMAP_H
 #define D3PP_EVENTCHATMAP_H
+#include "EventSystem.h"
+
 class EventChatMap : public Event {
 public:
     EventChatMap();
@@ -15,4 +17,5 @@ public:
 
     int Push(lua_State *L);
 };
+
 #endif //D3PP_EVENTCHATMAP_H

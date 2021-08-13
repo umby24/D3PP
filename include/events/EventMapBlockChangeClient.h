@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTMAPBLOCKCHANGECLIENT_H
 #define D3PP_EVENTMAPBLOCKCHANGECLIENT_H
+#include "EventSystem.h"
 class EventMapBlockChangeClient : public Event {
 public:
     EventMapBlockChangeClient();

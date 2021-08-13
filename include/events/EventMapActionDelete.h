@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTMAPACTIONDELETE_H
 #define D3PP_EVENTMAPACTIONDELETE_H
+#include "EventSystem.h"
 class EventMapActionDelete : public Event {
 public:
     EventMapActionDelete();

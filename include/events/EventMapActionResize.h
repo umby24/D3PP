@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTMAPACTIONRESIZE_H
 #define D3PP_EVENTMAPACTIONRESIZE_H
+#include "EventSystem.h"
 class EventMapActionResize : public Event {
 public:
     EventMapActionResize();

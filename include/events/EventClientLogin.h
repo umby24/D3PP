@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTCLIENTLOGIN_H
 #define D3PP_EVENTCLIENTLOGIN_H
+#include "EventSystem.h"
 class EventClientLogin : public Event {
 public:
     EventClientLogin();

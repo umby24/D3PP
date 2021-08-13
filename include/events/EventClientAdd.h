@@ -4,6 +4,7 @@
 
 #ifndef D3PP_EVENTCLIENTADD_H
 #define D3PP_EVENTCLIENTADD_H
+#include "EventSystem.h"
 class EventClientAdd : public Event {
 public:
     EventClientAdd();
