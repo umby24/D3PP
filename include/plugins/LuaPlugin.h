@@ -6,6 +6,7 @@
 #include <memory>
 #include <map>
 #include <lua.hpp>
+#include <EventSystem.h>
 
 #include "TaskScheduler.h"
 
@@ -28,6 +29,7 @@ public:
 private:
     lua_State* state;
     std::map<std::string, LuaFile> _files;
+    std::map<Event::DescriptorType, std::vector<std::string>> _luaEvents;
 
     void Init();
     void MainFunc();
@@ -202,6 +204,10 @@ private:
     void LuaDoEventChatAll();
     void LuaDoEventChatPrivate();
     void LuaDoEventEntityMapChange();
+
+    void RegisterEventListener();
+
+    void HandleEvent(const Event &event);
 };
 
 #endif

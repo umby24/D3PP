@@ -26,6 +26,10 @@
 
 #include "CPE.h"
 
+#include "EventSystem.h"
+#include "events/EventClientLogin.h"
+#include "events/EventClientLogout.h"
+
 const std::string MODULE_NAME = "Client";
 
 void Client::Login(int clientId, std::string name, std::string mppass, char version) {
@@ -110,6 +114,10 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     Logger::LogAdd(MODULE_NAME, "Player Logged in (IP:" + c->IP + " Name:" + name + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(newEntity->Id) + "&e' logged in");
     NetworkFunctions::SystemMessageNetworkSend(c->Id, pm->WelcomeMessage);
+    
+    EventClientLogin ecl;
+    ecl.clientId = c->Id;
+    Dispatcher::post(ecl);
 
     spawnMap->data.Clients += 1;
     pl->SaveFile = true;
@@ -164,6 +172,10 @@ void Client::Logout(int clientId, std::string message, bool showtoall) {
         Entity::Delete(c->player->tEntity->Id);
         c->player->tEntity = nullptr;
     }
+    
+    EventClientLogout ecl;
+    ecl.clientId = clientId;
+    Dispatcher::post(ecl);
 }
 
 void Client::LoginThread() {

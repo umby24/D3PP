@@ -13,6 +13,30 @@
 #include "Player_List.h"
 #include "Build.h"
 #include "Rank.h"
+#include "EventSystem.h"
+// -- Events..
+#include "events/EventChatAll.h"
+#include "events/EventChatMap.h"
+#include "events/EventChatPrivate.h"
+#include "events/EventClientAdd.h"
+#include "events/EventClientDelete.h"
+#include "events/EventClientLogin.h"
+#include "events/EventClientLogout.h"
+#include "events/EventEntityAdd.h"
+#include "events/EventEntityDelete.h"
+#include "events/EventEntityDie.h"
+#include "events/EventEntityMapChange.h"
+#include "events/EventEntityPositionSet.h"
+#include "events/EventMapActionDelete.h"
+#include "events/EventMapActionFill.h"
+#include "events/EventMapActionLoad.h"
+#include "events/EventMapActionResize.h"
+#include "events/EventMapActionSave.h"
+#include "events/EventMapAdd.h"
+#include "events/EventMapBlockChange.h"
+#include "events/EventMapBlockChangeClient.h"
+#include "events/EventMapBlockChangePlayer.h"
+#include "events/EventTimer.h"
 
 LuaPlugin* LuaPlugin::Instance = nullptr;
 
@@ -42,6 +66,7 @@ LuaPlugin::LuaPlugin() {
     luaL_dostring(state, "print(\"hello world from lua\")");
     *static_cast<LuaPlugin**>(lua_getextraspace(this->state)) = this;
     BindFunctions();
+    RegisterEventListener();
 }
 
 LuaPlugin::~LuaPlugin() {
@@ -54,6 +79,56 @@ LuaPlugin* LuaPlugin::GetInstance() {
     }
 
     return Instance;
+}
+
+void LuaPlugin::RegisterEventListener() {
+
+    Dispatcher::subscribe(EventChatAll::descriptor, nullptr);
+    Dispatcher::subscribe(EventChatMap::descriptor, nullptr);
+    Dispatcher::subscribe(EventChatPrivate::descriptor, nullptr);
+    Dispatcher::subscribe(EventClientAdd::descriptor, nullptr);
+    Dispatcher::subscribe(EventClientDelete::descriptor, nullptr);
+    Dispatcher::subscribe(EventClientLogin::descriptor, nullptr);
+    Dispatcher::subscribe(EventClientLogout::descriptor, nullptr);
+    Dispatcher::subscribe(EventEntityAdd::descriptor, nullptr);
+    Dispatcher::subscribe(EventEntityDelete::descriptor, nullptr);
+    Dispatcher::subscribe(EventEntityDie::descriptor, nullptr);
+    Dispatcher::subscribe(EventEntityMapChange::descriptor, nullptr);
+    Dispatcher::subscribe(EventEntityPositionSet::descriptor, nullptr);
+    Dispatcher::subscribe(EventMapActionDelete::descriptor, nullptr);
+    Dispatcher::subscribe(EventMapActionFill::descriptor, nullptr);
+    Dispatcher::subscribe(EventMapActionLoad::descriptor, nullptr);
+    Dispatcher::subscribe(EventMapActionResize::descriptor, nullptr);
+    Dispatcher::subscribe(EventMapActionSave::descriptor, nullptr);
+    Dispatcher::subscribe(EventMapAdd::descriptor, nullptr);
+    Dispatcher::subscribe(EventMapBlockChange::descriptor, nullptr);
+    Dispatcher::subscribe(EventMapBlockChangeClient::descriptor, nullptr);
+    Dispatcher::subscribe(EventMapBlockChangePlayer::descriptor, nullptr);
+    Dispatcher::subscribe(EventTimer::descriptor, nullptr);
+    
+}
+
+void LuaPlugin::HandleEvent(const Event& event) {
+    if (!event.PushLua)
+        return;
+
+    auto type = event.type(); // -- get the type..
+
+    if( _luaEvents.find( type ) == _luaEvents. end() ) // -- find all functions that want to be called on this event
+        return;
+
+    auto&& observers = _luaEvents.at( type );
+
+    for( auto&& observer : observers ) {
+        lua_getglobal(state, observer.c_str()); // -- Get the function to be called
+        int argCount = event.PushLua(state); // -- Have the event push its args and return how many were pushed..
+
+        if (lua_pcall(state, argCount, 0, 0) != 0) { // -- Call the function.
+            bail(state, "[Event Handler]"); // -- catch errors
+            return;
+        }
+        // -- done.
+    }
 }
 
 void LuaPlugin::BindFunctions() {
@@ -1541,6 +1616,70 @@ int LuaPlugin::LuaPlayerUnmute(lua_State *L) {
         ple->Unmute();
     }
 
+    return 0;
+}
+
+int LuaPlugin::LuaServerGetExtension(lua_State *L) {
+    return 0;
+}
+
+int LuaPlugin::LuaEventAdd(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 6) {
+        Logger::LogAdd("Lua", "LuaError: Event_Add called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    std::string eventId(lua_tostring(L, 1));
+    std::string function(lua_tostring(L, 2));
+    std::string type(lua_tostring(L, 3));
+    int setOrCheck = lua_tointeger(L, 4);
+    int time = lua_tointeger(L, 5);
+    int mapId = lua_tointeger(L, 6);
+
+    if (!Dispatcher::hasdescriptor(type)) {
+        Logger::LogAdd("Lua", "LuaError: Invalid event type: " + type + ".", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    
+    auto typeAsEvent = static_cast<Event::DescriptorType>(type.c_str());
+    if (setOrCheck == 1) {
+        if (_luaEvents.find(typeAsEvent) != _luaEvents.end()) {
+            _luaEvents[typeAsEvent].push_back(function);
+        } else {
+            _luaEvents.insert(std::make_pair(typeAsEvent, std::vector<std::string>()));
+            _luaEvents[typeAsEvent].push_back(function);
+        }
+    } else {
+        bool eventExists = false;
+
+        if (_luaEvents.find(typeAsEvent) != _luaEvents.end()) {
+            for(const auto &i : _luaEvents[typeAsEvent]) {
+                if (i == typeAsEvent) {
+                    eventExists = true;
+                    break;
+                }
+            }
+        } 
+
+        lua_pushboolean(L, eventExists);
+        return 1;
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaEventDelete(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Event_Delete called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    std::string eventId(lua_tostring(L, 1));
+    // -- TODO:
     return 0;
 }
 

@@ -24,6 +24,9 @@
 #include "Utils.h"
 #include "CPE.h"
 #include "Packets.h"
+#include "EventSystem.h"
+#include "events/EventClientAdd.h"
+#include "events/EventClientDelete.h"
 
 const std::string MODULE_NAME = "Network";
 Network* Network::singleton_ = nullptr;
@@ -243,6 +246,9 @@ watchdog::Watch("Network", "Begin events", 0);
                 NetworkClient newNcClient(std::move(newClient));
                 int clientId = newNcClient.Id;
                 _clients.insert(std::make_pair(clientId, std::make_shared<NetworkClient>(std::move(newNcClient))));
+                EventClientAdd eca;
+                eca.clientId = clientId;
+                Dispatcher::post(eca);
             }
         } else if (e == ServerSocketEvent::SOCKET_EVENT_DATA) {
             int clientId = static_cast<int>(listenSocket->GetEventSocket());
@@ -657,6 +663,11 @@ void Network::DeleteClient(int clientId, std::string message, bool sendToAll) {
     Mem::Free(_clients[clientId]->InputBuffer);
     Mem::Free(_clients[clientId]->OutputBuffer);
     listenSocket->Unaccept(_clients[clientId]->clientSocket->GetSocketFd());
+    
+    EventClientDelete ecd;
+    ecd.clientId = clientId;
+    Dispatcher::post(ecd);
+
     Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(clientId) + "] [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     _clients[clientId]->clientSocket->Disconnect();
     _clients.erase(clientId);

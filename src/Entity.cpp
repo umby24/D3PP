@@ -16,6 +16,12 @@
 #include "Utils.h"
 #include "CPE.h"
 #include "Packets.h"
+#include "EventSystem.h"
+#include "events/EventEntityAdd.h"
+#include "events/EventEntityDelete.h"
+#include "events/EventEntityDie.h"
+#include "events/EventEntityPositionSet.h"
+#include "events/EventEntityMapChange.h"
 
 const std::string MODULE_NAME = "Entity";
 std::map<int, std::shared_ptr<Entity>> Entity::_entities;
@@ -159,6 +165,10 @@ void Entity::Delete(int id) {
         }
     }
 
+    EventEntityDelete ed;
+    ed.entityId = id;
+    Dispatcher::post(ed);
+
     _entities.erase(id);
 }
 
@@ -168,6 +178,11 @@ void Entity::Kill() {
 
     if (timeMessageDeath < time(nullptr)) {
         timeMessageDeath = time(nullptr) + 2;
+        
+        EventEntityDie ed;
+        ed.entityId = this->Id;
+        Dispatcher::post(ed);
+
         NetworkFunctions::SystemMessageNetworkSend2All(MapID, "&c" + Name + " died.");
         PositionSet(MapID, cm->data.SpawnX, cm->data.SpawnY, cm->data.SpawnZ, cm->data.SpawnRot, cm->data.SpawnLook, 5, true);
     }
@@ -176,6 +191,19 @@ void Entity::Kill() {
 void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float lk, unsigned char priority, bool sendOwn) {
     MapMain* mm = MapMain::GetInstance();
     if (SendPos <= priority) {
+
+        EventEntityPositionSet eps;
+        eps.entityId = Id;
+        eps.mapId = mapId;
+        eps.x = x;
+        eps.y = y;
+        eps.z = z;
+        eps.rotation = rot;
+        eps.look = lk;
+        eps.priority = priority;
+        eps.sendOwnClient = sendOwn;
+        Dispatcher::post(eps);
+
         if (mapId != MapID) { // -- Changing map
             std::shared_ptr<Map> nm = mm->GetPointer(mapId);
             if (playerList == nullptr || playerList->PRank >= nm->data.RankJoin) {
@@ -196,6 +224,13 @@ void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float 
                 Rotation = rot;
                 Look = lk;
                 ClientId = GetFreeIdClient(mapId);
+
+                EventEntityMapChange emc;
+                emc.entityId = Id;
+                emc.oldMapId = oldMapId;
+                emc.newMapId = MapID;
+                Dispatcher::post(emc);
+
                 if (sendOwn)
                     SendPosOwn = true;
             } else {
@@ -380,6 +415,9 @@ void Entity::Delete() {
 
 void Entity::Add(std::shared_ptr<Entity> e) {
     _entities.insert(std::make_pair(e->Id, e));
+    EventEntityAdd ea;
+    ea.entityId = e->Id;
+    Dispatcher::post(ea);
 }
 
 void Entity::SetModel(std::string modelName) {

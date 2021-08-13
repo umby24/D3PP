@@ -26,6 +26,16 @@
 #include "Physics.h"
 #include "Undo.h"
 #include "CPE.h"
+#include "EventSystem.h"
+#include "events/EventMapActionDelete.h"
+#include "events/EventMapActionFill.h"
+#include "events/EventMapActionSave.h"
+#include "events/EventMapActionResize.h"
+#include "events/EventMapActionLoad.h"
+#include "events/EventMapBlockChange.h"
+#include "events/EventMapBlockChangeClient.h"
+#include "events/EventMapBlockChangePlayer.h"
+#include "events/EventMapAdd.h"
 
 using namespace std;
 
@@ -208,44 +218,78 @@ void MapMain::ActionProcessor() {
 
             switch(item.Action) {
                 case MapAction::SAVE:
+                {
                     watchdog::Watch("Map_Action", "Begin map-save", 1);
                     trigMap->Save(item.Directory);
                     if (item.ClientID > 0) {
                         NetworkFunctions::SystemMessageNetworkSend(item.ClientID, "&eMap Saved.");
                     }
+                    EventMapActionSave mas{};
+                    mas.actionId = item.ID;
+                    mas.mapId = item.MapID;
+                    Dispatcher::post(mas);
+
                     watchdog::Watch("Map_Action", "End map-save", 1);
+                }
                     break;
                 case MapAction::LOAD:
+                {
                     watchdog::Watch("Map_Action", "Begin map-load", 1);
                     trigMap->Load(item.Directory);
                     if (item.ClientID > 0) {
                         NetworkFunctions::SystemMessageNetworkSend(item.ClientID, "&eMap Loaded.");
                     }
+                    EventMapActionLoad mal{};
+                    mal.actionId = item.ID;
+                    mal.mapId = item.MapID;
+                    Dispatcher::post(mal);
+
                     watchdog::Watch("Map_Action", "end map-load", 1);
+                }
                     break;
                 case MapAction::FILL:
+                    {
                     watchdog::Watch("Map_Action", "Begin map-fill", 1);
                     trigMap->Fill(item.FunctionName, item.ArgumentString);
                     if (item.ClientID > 0) {
                         NetworkFunctions::SystemMessageNetworkSend(item.ClientID, "&eMap Filled.");
                     }
+                    EventMapActionFill maf{};
+                    maf.actionId = item.ID;
+                    maf.mapId = item.MapID;
+                    Dispatcher::post(maf);
                     watchdog::Watch("Map_Action", "end map-load", 1);
+                    }
                     break;
                 case MapAction::RESIZE:
+                {
                     watchdog::Watch("Map_Action", "Begin map-resize", 1);
                     trigMap->Resize(item.X, item.Y, item.Z);
                     if (item.ClientID > 0) {
                         NetworkFunctions::SystemMessageNetworkSend(item.ClientID, "&eMap Resized.");
                     }
+                    EventMapActionResize mar{};
+                    mar.actionId = item.ID;
+                    mar.mapId = item.MapID;
+                    Dispatcher::post(mar);
                     watchdog::Watch("Map_Action", "end map-resize", 1);
+                }
                     break;
                 case MapAction::DELETE:
+                {
                     watchdog::Watch("Map_Action", "Begin map-delete", 1);
+
+                    EventMapActionDelete delAct{};
+                    delAct.actionId = item.ID;
+                    delAct.mapId = item.MapID;
+                    Dispatcher::post(delAct);
+
                     Delete(item.MapID);
                      if (item.ClientID > 0) {
                         NetworkFunctions::SystemMessageNetworkSend(item.ClientID, "&eMap Deleted.");
                     }
                     watchdog::Watch("Map_Action", "end map-delete", 1);
+                }
                 break;
             }
         }
@@ -567,6 +611,11 @@ int MapMain::Add(int id, short x, short y, short z, const std::string& name) {
     newMap->data.blockCounter[0] = x*y*z;
     _maps.insert(std::make_pair(id, newMap));
     SaveFile = true;
+
+    EventMapAdd ema;
+    ema.mapId = id;
+    Dispatcher::post(ema);
+
     return id;
 }
 
@@ -1092,6 +1141,7 @@ void Map::BlockChange(const std::shared_ptr<NetworkClient>& client, unsigned sho
     if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
         auto rawBlock = static_cast<unsigned char>(data.Data[MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE)]);
         unsigned char rawNewType = 0;
+
         MapBlock oldType = bm->GetBlock(rawBlock);
         client->player->tEntity->lastMaterial = type;
         int blockRank = BlockGetRank(X, Y, Z);
@@ -1116,6 +1166,15 @@ void Map::BlockChange(const std::shared_ptr<NetworkClient>& client, unsigned sho
             NetworkFunctions::NetworkOutBlockSet(client->Id, X, Y, Z, oldType.OnClient);
             return;
         }
+        EventMapBlockChangeClient mbc;
+        mbc.playerId = client->player->tEntity->playerList->Number;
+        mbc.mapId = data.ID;
+        mbc.X = X;
+        mbc.Y = Y;
+        mbc.Z =  Z;
+        mbc.bType = type;
+        mbc.mode = mode;
+        Dispatcher::post(mbc);
 
         BlockChange(client->player->tEntity->playerList->Number, X, Y, Z, rawNewType, true, true, true, 250);
         QueueBlockChange(X, Y, Z, 250, -1);
@@ -1130,7 +1189,17 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
         int blockOffset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
         auto* atLoc = (MapBlockData*)(data.Data + blockOffset);
 
-        // -- Plugin Event: Block change
+        EventMapBlockChange event;
+        event.playerNumber = playerNumber;
+        event.mapId = data.ID;
+        event.X = X;
+        event.Y = Y;
+        event.Z = Z;
+        event.bType = type;
+        event.undo = undo;
+        event.send = send;
+        Dispatcher::post(event); // -- Post this event out!
+
         MapBlock oldType = bm->GetBlock(atLoc->type);
         MapBlock newType = bm->GetBlock(type);
         
