@@ -7,7 +7,10 @@ EventMapActionSave::EventMapActionSave() {
 }
 
 int EventMapActionSave::Push(lua_State* L) {
-
+    lua_pushinteger(L, 1);
+    lua_pushinteger(L, activeId);
+    lua_pushinteger(L, mapId);
+    return 3;
 }
 
 Event::DescriptorType EventMapActionSave::type() const {

@@ -7,7 +7,9 @@ EventEntityDie::EventEntityDie() {
 }
 
 int EventEntityDie::Push(lua_State* L) {
-
+    lua_pushinteger(L, 1);
+    lua_pushinteger(L, entityId);
+    return 2;
 }
 
 Event::DescriptorType EventEntityDie::type() const {

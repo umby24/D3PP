@@ -7,7 +7,8 @@ EventTimer::EventTimer() {
 }
 
 int EventTimer::Push(lua_State* L) {
-
+    lua_pushinteger(L, mapId);
+    return 1;
 }
 
 Event::DescriptorType EventTimer::type() const {

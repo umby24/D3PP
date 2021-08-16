@@ -7,7 +7,10 @@ EventMapBlockChangePlayer::EventMapBlockChangePlayer() {
 }
 
 int EventMapBlockChangePlayer::Push(lua_State* L) {
-
+    lua_pushinteger(L, 1);
+    lua_pushinteger(L, playerNumber);
+    
+    return 8;
 }
 
 Event::DescriptorType EventMapBlockChangePlayer::type() const {

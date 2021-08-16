@@ -12,6 +12,8 @@ public:
     static constexpr DescriptorType descriptor = "Map_Block_Change_Player";
     virtual DescriptorType type() const;
 
+    int playerNumber;
+    
     int Push(lua_State *L);
 };
 #endif //D3PP_EVENTMAPBLOCKCHANGEPLAYER_H

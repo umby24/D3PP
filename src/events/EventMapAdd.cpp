@@ -7,7 +7,9 @@ EventMapAdd::EventMapAdd() {
 }
 
 int EventMapAdd::Push(lua_State* L) {
-
+    lua_pushinteger(L, 1);
+    lua_pushinteger(L, mapId);
+    return 2;
 }
 
 Event::DescriptorType EventMapAdd::type() const {

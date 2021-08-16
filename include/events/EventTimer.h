@@ -11,6 +11,7 @@ public:
     static constexpr DescriptorType descriptor = "Timer";
     virtual DescriptorType type() const;
 
+    int mapId;
     int Push(lua_State *L);
 };
 #endif //D3PP_EVENTTIMER_H
