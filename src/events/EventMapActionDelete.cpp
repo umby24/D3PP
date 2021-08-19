@@ -8,7 +8,7 @@ EventMapActionDelete::EventMapActionDelete() {
 
 int EventMapActionDelete::Push(lua_State* L) {
     lua_pushinteger(L, 1);
-    lua_pushinteger(L, activeId);
+    lua_pushinteger(L, actionId);
     lua_pushinteger(L, mapId);
     return 3;
 }

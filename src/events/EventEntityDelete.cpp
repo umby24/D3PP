@@ -7,7 +7,9 @@ EventEntityDelete::EventEntityDelete() {
 }
 
 int EventEntityDelete::Push(lua_State* L) {
-
+    lua_pushinteger(L, 1);
+    lua_pushinteger(L, entityId);
+    return 2;
 }
 
 Event::DescriptorType EventEntityDelete::type() const {

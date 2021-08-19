@@ -2,6 +2,8 @@
 // Created by Wande on 2/25/2021.
 //
 
+#include <events/EventChatAll.h>
+#include <events/EventChatMap.h>
 #include "Chat.h"
 #include "Network.h"
 #include "Player.h"
@@ -147,6 +149,12 @@ void Chat::NetworkSend2Map(int entityId, std::string message) {
             int mapId = em->MapID;
             HandleChatEscapes(message, entityId);
             Logger::LogAdd("Chat", em->Name + ": " + message, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
+
+            EventChatMap ecm;
+            ecm.entityId = entityId;
+            ecm.message = message;
+            Dispatcher::post(ecm);
+
             message = Entity::GetDisplayname(entityId) + "&f: " + message;
             NetworkFunctions::SystemMessageNetworkSend2All(mapId, message);
         } else {
@@ -162,7 +170,14 @@ void Chat::NetworkSend2All(int entityId, std::string message) {
 
     if (em->playerList != nullptr) {
         if (em->playerList->MuteTime < time(nullptr)) {
+            HandleChatEscapes(message, entityId);
             Logger::LogAdd("Chat", "# " + em->Name + ": " + message, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
+
+            EventChatAll eca;
+            eca.message = message;
+            eca.entityId = entityId;
+            Dispatcher::post(eca);
+
             message = "&c# " + Entity::GetDisplayname(entityId) + "&f: " + message;
             NetworkFunctions::SystemMessageNetworkSend2All(-1, message);
         } else {

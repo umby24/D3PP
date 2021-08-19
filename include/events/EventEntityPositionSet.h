@@ -9,7 +9,7 @@ class EventEntityPositionSet : public Event {
 public:
     EventEntityPositionSet();
     static constexpr DescriptorType descriptor = "Entity_Position_Set";
-    virtual DescriptorType type() const;
+    [[nodiscard]] DescriptorType type() const override;
     
     int entityId;
     int mapId;

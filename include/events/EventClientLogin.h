@@ -9,7 +9,7 @@ class EventClientLogin : public Event {
 public:
     EventClientLogin();
     static constexpr DescriptorType descriptor = "Client_Login";
-    virtual DescriptorType type() const;
+    DescriptorType type() const override;// DescriptorType type() const;
 
     int clientId;
     

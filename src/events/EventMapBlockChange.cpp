@@ -8,7 +8,7 @@ EventMapBlockChange::EventMapBlockChange() {
 
 int EventMapBlockChange::Push(lua_State* L) {
     lua_pushinteger(L, 1);
-    lua_pushinteger(L, playerId);
+    lua_pushinteger(L, playerNumber);
     lua_pushinteger(L, mapId);
     lua_pushinteger(L, X);
     lua_pushinteger(L, Y);

@@ -54,13 +54,13 @@ public:
     MapBlock GetBlock(std::string name);
     void Save();
     static Block* GetInstance();
+    std::vector<MapBlock> Blocks;
 protected:
     static Block* Instance;
 private:
     bool SaveFile;
     bool hasLoaded;
     time_t LastFileDate;
-    std::vector<MapBlock> Blocks;
     
     void LoadOld();
     void Load();

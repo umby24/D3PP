@@ -27,6 +27,7 @@ public:
     void TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, std::string function);
     void TriggerBuildMode(std::string function, int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char block);
 private:
+    std::mutex executionMutex;
     lua_State* state;
     std::map<std::string, LuaFile> _files;
     std::map<Event::DescriptorType, std::vector<std::string>> _luaEvents;
@@ -183,27 +184,6 @@ private:
 
     // -- Event executors
     void LuaDoEventTimer();
-    void LuaDoEventClientAdd();
-    void LuaDoEventClientDelete();
-    void LuaDoEventClientLogin();
-    void LuaDoEventClientLogout();
-    void LuaDoEventEntityAdd();
-    void LuaDoEventEntityDelete();
-    void LuaDoEventEntityPositionSet();
-    void LuaDoEventEntityDie();
-    void LuaDoEventMapAdd();
-    void LuaDoEventMapActionDelete();
-    void LuaDoEventMapActionResize();
-    void LuaDoEventMapActionFill();
-    void LuaDoEventMapActionSave();
-    void LuaDoEventMapActionLoad();
-    void LuaDoEventMapBlockChange();
-    void LuaDoEventMapBlockChangeClient();
-    void LuaDoEventMapBlockCHangePlayer();
-    void LuaDoEventChatMap();
-    void LuaDoEventChatAll();
-    void LuaDoEventChatPrivate();
-    void LuaDoEventEntityMapChange();
 
     void RegisterEventListener();
 

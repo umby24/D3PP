@@ -19,7 +19,9 @@ int EventEntityPositionSet::Push(lua_State* L) {
     lua_pushboolean(L, sendOwnClient);
     return 10;
 }
-
+#pragma GCC push_options
+#pragma GCC optimize("O0")
 Event::DescriptorType EventEntityPositionSet::type() const {
     return descriptor;
 }
+#pragma GCC pop_options

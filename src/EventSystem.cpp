@@ -50,7 +50,7 @@ bool Dispatcher::hasdescriptor(std::string item) {
 
 void Dispatcher::post( const Event& event )
 {
-    auto type = event.type();
+    Event::DescriptorType type = event.type();
 
     if( _observers.find( type ) == _observers.end() )
         return;
@@ -59,4 +59,15 @@ void Dispatcher::post( const Event& event )
 
     for( auto&& observer : observers )
         observer.slot( event );
+}
+
+Event::DescriptorType Dispatcher::getDescriptor(std::string descriptor) {
+    bool found = false;
+    for (auto&& pair : _observers) {
+        if (pair.first == descriptor) {
+            found = true;
+            return pair.first;
+        }
+    }
+    return nullptr;
 }

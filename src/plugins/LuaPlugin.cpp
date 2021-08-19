@@ -14,6 +14,7 @@
 #include "Build.h"
 #include "Rank.h"
 #include "EventSystem.h"
+#include "Block.h"
 // -- Events..
 #include "events/EventChatAll.h"
 #include "events/EventChatMap.h"
@@ -65,6 +66,8 @@ LuaPlugin::LuaPlugin() {
     luaL_openlibs(state);
     luaL_dostring(state, "print(\"hello world from lua\")");
     *static_cast<LuaPlugin**>(lua_getextraspace(this->state)) = this;
+    executionMutex;
+
     BindFunctions();
     RegisterEventListener();
 }
@@ -82,30 +85,28 @@ LuaPlugin* LuaPlugin::GetInstance() {
 }
 
 void LuaPlugin::RegisterEventListener() {
-
-    Dispatcher::subscribe(EventChatAll::descriptor, nullptr);
-    Dispatcher::subscribe(EventChatMap::descriptor, nullptr);
-    Dispatcher::subscribe(EventChatPrivate::descriptor, nullptr);
-    Dispatcher::subscribe(EventClientAdd::descriptor, nullptr);
-    Dispatcher::subscribe(EventClientDelete::descriptor, nullptr);
-    Dispatcher::subscribe(EventClientLogin::descriptor, nullptr);
-    Dispatcher::subscribe(EventClientLogout::descriptor, nullptr);
-    Dispatcher::subscribe(EventEntityAdd::descriptor, nullptr);
-    Dispatcher::subscribe(EventEntityDelete::descriptor, nullptr);
-    Dispatcher::subscribe(EventEntityDie::descriptor, nullptr);
-    Dispatcher::subscribe(EventEntityMapChange::descriptor, nullptr);
-    Dispatcher::subscribe(EventEntityPositionSet::descriptor, nullptr);
-    Dispatcher::subscribe(EventMapActionDelete::descriptor, nullptr);
-    Dispatcher::subscribe(EventMapActionFill::descriptor, nullptr);
-    Dispatcher::subscribe(EventMapActionLoad::descriptor, nullptr);
-    Dispatcher::subscribe(EventMapActionResize::descriptor, nullptr);
-    Dispatcher::subscribe(EventMapActionSave::descriptor, nullptr);
-    Dispatcher::subscribe(EventMapAdd::descriptor, nullptr);
-    Dispatcher::subscribe(EventMapBlockChange::descriptor, nullptr);
-    Dispatcher::subscribe(EventMapBlockChangeClient::descriptor, nullptr);
-    Dispatcher::subscribe(EventMapBlockChangePlayer::descriptor, nullptr);
-    Dispatcher::subscribe(EventTimer::descriptor, nullptr);
-    
+    Dispatcher::subscribe(EventChatAll{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventChatMap{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+   // Dispatcher::subscribe(EventChatPrivate{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventClientAdd{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventClientDelete{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventClientLogin{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventClientLogout{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventEntityAdd{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventEntityDelete{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventEntityDie{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventEntityMapChange{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventEntityPositionSet{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapActionDelete{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapActionFill{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapActionLoad{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapActionResize{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapActionSave{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapAdd{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapBlockChange{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapBlockChangeClient{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapBlockChangePlayer{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventTimer{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
 }
 
 void LuaPlugin::HandleEvent(const Event& event) {
@@ -120,14 +121,26 @@ void LuaPlugin::HandleEvent(const Event& event) {
     auto&& observers = _luaEvents.at( type );
 
     for( auto&& observer : observers ) {
+        executionMutex.lock();
         lua_getglobal(state, observer.c_str()); // -- Get the function to be called
+        if (!lua_isfunction(state, -1)) {
+            lua_pop(state, 1);
+            continue;
+        }
         int argCount = event.PushLua(state); // -- Have the event push its args and return how many were pushed..
-
-        if (lua_pcall(state, argCount, 0, 0) != 0) { // -- Call the function.
-            bail(state, "[Event Handler]"); // -- catch errors
+        try {
+            if (lua_pcall(state, argCount, 0, 0) != 0) { // -- Call the function.
+                bail(state, "[Event Handler]"); // -- catch errors
+                executionMutex.unlock();
+                return;
+            }
+        } catch (const int exception) {
+            bail(state, "[Error Handler]"); // -- catch errors
+            executionMutex.unlock();
             return;
         }
         // -- done.
+        executionMutex.unlock();
     }
 }
 
@@ -193,14 +206,54 @@ void LuaPlugin::BindFunctions() {
     lua_register(state, "Player_Mute", &dispatch<&LuaPlugin::LuaPlayerMute>);
     lua_register(state, "Player_Unmute", &dispatch<&LuaPlugin::LuaPlayerUnmute>);
     // -- Map Functions:
+    lua_register(state, "Map_Get_Table", &dispatch<&LuaPlugin::LuaMapGetTable>);
     lua_register(state, "Map_Block_Change", &dispatch<&LuaPlugin::LuaMapBlockChange>);
     lua_register(state, "Map_Block_Change_Client", &dispatch<&LuaPlugin::LuaMapBlockChangeClient>);
+    lua_register(state, "Map_Block_Change_Player", &dispatch<&LuaPlugin::LuaMapBlockChangePlayer>);
+    lua_register(state, "Map_Block_Move", &dispatch<&LuaPlugin::LuaMapBlockMove>);
     lua_register(state, "Map_Block_Get_Type", &dispatch<&LuaPlugin::LuaMapBlockGetType>);
+    lua_register(state, "Map_Block_Get_Rank", &dispatch<&LuaPlugin::LuaMapBlockGetRank>);
     lua_register(state, "Map_Block_Get_Player_Last", &dispatch<&LuaPlugin::LuaMapBlockGetPlayer>);
+    lua_register(state, "Map_Get_Name", &dispatch<&LuaPlugin::LuaMapGetName>);
+    lua_register(state, "Map_Get_Unique_ID", &dispatch<&LuaPlugin::LuaMapGetUniqueId>);
+    lua_register(state, "Map_Get_Directory", &dispatch<&LuaPlugin::LuaMapGetDirectory>);
+    lua_register(state, "Map_Get_Rank_Build", &dispatch<&LuaPlugin::LuaMapGetRankBuild>);
+    lua_register(state, "Map_Get_Rank_Show", &dispatch<&LuaPlugin::LuaMapGetRankShow>);
+    lua_register(state, "Map_Get_Rank_Join", &dispatch<&LuaPlugin::LuaMapGetRankJoin>);
+    lua_register(state, "Map_Get_Dimensions", &dispatch<&LuaPlugin::LuaMapGetDimensions>);
+    lua_register(state, "Map_Get_Spawn", &dispatch<&LuaPlugin::LuaMapGetSpawn>);
+    lua_register(state, "Map_Get_Save_Intervall", &dispatch<&LuaPlugin::LuaMapGetSaveInterval>);
+    lua_register(state, "Map_Set_Name", &dispatch<&LuaPlugin::LuaMapSetName>);
+    lua_register(state, "Map_Set_Directory", &dispatch<&LuaPlugin::LuaMapSetDirectory>);
+    lua_register(state, "Map_Set_Rank_Build", &dispatch<&LuaPlugin::LuaMapSetRankBuild>);
+    lua_register(state, "Map_Set_Rank_Join", &dispatch<&LuaPlugin::LuaMapSetRankJoin>);
+    lua_register(state, "Map_Set_Rank_Show", &dispatch<&LuaPlugin::LuaMapSetRankShow>);
+    lua_register(state, "Map_Set_Spawn", &dispatch<&LuaPlugin::LuaMapSetSpawn>);
+    lua_register(state, "Map_Set_Save_Intervall", &dispatch<&LuaPlugin::LuaMapSetSaveInterval>);
+    lua_register(state, "Map_Add", &dispatch<&LuaPlugin::LuaMapAdd>);
+    lua_register(state, "Map_Action_Add_Resize", &dispatch<&LuaPlugin::LuaMapActionAddResize>);
+    lua_register(state, "Map_Action_Add_Save", &dispatch<&LuaPlugin::LuaMapActionAddSave>);
+    lua_register(state, "Map_Action_Add_Fill", &dispatch<&LuaPlugin::LuaMapActionAddFill>);
+    lua_register(state, "Map_Action_Add_Delete", &dispatch<&LuaPlugin::LuaMapActionAddDelete>);
+    lua_register(state, "Map_Resend", &dispatch<&LuaPlugin::LuaMapResend>);
+    lua_register(state, "Map_Export", &dispatch<&LuaPlugin::LuaMapExport>);
+    // -- Block Functions
+    lua_register(state, "Block_Get_Table", &dispatch<&LuaPlugin::LuaBlockGetTable>);
+    lua_register(state, "Block_Get_Name", &dispatch<&LuaPlugin::LuaBlockGetName>);
+    lua_register(state, "Block_Get_Rank_Place", &dispatch<&LuaPlugin::LuaBlockGetRankPlace>);
+    lua_register(state, "Block_Get_Rank_Delete", &dispatch<&LuaPlugin::LuaBlockGetRankDelete>);
+    lua_register(state, "Block_Get_Client_Type", &dispatch<&LuaPlugin::LuaBlockGetClientType>);
+    // -- Rank Functions
+    
     // -- System Functions
     lua_register(state, "System_Message_Network_Send_2_All", &dispatch<&LuaPlugin::LuaMessageToAll>);
     lua_register(state, "System_Message_Network_Send", &dispatch<&LuaPlugin::LuaMessage>);
     lua_register(state, "Lang_Get", &dispatch<&LuaPlugin::LuaLanguageGet>);
+    // -- Events
+    lua_register(state, "Event_Add", &dispatch<&LuaPlugin::LuaEventAdd>);
+    lua_register(state, "Event_Delete", &dispatch<&LuaPlugin::LuaEventDelete>);
+ //   lua_register(state, "CPE_Get_Held_Block", &dispatch<&LuaPlugin::LuaGetHeldBlock>);
+
 }
 
 void LuaPlugin::Init() {
@@ -392,6 +445,7 @@ void LuaPlugin::LoadFile(std::string path) {
 }
 
 void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, std::string function, std::string args) {
+    executionMutex.lock();
     lua_getglobal(state, function.c_str());
     if (lua_isfunction(state, -1)) {
         lua_pushinteger(state, mapId);
@@ -403,23 +457,28 @@ void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, std::
             bail(state, "Failed to run mapfill");
         }
     }
+    executionMutex.unlock();
 }
 
 void LuaPlugin::TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, std::string function) {
+    executionMutex.lock();
     lua_getglobal(state, function.c_str());
     if (lua_isfunction(state, -1)) {
         lua_pushinteger(state, mapId);
         lua_pushinteger(state, X);
         lua_pushinteger(state, Y);
         lua_pushinteger(state, Z);
-        lua_pcall(state, 4, 0, 0);
+        if (lua_pcall(state, 4, 0, 0) != 0) {
+            bail(state, "Failed to trig physics;");
+        }
     }
+    executionMutex.unlock();
 }
 
 void LuaPlugin::TriggerCommand(std::string function, int clientId, std::string parsedCmd, std::string text0,
                                std::string text1, std::string op1, std::string op2, std::string op3, std::string op4,
                                std::string op5) {
-
+    executionMutex.lock();
     lua_getglobal(state, function.c_str());
     if (lua_isfunction(state, -1)) {
         lua_pushinteger(state, clientId);
@@ -435,10 +494,12 @@ void LuaPlugin::TriggerCommand(std::string function, int clientId, std::string p
             bail(state, "Failed to run command.");
         }
     }
+    executionMutex.unlock();
 }
 
 void LuaPlugin::TriggerBuildMode(std::string function, int clientId, int mapId, unsigned short X, unsigned short Y,
                                  unsigned short Z, unsigned char mode, unsigned char block) {
+    executionMutex.lock();
     lua_getglobal(state, function.c_str());
     if (lua_isfunction(state, -1)) {
         lua_pushinteger(state, clientId);
@@ -452,6 +513,7 @@ void LuaPlugin::TriggerBuildMode(std::string function, int clientId, int mapId, 
             bail(state, "Failed to run command.");
         }
     }
+    executionMutex.unlock();
 }
 
 int LuaPlugin::LuaMapBlockGetPlayer(lua_State *L) {
@@ -503,7 +565,7 @@ int LuaPlugin::LuaClientGetMapId(lua_State *L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: CLient_Get_Map_Id called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("Lua", "LuaError: Client_Get_Map_Id called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
 
@@ -1069,9 +1131,9 @@ int LuaPlugin::LuaEntityDisplaynameGet(lua_State *L) {
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
 
     if (foundEntity != nullptr) {
-        std::string prefix(lua_tostring(L, 2));
-        std::string displayName(lua_tostring(L, 3));
-        std::string suffix(lua_tostring(L, 4));
+       // std::string prefix(lua_tostring(L, 2));
+       // std::string displayName(lua_tostring(L, 3));
+       // std::string suffix(lua_tostring(L, 4));
 
         lua_pushstring(L, foundEntity->Prefix.c_str());
         lua_pushstring(L, foundEntity->Name.c_str());
@@ -1643,7 +1705,7 @@ int LuaPlugin::LuaEventAdd(lua_State *L) {
         return 0;
     }
     
-    auto typeAsEvent = static_cast<Event::DescriptorType>(type.c_str());
+    auto typeAsEvent = Dispatcher::getDescriptor(type);
     if (setOrCheck == 1) {
         if (_luaEvents.find(typeAsEvent) != _luaEvents.end()) {
             _luaEvents[typeAsEvent].push_back(function);
@@ -1681,6 +1743,671 @@ int LuaPlugin::LuaEventDelete(lua_State *L) {
     std::string eventId(lua_tostring(L, 1));
     // -- TODO:
     return 0;
+}
+
+int LuaPlugin::LuaMapBlockMove(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 10) {
+        Logger::LogAdd("Lua", "LuaError: Map_Block_Move called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int mapId = lua_tointeger(L, 1);
+    int x0 = lua_tointeger(L, 2);
+    int y0 = lua_tointeger(L, 3);
+    int z0 = lua_tointeger(L, 4);
+    int x1 = lua_tointeger(L, 5);
+    int y1 = lua_tointeger(L, 6);
+    int z1 = lua_tointeger(L, 7);
+    bool undo = lua_toboolean(L, 8);
+    bool physic = lua_toboolean(L, 9);
+    unsigned char priority = lua_tointeger(L, 10);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map != nullptr) {
+        map->BlockMove(x0, y0, z0, x1, y1, z1, undo, physic, priority);
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaMapGetName(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Name called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int mapId = lua_tointeger(L, 1);
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map != nullptr) {
+        lua_pushstring(L, map->data.Name.c_str());
+        return 1;
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaMapGetDimensions(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Dimensions called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int mapId = lua_tointeger(L, 1);
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map != nullptr) {
+        lua_pushinteger(L, map->data.SizeX);
+        lua_pushinteger(L, map->data.SizeY);
+        lua_pushinteger(L, map->data.SizeZ);
+        return 3;
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaMapGetTable(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 0) {
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Table() called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    MapMain* mm = MapMain::GetInstance();
+    int numEntities = mm->_maps.size();
+    int index = 1;
+
+    lua_newtable(L);
+
+    if (numEntities > 0) {
+        for (auto const &e :  mm->_maps) {
+            lua_pushinteger(L, index++);
+            lua_pushinteger(L, e.second->data.ID);
+            lua_settable(L, -3);
+        }
+    }
+
+    lua_pushinteger(L, numEntities);
+
+    return 2;
+}
+
+int LuaPlugin::LuaMapBlockChangePlayer(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 10) {
+        Logger::LogAdd("Lua", "LuaError: Map_Block_Change_Client called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int playerId = lua_tointeger(L, 1);
+    int mapId = lua_tointeger(L, 2);
+    int X = lua_tointeger(L, 3);
+    int Y = lua_tointeger(L, 4);
+    int Z = lua_tointeger(L, 5);
+    unsigned char type = lua_tointeger(L, 6);
+    bool undo = lua_toboolean(L, 7);
+    bool physic = lua_toboolean(L, 8);
+    bool send = lua_toboolean(L, 9);
+    unsigned char priority = lua_tointeger(L, 10);
+
+    Player_List* pll = Player_List::GetInstance();
+    PlayerListEntry* pEntry = pll->GetPointer(playerId);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (pEntry == nullptr || map== nullptr) {
+        return 0;
+    }
+
+    map->BlockChange(playerId, X, Y, Z, type, undo, physic, send, priority);
+    return 0;
+}
+
+int LuaPlugin::LuaMapBlockGetRank(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 4) {
+        Logger::LogAdd("Lua", "LuaError: Map_Block_Get_Rank called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    int X = lua_tointeger(L, 2);
+    int Y = lua_tointeger(L, 3);
+    int Z = lua_tointeger(L, 4);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr) {
+        return 0;
+    }
+
+    int result = map->BlockGetRank(X, Y, Z);
+    lua_pushinteger(L, result);
+
+    return 1;
+}
+
+int LuaPlugin::LuaMapGetUniqueId(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Unique_Id called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr) {
+        return 0;
+    }
+
+    lua_pushstring(L, map->data.UniqueID.c_str());
+    return 1;
+}
+
+int LuaPlugin::LuaMapGetDirectory(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Directory called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr) {
+        return 0;
+    }
+
+    lua_pushstring(L, map->data.Directory.c_str());
+    return 1;
+}
+
+int LuaPlugin::LuaMapGetRankBuild(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Rank_Build called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr) {
+        return 0;
+    }
+
+    lua_pushinteger(L, map->data.RankBuild);
+    return 1;
+}
+
+int LuaPlugin::LuaMapGetRankShow(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Rank_Show called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr) {
+        return 0;
+    }
+
+    lua_pushinteger(L, map->data.RankShow);
+    return 1;
+}
+
+int LuaPlugin::LuaMapGetRankJoin(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Rank_Join called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr) {
+        return 0;
+    }
+
+    lua_pushinteger(L, map->data.RankJoin);
+    return 1;
+}
+
+int LuaPlugin::LuaMapGetSpawn(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Spawn called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr) {
+        return 0;
+    }
+
+    lua_pushnumber(L, map->data.SpawnX);
+    lua_pushnumber(L, map->data.SpawnY);
+    lua_pushnumber(L, map->data.SpawnZ);
+    lua_pushnumber(L, map->data.SpawnRot);
+    lua_pushnumber(L, map->data.SpawnLook);
+    return 5;
+}
+
+int LuaPlugin::LuaMapGetSaveInterval(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Save_Intervall called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr) {
+        return 0;
+    }
+
+    lua_pushinteger(L, map->data.SaveInterval);
+    return 1;
+}
+
+int LuaPlugin::LuaMapSetName(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Map_Set_Name called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    std::string newName(lua_tostring(L, 2));
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr) {
+        return 0;
+    }
+
+    map->data.Name = newName;
+    return 0;
+}
+
+int LuaPlugin::LuaMapSetDirectory(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Map_Set_Directory called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    std::string newName(lua_tostring(L, 2));
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr) {
+        return 0;
+    }
+
+    map->data.Directory = newName;
+    return 0;
+}
+
+int LuaPlugin::LuaMapSetRankBuild(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Map_Set_Rank_Build called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    int newRank = lua_tointeger(L, 2);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr) {
+        return 0;
+    }
+
+    map->data.RankBuild = newRank;
+    return 0;
+}
+
+int LuaPlugin::LuaMapSetRankJoin(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Map_Set_Rank_Join called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    int newRank = lua_tointeger(L, 2);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr) {
+        return 0;
+    }
+
+    map->data.RankJoin = newRank;
+    return 0;
+}
+
+int LuaPlugin::LuaMapSetRankShow(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Map_Set_Rank_Show called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    int newRank = lua_tointeger(L, 2);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr) {
+        return 0;
+    }
+
+    map->data.RankShow = newRank;
+    return 0;
+}
+
+int LuaPlugin::LuaMapSetSpawn(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 6) {
+        Logger::LogAdd("Lua", "LuaError: Map_Set_Spawn called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    float newX = lua_tonumber(L, 2);
+    float newY = lua_tonumber(L, 3);
+    float newZ = lua_tonumber(L, 4);
+    float newRot = lua_tonumber(L, 5);
+    float newLook = lua_tonumber(L, 6);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr) {
+        return 0;
+    }
+
+    map->data.SpawnX = newX;
+    map->data.SpawnY = newY;
+    map->data.SpawnZ = newZ;
+    map->data.SpawnRot = newRot;
+    map->data.SpawnLook = newLook;
+
+    return 0;
+}
+
+int LuaPlugin::LuaMapSetSaveInterval(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Map_Set_Save_Interval called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    int saveInterval = lua_tointeger(L, 2);
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr) {
+        return 0;
+    }
+
+    map->data.SaveInterval = saveInterval;
+    return 0;
+}
+
+int LuaPlugin::LuaMapAdd(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 5) {
+        Logger::LogAdd("Lua", "LuaError: Map_Add called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    int sizeX = lua_tointeger(L, 2);
+    int sizeY = lua_tointeger(L, 3);
+    int sizeZ = lua_tointeger(L, 4);
+    std::string name(lua_tostring(L, 5));
+    MapMain* mm = MapMain::GetInstance();
+
+    int resultId = mm->Add(mapId, sizeX, sizeY, sizeZ, name);
+    lua_pushinteger(L, resultId);
+    return 1;
+}
+
+int LuaPlugin::LuaMapActionAddResize(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 4) {
+        Logger::LogAdd("Lua", "LuaError: Map_Action_Add_Resize called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    int sizeX = lua_tointeger(L, 2);
+    int sizeY = lua_tointeger(L, 3);
+    int sizeZ = lua_tointeger(L, 4);
+    MapMain* mm = MapMain::GetInstance();
+
+    mm->AddResizeAction(0, mapId, sizeX, sizeY, sizeZ);
+
+    return 0;
+}
+
+int LuaPlugin::LuaMapActionAddFill(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 3) {
+        Logger::LogAdd("Lua", "LuaError: Map_Action_Add_Fill called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int mapId = lua_tointeger(L, 1);
+    std::string functionName(lua_tostring(L, 2));
+    std::string argumentString(lua_tostring(L, 3));
+    MapMain* mm = MapMain::GetInstance();
+
+    mm->AddFillAction(0, mapId, functionName, argumentString);
+    return 0;
+}
+
+int LuaPlugin::LuaMapActionAddSave(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Map_Action_Add_Save called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int mapId = lua_tointeger(L, 1);
+    std::string directory(lua_tostring(L, 2));
+    MapMain* mm = MapMain::GetInstance();
+
+    mm->AddSaveAction(0, mapId, directory);
+    return 0;
+}
+
+int LuaPlugin::LuaMapActionAddDelete(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Map_Action_Add_Delete called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int mapId = lua_tointeger(L, 1);
+    MapMain* mm = MapMain::GetInstance();
+    mm->AddDeleteAction(0, mapId);
+
+    return 0;
+}
+
+int LuaPlugin::LuaMapResend(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Map_Resend called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int mapId = lua_tointeger(L, 1);
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> givenMap = mm->GetPointer(mapId);
+
+    if (givenMap != nullptr) {
+        givenMap->Resend();
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaMapExport(lua_State *L) {
+    return 0;
+}
+
+int LuaPlugin::LuaMapExportGetSize(lua_State *L) {
+    return 0;
+}
+
+int LuaPlugin::LuaMapImportPlayer(lua_State *L) {
+    return 0;
+}
+
+int LuaPlugin::LuaBlockGetTable(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 0) {
+        Logger::LogAdd("Lua", "LuaError: BlocK_Get_Table() called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    Block* bm = Block::GetInstance();
+    int numEntities = bm->Blocks.size();
+    int index = 1;
+
+    lua_newtable(L);
+
+    if (numEntities > 0) {
+        for (auto const &e :  bm->Blocks) {
+            lua_pushinteger(L, index++);
+            lua_pushinteger(L, e.Id);
+            lua_settable(L, -3);
+        }
+    }
+
+    lua_pushinteger(L, numEntities);
+
+    return 2;
+}
+
+int LuaPlugin::LuaBlockGetName(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Block_Get_Name() called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int blockId = lua_tointeger(L, 1);
+    Block* bm = Block::GetInstance();
+    MapBlock be = bm->GetBlock(blockId);
+    lua_pushstring(L, be.Name.c_str());
+
+    return 1;
+}
+
+int LuaPlugin::LuaBlockGetRankPlace(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Block_Get_Rank_Place() called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int blockId = lua_tointeger(L, 1);
+    Block* bm = Block::GetInstance();
+    MapBlock be = bm->GetBlock(blockId);
+    lua_pushinteger(L, be.RankPlace);
+
+    return 1;
+}
+
+int LuaPlugin::LuaBlockGetRankDelete(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Block_Get_Rank_Delete() called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int blockId = lua_tointeger(L, 1);
+    Block* bm = Block::GetInstance();
+    MapBlock be = bm->GetBlock(blockId);
+    lua_pushinteger(L, be.RankDelete);
+
+    return 1;
+}
+
+int LuaPlugin::LuaBlockGetClientType(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Block_Get_Client_Type() called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int blockId = lua_tointeger(L, 1);
+    Block* bm = Block::GetInstance();
+    MapBlock be = bm->GetBlock(blockId);
+    lua_pushinteger(L, be.OnClient);
+
+    return 1;
 }
 
 

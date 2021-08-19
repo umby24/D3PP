@@ -7,7 +7,9 @@ EventClientAdd::EventClientAdd() {
 }
 
 int EventClientAdd::Push(lua_State* L) {
-
+    lua_pushinteger(L, 1);
+    lua_pushinteger(L, clientId);
+    return 2;
 }
 
 Event::DescriptorType EventClientAdd::type() const {

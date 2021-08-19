@@ -19,7 +19,7 @@ public:
     using DescriptorType = const char*;
 
     /** @returns The descriptor type of this event */
-    virtual DescriptorType type() const = 0;
+    [[nodiscard]] virtual DescriptorType type() const = 0;
     std::function<int(lua_State*)> PushLua;
 };
 
@@ -64,6 +64,8 @@ public:
     static void post( const Event& event );
 
     static bool hasdescriptor(std::string descriptor);
+
+    static Event::DescriptorType getDescriptor(std::string descriptor);
 private:
 
     /** Internal ID to assign to the next function handle */
