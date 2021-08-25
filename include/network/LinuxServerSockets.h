@@ -10,9 +10,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#include "../Logger.h"
 
-#include "LinuxSockets.h"
 #define MAXIMUM_CONNECTIONS 255
 
 enum ServerSocketEvent {
@@ -22,6 +20,8 @@ enum ServerSocketEvent {
     SOCKET_EVENT_DISCONNECT
 };
 
+class Sockets;
+
 class ServerSocket {
 public:
     ServerSocket();
@@ -30,7 +30,7 @@ public:
     void Listen();
     ServerSocketEvent CheckEvents();
     std::unique_ptr<Sockets> Accept();
-    int GetEventSocket();
+    [[nodiscard]] int GetEventSocket() const;
     void Unaccept(int fd);
     void Stop();
 private:

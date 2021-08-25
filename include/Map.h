@@ -44,7 +44,7 @@ struct MapBlockData {
 };
 
 struct MapBlockDo { // -- Physics Queue Item
-    int time;
+    time_t time;
     unsigned short X;
     unsigned short Y;
     unsigned short Z;
@@ -64,7 +64,7 @@ struct UndoStep {
     short X;
     short Y;
     short Z;
-    int Time;
+    time_t Time;
     char TypeBefore;
     short PlayerNumberBefore;
 };
@@ -111,15 +111,18 @@ struct MapData {
     unsigned short SizeX;
     unsigned short SizeY;
     unsigned short SizeZ;
-    int blockCounter[256];
+    std::vector<int> blockCounter;
     float SpawnX;
     float SpawnY;
     float SpawnZ;
     float SpawnRot;
     float SpawnLook;
-    char* Data; // -- Map data
-    char* PhysicData; // -- Physics state, (1 Byte -> 8 blocks)
-    char* BlockchangeData; // -- Blockchange state (1 byte -> 8 blocks)
+    std::vector<unsigned char> Data;
+    std::vector<unsigned char> PhysicData;
+    std::vector<unsigned char> BlockchangeData;
+//    char* Data; // -- Map data
+//    char* PhysicData; // -- Physics state, (1 Byte -> 8 blocks)
+//    char* BlockchangeData; // -- Blockchange state (1 byte -> 8 blocks)
     std::recursive_mutex physicsQueueMutex;
     std::vector<MapBlockDo> PhysicsQueue;
     std::vector<MapBlockChanged> ChangeQueue;
@@ -241,13 +244,13 @@ private:
     std::string TempFilename;
     int TempId;
     std::string TempOverviewFilename;
-    int LastWriteTime;
+    long LastWriteTime;
     time_t StatsTimer;
 
     std::vector<MapActionItem> _mapActions;
 
     // --
-    int mapSettingsLastWriteTime;
+    long mapSettingsLastWriteTime;
     int mapSettingsTimerFileCheck;
     int mapSettingsMaxChangesSec;
 

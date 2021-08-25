@@ -27,7 +27,7 @@ public:
     void TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, std::string function);
     void TriggerBuildMode(std::string function, int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char block);
 private:
-    std::mutex executionMutex;
+    std::recursive_mutex executionMutex;
     lua_State* state;
     std::map<std::string, LuaFile> _files;
     std::map<Event::DescriptorType, std::vector<std::string>> _luaEvents;

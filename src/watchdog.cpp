@@ -9,12 +9,12 @@
 
 watchdog* watchdog::singleton_ = nullptr;
 
-void watchdog::Watch(std::string module, std::string message, int state) {
+void watchdog::Watch(const std::string &moadule, const std::string &message, int state) {
     watchdog* i = watchdog::GetInstance();
-    i->_lock.lock();
+    const std::scoped_lock<std::mutex> pLock(i->_lock);
     int myI = 0;
     for(auto item : i->_modules) {
-        if (item.Name != module) {
+        if (item.Name != moadule) {
             myI++;
             continue;
         }
@@ -38,7 +38,6 @@ void watchdog::Watch(std::string module, std::string message, int state) {
         i->_modules[myI] = item;
         myI++;
     }
-    i->_lock.unlock();
 }
 
 watchdog *watchdog::GetInstance() {
@@ -52,7 +51,7 @@ void watchdog::MainFunc() {
     clock_t timer = 0;
 
     while (isRunning) {
-        _lock.lock();
+        const std::scoped_lock<std::mutex> pLock(_lock);
         clock_t currentTime = clock(); // -- generationTIme and timer
         clock_t time_ = currentTime - timer;
         timer = currentTime;
@@ -67,7 +66,7 @@ void watchdog::MainFunc() {
         }
 
         HtmlStats(time_);
-        _lock.unlock();
+        pLock.~scoped_lock();
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 }
@@ -100,15 +99,19 @@ void watchdog::HtmlStats(time_t time_) {
         _modules[i] = item;
         i++;
     }
-    Utils::replaceAll(result, "[MODULE_TABLE]", modTable);
+    std::string modTableStr = "[MODULE_TABLE]";
+    Utils::replaceAll(result, modTableStr, modTable);
 
     time_t finishTime = time(nullptr);
     long duration = finishTime - startTime;
     char buffer[255];
-//    strftime(buffer, sizeof(buffer), "%H:%M:%S  %m-%d-%Y", localtime(reinterpret_cast<const time_t *>(&finishTime)));
+    strftime(buffer, sizeof(buffer), "%H:%M:%S  %m-%d-%Y", localtime(reinterpret_cast<const time_t *>(&finishTime)));
     std::string meh(buffer);
-    Utils::replaceAll(result, "[GEN_TIME]", stringulate(duration));
-    Utils::replaceAll(result, "[GEN_TIMESTAMP]", meh);
+    std::string genTimeStr = "[GEN_TIME]";
+    std::string genTSStr = "[GEN_TIMESTAMP]";
+    std::string durationStr = stringulate(duration);
+    Utils::replaceAll(result, genTimeStr, durationStr);
+    Utils::replaceAll(result, genTSStr, meh);
 
     Files* files = Files::GetInstance();
     std::string memFile = files->GetFile(WATCHDOG_HTML_NAME);

@@ -43,30 +43,26 @@ int Mem::GetPageFileUsage() {
 char* Mem::Allocate(long size, std::string File, int line, std::string Message) {
     char* mem = new char[size];
     memset(mem, 0, size);
-    _lock.lock();
+    const std::scoped_lock<std::mutex> pLock(_lock);
 
     Mem* instance = GetInstance();
 
     struct MemElement newElement { mem, size, File, line, Message};
     instance->_elements.push_back(newElement);
     Mem::MemoryUsage += size;
-    _lock.unlock();
 
     return mem;
 }
-
-void Mem::Free(char *memory) {
+long Mem::GetMemSize(const char *memory) {
     bool found;
-
-    _lock.lock();
+    const std::scoped_lock<std::mutex> pLock(_lock);
     Mem* m = GetInstance();
     int i = 0;
-    for(auto item : m->_elements) {
+    long result = -1;
+    for(const auto &item : m->_elements) {
         if (item.Memory == memory) {
-            delete[] memory;
             found = true;
-            Mem::MemoryUsage -= item.Size;
-            m->_elements.erase(m->_elements.begin() + i);
+            result = item.Size;
             break;
         }
         i++;
@@ -74,7 +70,30 @@ void Mem::Free(char *memory) {
     if (!found) {
         Logger::LogAdd(MODULE_NAME, "Could not find memory", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
     }
-    _lock.unlock();
+    return result;
+}
+void Mem::Free(const char *memory) {
+    bool found;
+
+    const std::scoped_lock<std::mutex> pLock(_lock);
+    Mem* m = GetInstance();
+    int i = 0;
+    for(const auto &item : m->_elements) {
+        if (item.Memory == memory) {
+            found = true;
+            Mem::MemoryUsage -= item.Size;
+            m->_elements.erase(m->_elements.begin() + i);
+            if (memory != nullptr) {
+                delete[] memory;
+                memory = nullptr;
+            }
+            break;
+        }
+        i++;
+    }
+    if (!found) {
+        Logger::LogAdd(MODULE_NAME, "Could not find memory", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+    }
 }
 
 Mem *Mem::GetInstance() {
@@ -87,7 +106,7 @@ Mem *Mem::GetInstance() {
 void Mem::HtmlStats() {
     time_t startTime = time(nullptr);
     std::string result = MEM_HTML_TEMPLATE;
-    _lock.lock();
+    const std::scoped_lock<std::mutex> pLock(_lock);
     Utils::replaceAll(result, "[MEM]", stringulate(MemoryUsage / 1000000.0));
     Utils::replaceAll(result, "[RAM]", stringulate(GetWorkingSetSize() / 1000000.0));
     Utils::replaceAll(result, "[PGE]", stringulate(GetPageFileUsage() / 1000000.0));
@@ -164,7 +183,6 @@ void Mem::HtmlStats() {
         oStream << result;
         oStream.close();
     }
-    _lock.unlock();
 }
 
 

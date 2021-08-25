@@ -31,9 +31,10 @@ struct WatchdogModule {
 class watchdog : TaskItem {
 public:
     watchdog();
-    static void Watch(std::string module, std::string message, int state);
-protected:
+    static void Watch(const std::string &moadule, const std::string &message, int state);
     static watchdog* GetInstance();
+protected:
+
     static watchdog* singleton_;
     std::mutex _lock;
     std::vector<WatchdogModule> _modules;

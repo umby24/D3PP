@@ -10,17 +10,16 @@
 #include "Files.h"
 #include "Logger.h"
 
-const std::string MODULE_NAME = "Block";
+
 Block* Block::Instance = nullptr;
+const std::string Block::MODULE_NAME = "Block";
 
 Block::Block() {
     SaveFile = false;
     hasLoaded = false;
     LastFileDate = 0;
-
     for(auto i = 0; i < 255; i++) { // -- Pre-pop..
-        struct MapBlock shell;
-        shell.Id = i;
+        struct MapBlock shell{i};
         Blocks.push_back(shell);
     }
 
@@ -70,7 +69,7 @@ void Block::LoadOld() {
     pl.LoadFile();
     
     for (auto const &item : pl.SettingsDictionary) {
-        if (item.first.empty() || item.second.size() == 0)
+        if (item.first.empty())
             continue;
 
         pl.SelectGroup(item.first);
@@ -102,7 +101,8 @@ void Block::LoadOld() {
     Save();
     std::filesystem::remove("Data/Block.txt");
 }
-bool compareBlockIds(MapBlock i1, MapBlock i2) {
+
+bool compareBlockIds(const MapBlock &i1, const MapBlock &i2) {
     return (i1.Id < i2.Id);
 }
 
@@ -178,8 +178,7 @@ void Block::Load() {
                 loadedItem.CpeLevel = item["CpeLevel"];
 
             if (!item["CpeReplace"].is_null())
-            loadedItem.CpeReplace = item["CpeReplace"];
-
+                loadedItem.CpeReplace = item["CpeReplace"];
 
             Blocks[loadedItem.Id] = loadedItem;
         }

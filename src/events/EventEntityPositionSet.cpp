@@ -7,21 +7,19 @@ EventEntityPositionSet::EventEntityPositionSet() {
 }
 
 int EventEntityPositionSet::Push(lua_State* L) {
-    lua_pushinteger(L, 1);
-    lua_pushinteger(L, entityId);
-    lua_pushinteger(L, mapId);
-    lua_pushnumber(L, x);
-    lua_pushnumber(L, y);
-    lua_pushnumber(L, z);
-    lua_pushnumber(L, rotation);
-    lua_pushnumber(L, look);
-    lua_pushinteger(L, priority);
-    lua_pushboolean(L, sendOwnClient);
+    lua_pushinteger(L, static_cast<lua_Integer>(1));
+    lua_pushinteger(L, static_cast<lua_Integer>(entityId));
+    lua_pushinteger(L, static_cast<lua_Integer>(mapId));
+    lua_pushnumber(L, static_cast<lua_Number>(x));
+    lua_pushnumber(L, static_cast<lua_Number>(y));
+    lua_pushnumber(L, static_cast<lua_Number>(z));
+    lua_pushnumber(L, static_cast<lua_Number>(rotation));
+    lua_pushnumber(L, static_cast<lua_Number>(look));
+    lua_pushinteger(L, static_cast<lua_Integer>(priority));
+    lua_pushinteger(L, static_cast<lua_Integer>(sendOwnClient));
     return 10;
 }
-#pragma GCC push_options
-#pragma GCC optimize("O0")
+
 Event::DescriptorType EventEntityPositionSet::type() const {
     return descriptor;
 }
-#pragma GCC pop_options

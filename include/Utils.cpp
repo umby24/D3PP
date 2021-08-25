@@ -35,7 +35,7 @@ Utils::Utils()
     }
 }
 
-int Utils::FileSize(std::string filePath) {
+int Utils::FileSize(const std::string &filePath) {
     struct stat result;
 
     int statResult = stat(filePath.c_str(), &result);
@@ -43,15 +43,15 @@ int Utils::FileSize(std::string filePath) {
     return -1;
 }
 
-long Utils::FileModTime(std::string filePath) {
-    struct stat result;
+long Utils::FileModTime(const std::string &filePath) {
+    struct stat result{};
     int statResult = stat(filePath.c_str(), &result);
     if (statResult == 0) return result.st_mtime;
     return -1;
 }
 
-bool Utils::DirectoryExists(std::string filePath, bool create) {
-    if (filePath == "")
+bool Utils::DirectoryExists(const std::string &filePath, bool create) {
+    if (filePath.empty())
         return true;
 
     bool result = std::filesystem::is_directory(filePath);
@@ -63,22 +63,22 @@ bool Utils::DirectoryExists(std::string filePath, bool create) {
 }
 
 std::string Utils::TrimPathString(std::string input) {
-    if (input.find("/") == std::string::npos && input.find("\\") == std::string::npos)
+    if (input.find('/') == std::string::npos && input.find('\\') == std::string::npos)
         return input;
 
-    auto location = input.rfind("/");
+    auto location = input.rfind('/');
 
     if (location == std::string::npos)
-        location = input.rfind("\\");
+        location = input.rfind('\\');
 
     return input.substr(location+1);
 }
 
-int Utils::strCount(std::string input, char search) {
+int Utils::strCount(const std::string &input, char search) {
    int result = 0;
 
-   for(auto i = 0; i < input.size(); i++) {
-       if (input.at(i) == search)
+   for(char i : input) {
+       if (i == search)
            result++;
    }
 
@@ -96,7 +96,7 @@ std::vector<std::string> Utils::splitString(std::string input, const char splitC
     std::vector<std::string> result;
     int count = strCount(input, splitChar);
     for (auto i = 0; i < count+1; i++) {
-        int location = input.find(splitChar);
+        unsigned long location = input.find(splitChar);
         result.push_back(input.substr(0, location));
         input = input.substr(location+1, input.size() - (location +1));
     }
@@ -114,7 +114,7 @@ int Utils::RandomNumber(int max) {
     std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_real_distribution<double> dist(1.0, max);
-    return (dist(mt));
+    return ((int)dist(mt));
 }
 
 void Utils::TrimString(std::string &input) {

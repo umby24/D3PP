@@ -7,6 +7,7 @@
 #include "Utils.h"
 #include "Packets.h"
 #include "Network.h"
+#include "NetworkClient.h"
 #include "Block.h"
 #include "Player.h"
 #include "CPE.h"
@@ -73,9 +74,12 @@ void NetworkFunctions::SystemMessageNetworkSend2All(int mapId, std::string messa
         std::string text = linev.at(i);
         Utils::padTo(text, 64);
         if (!text.empty() && text != blankie) {
-            for (auto const &nc : n->_clients) {
-                if (mapId == -1 || nc.second->player->MapId == mapId) {
-                    Packets::SendChatMessage(nc.first, text, type);
+            for (auto const &nc : n->roClients) {
+                if (!nc->LoggedIn || nc->player == nullptr) {
+                    continue;
+                }
+                if (mapId == -1 || nc->player->MapId == mapId) {
+                    Packets::SendChatMessage(nc->Id, text, type);
                 }
             }
         }
@@ -102,16 +106,16 @@ void NetworkFunctions::NetworkOutBlockSet2Map(int mapId, unsigned short x, unsig
     Block* b = Block::GetInstance();
     MapBlock mb = b->GetBlock(type);
 
-    for(auto const &nc : n->_clients) {
-        if (nc.second->player != NULL && nc.second->player->MapId != mapId || !nc.second->LoggedIn)
+    for(auto const &nc : n->roClients) {
+        if (nc->player != NULL && nc->player->MapId != mapId || !nc->LoggedIn)
             continue;
 
         int onClient = mb.OnClient;
-        if (mb.CpeLevel > nc.second->CustomBlocksLevel) {
+        if (mb.CpeLevel > nc->CustomBlocksLevel) {
             onClient = mb.CpeReplace;
         }
 
-        Packets::SendBlockChange(nc.first, x, y, z, onClient);
+        Packets::SendBlockChange(nc->Id, x, y, z, onClient);
     }
 }
 

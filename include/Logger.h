@@ -30,7 +30,7 @@ class Logger
     public:
         Logger();
         virtual ~Logger();
-        static void LogAdd(std::string module, std::string message, LogType type, std::string file, int line, std::string procedure);
+        static void LogAdd(std::string maodule, std::string message, LogType type, std::string file, int line, std::string procedure);
         static Logger* GetInstance();
         std::vector<LogMessage> Messages;
     protected:

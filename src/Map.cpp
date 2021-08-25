@@ -8,6 +8,7 @@
 
 #include "Files.h"
 #include "Network.h"
+#include "NetworkClient.h"
 #include "System.h"
 #include "TaskScheduler.h"
 #include "Mem.h"
@@ -36,8 +37,6 @@
 #include "events/EventMapBlockChangeClient.h"
 #include "events/EventMapBlockChangePlayer.h"
 #include "events/EventMapAdd.h"
-
-using namespace std;
 
 const std::string MODULE_NAME = "Map";
 MapMain* MapMain::Instance = nullptr;
@@ -92,8 +91,7 @@ void MapMain::MainFunc() {
         MapListSave();
     }
     for(auto const &m : _maps) {
-
-        if (m.second->data.SaveInterval > 0 && m.second->data.SaveTime + m.second->data.SaveInterval*600 < time(nullptr) && m.second->data.loaded) {
+        if (m.second->data.SaveInterval > 0 && m.second->data.SaveTime + m.second->data.SaveInterval*60 < time(nullptr) && m.second->data.loaded) {
             m.second->data.SaveTime = time(nullptr);
             AddSaveAction(0, m.first, "");
         }
@@ -320,7 +318,6 @@ void MapMain::MapBlockChange() {
                 
                 int maxChangedSec = 1100 / 10;
                 int toRemove = 0;
-                m.second->BlockChangeMutex.lock();
                 for(auto const &chg : m.second->data.ChangeQueue) {
                     unsigned short x = chg.X;
                     unsigned short y = chg.Y;
@@ -333,7 +330,7 @@ void MapMain::MapBlockChange() {
                     int bitmaskSize = GetMapSize(m.second->data.SizeX, m.second->data.SizeY, m.second->data.SizeZ, 1);
                     
                     if (blockChangeOffset < bitmaskSize) { // -- remove from bitmask
-                        m.second->data.BlockchangeData[blockChangeOffset/8] = m.second->data.BlockchangeData[blockChangeOffset/8] & ~(1 << (blockChangeOffset % 8));
+                        m.second->data.BlockchangeData.at(blockChangeOffset/8) = m.second->data.BlockchangeData.at(blockChangeOffset/8) & ~(1 << (blockChangeOffset % 8));
                     }
                     if (currentMat != oldMat) {
                         NetworkFunctions::NetworkOutBlockSet2Map(m.first, x, y, z, currentMat);
@@ -343,9 +340,7 @@ void MapMain::MapBlockChange() {
                         }
                     }
                 }
-
                 m.second->data.ChangeQueue.erase(m.second->data.ChangeQueue.begin(), m.second->data.ChangeQueue.begin() + toRemove);
-                m.second->BlockChangeMutex.unlock();
             }
         }
         watchdog::Watch("Map_Blockchanging", "End thread-slope", 2);
@@ -365,8 +360,6 @@ void MapMain::MapBlockPhysics() {
             if (map.second->data.PhysicsStopped)
                 continue;
 
-            const std::lock_guard<std::recursive_mutex> pqlock(map.second->data.physicsQueueMutex);
-
             std::sort(map.second->data.PhysicsQueue.begin(), map.second->data.PhysicsQueue.end(), comparePhysicsTime);
             watchdog::Watch("Map_Physic", "After: std::sort", 1);
             int counter = 0;
@@ -374,9 +367,13 @@ void MapMain::MapBlockPhysics() {
                 MapBlockDo item = map.second->data.PhysicsQueue.at(0);
                 if (item.time < clock()) {
                     map.second->data.PhysicsQueue.erase(map.second->data.PhysicsQueue.begin());
-                    int offset = MapMain::GetMapOffset(item.X, item.Y, item.Z, map.second->data.SizeX, map.second->data.SizeY, map.second->data.SizeZ, 1);
+                    bool isBlockInBounds = (item.X >= 0 && item.X < map.second->data.SizeX && item.Y >= 0 && item.Y < map.second->data.SizeY && item.Z >= 0 && item.Z < map.second->data.SizeZ);
 
-                    map.second->data.PhysicData[offset/8] = map.second->data.PhysicData[offset/8] & ~(1 << (offset % 8)); // -- Set bitmask
+                    if (!isBlockInBounds)
+                        continue;
+
+                    int offset = MapMain::GetMapOffset(item.X, item.Y, item.Z, map.second->data.SizeX, map.second->data.SizeY, map.second->data.SizeZ, 1);
+                    map.second->data.PhysicData.at(offset/8) = map.second->data.PhysicData.at(offset/8) & ~(1 << (offset % 8)); // -- Set bitmask
                     map.second->ProcessPhysics(item.X, item.Y, item.Z);
                     counter++;
 
@@ -388,21 +385,20 @@ void MapMain::MapBlockPhysics() {
                     break;
             }
         }
-
         watchdog::Watch("Map_Physic", "End Thread-Slope", 2);
         std::this_thread::sleep_for(std::chrono::milliseconds(3));
     }
 }
 
-shared_ptr<Map> MapMain::GetPointer(int id) {
+std::shared_ptr<Map> MapMain::GetPointer(int id) {
     if (_maps.find(id) != _maps.end())
         return _maps[id];
 
     return nullptr;
 }
 
-shared_ptr<Map> MapMain::GetPointer(std::string name) {
-    shared_ptr<Map> result = nullptr;
+std::shared_ptr<Map> MapMain::GetPointer(std::string name) {
+    std::shared_ptr<Map> result = nullptr;
     for (auto const &mi : _maps) {
         if (Utils::InsensitiveCompare(mi.second->data.Name, name)) {
             result = mi.second;
@@ -414,7 +410,7 @@ shared_ptr<Map> MapMain::GetPointer(std::string name) {
 }
 
 std::shared_ptr<Map> MapMain::GetPointerUniqueId(std::string uniqueId) {
-    shared_ptr<Map> result = nullptr;
+    std::shared_ptr<Map> result = nullptr;
     for (auto const &mi : _maps) {
         if (Utils::InsensitiveCompare(mi.second->data.UniqueID, uniqueId)) {
             result = mi.second;
@@ -449,7 +445,7 @@ std::string MapMain::GetUniqueId() {
 
 std::string MapMain::GetMapMOTDOverride(int mapId) {
     std::string result;
-    shared_ptr<Map> mapPtr = GetPointer(mapId);
+    std::shared_ptr<Map> mapPtr = GetPointer(mapId);
 
     if (mapPtr == nullptr)
         return result;
@@ -492,7 +488,8 @@ void MapMain::HtmlStats(time_t time_) {
 
         mapTable += "</tr>\n";
     }
-    Utils::replaceAll(result, "[MAP_TABLE]", mapTable);
+    std::string mapTableString = "[MAP_TABLE]";
+    Utils::replaceAll(result, mapTableString, mapTable);
 
     time_t finishTime = time(nullptr);
     time_t duration = finishTime - startTime;
@@ -505,7 +502,7 @@ void MapMain::HtmlStats(time_t time_) {
     Files* files = Files::GetInstance();
     std::string memFile = files->GetFile(MAP_HTML_FILE);
 
-    ofstream oStream(memFile, std::ios::out | std::ios::trunc);
+    std::ofstream oStream(memFile, std::ios::out | std::ios::trunc);
     if (oStream.is_open()) {
         oStream << result;
         oStream.close();
@@ -521,6 +518,9 @@ void MapMain::MapListSave() {
 
     for(auto const &m : _maps) {
         pl.SelectGroup(stringulate(m.first));
+        if (m.second->data.Name == "0") {
+            throw std::exception();
+        }
         pl.Write("Name", m.second->data.Name);
         pl.Write("Directory", m.second->data.Directory);
         pl.Write("Delete", 0);
@@ -551,7 +551,7 @@ void MapMain::MapListLoad() {
         if (mapDelete) {
             AddDeleteAction(0, mapId);
         } else {
-            shared_ptr<Map> mapPtr = GetPointer(mapId);
+            std::shared_ptr<Map> mapPtr = GetPointer(mapId);
             if (mapPtr == nullptr) {
                 Add(mapId, 64, 64, 64, mapName);
                 mapReload = true;
@@ -581,11 +581,12 @@ int MapMain::Add(int id, short x, short y, short z, const std::string& name) {
 
     Files *f = Files::GetInstance();
 
-    shared_ptr<Map> newMap = std::make_shared<Map>();
+    std::shared_ptr<Map> newMap = std::make_shared<Map>();
     int mapSize = GetMapSize(x, y, z, MAP_BLOCK_ELEMENT_SIZE);
-    newMap->data.Data = Mem::Allocate(mapSize, __FILE__, __LINE__, "Map_ID = " + stringulate(id));
-    newMap->data.BlockchangeData = Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Blockchange) = " + stringulate(id));
-    newMap->data.PhysicData = Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Physics) = " + stringulate(id));
+    newMap->data.Data.resize(mapSize); // = Mem::Allocate(mapSize, __FILE__, __LINE__, "Map_ID = " + stringulate(id));
+    newMap->data.BlockchangeData.resize(1+mapSize/8);//Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Blockchange) = " + stringulate(id));
+    newMap->data.PhysicData.resize(1+mapSize/8);//Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Physics) = " + stringulate(id));
+    newMap->data.blockCounter.resize(256);
     newMap->data.ID = id;
     newMap->data.UniqueID = GetUniqueId();
     newMap->data.Name = name;
@@ -606,9 +607,9 @@ int MapMain::Add(int id, short x, short y, short z, const std::string& name) {
     newMap->data.Clients = 0;
     newMap->data.LastClient = time(nullptr);
     for(auto i = 1; i < 255; i++)
-        newMap->data.blockCounter[i] = 0;
+        newMap->data.blockCounter.at(i) = 0;
 
-    newMap->data.blockCounter[0] = x*y*z;
+    newMap->data.blockCounter.at(0) = x*y*z;
     _maps.insert(std::make_pair(id, newMap));
     SaveFile = true;
 
@@ -620,21 +621,20 @@ int MapMain::Add(int id, short x, short y, short z, const std::string& name) {
 }
 
 void MapMain::Delete(int id) {
-    shared_ptr<Map> mp = GetPointer(id);
+    std::shared_ptr<Map> mp = GetPointer(id);
     if (mp == nullptr)
         return;
     Network* nm = Network::GetInstance();
     if (mp->data.Clients > 0) {
-        for(auto const &nc : nm->_clients) {
-            if (nc.second->LoggedIn && nc.second->player->tEntity != nullptr&& nc.second->player->tEntity->MapID == id) {
-                nc.second->player->tEntity->PositionSet(0, 0, 0, 0, 0, 0, 4, true);
+        for(auto const &nc : nm->roClients) {
+            if (nc->LoggedIn && nc->player->tEntity != nullptr&& nc->player->tEntity->MapID == id) {
+                nc->player->tEntity->PositionSet(0, 0, 0, 0, 0, 0, 4, true);
             }
         }
     }
-
-    Mem::Free(mp->data.Data);
-    Mem::Free(mp->data.BlockchangeData);
-    Mem::Free(mp->data.PhysicData);
+    mp->data.Data.clear();
+    mp->data.BlockchangeData.clear();
+    mp->data.PhysicData.clear();
     _maps.erase(mp->data.ID);
     SaveFile = true;
 }
@@ -686,67 +686,29 @@ bool Map::Resize(short x, short y, short z) {
     bool result = false;
     if (x >= 16 && y >= 16 && z >= 16 && x <= 32767 && y <= 32767 && z <= 32767) {
         int newMapSize = MapMain::GetMapSize(x, y, z, MAP_BLOCK_ELEMENT_SIZE);
-        char* newMapData = Mem::Allocate(newMapSize, __FILE__, __LINE__, "Map_ID = " + stringulate(data.ID));
-        char* newBCData = Mem::Allocate(1+newMapSize/8, __FILE__, __LINE__, "Map_ID(Blockchange) = " + stringulate(data.ID));
-        char* newPhysData = Mem::Allocate(1+newMapSize/8, __FILE__, __LINE__, "Map_ID(Physics) = " + stringulate(data.ID));
+//        char* newMapData = Mem::Allocate(newMapSize, __FILE__, __LINE__, "Map_ID = " + stringulate(data.ID));
+//        char* newBCData = Mem::Allocate(1+newMapSize/8, __FILE__, __LINE__, "Map_ID(Blockchange) = " + stringulate(data.ID));
+//        char* newPhysData = Mem::Allocate(1+newMapSize/8, __FILE__, __LINE__, "Map_ID(Physics) = " + stringulate(data.ID));
 
-        int copyAreaX = data.SizeX;
-        int copyAreaY = data.SizeY;
-        int copyAreaZ = data.SizeZ;
-        if (copyAreaX > x)
-            copyAreaX = x;
-        if (copyAreaY > y)
-            copyAreaY = y;
-        if (copyAreaZ > z)
-            copyAreaZ = z;
+//        for(auto i = 1; i < 255; i++)
+//            data.blockCounter[i] = 0;
 
-        for(auto i = 1; i < 255; i++)
-            data.blockCounter[i] = 0;
-
-        data.blockCounter[0] = x*y*z - (copyAreaX * copyAreaY * copyAreaZ);
-        for (auto ix = 0; ix < copyAreaX; ix++) {
-            for(auto iy = 0; iy < copyAreaY; iy++) {
-                for (auto iz = 0; iz < copyAreaZ; iz++) {
-                    char* pointerOld = (&data.Data[MapMain::GetMapOffset(ix, iy, iz, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE)]);
-                    char* pointerNew = &newMapData[MapMain::GetMapOffset(ix, iy, iz, x, y, z, MAP_BLOCK_ELEMENT_SIZE)];
-                    data.blockCounter[(int)((unsigned char)(*pointerOld))] ++;
-
-                    memcpy(pointerNew, pointerOld, MAP_BLOCK_ELEMENT_SIZE);
-                }
-            }
-        }
-        // -- Copy physics queue
-        for(auto const &pi : data.PhysicsQueue) {
-            if (pi.X < copyAreaX && pi.Y < copyAreaY && pi.Z < copyAreaZ) {
-                int boolOffset = MapMain::GetMapOffset(pi.X, pi.Y, pi.Z, x, y, z, 1);
-                char* boolPointer = newPhysData + (boolOffset / 8);
-                newPhysData[(boolOffset / 8)] = newPhysData[(boolOffset / 8)] | (1 << (boolOffset % 8));
-            }
-        }
-        data.PhysicsQueue.clear();
-        for (auto const bc : data.ChangeQueue) {
-            if (bc.X < copyAreaX && bc.Y < copyAreaY && bc.Z < copyAreaZ) {
-                int boolOffset = MapMain::GetMapOffset(bc.X, bc.Y, bc.Z, x, y, z, 1);
-                char* boolPointer = newPhysData + (boolOffset / 8);
-                newBCData[(boolOffset / 8)] = newPhysData[(boolOffset / 8)] | (1 << (boolOffset % 8));
-            }
-        }
         data.ChangeQueue.clear();
         // -- Spawn limiting..
         if (data.SpawnX > x)
             data.SpawnX = x-1;
         if (data.SpawnY > y)
             data.SpawnY = y - 1;
+
         result = true;
         data.SizeX = x;
         data.SizeY = y;
         data.SizeZ = z;
-        Mem::Free(data.Data);
-        Mem::Free(data.PhysicData);
-        Mem::Free(data.BlockchangeData);
-        data.Data = newMapData;
-        data.BlockchangeData = newBCData;
-        data.PhysicData = newPhysData;
+
+        data.Data.resize(newMapSize);
+        data.BlockchangeData.resize(1+newMapSize/8);
+        data.PhysicData.resize(1+newMapSize/8);
+
         Resend();
         MapMain* mm = MapMain::GetInstance();
         mm->SaveFile = true;
@@ -760,17 +722,18 @@ void Map::Fill(const std::string& functionName, std::string paramString) {
     }
 
     for(auto i = 1; i < 256; i++) {
-        data.blockCounter[i] = 0;
+        data.blockCounter.at(i) = 0;
     }
-    data.blockCounter[0] = data.SizeX * data.SizeY * data.SizeZ;
+    data.blockCounter.at(0) = data.SizeX * data.SizeY * data.SizeZ;
 
     for(auto x = 0; x < data.SizeX; x++) { // -- Clear the map
         for (auto y = 0; y <data.SizeY; y++) {
             for (auto z = 0; z < data.SizeZ; z++) {
-                auto* point = (MapBlockData*)(data.Data + MapMain::GetMapOffset(x, y, z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE));
-                point->type = 0;
-                point->metadata = 0;
-                point->lastPlayer = -1;
+                int index = MapMain::GetMapOffset(x, y, z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
+                data.Data[index] = 0;
+                data.Data[index+1] = 0;
+                data.Data[index+2] = 128;
+                data.Data[index+3] = 0;
             }
         }
     }
@@ -795,53 +758,54 @@ bool Map::Save(std::string directory) {
 
     std::filesystem::create_directory(directory);
     std::string configName = directory + MAP_FILENAME_CONFIG;
-    ofstream oStream(configName);
+    std::ofstream oStream(configName);
     if (oStream.is_open()) {
-        oStream << "; Overview_Types: 0=Nothing, 1=2D, 2=Iso(fast)" << endl;
-        oStream << "; Save_Intervall: in minutes (0 = Disabled)" << endl;
-        oStream << "; Jumpheight: -1 = Default" << endl;
-        oStream << ";" << endl;
-        oStream << "Server_Version = 1018" << endl;
-        oStream << "Unique_ID = " << data.UniqueID << endl;
-        oStream << "Name = " + data.Name << endl;
-        oStream << "Rank_Build = " << data.RankBuild << endl;
-        oStream << "Rank_Join = " << data.RankJoin << endl;
-        oStream << "Rank_Show = " << data.RankShow << endl;
-        oStream << "Physic_Stopped = " << data.PhysicsStopped << endl;
-        oStream << "MOTD_Override = " << data.MotdOverride << endl;
-        oStream << "Save_Intervall = " << data.SaveInterval << endl;
-        oStream << "Overview_Type = " << data.overviewType << endl;
-        oStream << "Size_X = " << data.SizeX << endl;
-        oStream << "Size_Y = " << data.SizeY << endl;
-        oStream << "Size_Z = " << data.SizeZ << endl;
-        oStream << "Spawn_X = " << data.SpawnX << endl;
-        oStream << "Spawn_Y = " << data.SpawnY << endl;
-        oStream << "Spawn_Z = " << data.SpawnZ << endl;
-        oStream << "Spawn_Rot = " << data.SpawnRot << endl;
-        oStream << "Spawn_Look = " << data.SpawnLook << endl;
-        oStream << "Colors_Set = " << data.ColorsSet << endl;
-        oStream << "Sky_Color = " << data.SkyColor << endl;
-        oStream << "Cloud_Color = " << data.CloudColor << endl;
-        oStream << "Fog_Color = " << data.FogColor << endl;
-        oStream << "A_Light = " << data.alight << endl;
-        oStream << "D_Light = " << data.dlight << endl;
-        oStream << "Custom_Appearance = " << data.CustomAppearance << endl;
-        oStream << "Custom_Texture_Url = " << data.CustomURL << endl;
-        oStream << "Custom_Side_Block = " << (int)data.SideBlock << endl;
-        oStream << "Custom_Edge_Block = " << (int)data.EdgeBlock << endl;
-        oStream << "Custom_Side_Level = " << data.SideLevel << endl;
-        oStream << "Allow_Flying = " << data.Flying << endl;
-        oStream << "Allow_Noclip = " << data.NoClip << endl;
-        oStream << "Allow_Fastwalk = " << data.Speeding << endl;
-        oStream << "Allow_Respawn = " << data.SpawnControl << endl;
-        oStream << "Allow_Thirdperson = " << data.ThirdPerson << endl;
-        oStream << "Allow_Weatherchange = " << data.Weather << endl;
-        oStream << "Jumpheight = " << data.JumpHeight << endl;
+        oStream << "; Overview_Types: 0=Nothing, 1=2D, 2=Iso(fast)" << "\n";
+        oStream << "; Save_Intervall: in minutes (0 = Disabled)" << "\n";
+        oStream << "; Jumpheight: -1 = Default" << "\n";
+        oStream << ";" << "\n";
+        oStream << "Server_Version = 1018" << "\n";
+        oStream << "Unique_ID = " << data.UniqueID << "\n";
+        oStream << "Name = " + data.Name << "\n";
+        oStream << "Rank_Build = " << data.RankBuild << "\n";
+        oStream << "Rank_Join = " << data.RankJoin << "\n";
+        oStream << "Rank_Show = " << data.RankShow << "\n";
+        oStream << "Physic_Stopped = " << data.PhysicsStopped << "\n";
+        oStream << "MOTD_Override = " << data.MotdOverride << "\n";
+        oStream << "Save_Intervall = " << data.SaveInterval << "\n";
+        oStream << "Overview_Type = " << data.overviewType << "\n";
+        oStream << "Size_X = " << data.SizeX << "\n";
+        oStream << "Size_Y = " << data.SizeY << "\n";
+        oStream << "Size_Z = " << data.SizeZ << "\n";
+        oStream << "Spawn_X = " << data.SpawnX << "\n";
+        oStream << "Spawn_Y = " << data.SpawnY << "\n";
+        oStream << "Spawn_Z = " << data.SpawnZ << "\n";
+        oStream << "Spawn_Rot = " << data.SpawnRot << "\n";
+        oStream << "Spawn_Look = " << data.SpawnLook << "\n";
+        oStream << "Colors_Set = " << data.ColorsSet << "\n";
+        oStream << "Sky_Color = " << data.SkyColor << "\n";
+        oStream << "Cloud_Color = " << data.CloudColor << "\n";
+        oStream << "Fog_Color = " << data.FogColor << "\n";
+        oStream << "A_Light = " << data.alight << "\n";
+        oStream << "D_Light = " << data.dlight << "\n";
+        oStream << "Custom_Appearance = " << data.CustomAppearance << "\n";
+        oStream << "Custom_Texture_Url = " << data.CustomURL << "\n";
+        oStream << "Custom_Side_Block = " << (int)data.SideBlock << "\n";
+        oStream << "Custom_Edge_Block = " << (int)data.EdgeBlock << "\n";
+        oStream << "Custom_Side_Level = " << data.SideLevel << "\n";
+        oStream << "Allow_Flying = " << data.Flying << "\n";
+        oStream << "Allow_Noclip = " << data.NoClip << "\n";
+        oStream << "Allow_Fastwalk = " << data.Speeding << "\n";
+        oStream << "Allow_Respawn = " << data.SpawnControl << "\n";
+        oStream << "Allow_Thirdperson = " << data.ThirdPerson << "\n";
+        oStream << "Allow_Weatherchange = " << data.Weather << "\n";
+        oStream << "Jumpheight = " << data.JumpHeight << "\n";
         oStream.close();
     }
     configName = directory + MAP_FILENAME_RANK; // -- TODO: Rank boxes
     configName = directory + MAP_FILENAME_TELEPORTER; // -- TODO: Teleporters
-    GZIP::GZip_CompressToFile((unsigned char*)data.Data, mapDataSize, "temp.gz");
+    //System::mainMutex.unlock();
+    GZIP::GZip_CompressToFile(data.Data.data(), mapDataSize, "temp.gz");
     try {
         if (std::filesystem::exists(directory + MAP_FILENAME_DATA))
             std::filesystem::remove(directory + MAP_FILENAME_DATA);
@@ -850,6 +814,7 @@ bool Map::Save(std::string directory) {
     } catch (std::filesystem::filesystem_error& e) {
         Logger::LogAdd(MODULE_NAME, "Could not copy mapfile: " + stringulate(e.what()), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
     }
+    //const std::scoped_lock<std::mutex> pLock(System::mainMutex);
     Logger::LogAdd(MODULE_NAME, "File saved [" + directory + MAP_FILENAME_DATA + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 
     return true;
@@ -904,23 +869,25 @@ void Map::Load(std::string directory) {
     data.Weather = (pLoader.Read("Allow_Weatherchange", 1) > 0);
     data.JumpHeight = pLoader.Read("Jumpheight", -1);
 
-    int dSize = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.Data), mapSize * MAP_BLOCK_ELEMENT_SIZE, directory + MAP_FILENAME_DATA);
+    data.Data.resize(mapSize * MAP_BLOCK_ELEMENT_SIZE);
+
+    int dSize = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.Data.data()), mapSize * MAP_BLOCK_ELEMENT_SIZE, directory + MAP_FILENAME_DATA);
     if (dSize == (mapSize * MAP_BLOCK_ELEMENT_SIZE)) {
         Undo::ClearMap(data.ID);
         for(int i = 0; i < 255; i++) {
-            data.blockCounter[i] = 0;
+            data.blockCounter.at(i) = 0;
         }
         for (int iz = 0; iz < data.SizeZ; iz++) {
             for (int iy = 0; iy < data.SizeY; iy++) {
                 for (int ix = 0; ix < data.SizeX; ix++) {
                     int index = MapMain::GetMapOffset(ix, iy, iz, sizeX, sizeY, sizeZ, MAP_BLOCK_ELEMENT_SIZE);
-                    unsigned char point = data.Data[index];
+                    unsigned char point = data.Data.at(index);
                     MapBlock b = blockMain->GetBlock(point);
 
                     if (b.ReplaceOnLoad >= 0)
-                        data.Data[index] = static_cast<char>(b.ReplaceOnLoad);
+                        data.Data.at(index) = static_cast<char>(b.ReplaceOnLoad);
 
-                    data.blockCounter[point] += 1;
+                    data.blockCounter.at(point) += 1;
                     
                     if (b.PhysicsOnLoad) {
                         QueueBlockPhysics(ix, iy, iz);
@@ -980,28 +947,28 @@ void Map::Reload() {
 
     data.loading = true;
     int mapSize = data.SizeX * data.SizeY * data.SizeZ;
-    data.Data = Mem::Allocate(mapSize * MAP_BLOCK_ELEMENT_SIZE, __FILE__, __LINE__, "Map_ID = " + stringulate(data.ID));
-    data.BlockchangeData = Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Blockchange) = " + stringulate(data.ID));
-    data.PhysicData = Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Physics) = " + stringulate(data.ID));
+    data.Data.resize(mapSize * MAP_BLOCK_ELEMENT_SIZE);// = Mem::Allocate(mapSize * MAP_BLOCK_ELEMENT_SIZE, __FILE__, __LINE__, "Map_ID = " + stringulate(data.ID));
+    data.BlockchangeData.resize(1+mapSize/8);// = Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Blockchange) = " + stringulate(data.ID));
+    data.PhysicData.resize(1+mapSize/8);// = Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Physics) = " + stringulate(data.ID));
 
     std::string filenameData = data.Directory + MAP_FILENAME_DATA;
-    int unzipResult = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.Data), mapSize * MAP_BLOCK_ELEMENT_SIZE, data.Directory + MAP_FILENAME_DATA);
+    int unzipResult = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.Data.data()), mapSize * MAP_BLOCK_ELEMENT_SIZE, data.Directory + MAP_FILENAME_DATA);
     if (unzipResult > 0) {
         Undo::ClearMap(data.ID);
         for(int i = 0; i < 255; i++) {
-            data.blockCounter[i] = 0;
+            data.blockCounter.at(i) = 0;
         }
         for (int iz = 0; iz < data.SizeZ; iz++) {
             for (int iy = 0; iy < data.SizeY; iy++) {
                 for (int ix = 0; ix < data.SizeX; ix++) {
                     int offset = MapMain::GetMapOffset(ix, iy, iz, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
-                    unsigned char rawBlock = data.Data[offset];
+                    unsigned char rawBlock = data.Data.at(offset);
                     MapBlock b = blockMain->GetBlock(rawBlock);
 
                     if (b.ReplaceOnLoad >= 0)
-                        data.Data[offset] = static_cast<char>(b.ReplaceOnLoad);
+                        data.Data.at(offset) = b.ReplaceOnLoad;
 
-                    data.blockCounter[rawBlock] += 1;
+                    data.blockCounter.at(rawBlock) += 1;
 
                     if (b.PhysicsOnLoad) {
                         QueueBlockPhysics(ix, iy, iz);
@@ -1025,9 +992,12 @@ void Map::Unload() {
     Save("");
     data.PhysicsStopped = true;
     data.BlockchangeStopped = true;
-    Mem::Free(data.Data);
-    Mem::Free(data.BlockchangeData);
-    Mem::Free(data.PhysicData);
+    data.Data.resize(1);
+    data.BlockchangeData.resize(1);
+    data.PhysicData.resize(1);
+//    Mem::Free(data.Data);
+//    Mem::Free(data.BlockchangeData);
+//    Mem::Free(data.PhysicData);
     data.loaded = false;
     Logger::LogAdd(MODULE_NAME, "Map unloaded (" + data.Name + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
@@ -1035,7 +1005,7 @@ void Map::Unload() {
 void Map::Send(int clientId) {
     Network* nMain = Network::GetInstance();
     Block* bMain = Block::GetInstance();
-    shared_ptr<NetworkClient> nc = nMain->GetClient(clientId);
+    std::shared_ptr<NetworkClient> nc = nMain->GetClient(clientId);
 
     if (nc == nullptr)
         return;
@@ -1057,7 +1027,7 @@ void Map::Send(int clientId) {
     for (int i = 0; i < mapSize-1; i++) {
         int index = i * MAP_BLOCK_ELEMENT_SIZE;
 
-        auto rawBlock = static_cast<unsigned char>(data.Data[index]);
+        auto rawBlock = data.Data.at(index);
         MapBlock mb = bMain->GetBlock(rawBlock);
 
         if (mb.CpeLevel > nc->CustomBlocksLevel)
@@ -1086,7 +1056,7 @@ void Map::Send(int clientId) {
         int bytesInBlock = bytes2Send;
         if (bytesInBlock > 1024)
             bytesInBlock = 1024;
-        Packets::SendMapData(clientId, bytesInBlock, tempBuf2 + bytesSent, bytesSent*100.0/compressedSize);
+        Packets::SendMapData(clientId, static_cast<short>(bytesInBlock), tempBuf2 + bytesSent, static_cast<unsigned char>(bytesSent*100.0/compressedSize));
         bytesSent += bytesInBlock;
         bytes2Send -= bytesInBlock;
     }
@@ -1098,9 +1068,12 @@ void Map::Send(int clientId) {
 
 void Map::Resend() {
     Network* nMain = Network::GetInstance();
-    for(auto const &nc : nMain->_clients) {
-        if (nc.second->player->MapId == data.ID)
-            nc.second->player->MapId = -1;
+    for(auto const &nc : nMain->roClients) {
+        if (nc->player == nullptr)
+            continue;
+
+        if (nc->player->MapId == data.ID)
+            nc->player->MapId = -1;
     }
     for (auto const &me : Entity::_entities) {
         if (me.second->MapID == data.ID) {
@@ -1121,7 +1094,7 @@ void Map::Resend() {
     for(auto const &bc : data.ChangeQueue) {
         int blockCHangeOffset = MapMain::GetMapOffset(bc.X, bc.Y, bc.Z, data.SizeX, data.SizeY, data.SizeZ, 1);
         if (blockCHangeOffset < MapMain::GetMapSize(data.SizeX, data.SizeY, data.SizeZ, 1)) {
-            data.BlockchangeData[blockCHangeOffset/8] = (data.BlockchangeData[blockCHangeOffset/8]&255) & ~(1 << (blockCHangeOffset % 8));
+            data.BlockchangeData.at(blockCHangeOffset/8) = (data.BlockchangeData.at(blockCHangeOffset/8)&255) & ~(1 << (blockCHangeOffset % 8));
         }
     }
     data.ChangeQueue.clear();
@@ -1139,7 +1112,8 @@ void Map::BlockChange(const std::shared_ptr<NetworkClient>& client, unsigned sho
     Block* bm = Block::GetInstance();
 
     if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
-        auto rawBlock = static_cast<unsigned char>(data.Data[MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE)]);
+        int blockOffset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
+        auto &rawBlock = data.Data.at(blockOffset);
         unsigned char rawNewType = 0;
 
         MapBlock oldType = bm->GetBlock(rawBlock);
@@ -1187,7 +1161,7 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
     if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
         Block* bm = Block::GetInstance();
         int blockOffset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
-        auto* atLoc = (MapBlockData*)(data.Data + blockOffset);
+        auto &atLoc = data.Data.at(blockOffset);
 
         EventMapBlockChange event;
         event.playerNumber = playerNumber;
@@ -1200,17 +1174,17 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
         event.send = send;
         Dispatcher::post(event); // -- Post this event out!
 
-        MapBlock oldType = bm->GetBlock(atLoc->type);
+        MapBlock oldType = bm->GetBlock(atLoc);
         MapBlock newType = bm->GetBlock(type);
         
-        if (type != atLoc->type && undo) {
-            Undo::Add(playerNumber, data.ID, X, Y, Z, oldType.Id, atLoc->lastPlayer);
+        if (type != atLoc && undo) {
+           // Undo::Add(playerNumber, data.ID, X, Y, Z, oldType.Id, atLoc->lastPlayer);
         }
 
-        data.blockCounter[atLoc->type]--;
-        data.blockCounter[type]++;
-        atLoc->type = type;
-        atLoc->lastPlayer = playerNumber;
+        data.blockCounter.at(atLoc)--;
+        data.blockCounter.at(type)++;
+        atLoc = type;
+       // atLoc->lastPlayer = playerNumber;
 
         if (physic) {
             for (int ix = -1; ix < 2; ix++) {
@@ -1239,9 +1213,8 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
      }
     if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
         int oneOffset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
-        auto* stuff = (MapBlockData*)(data.Data + MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE));
         
-        return stuff->type;
+        return data.Data.at(oneOffset);
     }
 
     return -1;
@@ -1250,10 +1223,10 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
 void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z, unsigned char priority, unsigned char oldType) {
     if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
         int offset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, 1);
-        bool blockChangeFound = data.BlockchangeData[offset/8] & (1 << (offset % 8));
+        bool blockChangeFound = data.BlockchangeData.at(offset/8) & (1 << (offset % 8));
+
         if (!blockChangeFound) {
-            BlockChangeMutex.lock();
-            data.BlockchangeData[offset/8] |= (1 << (offset % 8)); // -- Set bitmask
+            data.BlockchangeData.at(offset/8) |= (1 << (offset % 8)); // -- Set bitmask
             MapBlockChanged changeItem { X, Y, Z, priority, oldType};
             int insertIndex = 0;
             
@@ -1264,8 +1237,12 @@ void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z,
                 }
                 insertIndex++;
             }
-            data.ChangeQueue.insert(data.ChangeQueue.begin() + insertIndex, changeItem);
-            BlockChangeMutex.unlock();
+            if ((data.ChangeQueue.begin() + insertIndex) > data.ChangeQueue.end()) {
+                std::cout << "Uhoh speghettiho";
+                return;
+            }
+            data.ChangeQueue.push_back(changeItem);
+            //data.ChangeQueue.insert(data.ChangeQueue.begin() + insertIndex, changeItem);
         }
     }
 }
@@ -1304,24 +1281,25 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
     bool isSecondInBounds = (X1 >= 0 && X1 < data.SizeX && Y1 >= 0 && Y1 < data.SizeY && Z1 >= 0 && Z1 < data.SizeZ);
 
     if (isFirstInBounds && isSecondInBounds) {
-        auto* blockdata0 = (MapBlockData*)(data.Data + MapMain::GetMapOffset(X0, Y0, Z0, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE));
-        auto* blockdata1 = (MapBlockData*)(data.Data + MapMain::GetMapOffset(X1, Y1, Z1, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE));
+        int blockdataoffset0 = MapMain::GetMapOffset(X0, Y0, Z0, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
+        int blockdataoffset1 = MapMain::GetMapOffset(X1, Y1, Z1, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
 
-        int oldType0 = blockdata0->type;
-        int oldType1 = blockdata1->type;
+        int oldType0 = data.Data.at(blockdataoffset0);
+        int oldType1 = data.Data.at(blockdataoffset1);
 
-        if (undo) {
-            if (blockdata0->type != 0)
-                Undo::Add(blockdata0->lastPlayer, data.ID, X0, Y0, Z0, blockdata0->type, blockdata0->lastPlayer);
+//        if (undo) {
+//            if (oldType0 != 0)
+//                Undo::Add(blockdata0->lastPlayer, data.ID, X0, Y0, Z0, blockdata0->type, blockdata0->lastPlayer);
+//
+//            if (blockdata1->type != blockdata0->type)
+//                Undo::Add(blockdata0->lastPlayer, data.ID, X1, Y1, Z1, blockdata1->type, blockdata1->lastPlayer);
+//        }
 
-            if (blockdata1->type != blockdata0->type)
-                Undo::Add(blockdata0->lastPlayer, data.ID, X1, Y1, Z1, blockdata1->type, blockdata1->lastPlayer);
-        }
-
-        blockdata1->type = blockdata0->type;
-        blockdata1->lastPlayer = blockdata0->lastPlayer;
-        blockdata0->type = 0;
-        blockdata0->lastPlayer = -1;
+        //blockdata1->type = blockdata0->type;
+        data.Data.at(blockdataoffset1) = oldType0;
+       // blockdata1->lastPlayer = blockdata0->lastPlayer;
+       data.Data.at(blockdataoffset0) = 0;
+        //blockdata0->lastPlayer = -1;
 
         if (oldType0 != 0) {
             QueueBlockChange(X0, Y0, Z0, priority, oldType0);
@@ -1347,8 +1325,12 @@ unsigned short Map::GetBlockPlayer(unsigned short X, unsigned short Y, unsigned 
     bool blockInBounds = (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ);
 
     if (blockInBounds) {
-        auto* blockdata0 = (MapBlockData*)(data.Data + MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE));
-        return blockdata0->lastPlayer;
+        int index = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
+        short player = 0;
+        player |= data.Data.at(index+2);
+        player |= data.Data.at(index+3) << 8;
+
+        return player;
     }
 
     return -1;
@@ -1361,20 +1343,22 @@ void Map::QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z
         return;
 
     int offset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, 1);
-    bool physItemFound = (data.PhysicData[offset/8] & (1 << (offset % 8)) != 0);
+
+    bool physItemFound = (data.PhysicData.at(offset/8) & (1 << (offset % 8)) != 0);
 
     if (!physItemFound) {
-        auto* mapBlockData= (MapBlockData*) (data.Data + MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE));
+        int mbdIndex = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
+
+       // auto* mapBlockData= (MapBlockData*) (data.Data + mbdIndex);
 
         Block* bm = Block::GetInstance();
-        MapBlock blockEntry = bm->GetBlock(mapBlockData->type);
+        MapBlock blockEntry = bm->GetBlock(data.Data.at(mbdIndex));
         unsigned char blockPhysics = blockEntry.Physics;
         std::string physPlugin = blockEntry.PhysicsPlugin;
 
         if (blockPhysics > 0 || !physPlugin.empty()) {
-            data.PhysicData[offset/8] |= (1 << (offset % 8)); // -- Set bitmask
+            data.PhysicData.at(offset/8) |= (1 << (offset % 8)); // -- Set bitmask
             int physTime = clock() + blockEntry.PhysicsTime + Utils::RandomNumber(blockEntry.PhysicsRandom);
-            const std::lock_guard<std::recursive_mutex> pqLock(data.physicsQueueMutex);
 
             MapBlockDo physicItem { physTime, X, Y, Z};
             data.PhysicsQueue.push_back(physicItem);
@@ -1390,8 +1374,8 @@ void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
     int offset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
 
     if (offset < MapMain::GetMapSize(data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE)) {
-        auto* mapBlockData = (MapBlockData*) (data.Data + offset);
-        MapBlock blockEntry = bm->GetBlock(mapBlockData->type);
+
+        MapBlock blockEntry = bm->GetBlock(data.Data.at(offset));
 
         switch (blockEntry.Physics) {
             case 10:

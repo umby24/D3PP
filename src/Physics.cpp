@@ -86,7 +86,7 @@ void Physics::BlockPhysics21(std::shared_ptr<Map> physMap, int x, int y, int z) 
     }
 
     _blockFill.clear();
-    BlockFillPhysics item {x, y, z};
+    BlockFillPhysics item {static_cast<short>(x), static_cast<short>(y), static_cast<short>(z)};
     _blockFill.push_back(item);
 
     bool found = false;

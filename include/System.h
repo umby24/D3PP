@@ -20,6 +20,7 @@ public:
     static time_t startTime;
     static System* GetInstance();
     static System* Instance_;
+    static std::mutex mainMutex;
     std::string ServerName;
     std::string Motd;
     int ClickDistance;

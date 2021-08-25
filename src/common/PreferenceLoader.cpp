@@ -108,8 +108,14 @@ std::string PreferenceLoader::Read(std::string key, std::string def) {
 }
 
 int PreferenceLoader::Read(std::string key, int def) {
-    if (SettingsDictionary[CurrentGroup].find(key) != SettingsDictionary[CurrentGroup].end())
-        return stoi(SettingsDictionary[CurrentGroup][key]);
+    if (SettingsDictionary[CurrentGroup].find(key) != SettingsDictionary[CurrentGroup].end()) {
+        try {
+            return stoi(SettingsDictionary[CurrentGroup][key]);
+        } catch (const std::exception& e) {
+            SettingsDictionary[CurrentGroup][key] = def;
+            return def;
+        }
+    }
 
     SettingsDictionary[CurrentGroup].insert(std::make_pair(key, stringulate(def)));
     return def;

@@ -6,6 +6,7 @@
 
 #include "Chat.h"
 #include "Network.h"
+#include "NetworkClient.h"
 #include "Client.h"
 #include "Player.h"
 #include "Entity.h"
@@ -13,14 +14,14 @@
 #include "BuildMode.h"
 #include "CPE.h"
 #include "Utils.h"
+#include "common/ByteBuffer.h"
 
 void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& client) {
-    client->InputAddOffset(1);
-    char clientVersion = client->InputReadByte();
-    std::string clientName = client->InputReadString();
-    std::string mppass = client->InputReadString();
-    char isCpe = client->InputReadByte();
-        Utils::TrimString(clientName);
+    char clientVersion = client->ReceiveBuffer->ReadByte();
+    std::string clientName = client->ReceiveBuffer->ReadString();
+    std::string mppass = client->ReceiveBuffer->ReadString();
+    char isCpe = client->ReceiveBuffer->ReadByte();
+    Utils::TrimString(clientName);
 
     if (!client->LoggedIn && client->DisconnectTime == 0 && isCpe != 66) {
         Client::Login(client->Id, clientName, mppass, clientVersion);
@@ -31,17 +32,15 @@ void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& clien
 }
 
 void PacketHandlers::HandlePing(const std::shared_ptr<NetworkClient> &client) {
-    client->InputAddOffset(1);
     client->Ping = time(nullptr) - client->PingSentTime;
 }
 
 void PacketHandlers::HandleBlockChange(const std::shared_ptr<NetworkClient> &client) {
-    client->InputAddOffset(1);
-    short X = client->InputReadShort();
-    short Z = client->InputReadShort();
-    short Y = client->InputReadShort();
-    char Mode = (client->InputReadByte() & 255);
-    char Type = (client->InputReadByte() & 255);
+    short X = client->ReceiveBuffer->ReadShort();
+    short Z = client->ReceiveBuffer->ReadShort();
+    short Y = client->ReceiveBuffer->ReadShort();
+    char Mode = (client->ReceiveBuffer->ReadByte() & 255);
+    char Type = (client->ReceiveBuffer->ReadByte() & 255);
 
     if (!client->LoggedIn || !client->player->tEntity)
         return;
@@ -53,20 +52,19 @@ void PacketHandlers::HandleBlockChange(const std::shared_ptr<NetworkClient> &cli
 void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &client) {
     // -- CPE :)
     if (CPE::GetClientExtVersion(client, HELDBLOCK_EXT_NAME) == 1) {
-        client->InputAddOffset(1);
         if (client->player->tEntity != nullptr)
-            client->player->tEntity->heldBlock = client->InputReadByte();
+            client->player->tEntity->heldBlock = client->ReceiveBuffer->ReadByte();
         else
-            client->InputAddOffset(1);
+            client->ReceiveBuffer->ReadByte();
     } else {
-        client->InputAddOffset(2);
+        client->ReceiveBuffer->ReadShort();
     }
 
-    unsigned short X = (unsigned short)client->InputReadShort();
-    unsigned short Z = (unsigned short)client->InputReadShort();
-    unsigned short Y = (unsigned short)client->InputReadShort();
-    char R = client->InputReadByte();
-    char L = client->InputReadByte();
+    unsigned short X = (unsigned short)client->ReceiveBuffer->ReadShort();
+    unsigned short Z = (unsigned short)client->ReceiveBuffer->ReadShort();
+    unsigned short Y = (unsigned short)client->ReceiveBuffer->ReadShort();
+    char R = client->ReceiveBuffer->ReadByte();
+    char L = client->ReceiveBuffer->ReadByte();
 
     if (!client->LoggedIn || !client->player->tEntity)
         return;
@@ -76,9 +74,8 @@ void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &
 }
 
 void PacketHandlers::HandleChatPacket(const std::shared_ptr<NetworkClient> &client) {
-    client->InputAddOffset(1);
-    char playerId = client->InputReadByte();
-    std::string message = client->InputReadString();
+    char playerId = client->ReceiveBuffer->ReadByte();
+    std::string message = client->ReceiveBuffer->ReadString();
     Utils::TrimString(message);
     if (client->LoggedIn && client->player->tEntity) {
         Chat::HandleIncomingChat(client, message, playerId);
@@ -86,10 +83,8 @@ void PacketHandlers::HandleChatPacket(const std::shared_ptr<NetworkClient> &clie
 }
 
 void PacketHandlers::HandleExtInfo(const std::shared_ptr<NetworkClient> &client) {
-    client->InputAddOffset(1);
-    
-    std::string appName = client->InputReadString();
-    short extensions = client->InputReadShort();
+    std::string appName = client->ReceiveBuffer->ReadString();
+    short extensions = client->ReceiveBuffer->ReadShort();
     client->CPE = true;
     
     if (extensions == 0) {
@@ -101,9 +96,8 @@ void PacketHandlers::HandleExtInfo(const std::shared_ptr<NetworkClient> &client)
 }
 
 void PacketHandlers::HandleExtEntry(const std::shared_ptr<NetworkClient> &client) {
-    client->InputAddOffset(1);
-    std::string extName = client->InputReadString();
-    int extVersion = client->InputReadInt();
+    std::string extName = client->ReceiveBuffer->ReadString();
+    int extVersion = client->ReceiveBuffer->ReadInt();
     
     client->CustomExtensions--;
     client->Extensions.insert(std::make_pair(extName, extVersion));
@@ -113,8 +107,7 @@ void PacketHandlers::HandleExtEntry(const std::shared_ptr<NetworkClient> &client
 }
 
 void PacketHandlers::HandleCustomBlockSupportLevel(const std::shared_ptr<NetworkClient> &client) {
-    client->InputAddOffset(1);
-    unsigned char supportLevel = client->InputReadByte();
+    unsigned char supportLevel = client->ReceiveBuffer->ReadByte();
     client->CustomBlocksLevel = supportLevel;
 
     Logger::LogAdd("CPE", "CPE Process complete.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);

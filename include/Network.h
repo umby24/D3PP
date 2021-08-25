@@ -9,80 +9,19 @@
 #define NETWORK_BUFFER_SIZE 3000000
 #define NETWORK_PACKET_SIZE 1400
 #define NETWORK_CLIENT_TIMEOUT 30
-#define MAX_SELECTION_BOXES 255
+
 
 #include <string>
 #include <map>
 #include <vector>
 #include <thread>
 #include <memory>
+#include <mutex>
 
 #include "TaskScheduler.h"
 
-#include "json.hpp"
-
-
-using json = nlohmann::json;
-
-class Player;
-class Sockets;
+class NetworkClient;
 class ServerSocket;
-
-class NetworkClient {
-public:
-    NetworkClient();
-    NetworkClient(std::unique_ptr<Sockets> socket);
-    // -- Input Buffer Commands
-    void InputAddOffset(int bytes);
-    char InputReadByte();
-    short InputReadShort();
-    int InputReadInt();
-    std::string InputReadString();
-    void InputReadBytes(char* data, int datalen);
-
-    void InputWriteBuffer(char* data, int size);
-    // -- Output Buffer Commands
-    void OutputReadBuffer(char* dataBuffer, int size);
-    void OutputAddOffset(int bytes);
-    void OutputPing();
-    void Kick(std::string message, bool hide);
-    int Id;
-    std::string IP;
-    char* InputBuffer;
-    int InputBufferOffset;
-    int InputBufferAvailable;
-    char* OutputBuffer;
-    int OutputBufferOffset;
-    int OutputBufferAvailable;
-    int DisconnectTime;
-    int LastTimeEvent;
-    int UploadRate;
-    int DownloadRate;
-    int UploadRateCounter;
-    int DownloadRateCounter;
-    int Ping;
-    int PingSentTime;
-    int PingTime;
-    bool LoggedIn;
-    bool CPE;
-    int CustomExtensions;
-    int CustomBlocksLevel;
-    bool GlobalChat;
-    std::unique_ptr<Sockets> clientSocket;
-    std::unique_ptr<Player> player;
-
-    std::map<std::string, int> Extensions;
-    unsigned char Selections[MAX_SELECTION_BOXES];
-    void OutputWriteByte(char value);
-    void OutputWriteShort(short value);
-    void OutputWriteInt(int value);
-    void OutputWriteString(std::string value);
-    void OutputWriteBlob(const char* data, int dataSize);
-
-    void HoldThis(unsigned char blockType, bool canChange);
-    void CreateSelection(unsigned char selectionId, std::string label, short startX, short startY, short startZ, short endX, short endY, short endZ, short red, short green, short blue, short opacity);
-    void DeleteSelection(unsigned char selectionId);
-};
 
 class Network {
 public:
@@ -94,11 +33,11 @@ public:
     static Network* GetInstance();
     static Network* singleton_;
     std::shared_ptr<NetworkClient> GetClient(int id);
-    std::map<int, std::shared_ptr<NetworkClient>> _clients;
+    std::vector<std::shared_ptr<NetworkClient>> roClients;
 
     int Port;
 protected:
-    void DeleteClient(int clientId, std::string message, bool sendToAll);
+    void DeleteClient(int clientId, const std::string& message, bool sendToAll);
 
 private:
     void UpdateNetworkStats();
@@ -109,9 +48,10 @@ private:
     void NetworkOutput();
     void NetworkInput();
 
+    std::mutex clientMutex;
+    std::map<int, std::shared_ptr<NetworkClient>> _clients;
     std::unique_ptr<ServerSocket> listenSocket;
     bool isListening;
-    char* TempBuffer;
     int TimerRate;
     int UploadRate;
     int DownloadRate;

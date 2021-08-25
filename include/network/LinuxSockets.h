@@ -6,19 +6,16 @@
 #define D3PP_LINUXSOCKETS_H
 
 #include <string>
-#include <cstring>      // Needed for memset
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#include <errno.h>
-#include <iostream>
 
 class Sockets
 {
     public:
         Sockets();
         Sockets(int acceptfd, std::string clientIp);
-        Sockets(std::string address, std::string port);
+        Sockets(const std::string& address, const std::string& port);
         virtual ~Sockets();
         bool Connect();
         void Disconnect();

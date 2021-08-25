@@ -14,7 +14,7 @@ class Packets {
 public:
     static void SendClientHandshake(int clientId, char protocolVersion, std::string serverName, std::string serverMotd, char userType);
     static void SendMapInit(int clientId);
-    static void SendMapData(int clientId, short chunkSize, char* data, char percentComplete);
+    static void SendMapData(int clientId, short chunkSize, char* data, unsigned char percentComplete);
     static void SendMapFinalize(int clientId, short sizeX, short sizeY, short sizeZ);
     static void SendBlockChange(int clientId, short x, short y, short z, unsigned char type);
     static void SendSpawnEntity(int clientId, char playerId, std::string name, short x, short y, short z, char rotation, char look);

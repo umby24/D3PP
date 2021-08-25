@@ -6,6 +6,7 @@
 #include <events/EventChatMap.h>
 #include "Chat.h"
 #include "Network.h"
+#include "NetworkClient.h"
 #include "Player.h"
 #include "Player_List.h"
 #include "Entity.h"
@@ -115,14 +116,14 @@ void Chat::NetworkSend2Player(int entityId, std::string message, std::string pla
             std::string message1 = "&cP " + Entity::GetDisplayname(entityId) + "&f: " + message;
             bool found = false;
 
-            for (const auto &nc : nm->_clients) {
-                if (nc.second->player != nullptr && nc.second->player->tEntity != nullptr) {
-                    if (Utils::InsensitiveCompare(nc.second->player->tEntity->Name, playerName)) {
+            for (const auto &nc : nm->roClients) {
+                if (nc->player != nullptr && nc->player->tEntity != nullptr) {
+                    if (Utils::InsensitiveCompare(nc->player->tEntity->Name, playerName)) {
                         em->lastPrivateMessage = playerName;
-                        Logger::LogAdd("Chat", em->Name + " > " + nc.second->player->tEntity->Name + ": " + message, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
-                        NetworkFunctions::SystemMessageNetworkSend(nc.first, message1);
+                        Logger::LogAdd("Chat", em->Name + " > " + nc->player->tEntity->Name + ": " + message, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
+                        NetworkFunctions::SystemMessageNetworkSend(nc->Id, message1);
 
-                        std::string message0 = "&c@ " + Entity::GetDisplayname(nc.second->player->tEntity->Id) + "&f: " +message;
+                        std::string message0 = "&c@ " + Entity::GetDisplayname(nc->player->tEntity->Id) + "&f: " +message;
                         Entity::MessageToClients(entityId, message0);
                         found = true;
                         break;

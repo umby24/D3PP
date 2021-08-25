@@ -7,6 +7,7 @@
 #include "Logger.h"
 #include "Utils.h"
 #include "Network.h"
+#include "NetworkClient.h"
 #include "Player.h"
 #include "Entity.h"
 #include "BuildMode.h"
@@ -125,6 +126,7 @@ void LuaPlugin::HandleEvent(const Event& event) {
         lua_getglobal(state, observer.c_str()); // -- Get the function to be called
         if (!lua_isfunction(state, -1)) {
             lua_pop(state, 1);
+            executionMutex.unlock();
             continue;
         }
         int argCount = event.PushLua(state); // -- Have the event push its args and return how many were pushed..
@@ -139,8 +141,8 @@ void LuaPlugin::HandleEvent(const Event& event) {
             executionMutex.unlock();
             return;
         }
-        // -- done.
         executionMutex.unlock();
+        // -- done.
     }
 }
 
@@ -244,7 +246,7 @@ void LuaPlugin::BindFunctions() {
     lua_register(state, "Block_Get_Rank_Delete", &dispatch<&LuaPlugin::LuaBlockGetRankDelete>);
     lua_register(state, "Block_Get_Client_Type", &dispatch<&LuaPlugin::LuaBlockGetClientType>);
     // -- Rank Functions
-    
+
     // -- System Functions
     lua_register(state, "System_Message_Network_Send_2_All", &dispatch<&LuaPlugin::LuaMessageToAll>);
     lua_register(state, "System_Message_Network_Send", &dispatch<&LuaPlugin::LuaMessage>);
@@ -261,8 +263,8 @@ void LuaPlugin::Init() {
         std::filesystem::create_directory("Lua");
 }
 
-std::vector<std::string> EnumerateDirectory(std::string dir) {
-    std::vector<std::string> result;
+std::vector<std::string> EnumerateDirectory(const std::string &dir) {
+    std::vector<std::string> result{};
 
     if (std::filesystem::is_directory(dir)) {
         for (const auto &entry : std::filesystem::directory_iterator(dir)) {
@@ -288,7 +290,7 @@ std::vector<std::string> EnumerateDirectory(std::string dir) {
 void LuaPlugin::MainFunc() {
     std::vector<std::string> files = EnumerateDirectory("Lua/");
 
-    for (auto const f : files) {
+    for (auto const &f : files) {
         auto i = _files.find(f);
         if (i != _files.end()) {
             time_t lastMod = Utils::FileModTime(f);
@@ -302,6 +304,7 @@ void LuaPlugin::MainFunc() {
         }
         LuaFile newFile;
         newFile.FilePath = f;
+        newFile.LastLoaded = 0;
         _files.insert(std::make_pair(f, newFile));
     }
 }
@@ -431,7 +434,6 @@ int LuaPlugin::LuaMessage(lua_State *L) {
     return 0;
 }
 
-
 void LuaPlugin::LoadFile(std::string path) {
     if(luaL_loadfile(this->state, path.c_str())) {
         bail(this->state, "Failed to load " + path);
@@ -445,43 +447,44 @@ void LuaPlugin::LoadFile(std::string path) {
 }
 
 void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, std::string function, std::string args) {
-    executionMutex.lock();
+    std::lock_guard<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(state, function.c_str());
     if (lua_isfunction(state, -1)) {
-        lua_pushinteger(state, mapId);
-        lua_pushinteger(state, sizeX);
-        lua_pushinteger(state, sizeY);
-        lua_pushinteger(state, sizeZ);
+        lua_pushinteger(state, static_cast<lua_Integer>(mapId));
+        lua_pushinteger(state, static_cast<lua_Integer>(sizeX));
+        lua_pushinteger(state, static_cast<lua_Integer>(sizeY));
+        lua_pushinteger(state, static_cast<lua_Integer>(sizeZ));
         lua_pushstring(state, args.c_str());
         if (lua_pcall(state, 5, 0, 0)) {
             bail(state, "Failed to run mapfill");
         }
     }
-    executionMutex.unlock();
 }
 
 void LuaPlugin::TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, std::string function) {
-    executionMutex.lock();
+    std::lock_guard<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(state, function.c_str());
+    if (!lua_checkstack(state, 1)) {
+        Logger::LogAdd("Lua", "State is fucked", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    }
     if (lua_isfunction(state, -1)) {
-        lua_pushinteger(state, mapId);
-        lua_pushinteger(state, X);
-        lua_pushinteger(state, Y);
-        lua_pushinteger(state, Z);
+        lua_pushinteger(state, static_cast<lua_Integer>(mapId));
+        lua_pushinteger(state, static_cast<lua_Integer>(X));
+        lua_pushinteger(state, static_cast<lua_Integer>(Y));
+        lua_pushinteger(state, static_cast<lua_Integer>(Z));
         if (lua_pcall(state, 4, 0, 0) != 0) {
             bail(state, "Failed to trig physics;");
         }
     }
-    executionMutex.unlock();
 }
 
 void LuaPlugin::TriggerCommand(std::string function, int clientId, std::string parsedCmd, std::string text0,
                                std::string text1, std::string op1, std::string op2, std::string op3, std::string op4,
                                std::string op5) {
-    executionMutex.lock();
+    std::lock_guard<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(state, function.c_str());
     if (lua_isfunction(state, -1)) {
-        lua_pushinteger(state, clientId);
+        lua_pushinteger(state, static_cast<lua_Integer>(clientId));
         lua_pushstring(state, parsedCmd.c_str());
         lua_pushstring(state, text0.c_str());
         lua_pushstring(state, text1.c_str());
@@ -494,12 +497,11 @@ void LuaPlugin::TriggerCommand(std::string function, int clientId, std::string p
             bail(state, "Failed to run command.");
         }
     }
-    executionMutex.unlock();
 }
 
 void LuaPlugin::TriggerBuildMode(std::string function, int clientId, int mapId, unsigned short X, unsigned short Y,
                                  unsigned short Z, unsigned char mode, unsigned char block) {
-    executionMutex.lock();
+    std::lock_guard<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(state, function.c_str());
     if (lua_isfunction(state, -1)) {
         lua_pushinteger(state, clientId);
@@ -513,7 +515,6 @@ void LuaPlugin::TriggerBuildMode(std::string function, int clientId, int mapId, 
             bail(state, "Failed to run command.");
         }
     }
-    executionMutex.unlock();
 }
 
 int LuaPlugin::LuaMapBlockGetPlayer(lua_State *L) {
@@ -543,15 +544,15 @@ int LuaPlugin::LuaMapBlockGetPlayer(lua_State *L) {
 
 int LuaPlugin::LuaClientGetTable(lua_State *L) {
     Network* nm = Network::GetInstance();
-    int numClients = nm->_clients.size();
+    int numClients = nm->roClients.size();
     int index = 1;
 
     lua_newtable(L);
 
     if (numClients > 0) {
-        for (auto const &nc : nm->_clients) {
+        for (auto const &nc : nm->roClients) {
             lua_pushinteger(L, index++);
-            lua_pushinteger(L, nc.first);
+            lua_pushinteger(L, nc->Id);
             lua_settable(L, -3);
         }
     }
@@ -904,7 +905,7 @@ int LuaPlugin::LuaBuildModeFloatGet(lua_State *L) {
     BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
     val = buildModeMain->GetFloat(clientId, index);
 
-    lua_pushnumber(L, val);
+    lua_pushnumber(L, static_cast<lua_Number>(val));
     return 1;
 }
 
@@ -1013,7 +1014,7 @@ int LuaPlugin::LuaEntityGetX(lua_State *L) {
         result = foundEntity->X;
     }
 
-    lua_pushnumber(L, result);
+    lua_pushnumber(L, static_cast<lua_Number>(result));
     return 1;
 }
 
@@ -1031,7 +1032,7 @@ int LuaPlugin::LuaEntityGetY(lua_State *L) {
         result = foundEntity->Y;
     }
 
-    lua_pushnumber(L, result);
+    lua_pushnumber(L, static_cast<lua_Number>(result));
     return 1;
 }
 
@@ -1049,7 +1050,7 @@ int LuaPlugin::LuaEntityGetZ(lua_State *L) {
         result = foundEntity->Z;
     }
 
-    lua_pushnumber(L, result);
+    lua_pushnumber(L, static_cast<lua_Number>(result));
     return 1;
 }
 
@@ -1067,7 +1068,7 @@ int LuaPlugin::LuaEntityGetRotation(lua_State *L) {
         result = foundEntity->Rotation;
     }
 
-    lua_pushnumber(L, result);
+    lua_pushnumber(L, static_cast<lua_Number>(result));
     return 1;
 }
 
@@ -1223,9 +1224,9 @@ int LuaPlugin::LuaBuildLinePlayer(lua_State *L) {
     short material = lua_tointeger(L, 9);
     unsigned char priority = lua_tointeger(L, 10);
     bool undo = (lua_tointeger(L, 11) > 0);
-    bool physics = lua_toboolean(L, 12);
+    bool physics = lua_tointeger(L, 12);
 
-    Build::BuildLinePlayer(playerNumber, mapId, x0, y0, z0, x1, y1, z1, material, priority, undo, physics);
+    Build::BuildLinePlayer(static_cast<short>(playerNumber), mapId, x0, y0, z0, x1, y1, z1, material, priority, undo, physics);
     return 0;
 }
 
