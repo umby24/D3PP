@@ -367,7 +367,7 @@ void MapMain::MapBlockPhysics() {
                 MapBlockDo item = map.second->data.PhysicsQueue.at(0);
                 if (item.time < clock()) {
                     map.second->data.PhysicsQueue.erase(map.second->data.PhysicsQueue.begin());
-                    bool isBlockInBounds = (item.X >= 0 && item.X < map.second->data.SizeX && item.Y >= 0 && item.Y < map.second->data.SizeY && item.Z >= 0 && item.Z < map.second->data.SizeZ);
+                    bool isBlockInBounds = map.second->BlockInBounds(item.X, item.Y, item.Z);
 
                     if (!isBlockInBounds)
                         continue;
@@ -684,19 +684,18 @@ bool Map::Resize(short x, short y, short z) {
         Reload();
     }
     bool result = false;
+
     if (x >= 16 && y >= 16 && z >= 16 && x <= 32767 && y <= 32767 && z <= 32767) {
         int newMapSize = MapMain::GetMapSize(x, y, z, MAP_BLOCK_ELEMENT_SIZE);
-//        char* newMapData = Mem::Allocate(newMapSize, __FILE__, __LINE__, "Map_ID = " + stringulate(data.ID));
-//        char* newBCData = Mem::Allocate(1+newMapSize/8, __FILE__, __LINE__, "Map_ID(Blockchange) = " + stringulate(data.ID));
-//        char* newPhysData = Mem::Allocate(1+newMapSize/8, __FILE__, __LINE__, "Map_ID(Physics) = " + stringulate(data.ID));
-
-//        for(auto i = 1; i < 255; i++)
-//            data.blockCounter[i] = 0;
+       
+        for(auto i = 1; i < 255; i++)
+           data.blockCounter.at(i) = 0;
 
         data.ChangeQueue.clear();
         // -- Spawn limiting..
         if (data.SpawnX > x)
             data.SpawnX = x-1;
+
         if (data.SpawnY > y)
             data.SpawnY = y - 1;
 
@@ -713,6 +712,7 @@ bool Map::Resize(short x, short y, short z) {
         MapMain* mm = MapMain::GetInstance();
         mm->SaveFile = true;
     }
+
     return result;
 }
 
@@ -753,10 +753,29 @@ bool Map::Save(std::string directory) {
         return true;
 
     int mapDataSize = MapMain::GetMapSize(data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
+    
     if (directory.empty())
         directory = data.Directory;
 
     std::filesystem::create_directory(directory);
+    SaveConfigFile(directory);
+    GZIP::GZip_CompressToFile(data.Data.data(), mapDataSize, "temp.gz");
+
+    try {
+        if (std::filesystem::exists(directory + MAP_FILENAME_DATA))
+            std::filesystem::remove(directory + MAP_FILENAME_DATA);
+
+        std::filesystem::copy("temp.gz", directory + MAP_FILENAME_DATA, std::filesystem::copy_options::overwrite_existing);
+    } catch (std::filesystem::filesystem_error& e) {
+        Logger::LogAdd(MODULE_NAME, "Could not copy mapfile: " + stringulate(e.what()), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+    }
+
+    Logger::LogAdd(MODULE_NAME, "File saved [" + directory + MAP_FILENAME_DATA + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+
+    return true;
+}
+
+void Map::SaveConfigFile(std::string directory) {
     std::string configName = directory + MAP_FILENAME_CONFIG;
     std::ofstream oStream(configName);
     if (oStream.is_open()) {
@@ -802,22 +821,45 @@ bool Map::Save(std::string directory) {
         oStream << "Jumpheight = " << data.JumpHeight << "\n";
         oStream.close();
     }
-    configName = directory + MAP_FILENAME_RANK; // -- TODO: Rank boxes
-    configName = directory + MAP_FILENAME_TELEPORTER; // -- TODO: Teleporters
-    //System::mainMutex.unlock();
-    GZIP::GZip_CompressToFile(data.Data.data(), mapDataSize, "temp.gz");
-    try {
-        if (std::filesystem::exists(directory + MAP_FILENAME_DATA))
-            std::filesystem::remove(directory + MAP_FILENAME_DATA);
+}
 
-        std::filesystem::copy("temp.gz", directory + MAP_FILENAME_DATA, std::filesystem::copy_options::overwrite_existing);
-    } catch (std::filesystem::filesystem_error& e) {
-        Logger::LogAdd(MODULE_NAME, "Could not copy mapfile: " + stringulate(e.what()), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+void Map::SaveRankBoxFile(std::string directory) {
+    PreferenceLoader pLoader(MAP_FILENAME_RANK, directory, true);
+    int rBoxNumber = 0;
+    for(auto const &rb : data.RankBoxes) {
+        pLoader.SelectGroup(stringulate(rBoxNumber));
+        pLoader.Write("X_0", rb.X0);
+        pLoader.Write("Y_0", rb.Y0);
+        pLoader.Write("Z_0", rb.Z0);
+        pLoader.Write("X_1", rb.X1);
+        pLoader.Write("Y_1", rb.Y1);
+        pLoader.Write("Z_1", rb.Z1);
+        pLoader.Write("Rank", rb.Rank);
     }
-    //const std::scoped_lock<std::mutex> pLock(System::mainMutex);
-    Logger::LogAdd(MODULE_NAME, "File saved [" + directory + MAP_FILENAME_DATA + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    pLoader.SaveFile();
+    Logger::LogAdd(MODULE_NAME, "File saved [" + directory + MAP_FILENAME_RANK + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+}
 
-    return true;
+void Map::SaveTeleporterFile(std::string directory) {
+    PreferenceLoader pLoader(MAP_FILENAME_TELEPORTER, directory, true);
+    for (auto const &tp : data.Teleporter) {
+        pLoader.SelectGroup(tp.first);
+        pLoader.Write("X_0", tp.second.X0);
+        pLoader.Write("Y_0", tp.second.Y0);
+        pLoader.Write("Z_0", tp.second.Z0);
+        pLoader.Write("X_1", tp.second.X1);
+        pLoader.Write("Y_1", tp.second.Y1);
+        pLoader.Write("Z_1", tp.second.Z1);
+        pLoader.Write("Dest_Map_Unique_ID", tp.second.DestMapUniqueId);
+        pLoader.Write("Dest_Map_ID", tp.second.DestMapId);
+        pLoader.Write("Dest_X", tp.second.DestX);
+        pLoader.Write("Dest_Y", tp.second.DestY);
+        pLoader.Write("Dest_Z", tp.second.DestZ);
+        pLoader.Write("Dest_Rot", tp.second.DestRot);
+        pLoader.Write("Dest_Look", tp.second.DestLook);
+    }
+    pLoader.SaveFile();
+    Logger::LogAdd(MODULE_NAME, "File saved [" + directory + MAP_FILENAME_TELEPORTER + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void Map::Load(std::string directory) {
@@ -829,6 +871,47 @@ void Map::Load(std::string directory) {
     if (!std::filesystem::exists(directory)) {
         return;
     }
+    LoadConfigFile(directory);
+
+    int sizeX = data.SizeX;
+    int sizeY = data.SizeY;
+    int sizeZ = data.SizeZ;
+    int mapSize = sizeX * sizeY * sizeZ;
+
+    int dSize = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.Data.data()), mapSize * MAP_BLOCK_ELEMENT_SIZE, directory + MAP_FILENAME_DATA);
+
+    if (dSize == (mapSize * MAP_BLOCK_ELEMENT_SIZE)) {
+        Undo::ClearMap(data.ID);
+
+        for (int iz = 0; iz < data.SizeZ; iz++) {
+            for (int iy = 0; iy < data.SizeY; iy++) {
+                for (int ix = 0; ix < data.SizeX; ix++) {
+                    int index = MapMain::GetMapOffset(ix, iy, iz, sizeX, sizeY, sizeZ, MAP_BLOCK_ELEMENT_SIZE);
+                    unsigned char point = data.Data.at(index);
+                    MapBlock b = blockMain->GetBlock(point);
+
+                    if (b.ReplaceOnLoad >= 0)
+                        data.Data.at(index) = static_cast<char>(b.ReplaceOnLoad);
+
+                    data.blockCounter.at(point) += 1;
+                    
+                    if (b.PhysicsOnLoad) {
+                        QueueBlockPhysics(ix, iy, iz);
+                    }
+                }
+            }
+        }
+
+        Logger::LogAdd(MODULE_NAME, "Map Loaded [" + directory + MAP_FILENAME_DATA + "] (" + stringulate(sizeX) + "x" + stringulate(sizeY) + "x" + stringulate(sizeZ) + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    }
+
+    // -- Load RankBox file
+    LoadRankBoxFile(directory);
+    // -- Load Teleporter file
+    LoadTeleporterFile(directory);
+}
+
+void Map::LoadConfigFile(std::string directory) {
     PreferenceLoader pLoader(MAP_FILENAME_CONFIG, directory);
     pLoader.LoadFile();
     int sizeX = pLoader.Read("Size_X", 0);
@@ -837,6 +920,7 @@ void Map::Load(std::string directory) {
     int mapSize = sizeX * sizeY * sizeZ;
 
     Resize(sizeX, sizeY, sizeZ);
+
     data.UniqueID = pLoader.Read("Unique_ID", MapMain::GetUniqueId());
     data.RankBuild = pLoader.Read("Rank_Build", 0);
     data.RankJoin = pLoader.Read("Rank_Join", 0);
@@ -868,38 +952,9 @@ void Map::Load(std::string directory) {
     data.ThirdPerson = (pLoader.Read("Allow_Thirdperson", 1) > 0);
     data.Weather = (pLoader.Read("Allow_Weatherchange", 1) > 0);
     data.JumpHeight = pLoader.Read("Jumpheight", -1);
+}
 
-    data.Data.resize(mapSize * MAP_BLOCK_ELEMENT_SIZE);
-
-    int dSize = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.Data.data()), mapSize * MAP_BLOCK_ELEMENT_SIZE, directory + MAP_FILENAME_DATA);
-    if (dSize == (mapSize * MAP_BLOCK_ELEMENT_SIZE)) {
-        Undo::ClearMap(data.ID);
-        for(int i = 0; i < 255; i++) {
-            data.blockCounter.at(i) = 0;
-        }
-        for (int iz = 0; iz < data.SizeZ; iz++) {
-            for (int iy = 0; iy < data.SizeY; iy++) {
-                for (int ix = 0; ix < data.SizeX; ix++) {
-                    int index = MapMain::GetMapOffset(ix, iy, iz, sizeX, sizeY, sizeZ, MAP_BLOCK_ELEMENT_SIZE);
-                    unsigned char point = data.Data.at(index);
-                    MapBlock b = blockMain->GetBlock(point);
-
-                    if (b.ReplaceOnLoad >= 0)
-                        data.Data.at(index) = static_cast<char>(b.ReplaceOnLoad);
-
-                    data.blockCounter.at(point) += 1;
-                    
-                    if (b.PhysicsOnLoad) {
-                        QueueBlockPhysics(ix, iy, iz);
-                    }
-                }
-            }
-        }
-
-        Logger::LogAdd(MODULE_NAME, "Map Loaded [" + directory + MAP_FILENAME_DATA + "] (" + stringulate(sizeX) + "x" + stringulate(sizeY) + "x" + stringulate(sizeZ) + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-    }
-
-    // -- Load RankBox file
+void Map::LoadRankBoxFile(std::string directory) {
     PreferenceLoader rBoxLoader(MAP_FILENAME_RANK, directory);
     rBoxLoader.LoadFile();
     for (auto const &fi : rBoxLoader.SettingsDictionary) {
@@ -914,7 +969,9 @@ void Map::Load(std::string directory) {
         mre.Rank = rBoxLoader.Read("Rank", 0);
         data.RankBoxes.push_back(mre);
     }
-    // -- Load Teleporter file
+}
+
+void Map::LoadTeleporterFile(std::string directory) {
     PreferenceLoader tpLoader(MAP_FILENAME_TELEPORTER, directory);
     tpLoader.LoadFile();
     for (auto const &tp : tpLoader.SettingsDictionary) {
@@ -947,9 +1004,9 @@ void Map::Reload() {
 
     data.loading = true;
     int mapSize = data.SizeX * data.SizeY * data.SizeZ;
-    data.Data.resize(mapSize * MAP_BLOCK_ELEMENT_SIZE);// = Mem::Allocate(mapSize * MAP_BLOCK_ELEMENT_SIZE, __FILE__, __LINE__, "Map_ID = " + stringulate(data.ID));
-    data.BlockchangeData.resize(1+mapSize/8);// = Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Blockchange) = " + stringulate(data.ID));
-    data.PhysicData.resize(1+mapSize/8);// = Mem::Allocate(1+mapSize/8, __FILE__, __LINE__, "Map_ID(Physics) = " + stringulate(data.ID));
+    data.Data.resize(mapSize * MAP_BLOCK_ELEMENT_SIZE);
+    data.BlockchangeData.resize(1+mapSize/8);
+    data.PhysicData.resize(1+mapSize/8);
 
     std::string filenameData = data.Directory + MAP_FILENAME_DATA;
     int unzipResult = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.Data.data()), mapSize * MAP_BLOCK_ELEMENT_SIZE, data.Directory + MAP_FILENAME_DATA);
@@ -995,9 +1052,6 @@ void Map::Unload() {
     data.Data.resize(1);
     data.BlockchangeData.resize(1);
     data.PhysicData.resize(1);
-//    Mem::Free(data.Data);
-//    Mem::Free(data.BlockchangeData);
-//    Mem::Free(data.PhysicData);
     data.loaded = false;
     Logger::LogAdd(MODULE_NAME, "Map unloaded (" + data.Name + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
@@ -1111,7 +1165,7 @@ void Map::BlockChange(const std::shared_ptr<NetworkClient>& client, unsigned sho
     
     Block* bm = Block::GetInstance();
 
-    if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
+    if (BlockInBounds(X, Y, Z)) {
         int blockOffset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
         auto &rawBlock = data.Data.at(blockOffset);
         unsigned char rawNewType = 0;
@@ -1158,7 +1212,7 @@ void Map::BlockChange(const std::shared_ptr<NetworkClient>& client, unsigned sho
 }
 
 void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, unsigned short Z, unsigned char type, bool undo, bool physic, bool send, unsigned char priority) {
-    if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
+    if (BlockInBounds(X, Y, Z)) {
         Block* bm = Block::GetInstance();
         int blockOffset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
         auto &atLoc = data.Data.at(blockOffset);
@@ -1211,7 +1265,7 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
              std::this_thread::sleep_for(std::chrono::milliseconds(100));
          }
      }
-    if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
+    if (BlockInBounds(X, Y, Z)) {
         int oneOffset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
         
         return data.Data.at(oneOffset);
@@ -1221,7 +1275,7 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
 }
 
 void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z, unsigned char priority, unsigned char oldType) {
-    if (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ) {
+    if (BlockInBounds(X, Y, Z)) {
         int offset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, 1);
         bool blockChangeFound = data.BlockchangeData.at(offset/8) & (1 << (offset % 8));
 
@@ -1242,7 +1296,6 @@ void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z,
                 return;
             }
             data.ChangeQueue.push_back(changeItem);
-            //data.ChangeQueue.insert(data.ChangeQueue.begin() + insertIndex, changeItem);
         }
     }
 }
@@ -1322,9 +1375,7 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
 }
 
 unsigned short Map::GetBlockPlayer(unsigned short X, unsigned short Y, unsigned short Z) {
-    bool blockInBounds = (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ);
-
-    if (blockInBounds) {
+    if (BlockInBounds(X, Y, Z)) {
         int index = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
         short player = 0;
         player |= data.Data.at(index+2);
@@ -1337,9 +1388,7 @@ unsigned short Map::GetBlockPlayer(unsigned short X, unsigned short Y, unsigned 
 }
 
 void Map::QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
-    bool isBlockInBounds = (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ);
-
-    if (!isBlockInBounds)
+    if (!BlockInBounds(X, Y, Z))
         return;
 
     int offset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, 1);
@@ -1440,4 +1489,161 @@ void Map::SetRankBox(unsigned short X0, unsigned short Y0, unsigned short Z0, un
     mre.Y1 = Y1;
     mre.X1 = X1;
     data.RankBoxes.push_back(mre);
+}
+
+void Map::AddTeleporter(std::string id, MinecraftLocation start, MinecraftLocation end, MinecraftLocation destination, std::string destMapUniqueId, int destMapId) {
+    MapTeleporterElement mte;
+    Vector3S startVec = start.GetAsBlockCoords();
+    Vector3S endVec = end.GetAsBlockCoords();
+    Vector3S destVec = end.GetAsBlockCoords();
+
+    if (startVec.X > endVec.X) {
+        int tmp = startVec.X;
+        startVec.X = endVec.X;
+        endVec.X = tmp;
+    }
+    if (startVec.Y > endVec.Y) {
+        int tmp = startVec.Y;
+        startVec.Y = endVec.Y;
+        endVec.Y = tmp;
+    }
+    if (startVec.Z > endVec.Z) {
+        int tmp = startVec.Z;
+        startVec.Z = endVec.Z;
+        endVec.Z = tmp;
+    }
+
+    mte.Id = id;
+    mte.X0 = startVec.X;
+    mte.Y0 = startVec.Y;
+    mte.Z0 = startVec.Z;
+    mte.X1 = endVec.X;
+    mte.Y1 = endVec.Y;
+    mte.Z1 = endVec.Z;
+    mte.DestX = destVec.X;
+    mte.DestY = destVec.Y;
+    mte.DestZ = destVec.Z;
+    mte.DestLook = destination.Look;
+    mte.DestRot = destination.Rotation;
+    mte.DestMapId = destMapId;
+    mte.DestMapUniqueId = destMapUniqueId;
+
+    data.Teleporter.insert(std::make_pair(id, mte));
+}
+
+void Map::DeleteTeleporter(std::string id) {
+    if (data.Teleporter.find(id) == data.Teleporter.end()) {
+        return;
+    }
+
+    data.Teleporter.erase(id);
+}
+
+void Map::MapExport(MinecraftLocation start, MinecraftLocation end, std::string filename) {
+    Vector3S startVec = start.GetAsBlockCoords();
+    Vector3S endVec = end.GetAsBlockCoords();
+
+    if (startVec.X > endVec.X) {
+        int tmp = startVec.X;
+        startVec.X = endVec.X;
+        endVec.X = tmp;
+    }
+    if (startVec.Y > endVec.Y) {
+        int tmp = startVec.Y;
+        startVec.Y = endVec.Y;
+        endVec.Y = tmp;
+    }
+    if (startVec.Z > endVec.Z) {
+        int tmp = startVec.Z;
+        startVec.Z = endVec.Z;
+        endVec.Z = tmp;
+    }
+    int sizeX = endVec.X - startVec.X + 1;
+    int sizeY = endVec.Y - startVec.Y + 1;
+    int sizeZ = endVec.Z - startVec.Z + 1;
+    int mapSize = sizeX * sizeY * sizeZ;
+    std::vector<unsigned char> tempData(mapSize+10);
+    int offset = 0;
+    // -- Version Number: 1000
+    tempData[offset++] = 232;
+    tempData[offset++] = 3;
+    tempData[offset++] = 0;
+    tempData[offset++] = 0;
+    // -- Sizes as shorts.
+    tempData[offset++] = sizeX & 0xFF;
+    tempData[offset++] = (sizeX & 0xFF00) >> 8;
+    tempData[offset++] = sizeY & 0xFF;
+    tempData[offset++] = (sizeY & 0xFF00) >> 8;
+    tempData[offset++] = sizeZ & 0xFF;
+    tempData[offset++] = (sizeZ & 0xFF00) >> 8;
+    // -- now block data.
+    for (int iz = startVec.Z; iz <= endVec.Z; iz++) {
+        for (int iy = startVec.Y; iy <= endVec.Y; iy++) {
+            for (int ix = startVec.X; ix <= endVec.X; ix++) {
+                if (BlockInBounds(ix, iy, iz)) {
+                    unsigned char currentBlock = GetBlockType(ix, iy, iz);
+                    tempData[offset++] = currentBlock;
+                } else {
+                    tempData[offset++] = 0;
+                }
+            }
+        }
+    }
+    // -- compress it
+    GZIP::GZip_CompressToFile(tempData.data(), mapSize+10, filename);
+    tempData.clear();
+    Logger::LogAdd(MODULE_NAME, "Map exported (" + filename + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+}
+
+void Map::MapImport(std::string filename, MinecraftLocation location, short scaleX, short scaleY, short scaleZ) {
+    // -- Decompress
+    std::vector<unsigned char> tempData(10);
+    int outputLen = GZIP::GZip_DecompressFromFile(tempData.data(), 10, filename);
+    if (outputLen != 10) {
+        Logger::LogAdd(MODULE_NAME, "Map not imported: Error unzipping.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        return;
+    }
+    // -- Read version and size info
+    int versionNumber = 0;
+    versionNumber = tempData[0];
+    versionNumber |= tempData[1] << 8;
+    versionNumber |= tempData[2] << 16;
+    versionNumber |= tempData[3] << 24;
+    if (versionNumber != 1000) {
+        Logger::LogAdd(MODULE_NAME, "Map not imported, unknown version [" + filename + "]", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        return;
+    }
+    Vector3S startLoc = location.GetAsBlockCoords();
+    short sizeX = 0;
+    short sizeY = 0;
+    short sizeZ = 0;
+    sizeX = tempData[4];
+    sizeX |= tempData[5] << 8;
+    sizeY = tempData[6];
+    sizeY |= tempData[7] << 8;
+    sizeZ = tempData[8];
+    sizeZ |= tempData[9] << 8;
+    int mapSize = sizeX * sizeY * sizeZ;
+    int X1 = startLoc.X + sizeX * scaleX;
+    int Y1 = startLoc.Y + sizeY * scaleY;
+    int Z1 = startLoc.Z + sizeZ * scaleZ;
+    tempData.resize(mapSize + 10);
+    GZIP::GZip_DecompressFromFile(tempData.data(), mapSize + 10, filename);
+    for (int jz = startLoc.Z; jz < Z1; jz++) {
+        int iz = (jz-startLoc.Z) / scaleZ;
+        for (int jy = startLoc.Y; jy < Y1; jy++) {
+            int iy = (jy-startLoc.Y) / scaleY;
+            for (int jx = startLoc.X; jx < X1; jx++) {
+                int ix = (jx - startLoc.X) / scaleX;
+                int location = MapMain::GetMapOffset(ix, iy, iz, sizeX, sizeY, sizeZ, 1)+10;
+                BlockChange(-1, jx, jy, jz, tempData.at(location), true, false, true, 10);
+            }
+        }
+    }
+    Logger::LogAdd(MODULE_NAME, "Map imported. (" + filename + ").", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    // -- If correct version, iterate through, apply scale, and map_block_change.
+}
+
+bool Map::BlockInBounds(unsigned short X, unsigned short Y, unsigned short Z) {
+    return (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ);
 }

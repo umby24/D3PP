@@ -16,6 +16,10 @@
 #include "Rank.h"
 #include "EventSystem.h"
 #include "Block.h"
+#include "MinecraftLocation.h"
+#include "CPE.h"
+#include "Files.h"
+
 // -- Events..
 #include "events/EventChatAll.h"
 #include "events/EventChatMap.h"
@@ -239,6 +243,7 @@ void LuaPlugin::BindFunctions() {
     lua_register(state, "Map_Action_Add_Delete", &dispatch<&LuaPlugin::LuaMapActionAddDelete>);
     lua_register(state, "Map_Resend", &dispatch<&LuaPlugin::LuaMapResend>);
     lua_register(state, "Map_Export", &dispatch<&LuaPlugin::LuaMapExport>);
+    lua_register(state, "Map_Import", &dispatch<&LuaPlugin::LuaMapImportPlayer>);
     // -- Block Functions
     lua_register(state, "Block_Get_Table", &dispatch<&LuaPlugin::LuaBlockGetTable>);
     lua_register(state, "Block_Get_Name", &dispatch<&LuaPlugin::LuaBlockGetName>);
@@ -251,9 +256,13 @@ void LuaPlugin::BindFunctions() {
     lua_register(state, "System_Message_Network_Send_2_All", &dispatch<&LuaPlugin::LuaMessageToAll>);
     lua_register(state, "System_Message_Network_Send", &dispatch<&LuaPlugin::LuaMessage>);
     lua_register(state, "Lang_Get", &dispatch<&LuaPlugin::LuaLanguageGet>);
+    lua_register(state, "Files_File_Get", &dispatch<&LuaPlugin::LuaFileGet>);
+    lua_register(state, "Files_Folder_Get", &dispatch<&LuaPlugin::LuaFolderGet>);
     // -- Events
     lua_register(state, "Event_Add", &dispatch<&LuaPlugin::LuaEventAdd>);
     lua_register(state, "Event_Delete", &dispatch<&LuaPlugin::LuaEventDelete>);
+    // -- CPE
+    lua_register(state, "Client_Get_Extension", &dispatch<&LuaPlugin::LuaClientGetExtension>);
  //   lua_register(state, "CPE_Get_Held_Block", &dispatch<&LuaPlugin::LuaGetHeldBlock>);
 
 }
@@ -2309,6 +2318,35 @@ int LuaPlugin::LuaMapResend(lua_State *L) {
 }
 
 int LuaPlugin::LuaMapExport(lua_State *L) {
+        int nArgs = lua_gettop(L);
+
+    if (nArgs != 8) {
+        Logger::LogAdd("Lua", "LuaError: Map_Export called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    Vector3S startLoc;
+    Vector3S endLoc;
+    int mapId = lua_tointeger(L, 1);
+    startLoc.X = lua_tointeger(L, 2);
+    startLoc.Y = lua_tointeger(L, 3);
+    startLoc.Z = lua_tointeger(L, 4);
+    endLoc.X = lua_tointeger(L, 5);
+    endLoc.Y = lua_tointeger(L, 6);
+    endLoc.Z = lua_tointeger(L, 7);
+    std::string fileName(lua_tostring(L, 8));
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> givenMap = mm->GetPointer(mapId);
+    
+    MinecraftLocation start;
+    start.SetAsBlockCoords(startLoc);
+    
+    MinecraftLocation end;
+    end.SetAsBlockCoords(endLoc);
+
+    if (givenMap != nullptr) {
+        givenMap->MapExport(start, end, fileName);
+    }
     return 0;
 }
 
@@ -2317,6 +2355,32 @@ int LuaPlugin::LuaMapExportGetSize(lua_State *L) {
 }
 
 int LuaPlugin::LuaMapImportPlayer(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 9) {
+        Logger::LogAdd("Lua", "LuaError: Map_Import called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int playerNumber = lua_tointeger(L, 1);
+    std::string fileName(lua_tostring(L, 2));
+    int mapId = lua_tointeger(L, 3);
+    Vector3S placeLoc;
+    placeLoc.X = lua_tointeger(L, 4);
+    placeLoc.Y = lua_tointeger(L, 5);
+    placeLoc.Z = lua_tointeger(L, 6);
+    short scaleX = lua_tointeger(L, 7);
+    short scaleY = lua_tointeger(L, 8);
+    short scaleZ = lua_tointeger(L, 9);
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> givenMap = mm->GetPointer(mapId);
+    
+    MinecraftLocation start;
+    start.SetAsBlockCoords(placeLoc);
+
+     if (givenMap != nullptr) {
+        givenMap->MapImport(fileName, start, scaleX, scaleY, scaleZ);
+    }
+
     return 0;
 }
 
@@ -2411,11 +2475,57 @@ int LuaPlugin::LuaBlockGetClientType(lua_State *L) {
     return 1;
 }
 
+int LuaPlugin::LuaClientGetExtension(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Block_Get_Client_Type() called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int clientId = lua_tointeger(L, 1);
+    std::string extension(lua_tostring(L, 2));
+    int result = 0;
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> c = nm->GetClient(clientId);
+
+    if (c == nullptr) {
+        if (c->LoggedIn && c->CPE) {
+            result = CPE::GetClientExtVersion(c, extension);
+        }
+    }
+
+    lua_pushinteger(L, result);
+    return 1;
+}
+
+int LuaPlugin::LuaFileGet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Files_File_Get called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    std::string fileName(lua_tostring(L, 1));
+    Files* f = Files::GetInstance();
+    lua_pushstring(L, f->GetFile(fileName).c_str());
+    return 1;
+}
 
 
+int LuaPlugin::LuaFolderGet(lua_State *L) {
+    int nArgs = lua_gettop(L);
 
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Files_Folder_Get called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
 
-
-
+    std::string fileName(lua_tostring(L, 1));
+    Files* f = Files::GetInstance();
+    lua_pushstring(L, f->GetFolder(fileName).c_str());
+    return 1;
+}
 
 

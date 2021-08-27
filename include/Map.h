@@ -14,6 +14,7 @@
 #include <filesystem>
 
 #include "TaskScheduler.h"
+#include "MinecraftLocation.h"
 
 class NetworkClient;
 enum MapAction {
@@ -120,14 +121,14 @@ struct MapData {
     std::vector<unsigned char> Data;
     std::vector<unsigned char> PhysicData;
     std::vector<unsigned char> BlockchangeData;
-//    char* Data; // -- Map data
-//    char* PhysicData; // -- Physics state, (1 Byte -> 8 blocks)
-//    char* BlockchangeData; // -- Blockchange state (1 byte -> 8 blocks)
+
     std::recursive_mutex physicsQueueMutex;
+
     std::vector<MapBlockDo> PhysicsQueue;
     std::vector<MapBlockChanged> ChangeQueue;
     std::vector<UndoStep> UndoCache;
     std::vector<MapRankElement> RankBoxes;
+
     std::map<std::string, MapTeleporterElement> Teleporter;
     bool PhysicsStopped;
     bool BlockchangeStopped;
@@ -187,6 +188,12 @@ public:
     void ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z);
     bool Save(std::string directory);
     void Load(std::string directory);
+    void LoadTeleporterFile(std::string directory);
+    void LoadRankBoxFile(std::string directory);
+    void LoadConfigFile(std::string directory);
+    void SaveTeleporterFile(std::string directory);
+    void SaveRankBoxFile(std::string directory);
+    void SaveConfigFile(std::string directory);
     unsigned char GetBlockType(unsigned short X, unsigned short Y, unsigned short Z);
     unsigned short GetBlockPlayer(unsigned short X, unsigned short Y, unsigned short Z);
     int BlockGetRank(unsigned short X, unsigned short Y, unsigned short Z);
@@ -195,6 +202,11 @@ public:
     void Unload();
     void Send(int clientId);
     void Resend();
+    void AddTeleporter(std::string id, MinecraftLocation start, MinecraftLocation end, MinecraftLocation destination, std::string destMapUniqueId, int destMapId);
+    void DeleteTeleporter(std::string id);
+    void MapExport(MinecraftLocation start, MinecraftLocation end, std::string filename);
+    void MapImport(std::string filename, MinecraftLocation location, short scaleX, short scaleY, short scaleZ);
+    bool BlockInBounds(unsigned short X, unsigned short Y, unsigned short Z);
     std::mutex BlockChangeMutex;
 protected:
 
