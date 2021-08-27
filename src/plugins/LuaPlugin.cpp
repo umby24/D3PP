@@ -69,7 +69,6 @@ LuaPlugin::LuaPlugin() {
 
     state = luaL_newstate();
     luaL_openlibs(state);
-    luaL_dostring(state, "print(\"hello world from lua\")");
     *static_cast<LuaPlugin**>(lua_getextraspace(this->state)) = this;
     executionMutex;
 
@@ -127,7 +126,7 @@ void LuaPlugin::HandleEvent(const Event& event) {
 
     for( auto&& observer : observers ) {
         executionMutex.lock();
-        lua_getglobal(state, observer.c_str()); // -- Get the function to be called
+        lua_getglobal(state, observer.functionName.c_str()); // -- Get the function to be called
         if (!lua_isfunction(state, -1)) {
             lua_pop(state, 1);
             executionMutex.unlock();
@@ -251,7 +250,19 @@ void LuaPlugin::BindFunctions() {
     lua_register(state, "Block_Get_Rank_Delete", &dispatch<&LuaPlugin::LuaBlockGetRankDelete>);
     lua_register(state, "Block_Get_Client_Type", &dispatch<&LuaPlugin::LuaBlockGetClientType>);
     // -- Rank Functions
-
+    lua_register(state, "Rank_Get_Table", &dispatch<&LuaPlugin::LuaRankGetTable>);
+    lua_register(state, "Rank_Add", &dispatch<&LuaPlugin::LuaRankAdd>);
+    lua_register(state, "Rank_Delete", &dispatch<&LuaPlugin::LuaRankDelete>);
+    lua_register(state, "Rank_Get_Name", &dispatch<&LuaPlugin::LuaRankGetName>);
+    lua_register(state, "Rank_Get_Prefix", &dispatch<&LuaPlugin::LuaRankGetPrefix>);
+    lua_register(state, "Rank_Get_Suffix", &dispatch<&LuaPlugin::LuaRankGetSuffix>);
+    lua_register(state, "Rank_Get_Root", &dispatch<&LuaPlugin::LuaRankGetRoot>);
+    // -- Teleporter functions
+    lua_register(state, "Teleporter_Get_Table", &dispatch<&LuaPlugin::LuaTeleporterGetTable>);
+    lua_register(state, "Teleporter_Add", &dispatch<&LuaPlugin::LuaTeleporterAdd>);
+    lua_register(state, "Teleporter_Delete", &dispatch<&LuaPlugin::LuaTeleporterDelete>);
+    lua_register(state, "Teleporter_Get_Box", &dispatch<&LuaPlugin::LuaTeleporterGetBox>);
+    lua_register(state, "Teleporter_Get_Destination", &dispatch<&LuaPlugin::LuaTeleporterGetDestination>);
     // -- System Functions
     lua_register(state, "System_Message_Network_Send_2_All", &dispatch<&LuaPlugin::LuaMessageToAll>);
     lua_register(state, "System_Message_Network_Send", &dispatch<&LuaPlugin::LuaMessage>);
@@ -263,7 +274,10 @@ void LuaPlugin::BindFunctions() {
     lua_register(state, "Event_Delete", &dispatch<&LuaPlugin::LuaEventDelete>);
     // -- CPE
     lua_register(state, "Client_Get_Extension", &dispatch<&LuaPlugin::LuaClientGetExtension>);
- //   lua_register(state, "CPE_Get_Held_Block", &dispatch<&LuaPlugin::LuaGetHeldBlock>);
+    lua_register(state, "CPE_Selection_Cuboid_Add", &dispatch<&LuaPlugin::LuaSelectionCuboidAdd>);
+    lua_register(state, "CPE_Selection_Cuboid_Delete", &dispatch<&LuaPlugin::LuaSelectionCuboidDelete>);
+    lua_register(state, "CPE_Get_Held_Block", &dispatch<&LuaPlugin::LuaGetHeldBlock>);
+    lua_register(state, "CPE_Set_Held_Block", &dispatch<&LuaPlugin::LuaSetHeldBlock>);
 
 }
 
@@ -315,6 +329,29 @@ void LuaPlugin::MainFunc() {
         newFile.FilePath = f;
         newFile.LastLoaded = 0;
         _files.insert(std::make_pair(f, newFile));
+    }
+    auto timerDescriptor = Dispatcher::getDescriptor("Timer");
+    if (_luaEvents.find(timerDescriptor) == _luaEvents.end())
+        return;
+
+    auto &eventsAt = _luaEvents[timerDescriptor];
+    for(auto &e : eventsAt) {
+        if (clock() >= (e.lastRun + e.duration)) {
+            e.lastRun = clock();
+            executionMutex.lock();
+            lua_getglobal(state, e.functionName.c_str()); // -- Get the function to be called
+            if (!lua_isfunction(state, -1)) {
+                lua_pop(state, 1);
+                executionMutex.unlock();
+                continue;
+            }
+            if (lua_pcall(state, 0, 0, 0) != 0) { // -- Call the function.
+                bail(state, "[Timer Event Handler]"); // -- catch errors
+                executionMutex.unlock();
+                return;
+            }
+            executionMutex.unlock();
+        }
     }
 }
 
@@ -1707,7 +1744,7 @@ int LuaPlugin::LuaEventAdd(lua_State *L) {
     std::string function(lua_tostring(L, 2));
     std::string type(lua_tostring(L, 3));
     int setOrCheck = lua_tointeger(L, 4);
-    int time = lua_tointeger(L, 5);
+    int timed = lua_tointeger(L, 5);
     int mapId = lua_tointeger(L, 6);
 
     if (!Dispatcher::hasdescriptor(type)) {
@@ -1716,19 +1753,27 @@ int LuaPlugin::LuaEventAdd(lua_State *L) {
     }
     
     auto typeAsEvent = Dispatcher::getDescriptor(type);
+
+    LuaEvent newEvent {
+            function,
+            typeAsEvent,
+            clock(),
+            timed
+    };
+
     if (setOrCheck == 1) {
         if (_luaEvents.find(typeAsEvent) != _luaEvents.end()) {
-            _luaEvents[typeAsEvent].push_back(function);
+            _luaEvents[typeAsEvent].push_back(newEvent);
         } else {
-            _luaEvents.insert(std::make_pair(typeAsEvent, std::vector<std::string>()));
-            _luaEvents[typeAsEvent].push_back(function);
+            _luaEvents.insert(std::make_pair(typeAsEvent, std::vector<LuaEvent>()));
+            _luaEvents[typeAsEvent].push_back(newEvent);
         }
     } else {
         bool eventExists = false;
 
         if (_luaEvents.find(typeAsEvent) != _luaEvents.end()) {
             for(const auto &i : _luaEvents[typeAsEvent]) {
-                if (i == typeAsEvent) {
+                if (i.type == typeAsEvent && i.functionName == function) {
                     eventExists = true;
                     break;
                 }
@@ -2526,6 +2571,474 @@ int LuaPlugin::LuaFolderGet(lua_State *L) {
     Files* f = Files::GetInstance();
     lua_pushstring(L, f->GetFolder(fileName).c_str());
     return 1;
+}
+
+int LuaPlugin::LuaRankGetTable(lua_State *L) {
+    Rank* rm = Rank::GetInstance();
+    int numRanks = rm->_ranks.size();
+    int index = 1;
+
+    lua_newtable(L);
+
+    if (numRanks > 0) {
+        for (auto const &nc : rm->_ranks) {
+            lua_pushinteger(L, index++);
+            lua_pushinteger(L, nc.first);
+            lua_settable(L, -3);
+        }
+    }
+
+    lua_pushinteger(L, numRanks);
+
+    return 2;
+}
+
+int LuaPlugin::LuaRankAdd(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 4) {
+        Logger::LogAdd("Lua", "LuaError: Rank_Add called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int rankNumber = lua_tointeger(L, 1);
+    std::string rankName(lua_tostring(L, 2));
+    std::string rankPrefix(lua_tostring(L, 3));
+    std::string rankSuffix(lua_tostring(L, 4));
+    RankItem newRankItem;
+    newRankItem.Name = rankName;
+    newRankItem.Rank = rankNumber;
+    newRankItem.Prefix = rankPrefix;
+    newRankItem.Suffix = rankSuffix;
+    
+    Rank* r = Rank::GetInstance();
+    r->Add(newRankItem);
+    return 0;
+}
+
+int LuaPlugin::LuaRankDelete(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Rank_Delete called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int rankNumber = lua_tointeger(L, 1);
+    int isExact = lua_tointeger(L, 2);
+
+    Rank* r = Rank::GetInstance();
+    r->Delete(rankNumber, isExact > 0);
+
+    return 0;
+}
+
+int LuaPlugin::LuaRankGetName(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Rank_Get_Name called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int rankNumber = lua_tointeger(L, 1);
+    int isExact = lua_tointeger(L, 2);
+
+    Rank* r = Rank::GetInstance();
+    RankItem ri = r->GetRank(rankNumber, isExact > 0);
+    lua_pushstring(L, ri.Name.c_str());
+
+    return 1;
+}
+
+int LuaPlugin::LuaRankGetPrefix(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Rank_Get_Prefix called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int rankNumber = lua_tointeger(L, 1);
+    int isExact = lua_tointeger(L, 2);
+
+    Rank* r = Rank::GetInstance();
+    RankItem ri = r->GetRank(rankNumber, isExact > 0);
+    lua_pushstring(L, ri.Prefix.c_str());
+
+    return 1;
+}
+
+int LuaPlugin::LuaRankGetSuffix(lua_State *L) {
+     int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Rank_Get_Suffix called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int rankNumber = lua_tointeger(L, 1);
+    int isExact = lua_tointeger(L, 2);
+
+    Rank* r = Rank::GetInstance();
+    RankItem ri = r->GetRank(rankNumber, isExact > 0);
+    lua_pushstring(L, ri.Suffix.c_str());
+
+    return 1;
+}
+
+int LuaPlugin::LuaRankGetRoot(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Rank_Get_Name called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int rankNumber = lua_tointeger(L, 1);
+    int isExact = lua_tointeger(L, 2);
+
+    Rank* r = Rank::GetInstance();
+    RankItem ri = r->GetRank(rankNumber, isExact > 0);
+    lua_pushinteger(L, ri.Rank);
+
+    return 1;
+}
+
+int LuaPlugin::LuaTeleporterGetTable(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Teleporter_Get_Table called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int mapId = lua_tointeger(L, 1);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> chosenMap = mm->GetPointer(mapId);
+
+    if (chosenMap == nullptr)
+        return 0;
+
+    int numRanks = chosenMap->data.Teleporter.size();
+    int index = 1;
+
+    lua_newtable(L);
+
+    if (numRanks > 0) {
+        for (auto const &nc : chosenMap->data.Teleporter) {
+            lua_pushinteger(L, index++);
+            lua_pushstring(L, nc.second.Id.c_str());
+            lua_settable(L, -3);
+        }
+    }
+
+    lua_pushinteger(L, numRanks);
+
+    return 2;
+}
+
+int LuaPlugin::LuaTeleporterGetBox(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Teleporter_Get_Box called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int mapId = lua_tointeger(L, 1);
+    std::string tpId(lua_tostring(L, 2));
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> chosenMap = mm->GetPointer(mapId);
+
+    if (chosenMap == nullptr)
+        return 0;
+    
+    if (chosenMap->data.Teleporter.find(tpId) == chosenMap->data.Teleporter.end())
+        return 0;
+
+    lua_pushinteger(L, chosenMap->data.Teleporter[tpId].X0);
+    lua_pushinteger(L, chosenMap->data.Teleporter[tpId].Y0);
+    lua_pushinteger(L, chosenMap->data.Teleporter[tpId].Z0);
+    lua_pushinteger(L, chosenMap->data.Teleporter[tpId].X1);
+    lua_pushinteger(L, chosenMap->data.Teleporter[tpId].Y1);
+    lua_pushinteger(L, chosenMap->data.Teleporter[tpId].Z1);
+    return 6;
+}
+
+int LuaPlugin::LuaTeleporterGetDestination(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Teleporter_Get_Destination called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int mapId = lua_tointeger(L, 1);
+    std::string tpId(lua_tostring(L, 2));
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> chosenMap = mm->GetPointer(mapId);
+
+    if (chosenMap == nullptr)
+        return 0;
+    
+    if (chosenMap->data.Teleporter.find(tpId) == chosenMap->data.Teleporter.end())
+        return 0;
+
+    lua_pushstring(L, chosenMap->data.Teleporter[tpId].DestMapUniqueId.c_str());
+    lua_pushinteger(L, chosenMap->data.Teleporter[tpId].DestMapId);
+    lua_pushnumber(L, chosenMap->data.Teleporter[tpId].DestX);
+    lua_pushnumber(L, chosenMap->data.Teleporter[tpId].DestY);
+    lua_pushnumber(L, chosenMap->data.Teleporter[tpId].DestZ);
+    lua_pushnumber(L, chosenMap->data.Teleporter[tpId].DestRot);
+    lua_pushnumber(L, chosenMap->data.Teleporter[tpId].DestLook);
+    return 7;
+}
+
+int LuaPlugin::LuaTeleporterAdd(lua_State *L) {
+        int nArgs = lua_gettop(L);
+
+    if (nArgs != 15) {
+        Logger::LogAdd("Lua", "LuaError: Teleporter_Add called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int mapId = lua_tointeger(L, 1);
+    std::string tpId(lua_tostring(L, 2));
+    Vector3S start;
+    Vector3S end;
+    start.X = lua_tointeger(L, 3);
+    start.Y = lua_tointeger(L, 4);
+    start.Z = lua_tointeger(L, 5);
+
+    end.X = lua_tointeger(L, 6);
+    end.Y = lua_tointeger(L, 7);
+    end.Z = lua_tointeger(L, 8);
+
+    std::string destMapUniqueId(lua_tostring(L, 9));
+    int destMapId = lua_tointeger(L, 10);
+    float DestX = lua_tonumber(L, 11);
+    float DestY = lua_tonumber(L, 12);
+    float DestZ = lua_tonumber(L, 13);
+    float DestRot = lua_tonumber(L, 14);
+    float DestLook = lua_tonumber(L, 15);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> chosenMap = mm->GetPointer(mapId);
+
+    if (chosenMap == nullptr)
+        return 0;
+    
+    if (chosenMap->data.Teleporter.find(tpId) != chosenMap->data.Teleporter.end())
+        return 0;
+
+    MapTeleporterElement newTp {
+        tpId,
+        start.X,
+        start.Y,
+        start.Z,
+        end.X,
+        end.Y,
+        end.Z,
+        destMapUniqueId,
+        destMapId,
+        DestX,
+        DestY,
+        DestZ,
+        DestRot,
+        DestLook
+    };
+
+    chosenMap->data.Teleporter.insert(std::make_pair(tpId, newTp));
+
+    return 0;
+}
+
+int LuaPlugin::LuaTeleporterDelete(lua_State *L) {
+     int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Teleporter_Delete called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int mapId = lua_tointeger(L, 1);
+    std::string tpId(lua_tostring(L, 2));
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> chosenMap = mm->GetPointer(mapId);
+
+    if (chosenMap == nullptr)
+        return 0;
+    
+    if (chosenMap->data.Teleporter.find(tpId) == chosenMap->data.Teleporter.end())
+        return 0;
+    
+    chosenMap->data.Teleporter.erase(tpId);
+    return 0;
+}
+
+int LuaPlugin::LuaServerGetExtensions(lua_State *L) {
+    return 0;
+}
+
+int LuaPlugin::LuaClientGetExtensions(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Client_Get_Extensions called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int clientId = lua_tointeger(L, 1);
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> client = nm->GetClient(clientId);
+    
+    if (client == nullptr || !client->LoggedIn)
+        return 0;
+
+    int number = client->Extensions.size();
+     lua_newtable(L);
+
+    if (number > 0) {
+        for (auto const &nc : client->Extensions) {
+            lua_pushstring(L, nc.first.c_str());
+            lua_pushinteger(L, nc.second);
+            lua_settable(L, -3);
+        }
+    }
+
+    lua_pushinteger(L, number);
+
+    return 2;
+}
+
+int LuaPlugin::LuaSelectionCuboidAdd(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 13) {
+        Logger::LogAdd("Lua", "LuaError: CPE_Selection_Cuboid_Add called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int clientId = lua_tointeger(L, 1);
+    int selectionId = lua_tointeger(L, 2);
+    std::string label(lua_tostring(L, 3));
+    Vector3S start;
+    Vector3S end;
+    start.X = lua_tointeger(L, 4);
+    start.Y = lua_tointeger(L, 5);
+    start.Z = lua_tointeger(L, 6);
+    end.X = lua_tointeger(L, 7);
+    end.Y = lua_tointeger(L, 8);
+    end.Z = lua_tointeger(L, 9);
+    int red = lua_tointeger(L, 10);
+    int green = lua_tointeger(L, 11);
+    int blue = lua_tointeger(L, 12);
+    float opacity = lua_tonumber(L, 13);
+
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+    if (nc == nullptr)
+        return 0;
+    
+    nc->CreateSelection(static_cast<unsigned char>(selectionId), label, start.X, start.Y, start.Z, end.X, end.Y, end.Z, red, green, blue, static_cast<short>(opacity));
+    return 0;
+}
+
+int LuaPlugin::LuaSelectionCuboidDelete(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: CPE_Selection_Cuboid_Delete called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int clientId = lua_tointeger(L, 1);
+    int selectionId = lua_tointeger(L, 2);
+     Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+    if (nc == nullptr)
+        return 0;
+
+    nc->DeleteSelection(static_cast<unsigned char>(selectionId));
+    return 0;
+}
+
+int LuaPlugin::LuaGetHeldBlock(lua_State *L) {
+        int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: CPE_Get_Held_Block called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int clientId = lua_tointeger(L, 1);
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+    if (nc == nullptr)
+        return 0;
+
+    if (nc->LoggedIn && nc->player && nc->player->tEntity) {
+        lua_pushinteger(L, nc->player->tEntity->heldBlock);
+        return 1;
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaSetHeldBlock(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 3) {
+        Logger::LogAdd("Lua", "LuaError: CPE_Set_Held_Block called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int clientId = lua_tointeger(L, 1);
+    int blockId = lua_tointeger(L, 2);
+    int canChange = lua_tointeger(L, 3);
+
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+
+    if (nc == nullptr)
+        return 0;
+
+    if (nc->LoggedIn && nc->player && nc->player->tEntity) {
+        nc->HoldThis(blockId, canChange);
+        return 1;
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaChangeModel(lua_State *L) {
+    return 0;
+}
+
+int LuaPlugin::LuaSetWeather(lua_State *L) {
+    return 0;
+}
+
+int LuaPlugin::LuaMapSetEnvColors(lua_State *L) {
+    return 0;
+}
+
+int LuaPlugin::LuaClientSetBlockPermissions(lua_State *L) {
+    return 0;
+}
+
+int LuaPlugin::LuaMapEnvSet(lua_State *L) {
+    return 0;
+}
+
+int LuaPlugin::LuaClientHackcontrolSend(lua_State *L) {
+    return 0;
+}
+
+int LuaPlugin::LuaHotkeyAdd(lua_State *L) {
+    return 0;
+}
+
+int LuaPlugin::LuaHotkeyRemove(lua_State *L) {
+    return 0;
+}
+
+int LuaPlugin::LuaMapHackcontrolSet(lua_State *L) {
+    return 0;
 }
 
 

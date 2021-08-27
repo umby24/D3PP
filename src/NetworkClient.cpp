@@ -100,6 +100,7 @@ void NetworkClient::HoldThis(unsigned char blockType, bool canChange) const {
         return;
     }
     Packets::SendHoldThis(selfPointer, blockType, canChange);
+    player->tEntity->heldBlock = blockType;
 }
 
 void NetworkClient::CreateSelection(unsigned char selectionId, std::string label, short startX, short startY, short startZ, short endX, short endY, short endZ, short red, short green, short blue, short opacity) {

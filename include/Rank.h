@@ -27,13 +27,14 @@ public:
     Rank();
     void Add(RankItem item);
     RankItem GetRank(int rank, bool exact);
-    void Delete(int id);
+    void Delete(int id, bool isExact);
     static Rank* GetInstance();
+    std::map<int, RankItem> _ranks;
 private:
     static Rank* Instance;
     bool SaveFile;
     time_t LastFileDate;
-    std::map<int, RankItem> _ranks;
+
 
     void Load();
     void Save();

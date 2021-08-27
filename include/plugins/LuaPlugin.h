@@ -15,6 +15,13 @@ struct LuaFile {
     time_t LastLoaded;
 };
 
+struct LuaEvent {
+    std::string functionName;
+    Event::DescriptorType type;
+    clock_t lastRun;
+    long duration;
+};
+
 class LuaPlugin : TaskItem {
 public:
     LuaPlugin();
@@ -30,7 +37,7 @@ private:
     std::recursive_mutex executionMutex;
     lua_State* state;
     std::map<std::string, LuaFile> _files;
-    std::map<Event::DescriptorType, std::vector<std::string>> _luaEvents;
+    std::map<Event::DescriptorType, std::vector<LuaEvent>> _luaEvents;
 
     void Init();
     void MainFunc();
