@@ -1674,3 +1674,63 @@ void Map::MapImport(std::string filename, MinecraftLocation location, short scal
 bool Map::BlockInBounds(unsigned short X, unsigned short Y, unsigned short Z) {
     return (X >= 0 && X < data.SizeX && Y >= 0 && Y < data.SizeY && Z >= 0 && Z < data.SizeZ);
 }
+
+void Map::SetEnvColors(int red, int green, int blue, int type) {
+    data.ColorsSet = true;
+
+    switch(type) {
+        case 0:
+            data.SkyColor = Utils::RGB(red, green, blue);
+            break;
+        case 1:
+            data.CloudColor = Utils::RGB(red, green, blue);
+            break;
+        case 2:
+            data.FogColor = Utils::RGB(red, green, blue);
+            break;
+        case 3:
+            data.alight = Utils::RGB(red, green, blue);
+            break;
+        case 4:
+            data.dlight = Utils::RGB(red, green, blue);
+            break;
+    }
+
+    Network* nm = Network::GetInstance();
+
+    for(auto const &nc : nm->roClients) {
+        CPE::AfterMapActions(nc);
+    }
+}
+
+void Map::SetMapAppearance(std::string url, int sideblock, int edgeblock, int sidelevel) {
+    if (url.find("https://") == std::string::npos && url.find("http://") == std::string::npos)
+        url = "";
+
+    data.CustomAppearance = true;
+    data.CustomURL = url;
+    data.SideBlock = sideblock;
+    data.EdgeBlock = edgeblock;
+    data.SideLevel = sidelevel;
+
+    Network* nm = Network::GetInstance();
+
+    for(auto const &nc : nm->roClients) {
+        CPE::AfterMapActions(nc);
+    }
+}
+
+void Map::SetHackControl(bool canFly, bool noclip, bool speeding, bool spawnControl, bool thirdperson, int jumpHeight) {
+    data.Flying = canFly;
+    data.NoClip = noclip;
+    data.Speeding = speeding;
+    data.SpawnControl = spawnControl;
+    data.ThirdPerson = thirdperson;
+    data.JumpHeight = jumpHeight;
+
+    Network* nm = Network::GetInstance();
+
+    for(auto const &nc : nm->roClients) {
+        CPE::AfterMapActions(nc);
+    }
+}

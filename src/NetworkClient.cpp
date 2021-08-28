@@ -135,6 +135,39 @@ void NetworkClient::DeleteSelection(unsigned char selectionId) {
     Packets::SendSelectionBoxDelete(selfPointer, selectionId);
 }
 
+void NetworkClient::SetWeather(int weatherType) {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+
+    if (CPE::GetClientExtVersion(selfPointer, EXT_WEATHER_CONTROL_EXT_NAME) <= 0)
+        return;
+    
+    if (weatherType != 0 && weatherType != 1 && weatherType != 2)
+        return;
+
+    Packets::SendSetWeather(selfPointer, weatherType);
+}
+
+void NetworkClient::SendHackControl(bool canFly, bool noclip, bool speeding, bool spawnControl, bool thirdperson, int jumpHeight) {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+
+    if (CPE::GetClientExtVersion(selfPointer, HACKCONTROL_EXT_NAME) <= 0)
+        return;
+    
+    Packets::SendHackControl(selfPointer, canFly, noclip, speeding, spawnControl, thirdperson, jumpHeight);
+}
+
+void NetworkClient::SetBlockPermissions(int blockId, bool canPlace, bool canDelete) {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+
+    if (CPE::GetClientExtVersion(selfPointer, BLOCK_PERMISSIONS_EXT_NAME) <= 0)
+        return;
+
+    Packets::SendBlockPermissions(selfPointer, blockId, canPlace, canDelete);
+}
+
 void NetworkClient::DataReady() {
     DataAvailable = true;
 }

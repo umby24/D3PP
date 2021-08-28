@@ -67,6 +67,8 @@ LuaPlugin::LuaPlugin() {
 
     TaskScheduler::RegisterTask("Lua", *this);
 
+
+
     state = luaL_newstate();
     luaL_openlibs(state);
     *static_cast<LuaPlugin**>(lua_getextraspace(this->state)) = this;
@@ -74,6 +76,11 @@ LuaPlugin::LuaPlugin() {
 
     BindFunctions();
     RegisterEventListener();
+
+    TaskItem newTi;
+    newTi.Interval = std::chrono::milliseconds(10);
+    newTi.Main = [this] { TimerMain(); };
+    TaskScheduler::RegisterTask("LuaTimer", newTi);
 }
 
 LuaPlugin::~LuaPlugin() {
@@ -243,6 +250,7 @@ void LuaPlugin::BindFunctions() {
     lua_register(state, "Map_Resend", &dispatch<&LuaPlugin::LuaMapResend>);
     lua_register(state, "Map_Export", &dispatch<&LuaPlugin::LuaMapExport>);
     lua_register(state, "Map_Import", &dispatch<&LuaPlugin::LuaMapImportPlayer>);
+    lua_register(state, "Map_Export_Get_Size",  &dispatch<&LuaPlugin::LuaMapExportGetSize>);
     // -- Block Functions
     lua_register(state, "Block_Get_Table", &dispatch<&LuaPlugin::LuaBlockGetTable>);
     lua_register(state, "Block_Get_Name", &dispatch<&LuaPlugin::LuaBlockGetName>);
@@ -273,12 +281,21 @@ void LuaPlugin::BindFunctions() {
     lua_register(state, "Event_Add", &dispatch<&LuaPlugin::LuaEventAdd>);
     lua_register(state, "Event_Delete", &dispatch<&LuaPlugin::LuaEventDelete>);
     // -- CPE
+    lua_register(state, "Client_Get_Extensions", &dispatch<&LuaPlugin::LuaClientGetExtensions>);
     lua_register(state, "Client_Get_Extension", &dispatch<&LuaPlugin::LuaClientGetExtension>);
     lua_register(state, "CPE_Selection_Cuboid_Add", &dispatch<&LuaPlugin::LuaSelectionCuboidAdd>);
     lua_register(state, "CPE_Selection_Cuboid_Delete", &dispatch<&LuaPlugin::LuaSelectionCuboidDelete>);
     lua_register(state, "CPE_Get_Held_Block", &dispatch<&LuaPlugin::LuaGetHeldBlock>);
     lua_register(state, "CPE_Set_Held_Block", &dispatch<&LuaPlugin::LuaSetHeldBlock>);
-
+    lua_register(state, "CPE_Map_Set_Env_Colors", &dispatch<&LuaPlugin::LuaMapSetEnvColors>);
+    lua_register(state, "CPE_Client_Set_Block_Permissions", &dispatch<&LuaPlugin::LuaClientSetBlockPermissions>);
+    lua_register(state, "Map_Env_Apperance_Set", &dispatch<&LuaPlugin::LuaMapEnvSet>);
+    lua_register(state, "CPE_Client_Hackcontrol_Send", &dispatch<&LuaPlugin::LuaClientHackcontrolSend>);
+    lua_register(state, "Hotkey_Add", &dispatch<&LuaPlugin::LuaHotkeyAdd>);
+    lua_register(state, "Hotkey_Delete", &dispatch<&LuaPlugin::LuaHotkeyRemove>);
+    lua_register(state, "Map_Hackcontrol_Set", &dispatch<&LuaPlugin::LuaMapHackcontrolSet>);
+    lua_register(state, "CPE_Model_Change", &dispatch<&LuaPlugin::LuaChangeModel>);
+    lua_register(state, "CPE_Set_Weather", &dispatch<&LuaPlugin::LuaSetWeather>);
 }
 
 void LuaPlugin::Init() {
@@ -330,6 +347,9 @@ void LuaPlugin::MainFunc() {
         newFile.LastLoaded = 0;
         _files.insert(std::make_pair(f, newFile));
     }
+  
+}
+void LuaPlugin::TimerMain() {
     auto timerDescriptor = Dispatcher::getDescriptor("Timer");
     if (_luaEvents.find(timerDescriptor) == _luaEvents.end())
         return;
@@ -796,7 +816,7 @@ int LuaPlugin::LuaBuildModeGet(lua_State *L) {
     Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> networkClient= nm->GetClient(clientId);
 
-    if (networkClient != nullptr) {
+    if (networkClient != nullptr && networkClient->LoggedIn) {
         std::string clientBuildMode = networkClient->player->tEntity->BuildMode;
         lua_pushstring(L, clientBuildMode.c_str());
     } else {
@@ -2396,7 +2416,19 @@ int LuaPlugin::LuaMapExport(lua_State *L) {
 }
 
 int LuaPlugin::LuaMapExportGetSize(lua_State *L) {
-    return 0;
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: Map_Export_Get_Size called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    std::string filename(lua_tostring(L, 1));
+    Vector3S result = MapMain::GetMapExportSize(filename);
+
+    lua_pushinteger(L, result.X);
+    lua_pushinteger(L, result.Y);
+    lua_pushinteger(L, result.Z);
+    return 3;
 }
 
 int LuaPlugin::LuaMapImportPlayer(lua_State *L) {
@@ -2524,7 +2556,7 @@ int LuaPlugin::LuaClientGetExtension(lua_State *L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Block_Get_Client_Type() called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("Lua", "LuaError: Client_Get_Extension() called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
 
@@ -2534,7 +2566,7 @@ int LuaPlugin::LuaClientGetExtension(lua_State *L) {
     Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> c = nm->GetClient(clientId);
 
-    if (c == nullptr) {
+    if (c != nullptr) {
         if (c->LoggedIn && c->CPE) {
             result = CPE::GetClientExtVersion(c, extension);
         }
@@ -3006,38 +3038,204 @@ int LuaPlugin::LuaSetHeldBlock(lua_State *L) {
 }
 
 int LuaPlugin::LuaChangeModel(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: CPE_Change_Model called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int clientId = lua_tointeger(L, 1);
+    std::string model(lua_tostring(L, 2));
+
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+
+    if (nc == nullptr)
+        return 0;
+
+    if (nc->LoggedIn && nc->CPE && nc->player) {
+        nc->player->tEntity->SetModel(model);
+    }
+
     return 0;
 }
 
 int LuaPlugin::LuaSetWeather(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: CPE_Set_Weather called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int clientId = lua_tointeger(L, 1);
+    int weatherType = lua_tointeger(L, 2);
+
+    if (weatherType != 0 && weatherType != 1 && weatherType != 2)
+        return 0;
+
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+
+    if (nc == nullptr || !nc->LoggedIn)
+        return 0;
+
+    nc->SetWeather(weatherType);
+
     return 0;
 }
 
 int LuaPlugin::LuaMapSetEnvColors(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 5) {
+        Logger::LogAdd("Lua", "LuaError: CPE_Map_Set_Env_Colors called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    int red = lua_tointeger(L, 2);
+    int green = lua_tointeger(L, 3);
+    int blue = lua_tointeger(L, 4);
+    int type = lua_tointeger(L, 5);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> thisMap = mm->GetPointer(mapId);
+
+    if (thisMap == nullptr)
+        return 0;
+
+    thisMap->SetEnvColors(red, green, blue, type);
+
     return 0;
 }
 
 int LuaPlugin::LuaClientSetBlockPermissions(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 4) {
+        Logger::LogAdd("Lua", "LuaError: CPE_Client_Set_Block_Permissions called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int clientId = lua_tointeger(L, 1);
+    int blockId = lua_tointeger(L, 2);
+    bool canPlace = lua_toboolean(L, 3);
+    bool canDelete = lua_toboolean(L, 4);
+
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+
+    if (nc == nullptr || !nc->LoggedIn)
+        return 0;
+
+    nc->SetBlockPermissions(blockId, canPlace, canDelete);
+
     return 0;
 }
 
 int LuaPlugin::LuaMapEnvSet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: CPE_Map_Env_Apperance_Set called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    std::string customUrl(lua_tostring(L, 2));
+    int sideBlock = lua_tointeger(L, 3);
+    int edgeBlock = lua_tointeger(L, 4);
+    int sideLevel = lua_tointeger(L, 5);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> thisMap = mm->GetPointer(mapId);
+
+    if (thisMap == nullptr)
+        return 0;
+
+    thisMap->SetMapAppearance(customUrl, sideBlock, edgeBlock, sideLevel);
     return 0;
 }
 
 int LuaPlugin::LuaClientHackcontrolSend(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 7) {
+        Logger::LogAdd("Lua", "LuaError: CPE_Client_Hackcontrol_Send called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int clientId = lua_tointeger(L, 1);
+    bool canFly = lua_toboolean(L, 2);
+    bool noclip = lua_toboolean(L, 3);
+    bool speeding = lua_toboolean(L, 4);
+    bool spawnControl = lua_toboolean(L, 5);
+    bool thirdperson = lua_toboolean(L, 6);
+    int jumpHeight = lua_tointeger(L, 7);
+
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+
+    if (nc == nullptr || !nc->LoggedIn)
+        return 0;
+
+    nc->SendHackControl(canFly, noclip, speeding, spawnControl, thirdperson, jumpHeight);
     return 0;
 }
 
 int LuaPlugin::LuaHotkeyAdd(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 4) {
+        Logger::LogAdd("Lua", "LuaError: CPE_Hotkey_Add called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    std::string label(lua_tostring(L, 1));
+    std::string action(lua_tostring(L, 2));
+    int keycode = lua_tointeger(L, 3);
+    int keymods = lua_tointeger(L, 4);
+
+    // -- TODO: Hotkey.Add
     return 0;
 }
 
 int LuaPlugin::LuaHotkeyRemove(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: CPE_Hotkey_Add called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    std::string label(lua_tostring(L, 1));
+    // -- TODO: Hotkey.remove
     return 0;
 }
 
 int LuaPlugin::LuaMapHackcontrolSet(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 7) {
+        Logger::LogAdd("Lua", "LuaError: CPE_Map_Hackcontrol_Set called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int mapId = lua_tointeger(L, 1);
+    bool canFly = lua_toboolean(L, 2);
+    bool noclip = lua_toboolean(L, 3);
+    bool speeding = lua_toboolean(L, 4);
+    bool spawnControl = lua_toboolean(L, 5);
+    bool thirdperson = lua_toboolean(L, 6);
+    int jumpHeight = lua_tointeger(L, 7);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map == nullptr)
+        return 0;
+
+    map->SetHackControl(canFly, noclip, speeding, spawnControl, thirdperson, jumpHeight);
     return 0;
 }
 

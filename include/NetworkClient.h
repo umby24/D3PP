@@ -58,5 +58,8 @@ public:
     void HoldThis(unsigned char blockType, bool canChange) const;
     void CreateSelection(unsigned char selectionId, std::string label, short startX, short startY, short startZ, short endX, short endY, short endZ, short red, short green, short blue, short opacity);
     void DeleteSelection(unsigned char selectionId);
+    void SetWeather(int weatherType);
+    void SendHackControl(bool canFly, bool noclip, bool speeding, bool spawnControl, bool thirdperson, int jumpHeight);
+    void SetBlockPermissions(int blockId, bool canPlace, bool canDelete);
 };
 #endif //D3PP_NETWORKCLIENT_H

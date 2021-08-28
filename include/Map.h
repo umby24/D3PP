@@ -207,6 +207,9 @@ public:
     void MapExport(MinecraftLocation start, MinecraftLocation end, std::string filename);
     void MapImport(std::string filename, MinecraftLocation location, short scaleX, short scaleY, short scaleZ);
     bool BlockInBounds(unsigned short X, unsigned short Y, unsigned short Z);
+    void SetEnvColors(int red, int green, int blue, int type);
+    void SetMapAppearance(std::string url, int sideblock, int edgeblock, int sidelevel);
+    void SetHackControl(bool canFly, bool noclip, bool speeding, bool spawnControl, bool thirdperson, int jumpHeight);
     std::mutex BlockChangeMutex;
 protected:
 
