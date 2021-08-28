@@ -6,6 +6,7 @@
 #define D3PP_NETWORKCLIENT_H
 #define MAX_SELECTION_BOXES 255
 
+#include <string>
 #include <memory>
 #include <map>
 #include <vector>
