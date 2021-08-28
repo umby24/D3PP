@@ -15,6 +15,13 @@ struct LuaFile {
     time_t LastLoaded;
 };
 
+struct LuaEvent {
+    std::string functionName;
+    Event::DescriptorType type;
+    clock_t lastRun;
+    long duration;
+};
+
 class LuaPlugin : TaskItem {
 public:
     LuaPlugin();
@@ -27,12 +34,13 @@ public:
     void TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, std::string function);
     void TriggerBuildMode(std::string function, int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char block);
 private:
-    std::mutex executionMutex;
+    std::recursive_mutex executionMutex;
     lua_State* state;
     std::map<std::string, LuaFile> _files;
-    std::map<Event::DescriptorType, std::vector<std::string>> _luaEvents;
+    std::map<Event::DescriptorType, std::vector<LuaEvent>> _luaEvents;
 
     void Init();
+    void TimerMain();
     void MainFunc();
     void BindFunctions();
     void LoadFile(std::string path);

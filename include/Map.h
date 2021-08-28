@@ -14,6 +14,7 @@
 #include <filesystem>
 
 #include "TaskScheduler.h"
+#include "MinecraftLocation.h"
 
 class NetworkClient;
 enum MapAction {
@@ -44,7 +45,7 @@ struct MapBlockData {
 };
 
 struct MapBlockDo { // -- Physics Queue Item
-    int time;
+    time_t time;
     unsigned short X;
     unsigned short Y;
     unsigned short Z;
@@ -64,7 +65,7 @@ struct UndoStep {
     short X;
     short Y;
     short Z;
-    int Time;
+    time_t Time;
     char TypeBefore;
     short PlayerNumberBefore;
 };
@@ -111,20 +112,23 @@ struct MapData {
     unsigned short SizeX;
     unsigned short SizeY;
     unsigned short SizeZ;
-    int blockCounter[256];
+    std::vector<int> blockCounter;
     float SpawnX;
     float SpawnY;
     float SpawnZ;
     float SpawnRot;
     float SpawnLook;
-    char* Data; // -- Map data
-    char* PhysicData; // -- Physics state, (1 Byte -> 8 blocks)
-    char* BlockchangeData; // -- Blockchange state (1 byte -> 8 blocks)
+    std::vector<unsigned char> Data;
+    std::vector<unsigned char> PhysicData;
+    std::vector<unsigned char> BlockchangeData;
+
     std::recursive_mutex physicsQueueMutex;
+
     std::vector<MapBlockDo> PhysicsQueue;
     std::vector<MapBlockChanged> ChangeQueue;
     std::vector<UndoStep> UndoCache;
     std::vector<MapRankElement> RankBoxes;
+
     std::map<std::string, MapTeleporterElement> Teleporter;
     bool PhysicsStopped;
     bool BlockchangeStopped;
@@ -184,6 +188,12 @@ public:
     void ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z);
     bool Save(std::string directory);
     void Load(std::string directory);
+    void LoadTeleporterFile(std::string directory);
+    void LoadRankBoxFile(std::string directory);
+    void LoadConfigFile(std::string directory);
+    void SaveTeleporterFile(std::string directory);
+    void SaveRankBoxFile(std::string directory);
+    void SaveConfigFile(std::string directory);
     unsigned char GetBlockType(unsigned short X, unsigned short Y, unsigned short Z);
     unsigned short GetBlockPlayer(unsigned short X, unsigned short Y, unsigned short Z);
     int BlockGetRank(unsigned short X, unsigned short Y, unsigned short Z);
@@ -192,6 +202,14 @@ public:
     void Unload();
     void Send(int clientId);
     void Resend();
+    void AddTeleporter(std::string id, MinecraftLocation start, MinecraftLocation end, MinecraftLocation destination, std::string destMapUniqueId, int destMapId);
+    void DeleteTeleporter(std::string id);
+    void MapExport(MinecraftLocation start, MinecraftLocation end, std::string filename);
+    void MapImport(std::string filename, MinecraftLocation location, short scaleX, short scaleY, short scaleZ);
+    bool BlockInBounds(unsigned short X, unsigned short Y, unsigned short Z);
+    void SetEnvColors(int red, int green, int blue, int type);
+    void SetMapAppearance(std::string url, int sideblock, int edgeblock, int sidelevel);
+    void SetHackControl(bool canFly, bool noclip, bool speeding, bool spawnControl, bool thirdperson, int jumpHeight);
     std::mutex BlockChangeMutex;
 protected:
 
@@ -217,6 +235,7 @@ public:
     std::string GetMapMOTDOverride(int mapId);
     static int GetMapSize(int x, int y, int z, int blockSize) { return (x * y * z) * blockSize; }
     static int GetMapOffset(int x, int y, int z, int sizeX, int sizeY, int sizeZ, int blockSize) { return (x + y * sizeX + z * sizeX * sizeY) * blockSize;}
+    static Vector3S GetMapExportSize(std::string filename);
     void MainFunc();
     
     void AddSaveAction(int clientId, int mapId, const std::string& directory);
@@ -241,13 +260,13 @@ private:
     std::string TempFilename;
     int TempId;
     std::string TempOverviewFilename;
-    int LastWriteTime;
+    long LastWriteTime;
     time_t StatsTimer;
 
     std::vector<MapActionItem> _mapActions;
 
     // --
-    int mapSettingsLastWriteTime;
+    long mapSettingsLastWriteTime;
     int mapSettingsTimerFileCheck;
     int mapSettingsMaxChangesSec;
 

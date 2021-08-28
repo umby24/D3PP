@@ -7,6 +7,7 @@
 #include "Block.h"
 
 #include "Network.h"
+#include "NetworkClient.h"
 #include "Player.h"
 #include "Player_List.h"
 
@@ -124,9 +125,9 @@ std::shared_ptr<Entity> Entity::GetPointer(int id) {
 void Entity::MessageToClients(int id, const std::string& message) {
     Network* n = Network::GetInstance();
 
-    for(auto const &nc : n->_clients) {
-        if (nc.second->player->tEntity->Id == id) {
-            NetworkFunctions::SystemMessageNetworkSend(nc.second->Id, message);
+    for(auto const &nc : n->roClients) {
+        if (nc->player->tEntity->Id == id) {
+            NetworkFunctions::SystemMessageNetworkSend(nc->Id, message);
         }
     }
 }
@@ -156,12 +157,12 @@ void Entity::Delete(int id) {
         return;
     Network* n = Network::GetInstance();
 
-    for(auto const &nc : n->_clients) {
-        if (nc.second->player == nullptr || nc.second->player->tEntity == nullptr)
+    for(auto const &nc : n->roClients) {
+        if (nc->player == nullptr || nc->player->tEntity == nullptr)
             continue;
             
-        if (nc.second->player->tEntity == e) {
-            nc.second->player->tEntity = nullptr;
+        if (nc->player->tEntity == e) {
+            nc->player->tEntity = nullptr;
         }
     }
 
@@ -296,22 +297,22 @@ void Entity::PositionCheck() {
 
 void Entity::Send() {
     Network *n = Network::GetInstance();
-    for(auto const &nc : n->_clients) {
-        if (!nc.second->LoggedIn)
+    for(auto const &nc : n->roClients) {
+        if (!nc->LoggedIn)
             continue;
 
         std::vector<int> toRemove;
-        for(auto const &vEntity : nc.second->player->Entities) {
+        for(auto const &vEntity : nc->player->Entities) {
             std::shared_ptr<Entity> fullEntity = GetPointer(vEntity.Id);
             if (fullEntity == nullptr) { // -- Entity no longer exists, despawn them.
-                NetworkFunctions::NetworkOutEntityDelete(nc.first, vEntity.ClientId);
+                NetworkFunctions::NetworkOutEntityDelete(nc->Id, vEntity.ClientId);
                 toRemove.push_back(vEntity.Id);
                 continue;
             }
             bool shouldDelete = false;
-            if (fullEntity->MapID != nc.second->player->MapId)
+            if (fullEntity->MapID != nc->player->MapId)
                 shouldDelete = true;
-            if (nc.second->player->tEntity && nc.second->player->tEntity->Id == vEntity.Id)
+            if (nc->player->tEntity && nc->player->tEntity->Id == vEntity.Id)
                 shouldDelete = true;
             if (fullEntity->resend) {
                 shouldDelete = true;
@@ -319,7 +320,7 @@ void Entity::Send() {
             }
 
             if (shouldDelete) {
-                NetworkFunctions::NetworkOutEntityDelete(nc.first, vEntity.ClientId);
+                NetworkFunctions::NetworkOutEntityDelete(nc->Id, vEntity.ClientId);
                 toRemove.push_back(vEntity.Id);
             }
         }
@@ -330,9 +331,9 @@ void Entity::Send() {
             if (toRemove.empty())
                 break;
             
-            for(auto const &vEntity : nc.second->player->Entities) {
+            for(auto const &vEntity : nc->player->Entities) {
                 if (vEntity.Id == toRemove.at(0)) {
-                    nc.second->player->Entities.erase(nc.second->player->Entities.begin() + iterator);
+                    nc->player->Entities.erase(nc->player->Entities.begin() + iterator);
                     removed++;
                     break;
                 }
@@ -344,26 +345,26 @@ void Entity::Send() {
 
         // -- now loop the global entities list, for creation.
         for (auto const &bEntity : _entities) {
-            if (bEntity.second->MapID != nc.second->player->MapId)
+            if (bEntity.second->MapID != nc->player->MapId)
                 continue;
             bool create = true;
-            for(auto const &vEntity : nc.second->player->Entities) {
+            for(auto const &vEntity : nc->player->Entities) {
                 if (vEntity.Id == bEntity.first) {
                     create = false;
                     break;
                 }
             }
-            if (bEntity.first == nc.second->player->tEntity->Id)
+            if (bEntity.first == nc->player->tEntity->Id)
                 create = false;
 
             if (create) {
                 EntityShort s{};
                 s.Id = bEntity.first;
                 s.ClientId = bEntity.second->ClientId;
-                nc.second->player->Entities.push_back(s); // -- track the new client
+                nc->player->Entities.push_back(s); // -- track the new client
                 // -- spawn them :)
-                NetworkFunctions::NetworkOutEntityAdd(nc.first, s.ClientId, Entity::GetDisplayname(s.Id), bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
-                CPE::PostEntityActions(nc.second, bEntity.second);
+                NetworkFunctions::NetworkOutEntityAdd(nc->Id, s.ClientId, Entity::GetDisplayname(s.Id), bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
+                CPE::PostEntityActions(nc, bEntity.second);
             }
         }
     }
@@ -371,37 +372,37 @@ void Entity::Send() {
     for (auto const &bEntity : _entities) {
         if (bEntity.second->SendPos) {
             bEntity.second->SendPos = 0;
-            for(auto const &nc : n->_clients) {
-                if (!nc.second->LoggedIn)
+            for(auto const &nc : n->roClients) {
+                if (!nc->LoggedIn)
                     continue;
 
-                for (auto const &vEntity : nc.second->player->Entities) {
+                for (auto const &vEntity : nc->player->Entities) {
                     if (vEntity.Id == bEntity.first)
-                        NetworkFunctions::NetworkOutEntityPosition(nc.first, vEntity.ClientId, bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
+                        NetworkFunctions::NetworkOutEntityPosition(nc->Id, vEntity.ClientId, bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
                 }
             }
         }
 
         if (bEntity.second->SendPosOwn) {
             bEntity.second->SendPosOwn = false;
-            for(auto const &nc : n->_clients) {
-                if (!nc.second->LoggedIn)
+            for(auto const &nc : n->roClients) {
+                if (!nc->LoggedIn)
                     continue;
 
-                if (nc.second->player->tEntity == bEntity.second) {
-                    NetworkFunctions::NetworkOutEntityPosition(nc.first, 255, bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
+                if (nc->player->tEntity == bEntity.second) {
+                    NetworkFunctions::NetworkOutEntityPosition(nc->Id, 255, bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
                 }
             }
         }
 
         if (bEntity.second->SpawnSelf) {
             bEntity.second->SpawnSelf = false;
-            for(auto const &nc : n->_clients) {
-                if (!nc.second->LoggedIn)
+            for(auto const &nc : n->roClients) {
+                if (!nc->LoggedIn)
                     continue;
 
-                if (nc.second->player->tEntity == bEntity.second) {
-                    NetworkFunctions::NetworkOutEntityAdd(nc.first, 255, Entity::GetDisplayname(bEntity.first), bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
+                if (nc->player->tEntity == bEntity.second) {
+                    NetworkFunctions::NetworkOutEntityAdd(nc->Id, 255, Entity::GetDisplayname(bEntity.first), bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
                 }
             }
         }
@@ -425,18 +426,18 @@ void Entity::SetModel(std::string modelName) {
 
     model = modelName;
     std::shared_ptr<NetworkClient> myClient = nullptr;
-    for(auto const &nc : nm->_clients) {
-        if (!nc.second->LoggedIn)
+    for(auto const &nc : nm->roClients) {
+        if (!nc->LoggedIn)
             continue;
 
-        if (CPE::GetClientExtVersion(nc.second, CHANGE_MODEL_EXT_NAME) <= 0 || nc.second->player->MapId != MapID)
+        if (CPE::GetClientExtVersion(nc, CHANGE_MODEL_EXT_NAME) <= 0 || nc->player->MapId != MapID)
             continue;
 
-        if (nc.second->player->tEntity->Id == Id) {
-            myClient = nc.second;
+        if (nc->player->tEntity->Id == Id) {
+            myClient = nc;
             continue;
         }
-        Packets::SendChangeModel(nc.second, this->ClientId, model);
+        Packets::SendChangeModel(nc, this->ClientId, model);
     }
     if (myClient != nullptr) {
         Packets::SendChangeModel(myClient, -1, model);

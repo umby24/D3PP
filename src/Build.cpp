@@ -4,25 +4,33 @@
 
 #include "Build.h"
 #include <cmath>
+#include <Utils.h>
+#include <Logger.h>
 #include "Map.h"
 
 
-void Build::BuildLinePlayer(int playerNumber, int mapId, unsigned short X0, unsigned short Y0, unsigned short Z0,
+void Build::BuildLinePlayer(short playerNumber, int mapId, unsigned short X0, unsigned short Y0, unsigned short Z0,
                             unsigned short X1, unsigned short Y1, unsigned short Z1, unsigned char material,
                             unsigned char priority, bool undo, bool physics) {
-    auto dx = X1 - X0;
-    auto dy = Y1 - Y0;
-    auto dz = Z1 - Z0;
+    Logger::LogAdd("Build", "Build from " + stringulate(X0) + "x" + stringulate(Y0) + "x" + stringulate(Z0), LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd("Build", "Build to " + stringulate(X1) + "x" + stringulate(Y1) + "x" + stringulate(Z1), LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    auto dx = (float)(X1 - X0);
+    auto absDx = (float)std::abs(dx);
+    auto dy = (float)(Y1 - Y0);
+    auto absDy = (float)std::abs(dy);
+    auto dz = (float)(Z1 - Z0);
+    auto absDz = (float)std::abs(dz);
+
     float blocks = 1.0;
 
-    if (blocks < std::abs(dx))
-        blocks = std::abs(dx);
+    if (blocks < absDx)
+        blocks = absDx;
 
-    if (blocks < std::abs(dy))
-        blocks = std::abs(dy);
+    if (blocks < absDy)
+        blocks = absDy;
 
-    if (blocks < std::abs(dz))
-        blocks = std::abs(dz);
+    if (blocks < absDz)
+        blocks = absDz;
 
     float mx = dx / (float)blocks;
     float my = dy / blocks;
@@ -32,13 +40,14 @@ void Build::BuildLinePlayer(int playerNumber, int mapId, unsigned short X0, unsi
     std::shared_ptr<Map> pMap = mapMain->GetPointer(mapId);
 
     if (pMap != nullptr) {
-        for(int i = 0; i < blocks+1; i++) {
-            pMap->BlockChange(playerNumber, X0+mx*i, Y0+my*i, Z0+mz*i, material, undo, physics, true, priority);
+        for(int i = 0; i < (int)(blocks+1); i++) {
+            auto x = static_cast<unsigned short>(X0+mx *i);
+            pMap->BlockChange(playerNumber, x, Y0+my*i, Z0+mz*i, material, undo, physics, true, priority);
         }
     }
 }
 
-void Build::BuildBoxPlayer(int playerNumber, int mapId, unsigned short X0, unsigned short Y0, unsigned short Z0,
+void Build::BuildBoxPlayer(short playerNumber, int mapId, unsigned short X0, unsigned short Y0, unsigned short Z0,
                            unsigned short X1, unsigned short Y1, unsigned short Z1, unsigned char material,
                            char replaceMaterial, bool hollow, unsigned char priority, bool undo,
                            bool physics) {
@@ -68,10 +77,10 @@ void Build::BuildBoxPlayer(int playerNumber, int mapId, unsigned short X0, unsig
 
 }
 
-void Build::BuildSpherePlayer(int playerNumber, int mapId, unsigned short X0, unsigned short Y0, unsigned short Z0,
+void Build::BuildSpherePlayer(short playerNumber, int mapId, unsigned short X0, unsigned short Y0, unsigned short Z0,
                               float radius, unsigned char material, char replaceMaterial, bool hollow,
                               unsigned char priority, bool undo, bool physics) {
-    auto rounded = std::round(radius) + 1;
+    int rounded = (int)std::round(radius) + 1;
     auto power = std::pow(radius, 2);
 
     for(auto ix = -rounded; ix < rounded; ix++) {

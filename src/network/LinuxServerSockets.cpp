@@ -2,23 +2,35 @@
 // Created by unknown on 4/2/21.
 //
 
+
 #include "network/LinuxServerSockets.h"
 
 #ifdef __linux__
+#include "Logger.h"
+#include "Utils.h"
+#include <errno.h>
+#include <memory>
 #include "arpa/inet.h"
+#include "network/LinuxSockets.h"
 
 const std::string MODULE_NAME = "ServerSocket";
 
-ServerSocket::ServerSocket() {
+ServerSocket::ServerSocket() : server(), address(), readfds(), clientSockets() {
     hasInit = false;
+    listenPort = 25565;
+    listenSocket = -1;
+    eventSocket = -1;
 
     for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
         clientSockets[i] = 0;
     }
 }
 
-ServerSocket::ServerSocket(int port) {
+ServerSocket::ServerSocket(int port) : server(), address(), readfds(), clientSockets() {
     hasInit = false;
+    listenPort = 25565;
+    listenSocket = -1;
+    eventSocket = -1;
     for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
         clientSockets[i] = 0;
     }
@@ -34,10 +46,10 @@ void ServerSocket::Listen() {
     int iResult;
     iResult = bind(listenSocket, (struct sockaddr*)&server, sizeof(server));
     if (iResult < 0) {
-        Logger::LogAdd(MODULE_NAME, "Failed to start networking", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Failed to start networking -- " + stringulate(errno), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         return;
-
     }
+
     iResult = listen(listenSocket, 5);
 
     if (iResult < 0) {
@@ -63,7 +75,8 @@ void ServerSocket::Init(int port) {
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
     server.sin_port = htons(port);
-
+    int enable = 1;
+    setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int) < 0);
     hasInit = true;
 }
 
@@ -79,6 +92,7 @@ std::unique_ptr<Sockets> ServerSocket::Accept() {
     for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
         if (clientSockets[i] == 0) {
             clientSockets[i] = newSocket;
+            break;
         }
     }
 
@@ -88,6 +102,9 @@ std::unique_ptr<Sockets> ServerSocket::Accept() {
 ServerSocketEvent ServerSocket::CheckEvents() {
     if (!hasInit)
         return SOCKET_EVENT_NONE;
+    if (listenSocket == -1) {
+        return SOCKET_EVENT_NONE;
+    }
 
     FD_ZERO(&readfds);
     FD_SET(listenSocket, &readfds);
@@ -132,7 +149,7 @@ void ServerSocket::Unaccept(int fd) {
     }
 }
 
-int ServerSocket::GetEventSocket() {
+int ServerSocket::GetEventSocket() const {
     return eventSocket;
 }
 

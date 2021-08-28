@@ -4,6 +4,7 @@
 #include "Files.h"
 #include "common/PreferenceLoader.h"
 #include "Network.h"
+#include "NetworkClient.h"
 #include "Player.h"
 #include "Entity.h"
 #include "Map.h"
@@ -159,7 +160,7 @@ void BuildModeMain::Resend(int clientId) {
         if (_resendBlocks.at(i).clientId != clientId)
             continue;
 
-        BlockResend toResend = _resendBlocks.at(i);
+        BlockResend &toResend = _resendBlocks.at(i);
 
         std::shared_ptr<Map> thisMap = mapMain->GetPointer(toResend.mapId);
         if (thisMap != nullptr) {

@@ -5,6 +5,7 @@
 #include "Player.h"
 #include <iomanip>
 #include <Network.h>
+#include "NetworkClient.h"
 #include "Entity.h"
 #include "Files.h"
 #include "Player_List.h"
@@ -142,11 +143,11 @@ int PlayerMain::GetFreeNameId() {
     bool found = false;
     while (true) {
         found = false;
-        for(auto const &nc: nm->_clients) {
-            if (!nc.second->LoggedIn)
+        for(auto const &nc: nm->roClients) {
+            if (!nc->LoggedIn)
                 continue;
 
-            if (nc.second->player->NameId == id)
+            if (nc->player->NameId == id)
                 found = true;
         }
 

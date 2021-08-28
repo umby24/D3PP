@@ -2,6 +2,7 @@
 
 #include "common/PreferenceLoader.h"
 #include "Network.h"
+#include "NetworkClient.h"
 #include "Player.h"
 #include "Player_List.h"
 #include "Entity.h"
@@ -729,9 +730,9 @@ void CommandMain::CommandPlayers() {
      NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlayers:");
     std::string textToSend = "";
 
-     for(auto const &nc : nm->_clients) {
-         if (nc.second != nullptr && nc.second->player != nullptr && nc.second->player->tEntity->playerList != nullptr) {
-             std::string playerName = Entity::GetDisplayname(nc.second->player->tEntity->Id);
+     for(auto const &nc : nm->roClients) {
+         if (nc != nullptr && nc->player != nullptr && nc->player->tEntity->playerList != nullptr) {
+             std::string playerName = Entity::GetDisplayname(nc->player->tEntity->Id);
 
             std::string toAdd = playerName + " &c| ";
             if (64 - textToSend.size() >= toAdd.size()) {

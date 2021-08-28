@@ -28,7 +28,7 @@ void Heartbeat::Beat() {
     httplib::Params params;
     params.emplace("name", sMain->ServerName);
     params.emplace("port", stringulate(nMain->Port));
-    params.emplace("users", stringulate(nMain->_clients.size()));
+    params.emplace("users", stringulate(nMain->roClients.size()));
     params.emplace("max", stringulate(pMain->MaxPlayers));
     params.emplace("public", isPublic ? "true" : "false");
     params.emplace("version", "7");

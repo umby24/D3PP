@@ -136,11 +136,13 @@ RankItem Rank::GetRank(const int rank, bool exact) {
     return result;
 }
 
-void Rank::Delete(int id) {
-    if (_ranks.find(id) == _ranks.end())
+void Rank::Delete(int id, bool isExact) {
+    RankItem current = GetRank(id, isExact);
+
+    if (_ranks.find(current.Rank) == _ranks.end())
         return;
 
-    _ranks.erase(id);
+    _ranks.erase(current.Rank);
     SaveFile = true;
 }
 

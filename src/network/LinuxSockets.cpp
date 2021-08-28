@@ -4,10 +4,15 @@
 
 #ifdef __linux__
 #include "network/LinuxSockets.h"
+#include <cerrno>
+#include <iostream>
+#include <cstring>      // Needed for memset
 
-Sockets::Sockets(std::string address, std::string port)
+Sockets::Sockets(const std::string& address, const std::string& port) : host_info(), host_info_list()
 {
     //ctor
+    m_Counter = 0;
+    connected = false;
     socketIp = "";
     memset(&host_info, 0, sizeof host_info);
     host_info.ai_family = AF_UNSPEC;     // IPv4 or IPv6

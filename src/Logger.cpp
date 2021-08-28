@@ -83,9 +83,9 @@ void Logger::Add(struct LogMessage message) {
     }
 }
 
-void Logger::LogAdd(std::string module, std::string message, LogType type, std::string file, int line, std::string procedure) {
+void Logger::LogAdd(std::string moadule, std::string message, LogType type, std::string file, int line, std::string procedure) {
     struct LogMessage newMessage;
-    newMessage.Module = module;
+    newMessage.Module = moadule;
     newMessage.Message = message;
     newMessage.File = Utils::TrimPathString(file);
     newMessage.Line = line;

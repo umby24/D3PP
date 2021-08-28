@@ -6,6 +6,7 @@
 #include "Player.h"
 #include "Entity.h"
 #include "Network.h"
+#include "NetworkClient.h"
 #include "Packets.h"
 #include "Map.h"
 
@@ -100,14 +101,14 @@ void CPE::AfterLoginActions(std::shared_ptr<NetworkClient> client) {
     int extVersion = CPE::GetClientExtVersion(client, EXT_PLAYER_LIST_EXT_NAME);
     int tempNameId = client->player->NameId;
 
-    for(auto const &nc : nm->_clients) {
-        if (nc.first != clientId) {
-            if (CPE::GetClientExtVersion(nc.second, EXT_PLAYER_LIST_EXT_NAME) == 2) {
-                Packets::SendExtAddPlayerName(nc.second, tempNameId, loginName, prettyName, clientMap->data.Name, 0);
+    for(auto const &nc : nm->roClients) {
+        if (nc->Id != clientId) {
+            if (CPE::GetClientExtVersion(nc, EXT_PLAYER_LIST_EXT_NAME) == 2) {
+                Packets::SendExtAddPlayerName(nc, tempNameId, loginName, prettyName, clientMap->data.Name, 0);
             }
             if (extVersion == 2) {
-                std::shared_ptr<Map> dudesMap = mapMain->GetPointer(nc.second->player->tEntity->MapID);
-                Packets::SendExtAddPlayerName(client, nc.second->player->NameId, nc.second->player->LoginName, Entity::GetDisplayname(nc.second->player->tEntity->Id), dudesMap->data.Name, 0);
+                std::shared_ptr<Map> dudesMap = mapMain->GetPointer(nc->player->tEntity->MapID);
+                Packets::SendExtAddPlayerName(client, nc->player->NameId, nc->player->LoginName, Entity::GetDisplayname(nc->player->tEntity->Id), dudesMap->data.Name, 0);
             }
         } else {
             if (extVersion == 2) {

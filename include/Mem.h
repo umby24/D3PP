@@ -32,8 +32,9 @@ class Mem : TaskItem {
 public:
     Mem();
     static char* Allocate(long size, std::string File, int line, std::string Message);
-    static void Free(char* memory);
+    static void Free(const char* memory);
     static long MemoryUsage;
+    static long GetMemSize(const char *memory);
 protected:
     static Mem* GetInstance();
     static Mem* singleton_;
@@ -48,6 +49,8 @@ private:
     static std::mutex _lock;
 
     std::vector<MemUsageChronic> _chronics;
+
+
 };
 
 const std::string MEM_HTML_TEMPLATE = R"(<html>

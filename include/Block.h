@@ -49,6 +49,7 @@ struct MapBlock {
 
 class Block : TaskItem {
 public:
+    const static std::string MODULE_NAME;
     Block();
     MapBlock GetBlock(int id);
     MapBlock GetBlock(std::string name);
