@@ -29,7 +29,6 @@ class CPE {
     static void AfterLoginActions(std::shared_ptr<NetworkClient> client);
     static void PreEntityActions();
     static void PostEntityActions(std::shared_ptr<NetworkClient> client, std::shared_ptr<Entity> postEntity);
-    static void SelectionCuboidAdd(std::shared_ptr<NetworkClient> client, Vector3S start, Vector3S end, int red, int green, int blue, float opacity);
     //static std::map<std::string, int> SupportedExtensions { std::pair<std::string, int>("CustomBlocks", 1)};
 };
 #endif

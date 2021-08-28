@@ -132,6 +132,7 @@ void Client::LoginCpe(int clientId, std::string name, std::string mppass, char v
     c->player = std::make_unique<Player>();
     c->player->LoginName = name;
     c->player->MPPass = mppass;
+    c->CPE = true;
     c->player->ClientVersion = version;
     Packets::SendExtInfo(c, "D3PP Server Alpha", 14);
     Packets::SendExtEntry(c, CUSTOM_BLOCKS_EXT_NAME, 1);

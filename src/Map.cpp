@@ -1454,6 +1454,33 @@ void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
     }
 }
 
+Vector3S MapMain::GetMapExportSize(std::string filename) {
+    std::vector<unsigned char> tempData(10);
+    int outputLen = GZIP::GZip_DecompressFromFile(tempData.data(), 10, filename);
+    if (outputLen != 10) {
+        Logger::LogAdd(MODULE_NAME, "Map not imported: Error unzipping.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        return Vector3S{};
+    }
+    // -- Read version and size info
+    int versionNumber = 0;
+    versionNumber = tempData[0];
+    versionNumber |= tempData[1] << 8;
+    versionNumber |= tempData[2] << 16;
+    versionNumber |= tempData[3] << 24;
+    if (versionNumber != 1000) {
+        Logger::LogAdd(MODULE_NAME, "Map not imported, unknown version [" + filename + "]", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        return Vector3S{};
+    }
+    Vector3S result;
+    result.X = tempData[4];
+    result.X |= tempData[5] << 8;
+    result.Y = tempData[6];
+    result.Y |= tempData[7] << 8;
+    result.Z = tempData[8];
+    result.Z |= tempData[9] << 8;
+    return result;
+}
+
 int Map::BlockGetRank(unsigned short X, unsigned short Y, unsigned short Z) {
     int result = data.RankBuild;
 

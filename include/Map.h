@@ -232,6 +232,7 @@ public:
     std::string GetMapMOTDOverride(int mapId);
     static int GetMapSize(int x, int y, int z, int blockSize) { return (x * y * z) * blockSize; }
     static int GetMapOffset(int x, int y, int z, int sizeX, int sizeY, int sizeZ, int blockSize) { return (x + y * sizeX + z * sizeX * sizeY) * blockSize;}
+    static Vector3S GetMapExportSize(std::string filename);
     void MainFunc();
     
     void AddSaveAction(int clientId, int mapId, const std::string& directory);

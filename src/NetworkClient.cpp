@@ -14,6 +14,7 @@
 #include "CPE.h"
 #include "Packets.h"
 #include "Entity.h"
+#include "MinecraftLocation.h"
 
 #ifndef __linux__
 #include "network/WindowsSockets.h"

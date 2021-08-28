@@ -40,6 +40,7 @@ private:
     std::map<Event::DescriptorType, std::vector<LuaEvent>> _luaEvents;
 
     void Init();
+    void TimerMain();
     void MainFunc();
     void BindFunctions();
     void LoadFile(std::string path);
