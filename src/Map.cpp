@@ -1680,19 +1680,19 @@ void Map::SetEnvColors(int red, int green, int blue, int type) {
 
     switch(type) {
         case 0:
-            data.SkyColor = Utils::RGB(red, green, blue);
+            data.SkyColor = Utils::Rgb(red, green, blue);
             break;
         case 1:
-            data.CloudColor = Utils::RGB(red, green, blue);
+            data.CloudColor = Utils::Rgb(red, green, blue);
             break;
         case 2:
-            data.FogColor = Utils::RGB(red, green, blue);
+            data.FogColor = Utils::Rgb(red, green, blue);
             break;
         case 3:
-            data.alight = Utils::RGB(red, green, blue);
+            data.alight = Utils::Rgb(red, green, blue);
             break;
         case 4:
-            data.dlight = Utils::RGB(red, green, blue);
+            data.dlight = Utils::Rgb(red, green, blue);
             break;
     }
 

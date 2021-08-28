@@ -128,7 +128,7 @@ void Utils::TrimString(std::string &input) {
         input = input.substr(0, input.size() - 1);
 }
 
-int Utils::RGB(int red, int green, int blue) {
+int Utils::Rgb(int red, int green, int blue) {
     return (red | (green << 8) | (blue << 16));
 }
 
