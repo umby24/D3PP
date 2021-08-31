@@ -143,20 +143,16 @@ void ByteBuffer::Write(std::string value) {
     _writePos += 64;
 }
 
-void ByteBuffer::Write(std::vector<unsigned char> memory, int length) { // -- TODO: This might not equal out to 1024 bytes!!
+void ByteBuffer::Write(std::vector<unsigned char> memory, int length) {
     const std::scoped_lock<std::mutex> pqlock(_bufLock);
     Resize(length);
     _buffer.insert(_buffer.begin()+_writePos, memory.begin(), memory.begin()+length);
-    if (length != 1024) {
-        Resize(1024-length);
-    }
     _writePos += length;
 }
 
 void ByteBuffer::Shift(int size) {
     const std::scoped_lock<std::mutex> pqlock(_bufLock);
     std::copy(_buffer.begin()+size, _buffer.end(), _buffer.begin());
-    //memmove(_buffer, _buffer + size, _writePos - size);
     _readPos -= size;
     _writePos -= size;
 }
