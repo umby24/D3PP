@@ -174,7 +174,6 @@ void NetworkClient::DataReady() {
 
 NetworkClient::NetworkClient(NetworkClient &client) : Selections(MAX_SELECTION_BOXES) {
     Id= client.Id;
-    TaskScheduler::UnregisterTask(client.SendBuffer->TaskId);
     SendBuffer = std::make_unique<ByteBuffer>([this]{ this->DataReady(); });//
     ReceiveBuffer = std::move(client.ReceiveBuffer);
     DataAvailable = false;
@@ -196,4 +195,15 @@ NetworkClient::NetworkClient(NetworkClient &client) : Selections(MAX_SELECTION_B
     CustomBlocksLevel = 0;
     GlobalChat = false;
     IP = clientSocket->GetSocketIp();
+}
+
+NetworkClient::~NetworkClient() {
+    SendBuffer = nullptr;
+    ReceiveBuffer = nullptr;
+    if (clientSocket != nullptr) {
+        if (clientSocket->GetConnected()) {
+            clientSocket->Disconnect();
+        }
+        clientSocket = nullptr;
+    }
 }

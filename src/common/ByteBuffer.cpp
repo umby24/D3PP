@@ -180,35 +180,20 @@ void ByteBuffer::Resize(int size) {
         _largestAlloc = size;
 
     if ((this->_size - this->_writePos) < size) {
-        // -- Resize needed.
-        // if size is bigger than one block..
-        // -- we need to find out how many blocks are in size, rounded up.
-        //_bufLock.lock();
         int blockMultiplier = std::ceil(size/(float)block_size);
         int newSize = (block_size * blockMultiplier) + _size;
-        if (newSize == 0) {
-            printf("Wait");
-        }
         _buffer.resize(newSize);
-//        auto *newMem = new unsigned char[newSize];
-//        memcpy(newMem, _buffer, _size); // -- Copy entire contents of old buffer into the new variable.
-        // -- Destroy old memory..
-        // -- Reassign pointer..
-        //std::swap(newMem, _buffer);
-        //*_buffer = *newMem;
-        // -- reasign sizes
-        //_writePos = _size;
         _largestAlloc = newSize - _size;
         _size = newSize;
-        //_bufLock
     }
 }
 
 ByteBuffer::~ByteBuffer() {
+    TaskScheduler::UnregisterTask(this->TaskId);
     _writePos = 0;
     _readPos = 0;
+    _size = 0;
     _buffer.clear();
-    printf("bytebuffer dtor\n");
 }
 
 int ByteBuffer::ReadSize() const {

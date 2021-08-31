@@ -19,6 +19,7 @@ class Player;
 class NetworkClient {
 public:
     NetworkClient();
+    ~NetworkClient();
     explicit NetworkClient(std::unique_ptr<Sockets> socket);
     NetworkClient(NetworkClient &client);
 
