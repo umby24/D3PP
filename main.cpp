@@ -71,7 +71,6 @@ int main()
     n->Start();
     
     std::thread mainThread(mainLoop);
-    std::thread clientLoginThread(Client::LoginThread);
 
     MainConsole();
 
