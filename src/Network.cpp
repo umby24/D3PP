@@ -279,15 +279,15 @@ void Network::NetworkEvents() {
                 auto* receiveBuf = new char[1026];
                 receiveBuf[1024] = 99;
                 int dataRead = client->clientSocket->Read(receiveBuf, 1024);
-                std::vector<unsigned char> receive(receiveBuf, receiveBuf+dataRead);
-                delete[] receiveBuf;
-                unsigned long mySize = receive.size();
-
                 if (dataRead > 0) {
+                    std::vector<unsigned char> receive(receiveBuf, receiveBuf+dataRead);
+                    delete[] receiveBuf;
+                    unsigned long mySize = receive.size();
                     client->ReceiveBuffer->Write(receive, dataRead);
                     client->DownloadRateCounter += dataRead;
                     DownloadRateCounter += dataRead;
                 } else {
+                    delete[] receiveBuf;
                     DeleteClient(clientId, "Disconnected", true);
                     break;
                 }

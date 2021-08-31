@@ -168,8 +168,6 @@ void BuildModeMain::Resend(int clientId) {
             NetworkFunctions::NetworkOutBlockSet(clientId, toResend.X, toResend.Y, toResend.Z, blockType);
         }
         _resendBlocks.erase(_resendBlocks.begin() + i);
-        if (i != 0)
-            i--;
     }
 }
 

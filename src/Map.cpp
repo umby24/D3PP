@@ -319,6 +319,7 @@ void MapMain::MapBlockChange() {
                 
                 int maxChangedSec = 1100 / 10;
                 int toRemove = 0;
+                const std::scoped_lock<std::mutex> sLock(m.second->data.bcMutex);
                 for(auto const &chg : m.second->data.ChangeQueue) {
                     unsigned short x = chg.X;
                     unsigned short y = chg.Y;
@@ -345,7 +346,7 @@ void MapMain::MapBlockChange() {
             }
         }
         watchdog::Watch("Map_Blockchanging", "End thread-slope", 2);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 }
 
@@ -372,8 +373,12 @@ void MapMain::MapBlockPhysics() {
 
                     if (!isBlockInBounds)
                         continue;
-
+                    // -- range can go out of bounds here.
                     int offset = MapMain::GetMapOffset(item.X, item.Y, item.Z, map.second->data.SizeX, map.second->data.SizeY, map.second->data.SizeZ, 1);
+                    if ((offset/8) >= map.second->data.PhysicData.size()) {
+                        counter++;
+                        continue;
+                    }
                     map.second->data.PhysicData.at(offset/8) = map.second->data.PhysicData.at(offset/8) & ~(1 << (offset % 8)); // -- Set bitmask
                     map.second->ProcessPhysics(item.X, item.Y, item.Z);
                     counter++;
@@ -387,7 +392,7 @@ void MapMain::MapBlockPhysics() {
             }
         }
         watchdog::Watch("Map_Physic", "End Thread-Slope", 2);
-        std::this_thread::sleep_for(std::chrono::milliseconds(3));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 }
 
@@ -477,7 +482,10 @@ void MapMain::HtmlStats(time_t time_) {
             mapTable += "<td>0 MB (unloaded)</td>\n";
 
         mapTable += "<td>" + stringulate(m.second->data.PhysicsQueue.size()) + "</td>\n";
-        mapTable += "<td>" + stringulate(m.second->data.ChangeQueue.size()) + "</td>\n";
+        {
+            const std::scoped_lock<std::mutex> sLock(m.second->data.bcMutex);
+            mapTable += "<td>" + stringulate(m.second->data.ChangeQueue.size()) + "</td>\n";
+        }
         if (m.second->data.PhysicsStopped)
             mapTable += "<td><font color=\"#FF0000\">Stopped</font></td>\n";
         else
@@ -692,8 +700,10 @@ bool Map::Resize(short x, short y, short z) {
        
         for(auto i = 1; i < 255; i++)
            data.blockCounter.at(i) = 0;
-
-        data.ChangeQueue.clear();
+        {
+            const std::scoped_lock<std::mutex> sLock(data.bcMutex);
+            data.ChangeQueue.clear();
+        }
         // -- Spawn limiting..
         if (data.SpawnX > x)
             data.SpawnX = x-1;
@@ -1126,9 +1136,11 @@ void Map::Resend() {
         if (nc->player == nullptr)
             continue;
 
-        if (nc->player->MapId == data.ID)
-            nc->player->MapId = -1;
+        if (nc->player->MapId == data.ID) {
+            nc->player->SendMap();
+        }
     }
+
     for (auto const &me : Entity::_entities) {
         if (me.second->MapID == data.ID) {
             if (me.second->X > data.SizeX-0.5)
@@ -1144,7 +1156,7 @@ void Map::Resend() {
                 me.second->Y = 0.5;
         }
     }
-
+    const std::scoped_lock<std::mutex> sLock(data.bcMutex);
     for(auto const &bc : data.ChangeQueue) {
         int blockCHangeOffset = MapMain::GetMapOffset(bc.X, bc.Y, bc.Z, data.SizeX, data.SizeY, data.SizeZ, 1);
         if (blockCHangeOffset < MapMain::GetMapSize(data.SizeX, data.SizeY, data.SizeZ, 1)) {
@@ -1292,6 +1304,7 @@ void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z,
 
     data.BlockchangeData.at(offset/8) |= (1 << (offset % 8)); // -- Set bitmask
     MapBlockChanged changeItem { X, Y, Z, priority, oldType};
+    const std::scoped_lock<std::mutex> sLock(data.bcMutex);
     data.ChangeQueue.push_back(changeItem);
 }
 

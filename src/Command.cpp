@@ -1526,7 +1526,10 @@ void CommandMain::CommandMapInfo() {
     } else {
         textToSend += "<br>";
     }
-    textToSend += "&eBlocksend Queue: " + stringulate(cMap->data.ChangeQueue.size());
+    {
+        const std::scoped_lock<std::mutex> sLock(cMap->data.bcMutex);
+        textToSend += "&eBlocksend Queue: " + stringulate(cMap->data.ChangeQueue.size());
+    }
     if (cMap->data.BlockchangeStopped) {
         textToSend += "&Block Changes Stopped&f<br>";
     } else {

@@ -123,6 +123,7 @@ struct MapData {
     std::vector<unsigned char> BlockchangeData;
 
     std::recursive_mutex physicsQueueMutex;
+    std::mutex bcMutex;
 
     std::vector<MapBlockDo> PhysicsQueue;
     std::vector<MapBlockChanged> ChangeQueue;

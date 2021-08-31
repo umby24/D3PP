@@ -501,6 +501,7 @@ int LuaPlugin::LuaMessage(lua_State *L) {
 }
 
 void LuaPlugin::LoadFile(std::string path) {
+    std::lock_guard<std::recursive_mutex> pqlock(executionMutex);
     if(luaL_loadfile(this->state, path.c_str())) {
         bail(this->state, "Failed to load " + path);
         return;
