@@ -79,6 +79,9 @@ void Block::LoadOld() {
         newItem.OnClient = pl.Read("On_Client", 4);
         newItem.Physics = pl.Read("Physic", 0);
         newItem.PhysicsPlugin = pl.Read("Physics_Plugin", "");
+        if (newItem.PhysicsPlugin.empty()) {
+            newItem.PhysicsPlugin = pl.Read("Physic_Plugin", "");
+        }
         newItem.PhysicsTime = pl.Read("Do_Time", 0);
         newItem.PhysicsRandom = pl.Read("Do_Time_Random", 0);
         newItem.PhysicsRepeat = (pl.Read("Do_Repeat", 0) == 1);
@@ -94,7 +97,8 @@ void Block::LoadOld() {
         newItem.OverviewColor = pl.Read("Color_Overview", 0);
         newItem.CpeLevel = pl.Read("CPE_Level", 0);
         newItem.CpeReplace = pl.Read("CPE_Replace", 0);
-        Blocks[newItem.Id] = newItem;
+        if (newItem.Id <= 254)
+            Blocks[newItem.Id] = newItem;
     }
 
     Logger::LogAdd(MODULE_NAME, stringulate(Blocks.size()) + " blocks imported.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
