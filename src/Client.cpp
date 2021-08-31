@@ -47,6 +47,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     c->player->LoginName = name;
     c->player->MPPass = mppass;
     c->player->ClientVersion = version;
+    c->player->myClientId = c->Id;
 
     bool preLoginCorrect = true;
     if (version != 7) {
@@ -119,9 +120,10 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 
     NetworkFunctions::SystemLoginScreen(c->Id, System::ServerName, motd, currentRank.OnClient);
 
-    spawnMap->Send(c->Id);
-    c->player->tEntity->SpawnSelf = true;
     c->player->MapId = spawnMap->data.ID;
+    c->player->SendMap();
+    c->player->tEntity->SpawnSelf = true;
+
 
     Logger::LogAdd(MODULE_NAME, "Player Logged in (IP:" + c->IP + " Name:" + name + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(newEntity->Id) + "&e' logged in");

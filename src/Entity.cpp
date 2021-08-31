@@ -189,6 +189,18 @@ void Entity::Kill() {
     }
 }
 
+std::shared_ptr<NetworkClient> getEntityClient(int entityId) {
+    Network* n = Network::GetInstance();
+
+    for(auto const &nc : n->roClients) {
+        if (nc->player->tEntity->Id == entityId) {
+            return nc;
+        }
+    }
+
+    return nullptr;
+}
+
 void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float lk, unsigned char priority, bool sendOwn) {
     MapMain* mm = MapMain::GetInstance();
     if (SendPos <= priority) {
@@ -231,6 +243,9 @@ void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float 
                 emc.oldMapId = oldMapId;
                 emc.newMapId = MapID;
                 Dispatcher::post(emc);
+                auto myClient = getEntityClient(Id);
+                myClient->player->MapId = MapID;
+                myClient->player->SendMap();
 
                 if (sendOwn)
                     SendPosOwn = true;

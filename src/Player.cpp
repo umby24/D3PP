@@ -5,12 +5,15 @@
 #include "Player.h"
 #include <iomanip>
 #include <Network.h>
+#include <Map.h>
 #include "NetworkClient.h"
 #include "Entity.h"
 #include "Files.h"
 #include "Player_List.h"
 #include "Logger.h"
 #include "Utils.h"
+#include "Network_Functions.h"
+#include "Packets.h"
 
 const std::string MODULE_NAME = "Player";
 PlayerMain* PlayerMain::Instance = nullptr;
@@ -166,4 +169,10 @@ Player::Player() {
     timeBuildMessage = 0;
     LogoutHide = false;
     NameId = PlayerMain::GetFreeNameId();
+}
+
+void Player::SendMap() {
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> myMap = mm->GetPointer(MapId);
+    myMap->Send(myClientId);
 }

@@ -1077,20 +1077,19 @@ void Map::Send(int clientId) {
     tempBuf.at(tempBufferOffset++) = mapSize / 65536;
     tempBuf.at(tempBufferOffset++) = mapSize / 256;
     tempBuf.at(tempBufferOffset++) = mapSize;
-    std::vector<unsigned char> seenIds;
-    std::vector<int> returnedIds;
+
+    int cbl = nc->CustomBlocksLevel;
 
     for (int i = 0; i < mapSize-1; i++) {
         int index = i * MAP_BLOCK_ELEMENT_SIZE;
+        MapBlock mb = bMain->GetBlock(data.Data[index]);
 
-        auto rawBlock = data.Data.at(index);
-        MapBlock mb = bMain->GetBlock(rawBlock);
-
-        if (mb.CpeLevel > nc->CustomBlocksLevel)
-            tempBuf.at(tempBufferOffset++) = static_cast<char>(mb.CpeReplace);
+        if (mb.CpeLevel > cbl)
+            tempBuf[tempBufferOffset++] = static_cast<char>(mb.CpeReplace);
         else     
-            tempBuf.at(tempBufferOffset++) = static_cast<char>(mb.OnClient);
+            tempBuf[tempBufferOffset++] = static_cast<char>(mb.OnClient);
     }
+
     int tempBuffer2Size = GZIP::GZip_CompressBound(tempBufferOffset) + 1024 + 512;
     std::vector<unsigned char> tempBuf2(tempBuffer2Size);
 
