@@ -138,3 +138,12 @@ void PreferenceLoader::Write(std::string key, int value) {
 
     SettingsDictionary[CurrentGroup].insert(std::make_pair(key, stringulate(value)));
 }
+
+void PreferenceLoader::Write(std::string key, float value) {
+    if (SettingsDictionary[CurrentGroup].find(key) != SettingsDictionary[CurrentGroup].end()) {
+        SettingsDictionary[CurrentGroup][key] = stringulate(value);
+        return;
+    }
+
+    SettingsDictionary[CurrentGroup].insert(std::make_pair(key, stringulate(value)));
+}

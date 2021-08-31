@@ -174,6 +174,7 @@ void NetworkClient::DataReady() {
 
 NetworkClient::NetworkClient(NetworkClient &client) : Selections(MAX_SELECTION_BOXES) {
     Id= client.Id;
+    TaskScheduler::UnregisterTask(client.SendBuffer->TaskId);
     SendBuffer = std::make_unique<ByteBuffer>([this]{ this->DataReady(); });//
     ReceiveBuffer = std::move(client.ReceiveBuffer);
     DataAvailable = false;

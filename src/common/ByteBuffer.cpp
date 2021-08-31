@@ -14,7 +14,9 @@ ByteBuffer::ByteBuffer(std::function<void()> callback) : _buffer(initial_size), 
     this->Main = [this] { MainFunc(); };
     _readPos = 0;
     _writePos = 0;
-    TaskScheduler::RegisterTask("ByteBuffer", *this);
+    _largestAlloc = 0;
+    std::string myId = TaskScheduler::RegisterTask("ByteBuffer", *this);
+    this->TaskId = myId;
 }
 
 void ByteBuffer::MainFunc() {
@@ -26,6 +28,9 @@ void ByteBuffer::MainFunc() {
     if (_writePos == 0 && _readPos == 0) {
         bool didLock = _bufLock.try_lock();
         if (didLock) {
+            if (_buffer.size() == 0 || _buffer.data() == nullptr) {
+                return; // -- In the process of being dealloced
+            }
             _buffer.resize(initial_size);
             _size = initial_size;
             _bufLock.unlock();
@@ -39,7 +44,12 @@ int ByteBuffer::Size() const {
 }
 
 unsigned char ByteBuffer::PeekByte() {
-    return _buffer.at(_readPos);
+    unsigned char result = 0;
+    {
+        const std::scoped_lock<std::mutex> pqlock(_bufLock);
+        result = _buffer.at(_readPos);
+    }
+    return result;
 }
 
 int ByteBuffer::PeekIntLE() {
@@ -133,10 +143,13 @@ void ByteBuffer::Write(std::string value) {
     _writePos += 64;
 }
 
-void ByteBuffer::Write(std::vector<unsigned char> memory, int length) {
+void ByteBuffer::Write(std::vector<unsigned char> memory, int length) { // -- TODO: This might not equal out to 1024 bytes!!
     const std::scoped_lock<std::mutex> pqlock(_bufLock);
     Resize(length);
     _buffer.insert(_buffer.begin()+_writePos, memory.begin(), memory.begin()+length);
+    if (length != 1024) {
+        Resize(1024-length);
+    }
     _writePos += length;
 }
 
@@ -173,6 +186,9 @@ void ByteBuffer::Resize(int size) {
         //_bufLock.lock();
         int blockMultiplier = std::ceil(size/(float)block_size);
         int newSize = (block_size * blockMultiplier) + _size;
+        if (newSize == 0) {
+            printf("Wait");
+        }
         _buffer.resize(newSize);
 //        auto *newMem = new unsigned char[newSize];
 //        memcpy(newMem, _buffer, _size); // -- Copy entire contents of old buffer into the new variable.
@@ -192,6 +208,7 @@ ByteBuffer::~ByteBuffer() {
     _writePos = 0;
     _readPos = 0;
     _buffer.clear();
+    printf("bytebuffer dtor\n");
 }
 
 int ByteBuffer::ReadSize() const {

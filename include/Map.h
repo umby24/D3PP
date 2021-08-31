@@ -191,11 +191,13 @@ public:
     void LoadTeleporterFile(std::string directory);
     void LoadRankBoxFile(std::string directory);
     void LoadConfigFile(std::string directory);
-    void SaveTeleporterFile(std::string directory);
-    void SaveRankBoxFile(std::string directory);
-    void SaveConfigFile(std::string directory);
+    void SaveTeleporterFile(const std::string& directory);
+    void SaveRankBoxFile(const std::string& directory);
+    void SaveConfigFile(const std::string& directory);
     unsigned char GetBlockType(unsigned short X, unsigned short Y, unsigned short Z);
     unsigned short GetBlockPlayer(unsigned short X, unsigned short Y, unsigned short Z);
+    MapBlockData GetBlockData(Vector3S location);
+    void SetBlockData(Vector3S location, MapBlockData mbData);
     int BlockGetRank(unsigned short X, unsigned short Y, unsigned short Z);
     void SetRankBox(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1, unsigned short Z1, short rank);
     void Reload();

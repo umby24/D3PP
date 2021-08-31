@@ -156,8 +156,15 @@ void Client::Logout(int clientId, std::string message, bool showtoall) {
     Network *n = Network::GetInstance();
     MapMain *mm = MapMain::GetInstance();
     std::shared_ptr<NetworkClient> c = n->GetClient(clientId);
+    if (!c || c == nullptr || c == NULL) {
+        return;
+    }
+    if (!c->LoggedIn) {
+        return;
+    }
 
     Logger::LogAdd(MODULE_NAME, "Player logged out (IP: " + c->IP + " Name: " + c->player->LoginName + " Message: " + message + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+
     if (c->player && c->player->tEntity) {
         std::shared_ptr<Map> currentMap = mm->GetPointer(c->player->MapId);
         currentMap->data.Clients -= 1;

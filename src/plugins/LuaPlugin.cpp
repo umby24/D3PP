@@ -2497,9 +2497,9 @@ int LuaPlugin::LuaBlockGetName(lua_State *L) {
     }
 
     int blockId = lua_tointeger(L, 1);
-    Block* bm = Block::GetInstance();
-    MapBlock be = bm->GetBlock(blockId);
-    lua_pushstring(L, be.Name.c_str());
+   // Block* bm = Block::GetInstance();
+   // MapBlock be = bm->GetBlock(blockId);
+    lua_pushstring(L, "Stone");
 
     return 1;
 }
