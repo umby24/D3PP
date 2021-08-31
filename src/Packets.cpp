@@ -41,8 +41,8 @@ void Packets::SendMapData(int clientId, short chunkSize, char *data, unsigned ch
     if (c->canSend && c->SendBuffer != nullptr) {
         c->SendBuffer->Write((unsigned char)3);
         c->SendBuffer->Write((short)chunkSize);
-        std::vector<unsigned char> vData(data, data+chunkSize);
-        c->SendBuffer->Write(vData, chunkSize);
+        std::vector<unsigned char> vData(data, data+1024);
+        c->SendBuffer->Write(vData, 1024);
         c->SendBuffer->Write(percentComplete);
         c->SendBuffer->Purge();
     }

@@ -445,8 +445,9 @@ std::string MapMain::GetUniqueId() {
 }
 
 std::string MapMain::GetMapMOTDOverride(int mapId) {
+    MapMain* mmInstance = GetInstance();
     std::string result;
-    std::shared_ptr<Map> mapPtr = GetPointer(mapId);
+    std::shared_ptr<Map> mapPtr = mmInstance->GetPointer(mapId);
 
     if (mapPtr == nullptr)
         return result;
@@ -1089,19 +1090,11 @@ void Map::Send(int clientId) {
             tempBuf.at(tempBufferOffset++) = static_cast<char>(mb.CpeReplace);
         else     
             tempBuf.at(tempBufferOffset++) = static_cast<char>(mb.OnClient);
-
-        if (tempBufferOffset > (mapSize + 10)) {
-            std::cout << "Temp buffer overflow!" << std::endl;
-        }
     }
     int tempBuffer2Size = GZIP::GZip_CompressBound(tempBufferOffset) + 1024 + 512;
-    //char* tempBuf2 = Mem::Allocate(tempBuffer2Size, __FILE__, __LINE__, "Temp");
     std::vector<unsigned char> tempBuf2(tempBuffer2Size);
 
     int compressedSize = GZIP::GZip_Compress(tempBuf2.data(), tempBuffer2Size, tempBuf.data(), tempBufferOffset);
-    if (compressedSize > tempBuffer2Size) {
-        std::cout << "Compression overrun" << std::endl;
-    }
 
     if (compressedSize == -1) {
         Logger::LogAdd(MODULE_NAME, "Can't send the map: GZip Error", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
@@ -1120,9 +1113,6 @@ void Map::Send(int clientId) {
             bytesInBlock = 1024;
         Packets::SendMapData(clientId, static_cast<short>(bytesInBlock),
                              reinterpret_cast<char *>(tempBuf2.data() + bytesSent), static_cast<unsigned char>(bytesSent * 100.0 / compressedSize));
-        if (bytesSent+bytesInBlock >= tempBuffer2Size) {
-            std::cout << "Tempbuf2 overrun" << std::endl;
-        }
         bytesSent += bytesInBlock;
         bytes2Send -= bytesInBlock;
     }
@@ -1303,18 +1293,6 @@ void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z,
 
     data.BlockchangeData.at(offset/8) |= (1 << (offset % 8)); // -- Set bitmask
     MapBlockChanged changeItem { X, Y, Z, priority, oldType};
-    int insertIndex = 0;
-
-    for(auto & i : data.ChangeQueue) {
-        if (i.Priority >= priority) {
-            insertIndex++;
-            break;
-        }
-        insertIndex++;
-    }
-    if ((data.ChangeQueue.begin() + insertIndex) > data.ChangeQueue.end()) {
-        return;
-    }
     data.ChangeQueue.push_back(changeItem);
 }
 
@@ -1426,7 +1404,7 @@ void Map::QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z
 
         if (blockPhysics > 0 || !physPlugin.empty()) {
             data.PhysicData.at(offset/8) |= (1 << (offset % 8)); // -- Set bitmask
-            int physTime = clock() + blockEntry.PhysicsTime + Utils::RandomNumber(blockEntry.PhysicsRandom);
+            clock_t physTime = clock() + blockEntry.PhysicsTime + Utils::RandomNumber(blockEntry.PhysicsRandom);
 
             MapBlockDo physicItem { physTime, X, Y, Z};
             data.PhysicsQueue.push_back(physicItem);
@@ -1473,7 +1451,7 @@ void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
     }
 }
 
-Vector3S MapMain::GetMapExportSize(std::string filename) {
+Vector3S MapMain::GetMapExportSize(const std::string& filename) {
     std::vector<unsigned char> tempData(10);
     int outputLen = GZIP::GZip_DecompressFromFile(tempData.data(), 10, filename);
     if (outputLen != 10) {

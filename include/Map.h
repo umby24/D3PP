@@ -45,7 +45,7 @@ struct MapBlockData {
 };
 
 struct MapBlockDo { // -- Physics Queue Item
-    time_t time;
+    clock_t time;
     unsigned short X;
     unsigned short Y;
     unsigned short Z;
@@ -234,10 +234,10 @@ public:
     int Add(int id, short x, short y, short z, const std::string& name);
     void Delete(int id);
     static MapMain* GetInstance();
-    std::string GetMapMOTDOverride(int mapId);
+    static std::string GetMapMOTDOverride(int mapId);
     static int GetMapSize(int x, int y, int z, int blockSize) { return (x * y * z) * blockSize; }
     static int GetMapOffset(int x, int y, int z, int sizeX, int sizeY, int sizeZ, int blockSize) { return (x + y * sizeX + z * sizeX * sizeY) * blockSize;}
-    static Vector3S GetMapExportSize(std::string filename);
+    static Vector3S GetMapExportSize(const std::string& filename);
     void MainFunc();
     
     void AddSaveAction(int clientId, int mapId, const std::string& directory);

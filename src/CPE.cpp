@@ -102,6 +102,9 @@ void CPE::AfterLoginActions(std::shared_ptr<NetworkClient> client) {
     int tempNameId = client->player->NameId;
 
     for(auto const &nc : nm->roClients) {
+        if (!nc->LoggedIn)
+            continue;
+
         if (nc->Id != clientId) {
             if (CPE::GetClientExtVersion(nc, EXT_PLAYER_LIST_EXT_NAME) == 2) {
                 Packets::SendExtAddPlayerName(nc, tempNameId, loginName, prettyName, clientMap->data.Name, 0);

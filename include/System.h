@@ -21,7 +21,7 @@ public:
     static System* GetInstance();
     static System* Instance_;
     static std::mutex mainMutex;
-    std::string ServerName;
+    static std::string ServerName;
     std::string Motd;
     int ClickDistance;
     System();
