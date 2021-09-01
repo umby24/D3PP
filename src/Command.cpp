@@ -13,7 +13,6 @@
 #include "Logger.h"
 #include "Files.h"
 #include "System.h"
-#include "Mem.h"
 #include "Utils.h"
 #include "Undo.h"
 #include "plugins/LuaPlugin.h"

@@ -1,9 +1,9 @@
+#include <iostream>
 #include <string>
 #include <thread>
 
 #include "Network.h"
 #include "Rank.h"
-#include "Mem.h"
 #include "System.h"
 #include "Logger.h"
 #include "Client.h"

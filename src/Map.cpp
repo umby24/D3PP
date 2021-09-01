@@ -12,7 +12,6 @@
 #include "System.h"
 #include "TaskScheduler.h"
 #include "common/ByteBuffer.h"
-#include "Mem.h"
 #include "Logger.h"
 #include "compression.h"
 #include "common/PreferenceLoader.h"
@@ -293,7 +292,7 @@ void MapMain::ActionProcessor() {
             }
         }
         watchdog::Watch("Map_Action", "End thread-slope", 2);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 }
 
@@ -346,7 +345,7 @@ void MapMain::MapBlockChange() {
             }
         }
         watchdog::Watch("Map_Blockchanging", "End thread-slope", 2);
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
@@ -392,7 +391,7 @@ void MapMain::MapBlockPhysics() {
             }
         }
         watchdog::Watch("Map_Physic", "End Thread-Slope", 2);
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
