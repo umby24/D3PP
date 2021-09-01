@@ -76,7 +76,8 @@ NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
     GlobalChat = false;
 }
 
-void NetworkClient::OutputPing() const {
+void NetworkClient::OutputPing() {
+    const std::scoped_lock<std::mutex> sLock(sendLock);
     SendBuffer->Write((unsigned char)1);
 }
 

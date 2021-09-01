@@ -17,6 +17,7 @@ void Packets::SendClientHandshake(int clientId, char protocolVersion, std::strin
                                   char userType) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
     if (c->canSend && c->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(c->sendLock);
         c->SendBuffer->Write((unsigned char)0);
         c->SendBuffer->Write((unsigned char)protocolVersion);
         if (serverName.size() != 64) Utils::padTo(serverName, 64);
@@ -31,6 +32,7 @@ void Packets::SendClientHandshake(int clientId, char protocolVersion, std::strin
 void Packets::SendMapInit(int clientId) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
     if (c->canSend && c->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(c->sendLock);
         c->SendBuffer->Write((unsigned char)2);
         c->SendBuffer->Purge();
     }
@@ -39,6 +41,7 @@ void Packets::SendMapInit(int clientId) {
 void Packets::SendMapData(int clientId, short chunkSize, char *data, unsigned char percentComplete) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
     if (c->canSend && c->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(c->sendLock);
         c->SendBuffer->Write((unsigned char)3);
         c->SendBuffer->Write((short)chunkSize);
         std::vector<unsigned char> vData(data, data+1024);
@@ -51,6 +54,7 @@ void Packets::SendMapData(int clientId, short chunkSize, char *data, unsigned ch
 void Packets::SendMapFinalize(int clientId, short sizeX, short sizeY, short sizeZ) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
     if (c->canSend && c->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(c->sendLock);
         c->SendBuffer->Write((unsigned char)4);
         c->SendBuffer->Write((short)sizeX);
         c->SendBuffer->Write((short)sizeZ);
@@ -62,6 +66,7 @@ void Packets::SendMapFinalize(int clientId, short sizeX, short sizeY, short size
 void Packets::SendBlockChange(int clientId, short x, short y, short z, unsigned char type) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
     if (c->canSend && c->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(c->sendLock);
         c->SendBuffer->Write((unsigned char)6);
         c->SendBuffer->Write((short)x);
         c->SendBuffer->Write((short)z);
@@ -75,6 +80,7 @@ void Packets::SendSpawnEntity(int clientId, char playerId, std::string name, sho
                               char look) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
     if (c->canSend && c->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(c->sendLock);
         c->SendBuffer->Write((unsigned char)7);
         c->SendBuffer->Write((unsigned char)playerId);
         if (name.size() != 64) Utils::padTo(name, 64);
@@ -91,6 +97,7 @@ void Packets::SendSpawnEntity(int clientId, char playerId, std::string name, sho
 void Packets::SendPlayerTeleport(int clientId, char playerId, short x, short y, short z, char rotation, char look) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
     if (c->canSend && c->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(c->sendLock);
         c->SendBuffer->Write((unsigned char)8);
         c->SendBuffer->Write((unsigned char)playerId);
         c->SendBuffer->Write((short)x);
@@ -105,6 +112,7 @@ void Packets::SendPlayerTeleport(int clientId, char playerId, short x, short y, 
 void Packets::SendDespawnEntity(int clientId, char playerId) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
     if (c->canSend && c->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(c->sendLock);
         c->SendBuffer->Write((unsigned char)12);
         c->SendBuffer->Write((unsigned char)playerId);
         c->SendBuffer->Purge();
@@ -114,6 +122,7 @@ void Packets::SendDespawnEntity(int clientId, char playerId) {
 void Packets::SendChatMessage(int clientId, std::string message, char location) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
     if (c->canSend && c->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(c->sendLock);
         c->SendBuffer->Write((unsigned char)13);
         c->SendBuffer->Write((unsigned char)location);
         if (message.size() != 64) Utils::padTo(message, 64);
@@ -125,6 +134,7 @@ void Packets::SendChatMessage(int clientId, std::string message, char location) 
 void Packets::SendDisconnect(int clientId, std::string reason) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
     if (c->canSend && c->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(c->sendLock);
         c->SendBuffer->Write((unsigned char)14);
         if (reason.size() != 64) Utils::padTo(reason, 64);
         c->SendBuffer->Write(std::move(reason));
@@ -134,6 +144,7 @@ void Packets::SendDisconnect(int clientId, std::string reason) {
 
 void Packets::SendExtInfo(std::shared_ptr<NetworkClient> client, std::string serverName, int extensionCount) {
     if (client->canSend && client->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(client->sendLock);
         client->SendBuffer->Write((unsigned char)16);
         if (serverName.size() != 64) Utils::padTo(serverName, 64);
         client->SendBuffer->Write(std::move(serverName));
@@ -144,6 +155,7 @@ void Packets::SendExtInfo(std::shared_ptr<NetworkClient> client, std::string ser
 
 void Packets::SendExtEntry(std::shared_ptr<NetworkClient> client, std::string extensionName, int versionNumber) {
     if (client->canSend && client->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(client->sendLock);
         client->SendBuffer->Write((unsigned char)17);
         if (extensionName.size() != 64) Utils::padTo(extensionName, 64);
         client->SendBuffer->Write(std::move(extensionName));
@@ -154,6 +166,7 @@ void Packets::SendExtEntry(std::shared_ptr<NetworkClient> client, std::string ex
 
 void Packets::SendCustomBlockSupportLevel(std::shared_ptr<NetworkClient> client, unsigned char supportLevel) {
     if (client->canSend && client->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(client->sendLock);
         client->SendBuffer->Write((unsigned char)19);
         client->SendBuffer->Write((unsigned char)supportLevel);
         client->SendBuffer->Purge();
@@ -162,6 +175,7 @@ void Packets::SendCustomBlockSupportLevel(std::shared_ptr<NetworkClient> client,
 
 void Packets::SendClickDistance(std::shared_ptr<NetworkClient> client, short distance) {
     if (client->canSend && client->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(client->sendLock);
         client->SendBuffer->Write((unsigned char)18);
         client->SendBuffer->Write((short)distance);
         client->SendBuffer->Purge();
@@ -170,6 +184,7 @@ void Packets::SendClickDistance(std::shared_ptr<NetworkClient> client, short dis
 
 void Packets::SendHoldThis(std::shared_ptr<NetworkClient> client, unsigned char block, bool preventChange) {
     if (client->canSend && client->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(client->sendLock);
         client->SendBuffer->Write((unsigned char)20);
         client->SendBuffer->Write((unsigned char)block);
         client->SendBuffer->Write((unsigned char)preventChange);
@@ -180,6 +195,7 @@ void Packets::SendHoldThis(std::shared_ptr<NetworkClient> client, unsigned char 
 void Packets::SendTextHotkeys(std::shared_ptr<NetworkClient> client, std::string label, std::string action, int keyCode,
                               char modifier) {
     if (client->canSend && client->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(client->sendLock);
         client->SendBuffer->Write((unsigned char)21);
         if (label.size() != 64) Utils::padTo(label, 64);
         if (action.size() != 64) Utils::padTo(action, 64);
@@ -194,6 +210,7 @@ void Packets::SendTextHotkeys(std::shared_ptr<NetworkClient> client, std::string
 void Packets::SendExtAddPlayerName(std::shared_ptr<NetworkClient> client, short nameId, std::string playerName,
                                    std::string listName, std::string groupName, char groupRank) {
     if (client->canSend && client->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(client->sendLock);
         client->SendBuffer->Write((unsigned char)22);
         client->SendBuffer->Write((short)nameId);
         if (playerName.size() != 64) Utils::padTo(playerName, 64);
@@ -209,6 +226,7 @@ void Packets::SendExtAddPlayerName(std::shared_ptr<NetworkClient> client, short 
 
 void Packets::SendExtRemovePlayerName(std::shared_ptr<NetworkClient> client, short nameId) {
     if (client->canSend && client->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(client->sendLock);
         client->SendBuffer->Write((unsigned char)24);
         client->SendBuffer->Write((short)nameId);
         client->SendBuffer->Purge();
@@ -218,6 +236,7 @@ void Packets::SendExtRemovePlayerName(std::shared_ptr<NetworkClient> client, sho
 void Packets::SendSetEnvironmentColors(std::shared_ptr<NetworkClient> client, char type, short red, short green,
                                        short blue) {
     if (client->canSend && client->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(client->sendLock);
         client->SendBuffer->Write((unsigned char)25);
         client->SendBuffer->Write((unsigned char)type);
         client->SendBuffer->Write((short)red);
@@ -231,6 +250,7 @@ void Packets::SendSelectionBoxAdd(std::shared_ptr<NetworkClient> client, unsigne
                                   short startX, short startY, short startZ, short endX, short endY, short endZ,
                                   short red, short green, short blue, short opacity) {
     if (client->canSend && client->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(client->sendLock);
         client->SendBuffer->Write((unsigned char)26);
         client->SendBuffer->Write((unsigned char)selectionId);
         if (label.size() != 64) Utils::padTo(label, 64);
@@ -250,6 +270,7 @@ void Packets::SendSelectionBoxAdd(std::shared_ptr<NetworkClient> client, unsigne
 }
 
 void Packets::SendSelectionBoxDelete(std::shared_ptr<NetworkClient> client, unsigned char selectionId) {
+    const std::scoped_lock<std::mutex> sLock(client->sendLock);
     client->SendBuffer->Write((unsigned char)27);
     client->SendBuffer->Write((unsigned char)selectionId);
     client->SendBuffer->Purge();
@@ -257,6 +278,7 @@ void Packets::SendSelectionBoxDelete(std::shared_ptr<NetworkClient> client, unsi
 
 void Packets::SendBlockPermissions(std::shared_ptr<NetworkClient> client, unsigned char blockId, bool canPlace,
                                    bool canDelete) {
+    const std::scoped_lock<std::mutex> sLock(client->sendLock);
     client->SendBuffer->Write((unsigned char)28);
     client->SendBuffer->Write((unsigned char)blockId);
     client->SendBuffer->Write((unsigned char)canPlace);
@@ -265,6 +287,7 @@ void Packets::SendBlockPermissions(std::shared_ptr<NetworkClient> client, unsign
 }
 
 void Packets::SendChangeModel(std::shared_ptr<NetworkClient> client, unsigned char entityId, std::string modelName) {
+    const std::scoped_lock<std::mutex> sLock(client->sendLock);
     client->SendBuffer->Write((unsigned char)29);
     client->SendBuffer->Write((unsigned char)entityId);
     if (modelName.size() != 64) Utils::padTo(modelName, 64);
@@ -274,6 +297,7 @@ void Packets::SendChangeModel(std::shared_ptr<NetworkClient> client, unsigned ch
 
 void Packets::SendEnvMapAppearance(std::shared_ptr<NetworkClient> client, std::string url, unsigned char sideBlock,
                                    unsigned char edgeBlock, short sideLevel) {
+    const std::scoped_lock<std::mutex> sLock(client->sendLock);
     client->SendBuffer->Write((unsigned char)30);
     if (url.size() != 64) Utils::padTo(url, 64);
     client->SendBuffer->Write(url);
@@ -284,6 +308,7 @@ void Packets::SendEnvMapAppearance(std::shared_ptr<NetworkClient> client, std::s
 }
 
 void Packets::SendSetWeather(std::shared_ptr<NetworkClient> client, unsigned char weatherType) {
+    const std::scoped_lock<std::mutex> sLock(client->sendLock);
     client->SendBuffer->Write((unsigned char)31);
     client->SendBuffer->Write((unsigned char)weatherType);
     client->SendBuffer->Purge();
@@ -292,6 +317,7 @@ void Packets::SendSetWeather(std::shared_ptr<NetworkClient> client, unsigned cha
 void
 Packets::SendHackControl(std::shared_ptr<NetworkClient> client, bool flying, bool noClip, bool speeding, bool respawn,
                          bool thirdPerson, short jumpHeight) {
+    const std::scoped_lock<std::mutex> sLock(client->sendLock);
     client->SendBuffer->Write((unsigned char)32);
     client->SendBuffer->Write((unsigned char)flying);
     client->SendBuffer->Write((unsigned char)noClip);
@@ -306,6 +332,7 @@ void Packets::SendExtAddEntity2(std::shared_ptr<NetworkClient> client, unsigned 
                                 std::string skin, short X, short Y, short Z, unsigned char rotation,
                                 unsigned char look) {
     if (client->canSend && client->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(client->sendLock);
         client->SendBuffer->Write((unsigned char)33);
         client->SendBuffer->Write((unsigned char)entityId);
         if (name.size() != 64) Utils::padTo(name, 64);

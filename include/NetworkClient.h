@@ -25,13 +25,13 @@ public:
 
     void DataReady();
     // -- Output Buffer Commands
-    void OutputPing() const;
+    void OutputPing();
     void Kick(const std::string& message, bool hide);
     bool canSend;
     bool canReceive;
     std::unique_ptr<ByteBuffer> SendBuffer;
     std::unique_ptr<ByteBuffer> ReceiveBuffer;
-    //std::mutex sendLock;
+    std::mutex sendLock;
 
     int Id;
     std::string IP;

@@ -312,6 +312,7 @@ void Network::NetworkEvents() {
 void Network::NetworkOutputSend() {
     for(auto const &nc : roClients) {
         if (nc->DataAvailable && nc->canSend) {
+            const std::scoped_lock<std::mutex> sLock(nc->sendLock);
             int sendSize = nc->SendBuffer->Size();
             std::vector<unsigned char> allBytes = nc->SendBuffer->GetAllBytes();
 
