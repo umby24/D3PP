@@ -345,7 +345,7 @@ void MapMain::MapBlockChange() {
             }
         }
         watchdog::Watch("Map_Blockchanging", "End thread-slope", 2);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
 

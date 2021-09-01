@@ -175,4 +175,7 @@ void Player::SendMap() {
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> myMap = mm->GetPointer(MapId);
     myMap->Send(myClientId);
+    Entities.clear(); // -- Bounce our entities
+    tEntity->SendPosOwn = true;
+    tEntity->resend = true;
 }

@@ -1137,7 +1137,6 @@ void CommandMain::CommandServerInfo() {
 #endif
 #endif
     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eRun time: " + serverRunTime + "h");
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eServer Memory Allocations: " + stringulate(Mem::MemoryUsage / 4096) + " MB");
 }
 
 void CommandMain::CommandLogLast() {
