@@ -306,47 +306,42 @@ int MapMain::GetMaxActionId() {
 }
 
 void MapMain::MapBlockChange() {
-    clock_t blockChangeTimer = clock();
-
     while (System::IsRunning) {
-        watchdog::Watch("Map_Blockchanging", "Begin thread-slope", 0);
-        while (blockChangeTimer < clock()) {
-            blockChangeTimer += 100;
+            watchdog::Watch("Map_Blockchanging", "Begin thread-slope", 0);
+
+
             for(auto const &m : _maps) {
-                if (m.second->data.BlockchangeStopped)
+                if (m.second->data.BlockchangeStopped) {
                     continue;
-                
+                }
                 int maxChangedSec = 1100 / 10;
-                int toRemove = 0;
-                const std::scoped_lock<std::mutex> sLock(m.second->data.bcMutex);
-                for(auto const &chg : m.second->data.ChangeQueue) {
-                    unsigned short x = chg.X;
-                    unsigned short y = chg.Y;
-                    unsigned short z = chg.Z;
-                    short oldMat = chg.OldMaterial;
-                    unsigned char priority = chg.Priority;
-                    unsigned char currentMat = m.second->GetBlockType(x, y, z);
-                    toRemove++;
-                    int blockChangeOffset = GetMapOffset(x, y, z, m.second->data.SizeX, m.second->data.SizeY, m.second->data.SizeZ, 1);
-                    int bitmaskSize = GetMapSize(m.second->data.SizeX, m.second->data.SizeY, m.second->data.SizeZ, 1);
-                    
-                    if (blockChangeOffset < bitmaskSize) { // -- remove from bitmask
-                        m.second->data.BlockchangeData.at(blockChangeOffset/8) = m.second->data.BlockchangeData.at(blockChangeOffset/8) & ~(1 << (blockChangeOffset % 8));
-                    }
-                    if (currentMat != oldMat) {
-                        NetworkFunctions::NetworkOutBlockSet2Map(m.first, x, y, z, currentMat);
-                        maxChangedSec--;
-                        if (maxChangedSec <= 0) {
-                            break;
+                while (maxChangedSec > 0 && !m.second->data.ChangeQueue.empty()) {
+                    MapBlockChanged chg{};
+                    {
+                        const std::scoped_lock<std::mutex> sLock(m.second->data.bcMutex);
+                        if (m.second->data.ChangeQueue.empty())
+                            continue;
+
+                        chg = m.second->data.ChangeQueue.top();
+
+                        unsigned short x = chg.X;
+                        unsigned short y = chg.Y;
+                        unsigned short z = chg.Z;
+                        short oldMat = chg.OldMaterial;
+                        unsigned char priority = chg.Priority;
+                        unsigned char currentMat = m.second->GetBlockType(x, y, z);
+
+                        if (currentMat != oldMat) {
+                            NetworkFunctions::NetworkOutBlockSet2Map(m.first, x, y, z, currentMat);
                         }
+                        maxChangedSec--;
+                        m.second->data.ChangeQueue.pop();
                     }
                 }
-                m.second->data.ChangeQueue.erase(m.second->data.ChangeQueue.begin(), m.second->data.ChangeQueue.begin() + toRemove);
             }
+            watchdog::Watch("Map_Blockchanging", "End thread-slope", 2);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-        watchdog::Watch("Map_Blockchanging", "End thread-slope", 2);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
 }
 
 bool comparePhysicsTime(MapBlockDo first, MapBlockDo second) {
@@ -701,7 +696,8 @@ bool Map::Resize(short x, short y, short z) {
            data.blockCounter.at(i) = 0;
         {
             const std::scoped_lock<std::mutex> sLock(data.bcMutex);
-            data.ChangeQueue.clear();
+            while (!data.ChangeQueue.empty())
+                data.ChangeQueue.pop();
         }
         // -- Spawn limiting..
         if (data.SpawnX > x)
@@ -1156,13 +1152,9 @@ void Map::Resend() {
         }
     }
     const std::scoped_lock<std::mutex> sLock(data.bcMutex);
-    for(auto const &bc : data.ChangeQueue) {
-        int blockCHangeOffset = MapMain::GetMapOffset(bc.X, bc.Y, bc.Z, data.SizeX, data.SizeY, data.SizeZ, 1);
-        if (blockCHangeOffset < MapMain::GetMapSize(data.SizeX, data.SizeY, data.SizeZ, 1)) {
-            data.BlockchangeData.at(blockCHangeOffset/8) = (data.BlockchangeData.at(blockCHangeOffset/8)&255) & ~(1 << (blockCHangeOffset % 8));
-        }
-    }
-    data.ChangeQueue.clear();
+    while (!data.ChangeQueue.empty())
+        data.ChangeQueue.pop();
+
 }
 
 void Map::BlockChange(const std::shared_ptr<NetworkClient>& client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type) {
@@ -1295,16 +1287,9 @@ void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z,
         return;
     }
     int offset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, 1);
-    bool blockChangeFound = data.BlockchangeData.at(offset/8) & (1 << (offset % 8));
-
-    if (blockChangeFound) {
-        return;
-    }
-
-    data.BlockchangeData.at(offset/8) |= (1 << (offset % 8)); // -- Set bitmask
     MapBlockChanged changeItem { X, Y, Z, priority, oldType};
     const std::scoped_lock<std::mutex> sLock(data.bcMutex);
-    data.ChangeQueue.push_back(changeItem);
+    data.ChangeQueue.push(changeItem);
 }
 
 Map::Map() {

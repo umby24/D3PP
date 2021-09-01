@@ -8,6 +8,7 @@
 #define D3PP_MAP_H
 #include <string>
 #include <vector>
+#include <queue>
 #include <map>
 #include <thread>
 #include <memory>
@@ -57,6 +58,11 @@ struct MapBlockChanged {
     unsigned short Z;
     unsigned char Priority;
     short OldMaterial;
+
+    bool operator()(const MapBlockChanged &a, const MapBlockChanged &b)
+    {
+        return a.Priority < b.Priority;
+    }
 };
 
 struct UndoStep {
@@ -126,7 +132,7 @@ struct MapData {
     std::mutex bcMutex;
 
     std::vector<MapBlockDo> PhysicsQueue;
-    std::vector<MapBlockChanged> ChangeQueue;
+    std::priority_queue<MapBlockChanged, std::vector<MapBlockChanged>, MapBlockChanged> ChangeQueue;
     std::vector<UndoStep> UndoCache;
     std::vector<MapRankElement> RankBoxes;
 
