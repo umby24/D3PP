@@ -330,10 +330,13 @@ void MapMain::MapBlockChange() {
                         unsigned char priority = chg.Priority;
                         unsigned char currentMat = m.second->GetBlockType(x, y, z);
 
-                        if (currentMat != oldMat) {
+                        //if (currentMat != oldMat) {
                             NetworkFunctions::NetworkOutBlockSet2Map(m.first, x, y, z, currentMat);
-                        }
-                        maxChangedSec--;
+                      //  }
+//                        int offset = MapMain::GetMapOffset(x, y, z, m.second->data.SizeX, m.second->data.SizeY, m.second->data.SizeZ, 1);
+//                        if (std::ceil(offset / 8) < m.second->data.BlockchangeData.size()) {
+//                            m.second->data.BlockchangeData.at(std::ceil(offset / 8)) = m.second->data.BlockchangeData.at(std::ceil(offset / 8)) & ~(1 << (offset % 8)); // -- Set bitmask
+//                        }
                         m.second->data.ChangeQueue.pop();
                     }
                 }
@@ -368,11 +371,11 @@ void MapMain::MapBlockPhysics() {
                         continue;
                     // -- range can go out of bounds here.
                     int offset = MapMain::GetMapOffset(item.X, item.Y, item.Z, map.second->data.SizeX, map.second->data.SizeY, map.second->data.SizeZ, 1);
-                    if ((offset/8) >= map.second->data.PhysicData.size()) {
+                    if ((std::ceil(offset / 8)) >= map.second->data.PhysicData.size()) {
                         counter++;
                         continue;
                     }
-                    map.second->data.PhysicData.at(offset/8) = map.second->data.PhysicData.at(offset/8) & ~(1 << (offset % 8)); // -- Set bitmask
+                    map.second->data.PhysicData.at(std::ceil(offset / 8)) = map.second->data.PhysicData.at(std::ceil(offset / 8)) & ~(1 << (offset % 8)); // -- Set bitmask
                     map.second->ProcessPhysics(item.X, item.Y, item.Z);
                     counter++;
 
@@ -1220,7 +1223,6 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
     Vector3S locationVector {static_cast<short>(X), static_cast<short>(Y), static_cast<short>(Z)};
     Block* bm = Block::GetInstance();
     int blockOffset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
-    auto &atLoc = data.Data.at(blockOffset);
     auto roData = GetBlockData(locationVector);
 
     EventMapBlockChange event;
@@ -1234,14 +1236,16 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
     event.send = send;
     Dispatcher::post(event); // -- Post this event out!
 
-    MapBlock oldType = bm->GetBlock(atLoc);
+    MapBlock oldType = bm->GetBlock(roData.type);
     MapBlock newType = bm->GetBlock(type);
 
-    if (type != atLoc && undo) {
+    if (type != roData.type && undo) {
         Undo::Add(playerNumber, data.ID, X, Y, Z, oldType.Id, roData.lastPlayer);
     }
-
-    data.blockCounter.at(atLoc)--;
+    if (type != roData.type && send) {
+        QueueBlockChange(X, Y, Z, priority, oldType.Id);
+    }
+    data.blockCounter.at(roData.type)--;
     data.blockCounter.at(type)++;
     roData.type = type;
     roData.lastPlayer = playerNumber;
@@ -1256,9 +1260,7 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
             }
         }
     }
-    if (type != atLoc && send) {
-        QueueBlockChange(X, Y, Z, priority, oldType.Id);
-    }
+
 
 }
 
@@ -1286,9 +1288,14 @@ void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z,
         return;
     }
     int offset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, 1);
+//    bool physItemFound = (data.BlockchangeData.at(std::ceil(offset / 8)) & (1 << (offset % 8)) != 0);
+//    if (physItemFound) {
+//        return;
+//    }
     MapBlockChanged changeItem { X, Y, Z, priority, oldType};
     const std::scoped_lock<std::mutex> sLock(data.bcMutex);
     data.ChangeQueue.push(changeItem);
+    data.BlockchangeData.at(std::ceil(offset / 8)) |= (1 << (offset % 8));
 }
 
 Map::Map() {
@@ -1321,8 +1328,8 @@ Map::Map() {
 
 void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1,
                     unsigned short Z1, bool undo, bool physic, unsigned char priority) {
-    bool isFirstInBounds = (X0 >= 0 && X0 < data.SizeX && Y0 >= 0 && Y0 < data.SizeY && Z0 >= 0 && Z0 < data.SizeZ);
-    bool isSecondInBounds = (X1 >= 0 && X1 < data.SizeX && Y1 >= 0 && Y1 < data.SizeY && Z1 >= 0 && Z1 < data.SizeZ);
+    bool isFirstInBounds = BlockInBounds(X0, Y0, Z0);
+    bool isSecondInBounds = BlockInBounds(X1, Y1, Z1);
 
     if (isFirstInBounds && isSecondInBounds) {
         Vector3S location0 {static_cast<short>(X0), static_cast<short>(Y0), static_cast<short>(Z0)};
@@ -1385,7 +1392,7 @@ void Map::QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z
 
     int offset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, 1);
 
-    bool physItemFound = (data.PhysicData.at(offset/8) & (1 << (offset % 8)) != 0);
+    bool physItemFound = (data.PhysicData.at(std::ceil(offset / 8)) & (1 << (offset % 8)) != 0);
 
     if (!physItemFound) {
         int mbdIndex = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
@@ -1396,7 +1403,7 @@ void Map::QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z
         std::string physPlugin = blockEntry.PhysicsPlugin;
 
         if (blockPhysics > 0 || !physPlugin.empty()) {
-            data.PhysicData.at(offset/8) |= (1 << (offset % 8)); // -- Set bitmask
+            data.PhysicData.at(std::ceil(offset / 8)) |= (1 << (offset % 8)); // -- Set bitmask
             auto physTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(blockEntry.PhysicsTime + Utils::RandomNumber(blockEntry.PhysicsRandom));
 
             MapBlockDo physicItem { physTime, X, Y, Z};

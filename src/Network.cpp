@@ -402,7 +402,7 @@ void Network::NetworkInput() {
                     }
                     break;
                 default:
-                    Logger::LogAdd(MODULE_NAME, "Unknown Packet Received [" + stringulate(commandByte) + "]", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+                    Logger::LogAdd(MODULE_NAME, "Unknown Packet Received [" + stringulate((int)commandByte) + "]", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
                     nc->Kick("Invalid Packet", true);
             }
 
