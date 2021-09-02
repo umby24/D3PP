@@ -1185,6 +1185,9 @@ void Map::BlockChange(const std::shared_ptr<NetworkClient>& client, unsigned sho
             rawNewType = oldType.AfterDelete;
 
         MapBlock newType = bm->GetBlock(rawNewType);
+        if (rawBlock == rawNewType) {
+            return;
+        }
 
         if (client->player->tEntity->playerList->PRank < oldType.RankDelete) {
             NetworkFunctions::SystemMessageNetworkSend(client->Id, "&eYou are not allowed to delete this block type.");
@@ -1288,10 +1291,6 @@ void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z,
         return;
     }
     int offset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, 1);
-//    bool physItemFound = (data.BlockchangeData.at(std::ceil(offset / 8)) & (1 << (offset % 8)) != 0);
-//    if (physItemFound) {
-//        return;
-//    }
     MapBlockChanged changeItem { X, Y, Z, priority, oldType};
     const std::scoped_lock<std::mutex> sLock(data.bcMutex);
     data.ChangeQueue.push(changeItem);
