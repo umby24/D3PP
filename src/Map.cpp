@@ -309,7 +309,6 @@ void MapMain::MapBlockChange() {
     while (System::IsRunning) {
             watchdog::Watch("Map_Blockchanging", "Begin thread-slope", 0);
 
-
             for(auto const &m : _maps) {
                 if (m.second->data.BlockchangeStopped) {
                     continue;
@@ -361,7 +360,7 @@ void MapMain::MapBlockPhysics() {
             int counter = 0;
             while (!map.second->data.PhysicsQueue.empty()) {
                 MapBlockDo item = map.second->data.PhysicsQueue.at(0);
-                if (item.time < clock()) {
+                if (item.time < std::chrono::steady_clock::now()) {
                     map.second->data.PhysicsQueue.erase(map.second->data.PhysicsQueue.begin());
                     bool isBlockInBounds = map.second->BlockInBounds(item.X, item.Y, item.Z);
 
@@ -1257,7 +1256,7 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
             }
         }
     }
-    if (oldType.Id != newType.Id && send) {
+    if (type != atLoc && send) {
         QueueBlockChange(X, Y, Z, priority, oldType.Id);
     }
 
@@ -1339,13 +1338,7 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
             if (oldRo0.type != oldRo1.type)
                 Undo::Add(oldRo0.lastPlayer, data.ID, X1, Y1, Z1, oldRo1.type, oldRo1.lastPlayer);
         }
-        oldRo1.type = oldRo0.type;
-        oldRo1.lastPlayer = oldRo0.lastPlayer;
-        oldRo0.type = 0;
-        oldRo0.lastPlayer = -1;
 
-        SetBlockData(location0, oldRo0);
-        SetBlockData(location1, oldRo1);
 
         if (oldRo0.type != 0) {
             QueueBlockChange(X0, Y0, Z0, priority, oldRo0.type);
@@ -1353,7 +1346,13 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
         if (oldRo1.type != oldRo0.type) {
             QueueBlockChange(X1, Y1, Z1, priority, oldRo1.type);
         }
+        oldRo1.type = oldRo0.type;
+        oldRo1.lastPlayer = oldRo0.lastPlayer;
+        oldRo0.type = 0;
+        oldRo0.lastPlayer = -1;
 
+        SetBlockData(location0, oldRo0);
+        SetBlockData(location1, oldRo1);
         if (physic) {
             for (int ix = -1; ix < 2; ix++) {
                 for (int iy = -1; iy < 2; iy++) {
@@ -1391,8 +1390,6 @@ void Map::QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z
     if (!physItemFound) {
         int mbdIndex = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
 
-       // auto* mapBlockData= (MapBlockData*) (data.Data + mbdIndex);
-
         Block* bm = Block::GetInstance();
         MapBlock blockEntry = bm->GetBlock(data.Data.at(mbdIndex));
         unsigned char blockPhysics = blockEntry.Physics;
@@ -1400,11 +1397,10 @@ void Map::QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z
 
         if (blockPhysics > 0 || !physPlugin.empty()) {
             data.PhysicData.at(offset/8) |= (1 << (offset % 8)); // -- Set bitmask
-            clock_t physTime = clock() + blockEntry.PhysicsTime + Utils::RandomNumber(blockEntry.PhysicsRandom);
+            auto physTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(blockEntry.PhysicsTime + Utils::RandomNumber(blockEntry.PhysicsRandom));
 
             MapBlockDo physicItem { physTime, X, Y, Z};
             data.PhysicsQueue.push_back(physicItem);
-
         }
     }
 }

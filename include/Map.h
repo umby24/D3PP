@@ -46,7 +46,7 @@ struct MapBlockData {
 };
 
 struct MapBlockDo { // -- Physics Queue Item
-    clock_t time;
+    std::chrono::time_point<std::chrono::steady_clock> time;
     unsigned short X;
     unsigned short Y;
     unsigned short Z;
