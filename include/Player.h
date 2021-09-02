@@ -66,10 +66,11 @@ public:
     int timeDeathMessage{};
     int timeBuildMessage{};
     bool LogoutHide{};
+    int myClientId;
 
     // -- Methods
     Player();
-
+    void SendMap();
 };
 
 #endif //D3PP_PLAYER_H

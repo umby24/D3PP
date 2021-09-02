@@ -12,7 +12,7 @@
 using json = nlohmann::json;
 
 const std::string SYSTEM_FILE_NAME = "System";
-const float SYSTEM_VERSION_NUMBER = 0.01;
+const float SYSTEM_VERSION_NUMBER = 0.02;
 
 class System : TaskItem {
 public:
@@ -21,7 +21,7 @@ public:
     static System* GetInstance();
     static System* Instance_;
     static std::mutex mainMutex;
-    std::string ServerName;
+    static std::string ServerName;
     std::string Motd;
     int ClickDistance;
     System();
@@ -33,6 +33,4 @@ private:
     void Save();
     void MainFunc();
 };
-
-
 #endif //D3PP_SYSTEM_H

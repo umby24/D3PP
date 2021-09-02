@@ -41,10 +41,10 @@ protected:
     static const int initial_size = 1024; // -- Initial allocation size
     static const int block_size = 128; // -- Size it will be increased at each bump..
     std::vector<unsigned char> _buffer;
-    std::atomic<unsigned int> _size;
-    std::atomic<unsigned int> _readPos;
-    std::atomic<unsigned int> _writePos;
-    std::atomic<int> _largestAlloc = 0;
+    unsigned int _size;
+    unsigned int _readPos;
+    unsigned int _writePos;
+    int _largestAlloc = 0;
     std::mutex _bufLock;
 private:
 

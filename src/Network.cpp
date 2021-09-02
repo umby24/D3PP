@@ -20,7 +20,6 @@ using json = nlohmann::json;
 #include "PacketHandlers.h"
 #include "Entity.h"
 #include "Player.h"
-#include "Mem.h"
 #include "Files.h"
 #include "watchdog.h"
 #include "Client.h"
@@ -279,15 +278,15 @@ void Network::NetworkEvents() {
                 auto* receiveBuf = new char[1026];
                 receiveBuf[1024] = 99;
                 int dataRead = client->clientSocket->Read(receiveBuf, 1024);
-                std::vector<unsigned char> receive(receiveBuf, receiveBuf+dataRead);
-                delete[] receiveBuf;
-                unsigned long mySize = receive.size();
-
                 if (dataRead > 0) {
+                    std::vector<unsigned char> receive(receiveBuf, receiveBuf+dataRead);
+                    delete[] receiveBuf;
+                    unsigned long mySize = receive.size();
                     client->ReceiveBuffer->Write(receive, dataRead);
                     client->DownloadRateCounter += dataRead;
                     DownloadRateCounter += dataRead;
                 } else {
+                    delete[] receiveBuf;
                     DeleteClient(clientId, "Disconnected", true);
                     break;
                 }
@@ -313,6 +312,7 @@ void Network::NetworkEvents() {
 void Network::NetworkOutputSend() {
     for(auto const &nc : roClients) {
         if (nc->DataAvailable && nc->canSend) {
+            const std::scoped_lock<std::mutex> sLock(nc->sendLock);
             int sendSize = nc->SendBuffer->Size();
             std::vector<unsigned char> allBytes = nc->SendBuffer->GetAllBytes();
 
@@ -402,7 +402,7 @@ void Network::NetworkInput() {
                     }
                     break;
                 default:
-                    Logger::LogAdd(MODULE_NAME, "Unknown Packet Received [" + stringulate(commandByte) + "]", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+                    Logger::LogAdd(MODULE_NAME, "Unknown Packet Received [" + stringulate((int)commandByte) + "]", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
                     nc->Kick("Invalid Packet", true);
             }
 

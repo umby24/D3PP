@@ -8,6 +8,7 @@
 #define D3PP_MAP_H
 #include <string>
 #include <vector>
+#include <queue>
 #include <map>
 #include <thread>
 #include <memory>
@@ -45,7 +46,7 @@ struct MapBlockData {
 };
 
 struct MapBlockDo { // -- Physics Queue Item
-    time_t time;
+    std::chrono::time_point<std::chrono::steady_clock> time;
     unsigned short X;
     unsigned short Y;
     unsigned short Z;
@@ -57,6 +58,11 @@ struct MapBlockChanged {
     unsigned short Z;
     unsigned char Priority;
     short OldMaterial;
+
+    bool operator()(const MapBlockChanged &a, const MapBlockChanged &b)
+    {
+        return a.Priority < b.Priority;
+    }
 };
 
 struct UndoStep {
@@ -123,9 +129,10 @@ struct MapData {
     std::vector<unsigned char> BlockchangeData;
 
     std::recursive_mutex physicsQueueMutex;
+    std::mutex bcMutex;
 
     std::vector<MapBlockDo> PhysicsQueue;
-    std::vector<MapBlockChanged> ChangeQueue;
+    std::priority_queue<MapBlockChanged, std::vector<MapBlockChanged>, MapBlockChanged> ChangeQueue;
     std::vector<UndoStep> UndoCache;
     std::vector<MapRankElement> RankBoxes;
 
@@ -191,11 +198,13 @@ public:
     void LoadTeleporterFile(std::string directory);
     void LoadRankBoxFile(std::string directory);
     void LoadConfigFile(std::string directory);
-    void SaveTeleporterFile(std::string directory);
-    void SaveRankBoxFile(std::string directory);
-    void SaveConfigFile(std::string directory);
+    void SaveTeleporterFile(const std::string& directory);
+    void SaveRankBoxFile(const std::string& directory);
+    void SaveConfigFile(const std::string& directory);
     unsigned char GetBlockType(unsigned short X, unsigned short Y, unsigned short Z);
     unsigned short GetBlockPlayer(unsigned short X, unsigned short Y, unsigned short Z);
+    MapBlockData GetBlockData(Vector3S location);
+    void SetBlockData(Vector3S location, MapBlockData mbData);
     int BlockGetRank(unsigned short X, unsigned short Y, unsigned short Z);
     void SetRankBox(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1, unsigned short Z1, short rank);
     void Reload();
@@ -232,10 +241,10 @@ public:
     int Add(int id, short x, short y, short z, const std::string& name);
     void Delete(int id);
     static MapMain* GetInstance();
-    std::string GetMapMOTDOverride(int mapId);
+    static std::string GetMapMOTDOverride(int mapId);
     static int GetMapSize(int x, int y, int z, int blockSize) { return (x * y * z) * blockSize; }
     static int GetMapOffset(int x, int y, int z, int sizeX, int sizeY, int sizeZ, int blockSize) { return (x + y * sizeX + z * sizeX * sizeY) * blockSize;}
-    static Vector3S GetMapExportSize(std::string filename);
+    static Vector3S GetMapExportSize(const std::string& filename);
     void MainFunc();
     
     void AddSaveAction(int clientId, int mapId, const std::string& directory);

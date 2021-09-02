@@ -385,9 +385,9 @@ int LuaPlugin::LuaMapBlockChange(lua_State *L) {
 
     int playerNumber = lua_tointeger(L, 1);
     int mapId = lua_tointeger(L, 2);
-    int X = lua_tointeger(L, 3);
-    int Y = lua_tointeger(L, 4);
-    int Z = lua_tointeger(L, 5);
+    int X = static_cast<int>(lua_tonumber(L, 3));
+    int Y = static_cast<int>(lua_tonumber(L, 4));
+    int Z = static_cast<int>(lua_tonumber(L, 5));
     unsigned char type = lua_tointeger(L, 6);
     bool Undo = (lua_tointeger(L, 7) > 0);
     bool physics = (lua_tointeger(L, 8) > 0);
@@ -413,9 +413,9 @@ int LuaPlugin::LuaMapBlockChangeClient(lua_State *L) {
 
     int clientId = lua_tointeger(L, 1);
     int mapId = lua_tointeger(L, 2);
-    int X = lua_tointeger(L, 3);
-    int Y = lua_tointeger(L, 4);
-    int Z = lua_tointeger(L, 5);
+    int X = static_cast<int>(lua_tonumber(L, 3));
+    int Y = static_cast<int>(lua_tonumber(L, 4));
+    int Z = static_cast<int>(lua_tonumber(L, 5));
     unsigned char mode = lua_tointeger(L, 6);
     unsigned char type = lua_tointeger(L, 7);
     Network* nm = Network::GetInstance();
@@ -442,9 +442,9 @@ int LuaPlugin::LuaMapBlockGetType(lua_State *L) {
     }
 
     int mapId = lua_tointeger(L, 1);
-    int X = lua_tointeger(L, 2);
-    int Y = lua_tointeger(L, 3);
-    int Z = lua_tointeger(L, 4);
+    int X = static_cast<int>(lua_tonumber(L, 2));
+    int Y = static_cast<int>(lua_tonumber(L, 3));
+    int Z = static_cast<int>(lua_tonumber(L, 4));
 
     int result = -1;
     MapMain* mm = MapMain::GetInstance();
@@ -501,6 +501,7 @@ int LuaPlugin::LuaMessage(lua_State *L) {
 }
 
 void LuaPlugin::LoadFile(std::string path) {
+    std::lock_guard<std::recursive_mutex> pqlock(executionMutex);
     if(luaL_loadfile(this->state, path.c_str())) {
         bail(this->state, "Failed to load " + path);
         return;
@@ -592,9 +593,9 @@ int LuaPlugin::LuaMapBlockGetPlayer(lua_State *L) {
     }
 
     int mapId = lua_tointeger(L, 1);
-    int X = lua_tointeger(L, 2);
-    int Y = lua_tointeger(L, 3);
-    int Z = lua_tointeger(L, 4);
+    int X = static_cast<int>(lua_tonumber(L, 2));
+    int Y = static_cast<int>(lua_tonumber(L, 3));
+    int Z = static_cast<int>(lua_tonumber(L, 4));
 
     int result = -1;
     MapMain* mm = MapMain::GetInstance();
@@ -1828,12 +1829,12 @@ int LuaPlugin::LuaMapBlockMove(lua_State *L) {
         return 0;
     }
     int mapId = lua_tointeger(L, 1);
-    int x0 = lua_tointeger(L, 2);
-    int y0 = lua_tointeger(L, 3);
-    int z0 = lua_tointeger(L, 4);
-    int x1 = lua_tointeger(L, 5);
-    int y1 = lua_tointeger(L, 6);
-    int z1 = lua_tointeger(L, 7);
+    int x0 = static_cast<int>(lua_tonumber(L, 2));
+    int y0 = static_cast<int>(lua_tonumber(L, 3));
+    int z0 = static_cast<int>(lua_tonumber(L, 4));
+    int x1 = static_cast<int>(lua_tonumber(L, 5));
+    int y1 = static_cast<int>(lua_tonumber(L, 6));
+    int z1 =static_cast<int>(lua_tonumber(L, 7));
     bool undo = lua_toboolean(L, 8);
     bool physic = lua_toboolean(L, 9);
     unsigned char priority = lua_tointeger(L, 10);
@@ -1925,9 +1926,9 @@ int LuaPlugin::LuaMapBlockChangePlayer(lua_State *L) {
 
     int playerId = lua_tointeger(L, 1);
     int mapId = lua_tointeger(L, 2);
-    int X = lua_tointeger(L, 3);
-    int Y = lua_tointeger(L, 4);
-    int Z = lua_tointeger(L, 5);
+    int X = static_cast<int>(lua_tonumber(L, 3));
+    int Y = static_cast<int>(lua_tonumber(L, 4));
+    int Z = static_cast<int>(lua_tonumber(L, 5));
     unsigned char type = lua_tointeger(L, 6);
     bool undo = lua_toboolean(L, 7);
     bool physic = lua_toboolean(L, 8);

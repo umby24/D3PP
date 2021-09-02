@@ -6,6 +6,7 @@
 #define D3PP_NETWORKCLIENT_H
 #define MAX_SELECTION_BOXES 255
 
+#include <string>
 #include <memory>
 #include <map>
 #include <vector>
@@ -18,18 +19,19 @@ class Player;
 class NetworkClient {
 public:
     NetworkClient();
+    ~NetworkClient();
     explicit NetworkClient(std::unique_ptr<Sockets> socket);
     NetworkClient(NetworkClient &client);
 
     void DataReady();
     // -- Output Buffer Commands
-    void OutputPing() const;
+    void OutputPing();
     void Kick(const std::string& message, bool hide);
     bool canSend;
     bool canReceive;
     std::unique_ptr<ByteBuffer> SendBuffer;
     std::unique_ptr<ByteBuffer> ReceiveBuffer;
-    //std::mutex sendLock;
+    std::mutex sendLock;
 
     int Id;
     std::string IP;

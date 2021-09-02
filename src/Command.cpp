@@ -13,7 +13,6 @@
 #include "Logger.h"
 #include "Files.h"
 #include "System.h"
-#include "Mem.h"
 #include "Utils.h"
 #include "Undo.h"
 #include "plugins/LuaPlugin.h"
@@ -1138,7 +1137,6 @@ void CommandMain::CommandServerInfo() {
 #endif
 #endif
     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eRun time: " + serverRunTime + "h");
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eServer Memory Allocations: " + stringulate(Mem::MemoryUsage / 4096) + " MB");
 }
 
 void CommandMain::CommandLogLast() {
@@ -1526,7 +1524,10 @@ void CommandMain::CommandMapInfo() {
     } else {
         textToSend += "<br>";
     }
-    textToSend += "&eBlocksend Queue: " + stringulate(cMap->data.ChangeQueue.size());
+    {
+        const std::scoped_lock<std::mutex> sLock(cMap->data.bcMutex);
+        textToSend += "&eBlocksend Queue: " + stringulate(cMap->data.ChangeQueue.size());
+    }
     if (cMap->data.BlockchangeStopped) {
         textToSend += "&Block Changes Stopped&f<br>";
     } else {

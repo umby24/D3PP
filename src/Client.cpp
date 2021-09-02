@@ -47,6 +47,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     c->player->LoginName = name;
     c->player->MPPass = mppass;
     c->player->ClientVersion = version;
+    c->player->myClientId = c->Id;
 
     bool preLoginCorrect = true;
     if (version != 7) {
@@ -111,6 +112,18 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     c->LoggedIn = true;
     Entity::Add(newEntity);
     Entity::SetDisplayName(newEntity->Id, currentRank.Prefix, name, currentRank.Suffix);
+    System* sMain = System::GetInstance();
+    std::string motd = MapMain::GetMapMOTDOverride(spawnMap->data.ID);
+
+    if (motd.empty())
+        motd = sMain->Motd;
+
+    NetworkFunctions::SystemLoginScreen(c->Id, System::ServerName, motd, currentRank.OnClient);
+
+    c->player->MapId = spawnMap->data.ID;
+    c->player->SendMap();
+    c->player->tEntity->SpawnSelf = true;
+
 
     Logger::LogAdd(MODULE_NAME, "Player Logged in (IP:" + c->IP + " Name:" + name + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(newEntity->Id) + "&e' logged in");
@@ -156,11 +169,20 @@ void Client::Logout(int clientId, std::string message, bool showtoall) {
     Network *n = Network::GetInstance();
     MapMain *mm = MapMain::GetInstance();
     std::shared_ptr<NetworkClient> c = n->GetClient(clientId);
+    if (!c || c == nullptr || c == NULL) {
+        return;
+    }
+    if (!c->LoggedIn) {
+        return;
+    }
 
     Logger::LogAdd(MODULE_NAME, "Player logged out (IP: " + c->IP + " Name: " + c->player->LoginName + " Message: " + message + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+
     if (c->player && c->player->tEntity) {
-        std::shared_ptr<Map> currentMap = mm->GetPointer(c->player->MapId);
-        currentMap->data.Clients -= 1;
+        std::shared_ptr<Map> currentMap = mm->GetPointer(c->player->tEntity->MapID);
+        if (currentMap != nullptr) {
+            currentMap->data.Clients -= 1;
+        }
 
         if (showtoall && !c->player->LogoutHide) {
             NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(c->player->tEntity->Id) + "&e' logged out (" + message + ")");
@@ -178,58 +200,4 @@ void Client::Logout(int clientId, std::string message, bool showtoall) {
     EventClientLogout ecl;
     ecl.clientId = clientId;
     Dispatcher::post(ecl);
-}
-
-void Client::LoginThread() {
-    Network *n = Network::GetInstance();
-    System* sMain = System::GetInstance();
-    MapMain* mMain = MapMain::GetInstance();
-    Rank* rMain = Rank::GetInstance();
-
-    while (System::IsRunning) {
-        watchdog::Watch("Client_login", "Begin Thread-Slope", 0);
-        for(auto const &nc : n->roClients) {
-            if (!nc->LoggedIn || !nc->player->tEntity)
-                continue;
-
-            if (nc->player->MapId == nc->player->tEntity->MapID)
-                continue;
-
-            int rank = 0;
-            std::string motd = "";
-
-            if (nc->player->tEntity->playerList)
-                rank = nc->player->tEntity->playerList->PRank;
-
-            motd = mMain->GetMapMOTDOverride(nc->player->tEntity->MapID);
-            
-            if (motd.empty())
-                motd = sMain->Motd;
-
-            int clientId = nc->Id;
-            int eMapId = nc->player->tEntity->MapID;
-            float entityX = nc->player->tEntity->X;
-            float entityY = nc->player->tEntity->Y;
-            float entityZ = nc->player->tEntity->Z;
-            float entityRot = nc->player->tEntity->Rotation;
-            float entityLook = nc->player->tEntity->Look;
-
-            RankItem ri = rMain->GetRank(rank, false);
-            std::shared_ptr<Map> sendMap = mMain->GetPointer(eMapId);
-            
-            NetworkFunctions::SystemLoginScreen(clientId, sMain->ServerName, motd, ri.OnClient);
-            sendMap->Send(clientId);
-            
-            nc->player->tEntity->SpawnSelf = true;
-            
-            for(auto const &pe : nc->player->Entities) {
-                NetworkFunctions::NetworkOutEntityDelete(clientId, pe.ClientId);
-            }
-            nc->player->Entities.clear();
-            // -- Map is now sent, change client map.
-            nc->player->MapId = eMapId;
-        }
-        watchdog::Watch("Client_login", "End Thread-Slope", 2);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
 }

@@ -51,22 +51,22 @@ void watchdog::MainFunc() {
     clock_t timer = 0;
 
     while (isRunning) {
-        const std::scoped_lock<std::mutex> pLock(_lock);
         clock_t currentTime = clock(); // -- generationTIme and timer
         clock_t time_ = currentTime - timer;
         timer = currentTime;
         int i = 0;
-        for(auto item : _modules) {
-            item.Timeout = currentTime - item.WatchTime;
-            if (item.BiggestTimeout < item.Timeout) {
-                item.BiggestTimeout = item.Timeout;
+        { // -- Artificial block for scoped lock
+            const std::scoped_lock<std::mutex> pLock(_lock);
+            for (auto item : _modules) {
+                item.Timeout = currentTime - item.WatchTime;
+                if (item.BiggestTimeout < item.Timeout) {
+                    item.BiggestTimeout = item.Timeout;
+                }
+                _modules[i] = item;
+                i++;
             }
-            _modules[i] = item;
-            i++;
         }
-
         HtmlStats(time_);
-        pLock.~scoped_lock();
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 }

@@ -57,7 +57,7 @@ void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &
         else
             client->ReceiveBuffer->ReadByte();
     } else {
-        client->ReceiveBuffer->ReadShort();
+        client->ReceiveBuffer->ReadByte();
     }
 
     unsigned short X = (unsigned short)client->ReceiveBuffer->ReadShort();

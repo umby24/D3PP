@@ -26,7 +26,7 @@ void Heartbeat::Beat() {
     httplib::Client cli(CLASSICUBE_NET_URL);
 
     httplib::Params params;
-    params.emplace("name", sMain->ServerName);
+    params.emplace("name", System::ServerName);
     params.emplace("port", stringulate(nMain->Port));
     params.emplace("users", stringulate(nMain->roClients.size()));
     params.emplace("max", stringulate(pMain->MaxPlayers));

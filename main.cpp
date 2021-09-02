@@ -1,9 +1,9 @@
+#include <iostream>
 #include <string>
 #include <thread>
 
 #include "Network.h"
 #include "Rank.h"
-#include "Mem.h"
 #include "System.h"
 #include "Logger.h"
 #include "Client.h"
@@ -71,7 +71,6 @@ int main()
     n->Start();
     
     std::thread mainThread(mainLoop);
-    std::thread clientLoginThread(Client::LoginThread);
 
     MainConsole();
 

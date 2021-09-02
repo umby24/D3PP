@@ -27,6 +27,7 @@ public:
     int Read(std::string key, int def);
     void Write(std::string key, std::string value);
     void Write(std::string key, int value);
+    void Write(std::string key, float value);
 private:
     void LoadFile_();
 };

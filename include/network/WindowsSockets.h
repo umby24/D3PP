@@ -32,6 +32,7 @@ public:
     void Disconnect();
     int Read(char* buffer, int size);
     int Send(char* data, int size);
+    bool GetConnected() const { return connected; }
     SOCKET GetSocketFd();
     std::string GetSocketIp();
     void SetSocketIp(std::string toSet);

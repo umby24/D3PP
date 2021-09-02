@@ -13,6 +13,7 @@ System* System::Instance_ = nullptr;
 bool System::IsRunning = false;
 time_t System::startTime = time(nullptr);
 std::mutex System::mainMutex;
+std::string System::ServerName = "D3PP Server";
 
 System::System() {
     this->Interval = std::chrono::seconds(2);
@@ -21,7 +22,7 @@ System::System() {
     this->Teardown = [this] {Save(); };
 
     // -- Default values
-    ServerName = "D3PP Server";
+    System::ServerName = "D3PP Server";
     Motd = "&cWelcome to D3PP!";
     ClickDistance = 160;
     SaveFile = false;
@@ -46,7 +47,7 @@ void System::Load() {
     iStream >> j;
     iStream.close();
 
-    ServerName = j["ServerName"];
+    System::ServerName = j["ServerName"];
     Motd = j["MOTD"];
     ClickDistance = j["ClickDistance"];
 
@@ -60,7 +61,7 @@ void System::Save() {
     Files* f = Files::GetInstance();
     std::string blockFile = f->GetFile(SYSTEM_FILE_NAME);
 
-    j["ServerName"] = ServerName;
+    j["ServerName"] = System::ServerName;
     j["MOTD"] = Motd;
     j["ClickDistance"] = ClickDistance;
 
