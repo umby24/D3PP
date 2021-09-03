@@ -1041,7 +1041,7 @@ int LuaPlugin::LuaEntityGetPlayer(lua_State *L) {
     int entityId = lua_tointeger(L, 1);
     int result = -1;
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
-    if (foundEntity != nullptr) {
+    if (foundEntity != nullptr && foundEntity->playerList != NULL) {
         result = foundEntity->playerList->Number;
     }
 
@@ -3139,7 +3139,7 @@ int LuaPlugin::LuaClientSetBlockPermissions(lua_State *L) {
 int LuaPlugin::LuaMapEnvSet(lua_State *L) {
     int nArgs = lua_gettop(L);
 
-    if (nArgs != 2) {
+    if (nArgs != 4) {
         Logger::LogAdd("Lua", "LuaError: CPE_Map_Env_Apperance_Set called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }

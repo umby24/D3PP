@@ -15,6 +15,7 @@
 #define MESSAGE_TYPES_EXT_NAME "MessageTypes"
 #define SELECTION_CUBOID_EXT_NAME "SelectionCuboid"
 #define LONG_MESSAGES_EXT_NAME "LongerMessages"
+#define TWOWAY_PING_EXT_NAME "TwoWayPing"
 
 #include <memory>
 

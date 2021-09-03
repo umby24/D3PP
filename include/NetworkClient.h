@@ -8,6 +8,7 @@
 
 #include <string>
 #include <memory>
+#include <mutex>
 #include <map>
 #include <vector>
 #include <atomic>
@@ -42,9 +43,10 @@ public:
     int DownloadRate;
     int UploadRateCounter;
     int DownloadRateCounter;
-    int Ping;
-    time_t PingSentTime;
-    time_t PingTime;
+    float Ping;
+    short PingVal;
+    std::chrono::time_point<std::chrono::steady_clock> PingSentTime;
+    std::chrono::time_point<std::chrono::steady_clock> PingTime;
     bool LoggedIn;
     bool CPE;
     int CustomExtensions;

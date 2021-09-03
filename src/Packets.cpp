@@ -347,3 +347,13 @@ void Packets::SendExtAddEntity2(std::shared_ptr<NetworkClient> client, unsigned 
         client->SendBuffer->Purge();
     }
 }
+
+void Packets::SendTwoWayPing(const std::shared_ptr<NetworkClient>& client, unsigned char direction, short timeval) {
+    if (client->canSend && client->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(client->sendLock);
+        client->SendBuffer->Write((unsigned char)43);
+        client->SendBuffer->Write(direction);
+        client->SendBuffer->Write(timeval);
+        client->SendBuffer->Purge();
+    }
+}

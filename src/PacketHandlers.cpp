@@ -15,6 +15,7 @@
 #include "CPE.h"
 #include "Utils.h"
 #include "common/ByteBuffer.h"
+#include "Packets.h"
 
 void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& client) {
     char clientVersion = client->ReceiveBuffer->ReadByte();
@@ -32,7 +33,7 @@ void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& clien
 }
 
 void PacketHandlers::HandlePing(const std::shared_ptr<NetworkClient> &client) {
-    client->Ping = time(nullptr) - client->PingSentTime;
+    client->Ping = static_cast<int>((std::chrono::steady_clock::now() - client->PingSentTime).count());
 }
 
 void PacketHandlers::HandleBlockChange(const std::shared_ptr<NetworkClient> &client) {
@@ -112,4 +113,18 @@ void PacketHandlers::HandleCustomBlockSupportLevel(const std::shared_ptr<Network
 
     Logger::LogAdd("CPE", "CPE Process complete.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     Client::Login(client->Id, client->player->LoginName, client->player->MPPass, client->player->ClientVersion);
+}
+
+void PacketHandlers::HandleTwoWayPing(const std::shared_ptr<NetworkClient> &client) {
+    unsigned char direction = client->ReceiveBuffer->ReadByte();
+    short timeval = client->ReceiveBuffer->ReadShort();
+
+    if (direction == 0) {
+        Packets::SendTwoWayPing(client, direction, timeval);
+        return;
+    }
+
+    short totalduration = static_cast<short>(clock() - timeval);
+    float secondsTaken = (float)totalduration / static_cast<float>(CLOCKS_PER_SEC);
+    client->Ping = secondsTaken;
 }

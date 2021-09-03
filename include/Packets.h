@@ -40,5 +40,6 @@ public:
     static void SendSetWeather(std::shared_ptr<NetworkClient> client, unsigned char weatherType);
     static void SendHackControl(std::shared_ptr<NetworkClient> client, bool flying, bool noClip, bool speeding, bool respawn, bool thirdPerson, short jumpHeight);
     static void SendExtAddEntity2(std::shared_ptr<NetworkClient> client, unsigned char entityId, std::string name, std::string skin, short X, short Y, short Z, unsigned char rotation, unsigned char look);
+    static void SendTwoWayPing(const std::shared_ptr<NetworkClient>& client, unsigned char direction, short timeVal);
 };
 #endif //D3PP_PACKETS_H

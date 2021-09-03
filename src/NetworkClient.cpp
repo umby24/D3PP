@@ -38,7 +38,7 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) : Selections(MAX_S
     canSend = true;
     LastTimeEvent = time(nullptr);
     clientSocket = std::move(socket);
-    PingTime = time(nullptr) + 5;
+    PingTime = std::chrono::steady_clock::now() + std::chrono::seconds(5);
     DisconnectTime = 0;
     LoggedIn = false;
     UploadRate = 0;
@@ -62,7 +62,7 @@ NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
     canReceive = true;
     canSend = true;
     LastTimeEvent = time(nullptr);
-    PingTime = time(nullptr) + 5;
+    PingTime = std::chrono::steady_clock::now() + std::chrono::seconds(5);
     DisconnectTime = 0;
     LoggedIn = false;
     UploadRate = 0;
@@ -183,7 +183,7 @@ NetworkClient::NetworkClient(NetworkClient &client) : Selections(MAX_SELECTION_B
     CustomExtensions = 0;
     LastTimeEvent = time(nullptr);
     clientSocket = std::move(client.clientSocket);
-    PingTime = time(nullptr) + 5;
+    PingTime = std::chrono::steady_clock::now() + std::chrono::seconds(5);
     DisconnectTime = 0;
     LoggedIn = false;
     UploadRate = 0;

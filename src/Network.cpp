@@ -29,6 +29,8 @@ using json = nlohmann::json;
 #include "common/ByteBuffer.h"
 #include "events/EventClientAdd.h"
 #include "events/EventClientDelete.h"
+#include "CPE.h"
+#include "Packets.h"
 
 const std::string MODULE_NAME = "Network";
 Network* Network::singleton_ = nullptr;
@@ -327,10 +329,14 @@ void Network::NetworkOutputSend() {
 
 void Network::NetworkOutput() {
     for (auto const &nc : roClients) {
-        if (nc->PingTime < time(nullptr))  {
-            nc->PingTime = time(nullptr) + 5;
-            nc->PingSentTime = time(nullptr);
-            nc->OutputPing();
+        if (nc->PingTime < std::chrono::steady_clock::now())  {
+            nc->PingTime = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            nc->PingSentTime = std::chrono::steady_clock::now();
+            nc->PingVal = static_cast<short>(clock());
+            if (CPE::GetClientExtVersion(nc, TWOWAY_PING_EXT_NAME) == 0)
+                nc->OutputPing();
+            else
+                Packets::SendTwoWayPing(nc, 1, nc->PingVal);
         }
     }
 }
@@ -399,6 +405,13 @@ void Network::NetworkInput() {
                         nc->ReceiveBuffer->ReadByte();
                         PacketHandlers::HandleCustomBlockSupportLevel(nc);
                         nc->ReceiveBuffer->Shift(2);
+                    }
+                    break;
+                case 43:
+                    if (nc->ReceiveBuffer->Size() >= 4) {
+                        nc->ReceiveBuffer->ReadByte();
+                        PacketHandlers::HandleTwoWayPing(nc);
+                        nc->ReceiveBuffer->Shift(4);
                     }
                     break;
                 default:
