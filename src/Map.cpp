@@ -1094,7 +1094,13 @@ void Map::Send(int clientId) {
 
     for (int i = 0; i < mapSize-1; i++) {
         int index = i * MAP_BLOCK_ELEMENT_SIZE;
-        MapBlock mb = bMain->GetBlock(data.Data[index]);
+        unsigned char blockAt = data.Data[index];
+        if (blockAt < 49) { // -- If its an original block, Dont bother checking. Just speed past.
+            tempBuf[tempBufferOffset++] = blockAt;
+            continue;
+        }
+
+        MapBlock mb = bMain->GetBlock(blockAt);
 
         if (mb.CpeLevel > cbl)
             tempBuf[tempBufferOffset++] = static_cast<char>(mb.CpeReplace);
