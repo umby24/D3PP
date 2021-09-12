@@ -1262,8 +1262,8 @@ void CommandMain::CommandLoadMap() {
     Files* fm = Files::GetInstance();
     std::string mapDirectory = "";
 
-    if (!ParsedOperator[0].empty()) {
-        mapDirectory = fm->GetFolder("Maps") + ParsedOperator[0];
+    if (!ParsedText0.empty()) {
+        mapDirectory = fm->GetFolder("Maps") + ParsedText0;
     }
 
     MapMain* mapMain = MapMain::GetInstance();

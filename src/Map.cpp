@@ -880,6 +880,10 @@ void Map::Load(std::string directory) {
     if (!std::filesystem::exists(directory)) {
         return;
     }
+    if (directory[directory.size()-1] != '/') {
+        directory = directory + "/";
+    }
+    data.loading = true;
     LoadConfigFile(directory);
 
     int sizeX = data.SizeX;
@@ -918,6 +922,7 @@ void Map::Load(std::string directory) {
     LoadRankBoxFile(directory);
     // -- Load Teleporter file
     LoadTeleporterFile(directory);
+    data.loading = false;
 }
 
 void Map::LoadConfigFile(std::string directory) {
@@ -1273,7 +1278,7 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
          Reload();
      }
      if (data.loading) {
-         while (!data.loaded) {
+         while (data.loading) {
              std::this_thread::sleep_for(std::chrono::milliseconds(100));
          }
      }

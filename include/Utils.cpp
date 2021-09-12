@@ -104,7 +104,7 @@ std::vector<std::string> Utils::splitString(std::string input, const char splitC
     return result;
 }
 
-bool Utils::InsensitiveCompare(std::string &first, std::string &second) {
+bool Utils::InsensitiveCompare(std::string first, std::string second) {
     std::transform(first.begin(), first.end(), first.begin(), ::tolower);
     std::transform(second.begin(), second.end(), second.begin(), ::tolower);
     return first == second;

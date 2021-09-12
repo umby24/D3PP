@@ -24,7 +24,7 @@ class Utils
         static int FileSize(const std::string &filePath);
         static long FileModTime(const std::string &filePath);
         static bool DirectoryExists(const std::string& filePath, bool create);
-        static bool InsensitiveCompare(std::string &first, std::string &second);
+        static bool InsensitiveCompare(std::string first, std::string second);
         static std::string TrimPathString(std::string input);
         static void padTo(std::string &str, size_t num, char paddingChar = ' ');
         static int strCount(const std::string &input, char search);
