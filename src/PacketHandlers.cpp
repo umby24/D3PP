@@ -16,6 +16,7 @@
 #include "Utils.h"
 #include "common/ByteBuffer.h"
 #include "Packets.h"
+#include "MinecraftLocation.h"
 
 void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& client) {
     char clientVersion = client->ReceiveBuffer->ReadByte();
@@ -66,12 +67,13 @@ void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &
     unsigned short Y = (unsigned short)client->ReceiveBuffer->ReadShort();
     char R = client->ReceiveBuffer->ReadByte();
     char L = client->ReceiveBuffer->ReadByte();
+    MinecraftLocation inputLocation {R, L, X, Y, Z};
 
     if (!client->LoggedIn || !client->player->tEntity)
         return;
 
     if (client->player->tEntity->MapID == client->player->MapId)
-        client->player->tEntity->PositionSet(client->player->tEntity->MapID, X/32.0, Y/32.0, (Z-51)/32.0, R*360/256.0, L*360/256.0, 1, false);
+        client->player->tEntity->PositionSet(client->player->tEntity->MapID, inputLocation, 1, false);
 }
 
 void PacketHandlers::HandleChatPacket(const std::shared_ptr<NetworkClient> &client) {

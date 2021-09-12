@@ -11,6 +11,7 @@
 #include <memory>
 
 #include "TaskScheduler.h"
+#include "MinecraftLocation.h"
 
 class PlayerListEntry;
 class Player;
@@ -41,11 +42,7 @@ public:
     bool resend;
     // --
     int MapID;
-    float X;
-    float Y;
-    float Z;
-    float Rotation;
-    float Look;
+    MinecraftLocation Location;
     bool SendPosOwn;
     char SendPos;
     // --
@@ -76,7 +73,7 @@ public:
 
     void Kill();
     void PositionCheck();
-    void PositionSet(int mapId, float x, float y, float z, float rot, float lk, unsigned char priority, bool sendOwn);
+    void PositionSet(int mapId, MinecraftLocation location, unsigned char priority, bool sendOwn);
     void SetModel(std::string modelName);
     static void Send();
     static int GetFreeId();

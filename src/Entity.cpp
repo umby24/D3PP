@@ -89,18 +89,13 @@ int Entity::GetFreeIdClient(int mapId) {
     return -1;
 }
 
-Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look) : variables{} {
+Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look) : variables{}, Location{rotation, look} {
     Prefix = "";
     Name = name;
     Suffix = "";
     Id = GetFreeId();
     ClientId = GetFreeIdClient(mapId);
     MapID = mapId;
-    this->X = X;
-    this->Y = Y;
-    this->Z = Z;
-    Rotation = rotation;
-    Look = look;
     resend = false;
     SendPosOwn = false;
     SendPos = false;
@@ -113,6 +108,8 @@ Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rot
     BuildState = 0;
     BuildMode = "Normal";
     playerList = nullptr;
+    Vector3S locAsBlocks {X*32, Y*32, Z*32-51};
+    Location.SetAsPlayerCoords(locAsBlocks);
 }
 
 std::shared_ptr<Entity> Entity::GetPointer(int id) {
@@ -185,7 +182,8 @@ void Entity::Kill() {
         Dispatcher::post(ed);
 
         NetworkFunctions::SystemMessageNetworkSend2All(MapID, "&c" + Name + " died.");
-        PositionSet(MapID, cm->data.SpawnX, cm->data.SpawnY, cm->data.SpawnZ, cm->data.SpawnRot, cm->data.SpawnLook, 5, true);
+        MinecraftLocation spawnLoc {cm->data.SpawnRot, cm->data.SpawnLook, cm->data.SpawnX, cm->data.SpawnY, cm->data.SpawnZ};
+        PositionSet(MapID, spawnLoc, 5, true);
     }
 }
 
@@ -201,18 +199,25 @@ std::shared_ptr<NetworkClient> getEntityClient(int entityId) {
     return nullptr;
 }
 
-void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float lk, unsigned char priority, bool sendOwn) {
+void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char priority, bool sendOwn) {
+    if (location == Location) {
+        return;
+    }
+
     MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> currentMap = mm->GetPointer(MapID);
+    // -- Do entity position check here? TODO:
     if (SendPos <= priority) {
+        Location = location;
 
         EventEntityPositionSet eps;
         eps.entityId = Id;
         eps.mapId = mapId;
-        eps.x = x;
-        eps.y = y;
-        eps.z = z;
-        eps.rotation = rot;
-        eps.look = lk;
+        eps.x = Location.X() / 32.0;
+        eps.y = Location.Y() / 32.0;
+        eps.z = (Location.Z() +51) / 32.0;
+        eps.rotation = Location.Rotation;
+        eps.look = Location.Look;
         eps.priority = priority;
         eps.sendOwnClient = sendOwn;
         Dispatcher::post(eps);
@@ -226,16 +231,11 @@ void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float 
                 NetworkFunctions::SystemMessageNetworkSend2All(mapId, mapChangeMessage);
                 nm->data.Clients += 1;
                 int oldMapId = MapID;
-                std::shared_ptr<Map> om = mm->GetPointer(oldMapId);
-                if (om!= nullptr)
-                    om->data.Clients -= 1;
+                
+                if (currentMap != nullptr)
+                    currentMap->data.Clients -= 1;
 
                 MapID = mapId;
-                X = x;
-                Y = y;
-                Z = z;
-                Rotation = rot;
-                Look = lk;
                 ClientId = GetFreeIdClient(mapId);
 
                 EventEntityMapChange emc;
@@ -253,15 +253,8 @@ void Entity::PositionSet(int mapId, float x, float y, float z, float rot, float 
                 MessageToClients(Id, "&eYou are not allowed to join map '" + nm->data.Name + "'");
             }
         } else {
-            std::shared_ptr<Map> om = mm->GetPointer(MapID);
-            if (om != nullptr) {
+            if (currentMap != nullptr) {
                 if (sendOwn || !SendPosOwn) {
-                    X = x;
-                    Y = y;
-                    Z = z;
-                    if (Rotation != rot)
-                        Rotation = rot;
-                    Look = lk;
                     SendPos = priority;
                     if (sendOwn)
                         SendPosOwn = true;
@@ -275,9 +268,7 @@ void Entity::PositionCheck() {
     MapMain* mm = MapMain::GetInstance();
     Block* bm = Block::GetInstance();
     int mapId = MapID;
-    float x = round(X);
-    float y = round(Y);
-    float z = round(Z);
+    Vector3S blockLocation = Location.GetAsBlockCoords();
     std::shared_ptr<Map> theMap = mm->GetPointer(mapId);
     
     if (theMap == nullptr) {
@@ -285,7 +276,7 @@ void Entity::PositionCheck() {
     }
     // -- do a teleporter check..
     for(auto const &tp : theMap->data.Teleporter) {
-        if (x >= tp.second.X0 && x <= tp.second.X1 && y >= tp.second.Y0 && y<= tp.second.Y1 && z>= tp.second.Z0 && z <= tp.second.Z1) {
+        if (blockLocation.X >= tp.second.X0 && blockLocation.X <= tp.second.X1 && blockLocation.Y >= tp.second.Y0 && blockLocation.Y<= tp.second.Y1 && blockLocation.Z>= tp.second.Z0 && blockLocation.Z <= tp.second.Z1) {
             int destMapId = MapID;
             
             if (!tp.second.DestMapUniqueId.empty()) {
@@ -296,15 +287,16 @@ void Entity::PositionCheck() {
             } else if (tp.second.DestMapId != -1) {
                 destMapId = tp.second.DestMapId;
             }
+            MinecraftLocation tpDest {tp.second.DestRot, tp.second.DestLook, tp.second.DestX, tp.second.DestY, tp.second.DestZ};
 
-            PositionSet(destMapId, tp.second.DestX, tp.second.DestY, tp.second.DestZ, tp.second.DestRot, tp.second.DestLook, 10, true);
+            PositionSet(destMapId, tpDest, 10, true);
             break;
         }
     }
 
     // -- check if the block we're touching is a killing block, if so call kill.
     for (int i = 0; i < 2; i++) {
-        unsigned char blockType = theMap->GetBlockType(x, y, z+i);
+        unsigned char blockType = theMap->GetBlockType(blockLocation.X, blockLocation.Y, blockLocation.Z+i);
         if (bm->GetBlock(blockType).Kills)
             Kill();
     }
@@ -378,7 +370,7 @@ void Entity::Send() {
                 s.ClientId = bEntity.second->ClientId;
                 nc->player->Entities.push_back(s); // -- track the new client
                 // -- spawn them :)
-                NetworkFunctions::NetworkOutEntityAdd(nc->Id, s.ClientId, Entity::GetDisplayname(s.Id), bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
+                NetworkFunctions::NetworkOutEntityAdd(nc->Id, s.ClientId, Entity::GetDisplayname(s.Id), bEntity.second->Location);
                 CPE::PostEntityActions(nc, bEntity.second);
             }
         }
@@ -393,7 +385,7 @@ void Entity::Send() {
 
                 for (auto const &vEntity : nc->player->Entities) {
                     if (vEntity.Id == bEntity.first)
-                        NetworkFunctions::NetworkOutEntityPosition(nc->Id, vEntity.ClientId, bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
+                        NetworkFunctions::NetworkOutEntityPosition(nc->Id, vEntity.ClientId, bEntity.second->Location);
                 }
             }
         }
@@ -405,7 +397,7 @@ void Entity::Send() {
                     continue;
 
                 if (nc->player->tEntity == bEntity.second) {
-                    NetworkFunctions::NetworkOutEntityPosition(nc->Id, 255, bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
+                    NetworkFunctions::NetworkOutEntityPosition(nc->Id, 255, bEntity.second->Location);
                 }
             }
         }
@@ -417,7 +409,7 @@ void Entity::Send() {
                     continue;
 
                 if (nc->player->tEntity == bEntity.second) {
-                    NetworkFunctions::NetworkOutEntityAdd(nc->Id, 255, Entity::GetDisplayname(bEntity.first), bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
+                    NetworkFunctions::NetworkOutEntityAdd(nc->Id, 255, Entity::GetDisplayname(bEntity.first), bEntity.second->Location);
                 }
             }
         }

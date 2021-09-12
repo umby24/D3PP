@@ -11,7 +11,7 @@
 #include "Block.h"
 #include "Player.h"
 #include "CPE.h"
-
+#include "MinecraftLocation.h"
 static std::shared_ptr<NetworkClient> GetPlayer(int id) {
     auto network = Network::GetInstance();
     auto result = network->GetClient(id);
@@ -119,21 +119,18 @@ void NetworkFunctions::NetworkOutBlockSet2Map(int mapId, unsigned short x, unsig
     }
 }
 
-void NetworkFunctions::NetworkOutEntityAdd(int clientId, char playerId, std::string name, float x, float y, float z,
-                                           float rotation, float look) {
+void NetworkFunctions::NetworkOutEntityAdd(int clientId, char playerId, std::string name, MinecraftLocation& location) {
     Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> c = nm->GetClient(clientId);
 
     Utils::padTo(name, 64);
-    x *= 32;
-    y *= 32;
-    z = (z *32) + 51;
-    rotation = rotation/360*256.0;
-    look = look/360*256.0;
+
+    unsigned char rotation = location.Rotation/360*256.0;
+    unsigned char look = location.Look/360*256.0;
     if (CPE::GetClientExtVersion(c, EXT_PLAYER_LIST_EXT_NAME) < 2) {
-        Packets::SendSpawnEntity(clientId, playerId, name, x, y, z, rotation, look);
+        Packets::SendSpawnEntity(clientId, playerId, name, location.X(), location.Y(), location.Z(), rotation, look);
     } else {
-        Packets::SendExtAddEntity2(c, playerId, name, name, x, y, z, rotation, look);
+        Packets::SendExtAddEntity2(c, playerId, name, name, location.X(), location.Y(), location.Z(), rotation, look);
     }
 }
 
@@ -141,12 +138,6 @@ void NetworkFunctions::NetworkOutEntityDelete(int clientId, char playerId) {
     Packets::SendDespawnEntity(clientId, playerId);
 }
 
-void NetworkFunctions::NetworkOutEntityPosition(int clientId, char playerId, float x, float y, float z, float rotation,
-                                                float look) {
-    x *= 32;
-    y *= 32;
-    z = (z * 32) + 51;
-    rotation = rotation/360*256.0;
-    look = look/360*256.0;
-    Packets::SendPlayerTeleport(clientId, playerId, x, y, z, rotation, look);
+void NetworkFunctions::NetworkOutEntityPosition(int clientId, char playerId, MinecraftLocation& location) {
+    Packets::SendPlayerTeleport(clientId, playerId, location.X(), location.Y(), location.Z(), location.Rotation, location.Look);
 }

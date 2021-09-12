@@ -634,7 +634,8 @@ void MapMain::Delete(int id) {
     if (mp->data.Clients > 0) {
         for(auto const &nc : nm->roClients) {
             if (nc->LoggedIn && nc->player->tEntity != nullptr&& nc->player->tEntity->MapID == id) {
-                nc->player->tEntity->PositionSet(0, 0, 0, 0, 0, 0, 4, true);
+                MinecraftLocation somewhere {0, 0, 0, 0, 0};
+                nc->player->tEntity->PositionSet(0, somewhere, 4, true);
             }
         }
     }
@@ -1151,19 +1152,11 @@ void Map::Resend() {
 
     for (auto const &me : Entity::_entities) {
         if (me.second->MapID == data.ID) {
-            if (me.second->X > data.SizeX-0.5)
-                me.second->X = data.SizeX-0.5;
-            
-            if (me.second->X < 0.5)
-                me.second->X = 0.5;
-
-            if (me.second->Y > data.SizeY-0.5)
-                me.second->Y = data.SizeY-0.5;
-            
-            if (me.second->Y < 0.5)
-                me.second->Y = 0.5;
+            Vector3S newLocation{data.SizeX+16, data.SizeY+16, data.SizeZ+16};
+            me.second->Location.SetAsPlayerCoords(newLocation);
         }
     }
+
     const std::scoped_lock<std::mutex> sLock(data.bcMutex);
     while (!data.ChangeQueue.empty())
         data.ChangeQueue.pop();

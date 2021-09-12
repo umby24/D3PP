@@ -1078,7 +1078,7 @@ int LuaPlugin::LuaEntityGetX(lua_State *L) {
     float result = -1;
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
     if (foundEntity != nullptr) {
-        result = foundEntity->X;
+        result = foundEntity->Location.X()/32.0;
     }
 
     lua_pushnumber(L, static_cast<lua_Number>(result));
@@ -1096,7 +1096,7 @@ int LuaPlugin::LuaEntityGetY(lua_State *L) {
     float result = -1;
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
     if (foundEntity != nullptr) {
-        result = foundEntity->Y;
+        result = foundEntity->Location.Y()/32.0;
     }
 
     lua_pushnumber(L, static_cast<lua_Number>(result));
@@ -1114,7 +1114,7 @@ int LuaPlugin::LuaEntityGetZ(lua_State *L) {
     float result = -1;
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
     if (foundEntity != nullptr) {
-        result = foundEntity->Z;
+        result = (foundEntity->Location.Z()+51)/32;
     }
 
     lua_pushnumber(L, static_cast<lua_Number>(result));
@@ -1132,7 +1132,7 @@ int LuaPlugin::LuaEntityGetRotation(lua_State *L) {
     float result = -1;
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
     if (foundEntity != nullptr) {
-        result = foundEntity->Rotation;
+        result = foundEntity->Location.Rotation;
     }
 
     lua_pushnumber(L, static_cast<lua_Number>(result));
@@ -1150,7 +1150,7 @@ int LuaPlugin::LuaEntityGetLook(lua_State *L) {
     float result = -1;
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
     if (foundEntity != nullptr) {
-        result = foundEntity->Look;
+        result = foundEntity->Location.Look;
     }
 
     lua_pushnumber(L, result);
@@ -1249,7 +1249,10 @@ int LuaPlugin::LuaEntityPositionSet(lua_State *L) {
 
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
     if (foundEntity != nullptr) {
-        foundEntity->PositionSet(mapId, X, Y, Z, rotation, look, 10, true);
+        MinecraftLocation newLoc{rotation, look};
+        Vector3S blockCoords { X, Y, Z };
+        newLoc.SetAsBlockCoords(blockCoords);
+        foundEntity->PositionSet(mapId, newLoc, 10, true);
     }
 
     return 0;

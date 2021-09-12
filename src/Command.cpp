@@ -854,7 +854,10 @@ void CommandMain::CommandChangeMap() {
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> mi = mm->GetPointer(ParsedText0);
     if (mi != nullptr) {
-        c->player->tEntity->PositionSet(mi->data.ID, mi->data.SpawnX, mi->data.SpawnY, mi->data.SpawnZ, mi->data.SpawnRot, mi->data.SpawnLook, 255, true);
+        MinecraftLocation spawnLoc {mi->data.SpawnRot, mi->data.SpawnLook};
+        Vector3S spawnBlockCoords {mi->data.SpawnX, mi->data.SpawnY, mi->data.SpawnZ};
+        spawnLoc.SetAsBlockCoords(spawnBlockCoords);
+        c->player->tEntity->PositionSet(mi->data.ID, spawnLoc, 255, true);
 
     } else {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find map '" + ParsedText0 + "'.");
@@ -1227,7 +1230,7 @@ void CommandMain::CommandTeleport() {
         return;
     }
 
-    c->player->tEntity->PositionSet(entry->MapID, entry->X, entry->Y, entry->Z, entry->Rotation, entry->Look, 10, true);
+    c->player->tEntity->PositionSet(entry->MapID, entry->Location, 10, true);
 }
 
 void CommandMain::CommandBring() {
@@ -1240,7 +1243,7 @@ void CommandMain::CommandBring() {
         return;
     }
 
-    entry->PositionSet(c->player->tEntity->MapID, c->player->tEntity->X, c->player->tEntity->Y, c->player->tEntity->Z, c->player->tEntity->Rotation, c->player->tEntity->Look, 10, true);
+    entry->PositionSet(c->player->tEntity->MapID, c->player->tEntity->Location, 10, true);
 }
 
 void CommandMain::CommandMapFill() {
@@ -1436,11 +1439,11 @@ void CommandMain::CommandSetSpawn() {
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
-    cMap->data.SpawnX = c->player->tEntity->X;
-    cMap->data.SpawnY = c->player->tEntity->Y;
-    cMap->data.SpawnZ = c->player->tEntity->Z;
-    cMap->data.SpawnRot = c->player->tEntity->Rotation;
-    cMap->data.SpawnLook = c->player->tEntity->Look;
+    cMap->data.SpawnX = c->player->tEntity->Location.X() / 32.0;
+    cMap->data.SpawnY = c->player->tEntity->Location.Y() / 32.0;
+    cMap->data.SpawnZ = c->player->tEntity->Location.Z() / 32.0;
+    cMap->data.SpawnRot = c->player->tEntity->Location.Rotation;
+    cMap->data.SpawnLook = c->player->tEntity->Location.Look;
     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eSpawn updated.");
 }
 
@@ -1450,11 +1453,11 @@ void CommandMain::CommandSetKilLSpawn() {
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
-    cMap->data.SpawnX = c->player->tEntity->X;
-    cMap->data.SpawnY = c->player->tEntity->Y;
-    cMap->data.SpawnZ = c->player->tEntity->Z;
-    cMap->data.SpawnRot = c->player->tEntity->Rotation;
-    cMap->data.SpawnLook = c->player->tEntity->Look;
+    cMap->data.SpawnX = c->player->tEntity->Location.X() / 32.0;
+    cMap->data.SpawnY = c->player->tEntity->Location.Y() / 32.0;
+    cMap->data.SpawnZ = c->player->tEntity->Location.Z() / 32.0;
+    cMap->data.SpawnRot = c->player->tEntity->Location.Rotation;
+    cMap->data.SpawnLook = c->player->tEntity->Location.Look;
     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eKill Spawn updated.");
 }
 
@@ -1539,16 +1542,13 @@ void CommandMain::CommandPlace() {
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
-
-    float X = roundf(c->player->tEntity->X);
-    float Y = roundf(c->player->tEntity->Y);
-    float Z = roundf(c->player->tEntity->Z)-1;
-    if (X< 0) X = 0;
-    if (Y< 0) Y= 0;
-    if (Z< 0) Z= 0;
-    if (X>cMap->data.SizeX-1) X = cMap->data.SizeX-1;
-    if (Y>cMap->data.SizeY-1) Y = cMap->data.SizeY-1;
-    if (Z>cMap->data.SizeZ-1) Z = cMap->data.SizeZ-1;
+    Vector3S blockCoords = c->player->tEntity->Location.GetAsBlockCoords();
+    if (blockCoords.X< 0) blockCoords.X = 0;
+    if (blockCoords.Y< 0) blockCoords.Y= 0;
+    if (blockCoords.Z< 0) blockCoords.Z= 0;
+    if (blockCoords.X>cMap->data.SizeX-1) blockCoords.X = cMap->data.SizeX-1;
+    if (blockCoords.Y>cMap->data.SizeY-1) blockCoords.Y = cMap->data.SizeY-1;
+    if (blockCoords.Z>cMap->data.SizeZ-1) blockCoords.Z = cMap->data.SizeZ-1;
 
     bool found = false;
     unsigned char blockToPlace = 0;
@@ -1565,7 +1565,7 @@ void CommandMain::CommandPlace() {
     }
 
     if (found) {
-        cMap->BlockChange(c, X, Y, Z, 1, blockToPlace);
+        cMap->BlockChange(c, blockCoords.X, blockCoords.Y, blockCoords.Z, 1, blockToPlace);
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eBlock placed.");
     } else {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a block called '" + ParsedText0 + "'.");

@@ -9,13 +9,17 @@ struct Vector3S {
     short X;
     short Y;
     short Z;
+
+    bool isEqual(const Vector3S &other) {
+        return (X == other.X && Y == other.Y && Z == other.Z);
+    }
 };
 
 class MinecraftLocation {
 public:
-    short X() { return Location.X; };
-    short Y() { return Location.Y; };
-    short Z() { return Location.Z; };
+    const short X() { return Location.X; };
+    const short Y() { return Location.Y; };
+    const short Z() { return Location.Z; };
     unsigned char Rotation;
     unsigned char Look;
     Vector3S Location;
@@ -23,6 +27,10 @@ public:
     void SetAsBlockCoords(Vector3S blockCoords);
     void SetAsPlayerCoords(Vector3S playerCoords);
     Vector3S GetAsBlockCoords();
+
+    bool operator==(const MinecraftLocation &other) {
+        return Location.isEqual(other.Location) && other.Rotation == Rotation && other.Look == Look;
+    }
 };
 
 #endif
