@@ -15,6 +15,8 @@
 #include "Packets.h"
 #include "Entity.h"
 #include "MinecraftLocation.h"
+#include "EventSystem.h"
+#include "events/EntityEventArgs.h"
 
 #ifndef __linux__
 #include "network/WindowsSockets.h"
@@ -51,8 +53,8 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) : Selections(MAX_S
     CustomBlocksLevel = 0;
     GlobalChat = false;
     IP = clientSocket->GetSocketIp();
-
-    Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    SubEvents();
+    Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", LogType::NORMAL, __FILE__, __LINE__, __PRETTY_FUNCTION__);
 }
 
 NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
@@ -74,6 +76,38 @@ NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
     Ping = 0;
     CustomBlocksLevel = 0;
     GlobalChat = false;
+    SubEvents();
+}
+
+void NetworkClient::SubEvents() {
+    eventSubId = Dispatcher::subscribe(ENTITY_EVENT_MOVED, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+}
+
+void NetworkClient::HandleEvent(const Event& e) {
+    if (!LoggedIn)
+        return;
+
+    if (stringulate(e.type()) == ENTITY_EVENT_MOVED) {
+        const EntityEventArgs& ea = static_cast<const EntityEventArgs&>(e);
+        std::shared_ptr<Entity> eventEntity = Entity::GetPointer(ea.entityId);
+        if (eventEntity->Id == player->tEntity->Id && !eventEntity->SendPosOwn)
+            return;
+        
+        if (eventEntity->Id != player->tEntity->Id)
+            NetworkFunctions::NetworkOutEntityPosition(Id, eventEntity->ClientId, eventEntity->Location);
+        else
+            NetworkFunctions::NetworkOutEntityPosition(Id, -1, eventEntity->Location);
+    } else if (stringulate(e.type()) == ENTITY_EVENT_SPAWN) {
+        const EntityEventArgs& ea = static_cast<const EntityEventArgs&>(e);
+        std::shared_ptr<Entity> eventEntity = Entity::GetPointer(ea.entityId);
+        if (eventEntity->Id != player->tEntity->Id)
+            NetworkFunctions::NetworkOutEntityAdd(Id, eventEntity->ClientId, Entity::GetDisplayname(ea.entityId), eventEntity->Location);
+        else
+            NetworkFunctions::NetworkOutEntityAdd(Id, -1, Entity::GetDisplayname(ea.entityId), eventEntity->Location);
+    } else if (stringulate(e.type()) == ENTITY_EVENT_DESPAWN) {
+        const EntityEventArgs& ea = static_cast<const EntityEventArgs&>(e);
+        std::shared_ptr<Entity> eventEntity = Entity::GetPointer(ea.entityId);
+    }
 }
 
 void NetworkClient::OutputPing() {
@@ -88,8 +122,43 @@ void NetworkClient::Kick(const std::string& message, bool hide) {
         DisconnectTime = time(nullptr) + 1;
         LoggedIn = false;
         player->LogoutHide = hide;
-        Logger::LogAdd(MODULE_NAME, "Client Kicked [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Client Kicked [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __PRETTY_FUNCTION__);
     }
+}
+
+void NetworkClient::SpawnEntity(std::shared_ptr<Entity> e) {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+    if (e->Id != player->tEntity->Id && !e->SpawnSelf) {
+        EntityShort s{};
+        s.Id = e->Id;
+        s.ClientId = e->ClientId;
+        player->Entities.push_back(s); // -- track the new client
+        // -- spawn them :)
+        NetworkFunctions::NetworkOutEntityAdd(Id, s.ClientId, Entity::GetDisplayname(s.Id), e->Location);
+        CPE::PostEntityActions(selfPointer, e);
+    } else {
+        NetworkFunctions::NetworkOutEntityAdd(Id, -1, Entity::GetDisplayname(e->Id), e->Location);
+        CPE::PostEntityActions(selfPointer, e);
+        e->SpawnSelf = false;
+    }
+}
+
+void NetworkClient::DespawnEntity(std::shared_ptr<Entity> e) {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+
+    int iterator = 0;
+    for(auto const &vEntity : player->Entities) {
+        if (vEntity.Id == e->Id) {
+            player->Entities.erase(player->Entities.begin() + iterator);
+            break;
+        }
+        iterator++;
+    }
+
+    // -- spawn them :)
+    NetworkFunctions::NetworkOutEntityDelete(Id, e->ClientId);
 }
 
 void NetworkClient::HoldThis(unsigned char blockType, bool canChange) const {
@@ -196,15 +265,19 @@ NetworkClient::NetworkClient(NetworkClient &client) : Selections(MAX_SELECTION_B
     CustomBlocksLevel = 0;
     GlobalChat = false;
     IP = clientSocket->GetSocketIp();
+    SubEvents();
 }
 
 NetworkClient::~NetworkClient() {
     SendBuffer = nullptr;
     ReceiveBuffer = nullptr;
+
     if (clientSocket != nullptr) {
         if (clientSocket->GetConnected()) {
             clientSocket->Disconnect();
         }
         clientSocket = nullptr;
     }
+
+    Dispatcher::unsubscribe(eventSubId);
 }

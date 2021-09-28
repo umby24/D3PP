@@ -15,6 +15,7 @@
 
 class PlayerListEntry;
 class Player;
+class NetworkClient;
 
 struct BuildVariable {
     unsigned short X;
@@ -62,6 +63,7 @@ public:
 
     // -- Methods:
     Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look);
+    Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look, std::shared_ptr<NetworkClient> c);
 
     static std::shared_ptr<Entity> GetPointer(int id);
     static std::shared_ptr<Entity> GetPointer(std::string name);
@@ -71,18 +73,24 @@ public:
     static void Add(std::shared_ptr<Entity> e);
     static void Delete(int id);
 
+    void Spawn();
+    void Despawn();
+
     void Kill();
     void PositionCheck();
     void PositionSet(int mapId, MinecraftLocation location, unsigned char priority, bool sendOwn);
     void SetModel(std::string modelName);
+    void HandleMove();
     static void Send();
     static int GetFreeId();
     static int GetFreeIdClient(int mapId);
     void Delete();
     void Resend(int id);
-    static std::map<int, std::shared_ptr<Entity>> _entities;
+
+    static std::map<int, std::shared_ptr<Entity>> AllEntities;
+    static std::mutex entityMutex;
 private:
-    
+    std::shared_ptr<NetworkClient> associatedClient;
 };
 
 class EntityMain : TaskItem {

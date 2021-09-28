@@ -101,7 +101,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 
     c->GlobalChat = entry->GlobalChat;
     std::shared_ptr<Map> spawnMap = mm->GetPointer(pm->spawnMapId);
-    std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(name, pm->spawnMapId, spawnMap->data.SpawnX, spawnMap->data.SpawnY, spawnMap->data.SpawnZ, spawnMap->data.SpawnRot, spawnMap->data.SpawnLook);
+    std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(name, pm->spawnMapId, spawnMap->data.SpawnX, spawnMap->data.SpawnY, spawnMap->data.SpawnZ, spawnMap->data.SpawnRot, spawnMap->data.SpawnLook, c);
     RankItem currentRank = rm->GetRank(entry->PRank, false);
 
     newEntity->buildMaterial = -1;
@@ -112,6 +112,9 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     c->LoggedIn = true;
     Entity::Add(newEntity);
     Entity::SetDisplayName(newEntity->Id, currentRank.Prefix, name, currentRank.Suffix);
+    newEntity->SpawnSelf = true;
+    newEntity->Spawn();
+
     System* sMain = System::GetInstance();
     std::string motd = MapMain::GetMapMOTDOverride(spawnMap->data.ID);
 
@@ -122,7 +125,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 
     c->player->MapId = spawnMap->data.ID;
     c->player->SendMap();
-    c->player->tEntity->SpawnSelf = true;
+
 
 
     Logger::LogAdd(MODULE_NAME, "Player Logged in (IP:" + c->IP + " Name:" + name + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
@@ -132,6 +135,15 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     EventClientLogin ecl;
     ecl.clientId = c->Id;
     Dispatcher::post(ecl);
+
+    { // -- Spawn other entities too.
+        for(auto const &e : Entity::AllEntities) {
+            if (e.second->MapID != spawnMap->data.ID || e.first == newEntity->Id)
+                continue;
+            
+            c->SpawnEntity(e.second);
+        }
+    }
 
     spawnMap->data.Clients += 1;
     pl->SaveFile = true;
@@ -193,7 +205,7 @@ void Client::Logout(int clientId, std::string message, bool showtoall) {
                 Packets::SendExtRemovePlayerName(nc, c->player->NameId);
             }
         }
-
+        c->player->tEntity->Despawn();
         Entity::Delete(c->player->tEntity->Id);
         c->player->tEntity = nullptr;
     }

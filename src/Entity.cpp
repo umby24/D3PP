@@ -23,29 +23,24 @@
 #include "events/EventEntityDie.h"
 #include "events/EventEntityPositionSet.h"
 #include "events/EventEntityMapChange.h"
+#include "events/EntityEventArgs.h"
 
 const std::string MODULE_NAME = "Entity";
-std::map<int, std::shared_ptr<Entity>> Entity::_entities;
+std::map<int, std::shared_ptr<Entity>> Entity::AllEntities;
+std::mutex Entity::entityMutex{};
 
 EntityMain::EntityMain() {
-    this->Interval = std::chrono::milliseconds(100);
-    this->Main = [this] { MainFunc(); };
-    TaskScheduler::RegisterTask("Entity", *this);
 }
 
 void EntityMain::MainFunc() {
-    for(auto const &e : Entity::_entities) {
-        e.second->PositionCheck();
-    }
 
-    Entity::Send();
 }
 
 int Entity::GetFreeId() {
     int id = 0;
     bool found = false;
     while (true) {
-        found = (_entities.find(id) != _entities.end());
+        found = (AllEntities.find(id) != AllEntities.end());
 
         if (found)
             id++;
@@ -71,7 +66,7 @@ int Entity::GetFreeIdClient(int mapId) {
     int id = 0;
     bool found = false;
     for (id = 0; id < 128; id++) {
-        for(auto const &e : _entities) {
+        for(auto const &e : AllEntities) {
             if (e.second->ClientId == id && e.second->MapID == mapId) {
                 found = true;
                 continue;
@@ -89,6 +84,7 @@ int Entity::GetFreeIdClient(int mapId) {
     return -1;
 }
 
+
 Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look) : variables{}, Location{rotation, look} {
     Prefix = "";
     Name = name;
@@ -97,7 +93,7 @@ Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rot
     ClientId = GetFreeIdClient(mapId);
     MapID = mapId;
     resend = false;
-    SendPosOwn = false;
+    SendPosOwn = true;
     SendPos = false;
     timeMessageDeath = 0;
     timeMessageOther = 0;
@@ -110,13 +106,38 @@ Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rot
     playerList = nullptr;
     Vector3S locAsBlocks {X*32, Y*32, Z*32-51};
     Location.SetAsPlayerCoords(locAsBlocks);
+    associatedClient = nullptr;
+}
+
+Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look, std::shared_ptr<NetworkClient> c) : variables{}, Location{rotation, look} {
+    Prefix = "";
+    Name = name;
+    Suffix = "";
+    Id = GetFreeId();
+    ClientId = GetFreeIdClient(mapId);
+    MapID = mapId;
+    resend = false;
+    SendPosOwn = true;
+    SendPos = false;
+    timeMessageDeath = 0;
+    timeMessageOther = 0;
+    heldBlock = 0;
+    lastMaterial = 0;
+    buildMaterial = -1;
+    SpawnSelf = false;
+    BuildState = 0;
+    BuildMode = "Normal";
+    playerList = nullptr;
+    Vector3S locAsBlocks {X*32, Y*32, Z*32-51};
+    Location.SetAsPlayerCoords(locAsBlocks);
+    associatedClient = c;
 }
 
 std::shared_ptr<Entity> Entity::GetPointer(int id) {
-    if (_entities.find(id) == _entities.end())
+    if (AllEntities.find(id) == AllEntities.end())
         return nullptr;
 
-    return _entities.at(id);
+    return AllEntities.at(id);
 }
 
 void Entity::MessageToClients(int id, const std::string& message) {
@@ -139,7 +160,7 @@ std::string Entity::GetDisplayname(int id) {
 }
 
 std::shared_ptr<Entity> Entity::GetPointer(std::string name) {
-    for(auto const &e : _entities) {
+    for(auto const &e : AllEntities) {
         if (Utils::InsensitiveCompare(e.second->Name, name)) {
             return e.second;
         }
@@ -167,7 +188,43 @@ void Entity::Delete(int id) {
     ed.entityId = id;
     Dispatcher::post(ed);
 
-    _entities.erase(id);
+    AllEntities.erase(id);
+}
+
+void Entity::Spawn() {
+    // -- Entity::Add(); should be called..
+    Network* n = Network::GetInstance();
+    std::shared_ptr<Entity> selfPointer = GetPointer(Id);
+
+    for(auto const &nc : n->roClients) {
+        if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+            continue;
+            
+        if (nc->player->MapId != MapID)
+            continue;
+
+        nc->SpawnEntity(selfPointer);
+    }
+}
+
+void Entity::Despawn() {
+    Network* n = Network::GetInstance();
+    std::shared_ptr<Entity> selfPointer = GetPointer(Id);
+    
+    {
+        std::scoped_lock<std::mutex> pLock(entityMutex);
+        AllEntities.erase(Id);
+    }
+
+    for(auto const &nc : n->roClients) {
+        if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+            continue;
+            
+        if (nc->player->MapId != MapID)
+            continue;
+
+        nc->DespawnEntity(selfPointer);
+    }
 }
 
 void Entity::Kill() {
@@ -187,16 +244,12 @@ void Entity::Kill() {
     }
 }
 
-std::shared_ptr<NetworkClient> getEntityClient(int entityId) {
-    Network* n = Network::GetInstance();
+void Entity::HandleMove() {
+    EntityEventArgs moveEvent(ENTITY_EVENT_MOVED);
+    moveEvent.entityId = Id;
+    Dispatcher::post(moveEvent);
 
-    for(auto const &nc : n->roClients) {
-        if (nc->player->tEntity->Id == entityId) {
-            return nc;
-        }
-    }
-
-    return nullptr;
+    SendPosOwn = false;
 }
 
 void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char priority, bool sendOwn) {
@@ -204,9 +257,11 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
         return;
     }
 
+    HandleMove();
+
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> currentMap = mm->GetPointer(MapID);
-    // -- Do entity position check here? TODO:
+    
     if (SendPos <= priority) {
         Location = location;
 
@@ -243,9 +298,11 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
                 emc.oldMapId = oldMapId;
                 emc.newMapId = MapID;
                 Dispatcher::post(emc);
-                auto myClient = getEntityClient(Id);
-                myClient->player->MapId = MapID;
-                myClient->player->SendMap();
+                
+                if (associatedClient != nullptr) {
+                    associatedClient->player->MapId = MapID;
+                    associatedClient->player->SendMap();
+                }
 
                 if (sendOwn)
                     SendPosOwn = true;
@@ -253,6 +310,7 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
                 MessageToClients(Id, "&eYou are not allowed to join map '" + nm->data.Name + "'");
             }
         } else {
+            PositionCheck();
             if (currentMap != nullptr) {
                 if (sendOwn || !SendPosOwn) {
                     SendPos = priority;
@@ -303,117 +361,6 @@ void Entity::PositionCheck() {
 }
 
 void Entity::Send() {
-    Network *n = Network::GetInstance();
-    for(auto const &nc : n->roClients) {
-        if (!nc->LoggedIn)
-            continue;
-
-        std::vector<int> toRemove;
-        for(auto const &vEntity : nc->player->Entities) {
-            std::shared_ptr<Entity> fullEntity = GetPointer(vEntity.Id);
-            if (fullEntity == nullptr) { // -- Entity no longer exists, despawn them.
-                NetworkFunctions::NetworkOutEntityDelete(nc->Id, vEntity.ClientId);
-                toRemove.push_back(vEntity.Id);
-                continue;
-            }
-            bool shouldDelete = false;
-            if (fullEntity->MapID != nc->player->MapId)
-                shouldDelete = true;
-            if (nc->player->tEntity && nc->player->tEntity->Id == vEntity.Id)
-                shouldDelete = true;
-            if (fullEntity->resend) {
-                shouldDelete = true;
-                fullEntity->resend = false;
-            }
-
-            if (shouldDelete) {
-                NetworkFunctions::NetworkOutEntityDelete(nc->Id, vEntity.ClientId);
-                toRemove.push_back(vEntity.Id);
-            }
-        }
-
-        while(true) { // -- stupid.. but a safe way to delete elements =/
-            int removed = 0;
-            int iterator = 0;
-            if (toRemove.empty())
-                break;
-            
-            for(auto const &vEntity : nc->player->Entities) {
-                if (vEntity.Id == toRemove.at(0)) {
-                    nc->player->Entities.erase(nc->player->Entities.begin() + iterator);
-                    removed++;
-                    break;
-                }
-                iterator++;
-            }
-
-            if (removed == 0) break;
-        }
-
-        // -- now loop the global entities list, for creation.
-        for (auto const &bEntity : _entities) {
-            if (bEntity.second->MapID != nc->player->MapId)
-                continue;
-            bool create = true;
-            for(auto const &vEntity : nc->player->Entities) {
-                if (vEntity.Id == bEntity.first) {
-                    create = false;
-                    break;
-                }
-            }
-            if (bEntity.first == nc->player->tEntity->Id)
-                create = false;
-
-            if (create) {
-                EntityShort s{};
-                s.Id = bEntity.first;
-                s.ClientId = bEntity.second->ClientId;
-                nc->player->Entities.push_back(s); // -- track the new client
-                // -- spawn them :)
-                NetworkFunctions::NetworkOutEntityAdd(nc->Id, s.ClientId, Entity::GetDisplayname(s.Id), bEntity.second->Location);
-                CPE::PostEntityActions(nc, bEntity.second);
-            }
-        }
-    }
-    // Loop through the entire global entities list *again*
-    for (auto const &bEntity : _entities) {
-        if (bEntity.second->SendPos) {
-            bEntity.second->SendPos = 0;
-            for(auto const &nc : n->roClients) {
-                if (!nc->LoggedIn)
-                    continue;
-
-                for (auto const &vEntity : nc->player->Entities) {
-                    if (vEntity.Id == bEntity.first)
-                        NetworkFunctions::NetworkOutEntityPosition(nc->Id, vEntity.ClientId, bEntity.second->Location);
-                }
-            }
-        }
-
-        if (bEntity.second->SendPosOwn) {
-            bEntity.second->SendPosOwn = false;
-            for(auto const &nc : n->roClients) {
-                if (!nc->LoggedIn)
-                    continue;
-
-                if (nc->player->tEntity == bEntity.second) {
-                    NetworkFunctions::NetworkOutEntityPosition(nc->Id, 255, bEntity.second->Location);
-                }
-            }
-        }
-
-        if (bEntity.second->SpawnSelf) {
-            bEntity.second->SpawnSelf = false;
-            for(auto const &nc : n->roClients) {
-                if (!nc->LoggedIn)
-                    continue;
-
-                if (nc->player->tEntity == bEntity.second) {
-                    NetworkFunctions::NetworkOutEntityAdd(nc->Id, 255, Entity::GetDisplayname(bEntity.first), bEntity.second->Location);
-                }
-            }
-        }
-    }
 
 }
 
@@ -422,7 +369,11 @@ void Entity::Delete() {
 }
 
 void Entity::Add(std::shared_ptr<Entity> e) {
-    _entities.insert(std::make_pair(e->Id, e));
+    {
+        std::scoped_lock<std::mutex> pLock(entityMutex);
+        AllEntities.insert(std::make_pair(e->Id, e));
+    }
+
     EventEntityAdd ea;
     ea.entityId = e->Id;
     Dispatcher::post(ea);

@@ -1150,7 +1150,7 @@ void Map::Resend() {
         }
     }
 
-    for (auto const &me : Entity::_entities) {
+    for (auto const &me : Entity::AllEntities) {
         if (me.second->MapID == data.ID) {
             Vector3S newLocation{data.SizeX+16, data.SizeY+16, data.SizeZ+16};
             me.second->Location.SetAsPlayerCoords(newLocation);

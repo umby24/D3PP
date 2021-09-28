@@ -735,13 +735,13 @@ int LuaPlugin::LuaClientGetEntity(lua_State *L) {
 }
 
 int LuaPlugin::LuaEntityGetTable(lua_State *L) {
-    int numEntities = Entity::_entities.size();
+    int numEntities = Entity::AllEntities.size();
     int index = 1;
 
     lua_newtable(L);
 
     if (numEntities > 0) {
-        for (auto const &e : Entity::_entities) {
+        for (auto const &e : Entity::AllEntities) {
             lua_pushinteger(L, index++);
             lua_pushinteger(L, e.first);
             lua_settable(L, -3);

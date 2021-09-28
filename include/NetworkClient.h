@@ -16,6 +16,8 @@
 class Sockets;
 class ByteBuffer;
 class Player;
+class Entity;
+class Event;
 
 class NetworkClient {
 public:
@@ -59,11 +61,18 @@ public:
     std::map<std::string, int> Extensions;
     std::vector<unsigned char> Selections;
 
+    void SpawnEntity(std::shared_ptr<Entity> e);
+    void DespawnEntity(std::shared_ptr<Entity> e);
+
     void HoldThis(unsigned char blockType, bool canChange) const;
     void CreateSelection(unsigned char selectionId, std::string label, short startX, short startY, short startZ, short endX, short endY, short endZ, short red, short green, short blue, short opacity);
     void DeleteSelection(unsigned char selectionId);
     void SetWeather(int weatherType);
     void SendHackControl(bool canFly, bool noclip, bool speeding, bool spawnControl, bool thirdperson, int jumpHeight);
     void SetBlockPermissions(int blockId, bool canPlace, bool canDelete);
+private:
+    int eventSubId;
+    void SubEvents();
+    void HandleEvent(const Event &event);
 };
 #endif //D3PP_NETWORKCLIENT_H
