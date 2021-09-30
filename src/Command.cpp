@@ -630,7 +630,7 @@ void CommandMain::CommandDo(const std::shared_ptr<NetworkClient>& client, const 
             found = true;
         } else {
             if (!cmd.Hidden) {
-                Logger::LogAdd(MODULE_NAME, "Client '" + client->player->LoginName + "' uses command /" + ParsedCommand, LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+                Logger::LogAdd(MODULE_NAME, "Client '" + client->player->LoginName + "' uses command /" + ParsedCommand, LogType::COMMAND, __FILE__, __LINE__, __FUNCTION__);
             }
             if (!cmd.Plugin.empty()) {
                 // -- Run plugin based command
