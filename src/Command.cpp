@@ -20,13 +20,18 @@
 const std::string MODULE_NAME = "Command";
 CommandMain* CommandMain::Instance = nullptr;
 
-CommandMain::CommandMain() {
+CommandMain::CommandMain() : ParsedOperator{} {
     this->Setup = [this] { Init(); };
     this->Main = [this] { MainFunc(); };
     this->Interval = std::chrono::seconds(1);
     SaveFile = false;
     FileDateLast = 0;
     CommandClientId = -1;
+    ParsedOperator->push_back("");
+    ParsedOperator->push_back("");
+    ParsedOperator->push_back("");
+    ParsedOperator->push_back("");
+    ParsedOperator->push_back("");
     TaskScheduler::RegisterTask("Commands", *this);
 }
 
@@ -601,9 +606,9 @@ void CommandMain::CommandDo(const std::shared_ptr<NetworkClient>& client, const 
     ParsedCommand = splitString[0];
 
     for (int i = 0; i < COMMAND_OPERATORS_MAX; i++) {
-        ParsedOperator[i] = "";
+        ParsedOperator->at(i) = "";
         if (i+1 < splitString.size()) {
-            ParsedOperator[i] = splitString[i + 1];
+            ParsedOperator->at(i) = splitString[i + 1];
         }
     }
 
@@ -630,14 +635,14 @@ void CommandMain::CommandDo(const std::shared_ptr<NetworkClient>& client, const 
             found = true;
         } else {
             if (!cmd.Hidden) {
-                Logger::LogAdd(MODULE_NAME, "Client '" + client->player->LoginName + "' uses command /" + ParsedCommand, LogType::COMMAND, __FILE__, __LINE__, __FUNCTION__);
+                Logger::LogAdd(MODULE_NAME, "Player '" + client->player->LoginName + "' used command /" + ParsedCommand + " (" + join(ParsedOperator->begin(), ParsedOperator->end()) + ")", LogType::COMMAND, __FILE__, __LINE__, __FUNCTION__);
             }
             if (!cmd.Plugin.empty()) {
                 // -- Run plugin based command
                 LuaPlugin* lm = LuaPlugin::GetInstance();
                 std::string functionName = cmd.Plugin;
                 Utils::replaceAll(functionName, "Lua:", "");
-                lm->TriggerCommand(functionName, client->Id, ParsedCommand, ParsedText0, ParsedText1, ParsedOperator[0], ParsedOperator[1], ParsedOperator[2], ParsedOperator[3], ParsedOperator[4]);
+                lm->TriggerCommand(functionName, client->Id, ParsedCommand, ParsedText0, ParsedText1, ParsedOperator->at(0), ParsedOperator->at(1), ParsedOperator->at(2), ParsedOperator->at(3), ParsedOperator->at(4));
 
             } else if (cmd.Function != nullptr) {
                 cmd.Function();
@@ -657,7 +662,7 @@ void CommandMain::CommandCommands() {
     if (c == nullptr)
         return;
 
-    std::string groupName = ParsedOperator[0];
+    std::string groupName = ParsedOperator->at(0);
     short playerRank = c->player->tEntity->playerList->PRank;
     std::string allString = "all";
 
@@ -709,7 +714,7 @@ void CommandMain::CommandHelp() {
 
     bool found = false;
     for(const auto& cmd : Commands) {
-        if (!Utils::InsensitiveCompare(cmd.Name, ParsedOperator[0]))
+        if (!Utils::InsensitiveCompare(cmd.Name, ParsedOperator->at(0)))
             continue;
 
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCommand Help:");
@@ -719,7 +724,7 @@ void CommandMain::CommandHelp() {
     }
 
     if (!found) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find command '" + ParsedOperator[0] + "'");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find command '" + ParsedOperator->at(0) + "'");
     }
 }
 
@@ -753,9 +758,9 @@ void CommandMain::CommandPlayerInfo() {
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
 
-    PlayerListEntry* ple = pll->GetPointer(ParsedOperator[0]);
+    PlayerListEntry* ple = pll->GetPointer(ParsedOperator->at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
         return;
     }
     RankItem ri = rm->GetRank(ple->PRank, false);
@@ -786,14 +791,14 @@ void CommandMain::CommandChangeRank() {
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
 
-    std::string playerName = ParsedOperator[0];
-    int rankVal = std::stoi(ParsedOperator[1]);
+    std::string playerName = ParsedOperator->at(0);
+    int rankVal = std::stoi(ParsedOperator->at(1));
     std::string reason = ParsedText2;
 
     if (rankVal >= -32768 && rankVal <= 32767) {
-        PlayerListEntry* ple = pll->GetPointer(ParsedOperator[0]);
+        PlayerListEntry* ple = pll->GetPointer(ParsedOperator->at(0));
         if (ple == nullptr) {
-            NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+            NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
             return;
         }
         if (c->player->tEntity->playerList->PRank <= ple->PRank) {
@@ -821,10 +826,10 @@ void CommandMain::CommandGlobal() {
     std::string offString = "off";
     std::string falseString = "false";
 
-    if (Utils::InsensitiveCompare(ParsedOperator[0], onString) || Utils::InsensitiveCompare(ParsedOperator[0], trueString)) {
+    if (Utils::InsensitiveCompare(ParsedOperator->at(0), onString) || Utils::InsensitiveCompare(ParsedOperator->at(0), trueString)) {
         c->GlobalChat = true;
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eGlobal chat is now on by default.");
-    } else if (Utils::InsensitiveCompare(ParsedOperator[0], offString) || Utils::InsensitiveCompare(ParsedOperator[0], falseString)) {
+    } else if (Utils::InsensitiveCompare(ParsedOperator->at(0), offString) || Utils::InsensitiveCompare(ParsedOperator->at(0), falseString)) {
         c->GlobalChat = false;
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eGlobal chat is now off by default.");
     } else {
@@ -890,14 +895,14 @@ void CommandMain::CommandGetRank() {
     Rank* rm = Rank::GetInstance();
     PlayerListEntry* ple;
     
-    if (ParsedOperator[0].empty()) {
+    if (ParsedOperator->at(0).empty()) {
         ple = c->player->tEntity->playerList;
     } else {
-        ple = pll->GetPointer(ParsedOperator[0]);
+        ple = pll->GetPointer(ParsedOperator->at(0));
     }
     
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
         return;
     }
 
@@ -933,9 +938,9 @@ void CommandMain::CommandKick() {
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator[0]);
+    ple = pll->GetPointer(ParsedOperator->at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
         return;
     }
     std::string kickReason = (ParsedText1.empty() ? "&eYou were kicked." : ParsedText1);
@@ -954,9 +959,9 @@ void CommandMain::CommandBan() {
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator[0]);
+    ple = pll->GetPointer(ParsedOperator->at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
         return;
     }
     std::string banReason = (ParsedText1.empty() ? "&eYou were banned." : ParsedText1);
@@ -974,9 +979,9 @@ void CommandMain::CommandUnban() {
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator[0]);
+    ple = pll->GetPointer(ParsedOperator->at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
         return;
     }
     if (c->player->tEntity->playerList->PRank > ple->PRank) {
@@ -993,9 +998,9 @@ void CommandMain::CommandStop() {
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator[0]);
+    ple = pll->GetPointer(ParsedOperator->at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
         return;
     }
     std::string stopReason = (ParsedText1.empty() ? "&eYou were stopped." : ParsedText1);
@@ -1013,9 +1018,9 @@ void CommandMain::CommandUnStop() {
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator[0]);
+    ple = pll->GetPointer(ParsedOperator->at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
         return;
     }
     if (c->player->tEntity->playerList->PRank > ple->PRank) {
@@ -1032,17 +1037,17 @@ void CommandMain::CommandMute() {
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator[0]);
+    ple = pll->GetPointer(ParsedOperator->at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
         return;
     }
-    if ((ParsedOperator[1].empty())) {
-        ParsedOperator[1] = "99999";
+    if ((ParsedOperator->at(1).empty())) {
+        ParsedOperator->at(1) = "99999";
     }
 
     if (c->player->tEntity->playerList->PRank > ple->PRank) {
-        ple->Mute(stoi(ParsedOperator[1]), "Muted by " + c->player->LoginName);
+        ple->Mute(stoi(ParsedOperator->at(1)), "Muted by " + c->player->LoginName);
     } else {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't mute someone ranked higher than you.");
         return;
@@ -1056,9 +1061,9 @@ void CommandMain::CommandUnmute() {
     Rank* rm = Rank::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator[0]);
+    ple = pll->GetPointer(ParsedOperator->at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator[0] + "'");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
         return;
     }
     if (c->player->tEntity->playerList->PRank > ple->PRank) {
@@ -1143,8 +1148,8 @@ void CommandMain::CommandLogLast() {
 
     int numLines = 10;
 
-    if (!ParsedOperator[0].empty()) {
-        numLines = stoi(ParsedOperator[0]);
+    if (!ParsedOperator->at(0).empty()) {
+        numLines = stoi(ParsedOperator->at(0));
     }
     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eLog:");
     Logger* logMain = Logger::GetInstance();
@@ -1164,8 +1169,8 @@ void CommandMain::CommandUndoTime() {
 
     int timeAmount = 60;
 
-    if (!ParsedOperator[0].empty()) {
-        timeAmount = stoi(ParsedOperator[0]);
+    if (!ParsedOperator->at(0).empty()) {
+        timeAmount = stoi(ParsedOperator->at(0));
     }
     if (timeAmount > 3600)
         timeAmount = 3600;
@@ -1178,16 +1183,16 @@ void CommandMain::CommandUndoPlayer() {
     Network* nm = Network::GetInstance();
     Player_List* playerList= Player_List::GetInstance();
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
-    PlayerListEntry* entry= playerList->GetPointer(ParsedOperator[0]);
+    PlayerListEntry* entry= playerList->GetPointer(ParsedOperator->at(0));
     if (entry == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find a player named '" + ParsedOperator[0] + "'.");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find a player named '" + ParsedOperator->at(0) + "'.");
         return;
     }
 
     int timeAmount = 60;
 
-    if (!ParsedOperator[1].empty()) {
-        timeAmount = stoi(ParsedOperator[1]);
+    if (!ParsedOperator->at(1).empty()) {
+        timeAmount = stoi(ParsedOperator->at(1));
     }
     if (timeAmount > 3600)
         timeAmount = 3600;
@@ -1204,8 +1209,8 @@ void CommandMain::CommandUndo() {
 
     int timeAmount = 60;
 
-    if (!ParsedOperator[0].empty()) {
-        timeAmount = stoi(ParsedOperator[0]);
+    if (!ParsedOperator->at(0).empty()) {
+        timeAmount = stoi(ParsedOperator->at(0));
     }
     if (timeAmount > 3600)
         timeAmount = 3600;
@@ -1220,10 +1225,10 @@ void CommandMain::CommandTeleport() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
 
-    std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator[0]);
+    std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator->at(0));
 
     if (entry == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find a player named '" + ParsedOperator[0] + "'.");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find a player named '" + ParsedOperator->at(0) + "'.");
         return;
     }
 
@@ -1234,9 +1239,9 @@ void CommandMain::CommandBring() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
 
-    std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator[0]);
+    std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator->at(0));
     if (entry == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find a player named '" + ParsedOperator[0] + "'.");
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find a player named '" + ParsedOperator->at(0) + "'.");
         return;
     }
 
@@ -1247,9 +1252,9 @@ void CommandMain::CommandMapFill() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
 
-    if (!ParsedOperator[0].empty()) {
+    if (!ParsedOperator->at(0).empty()) {
         MapMain* mapMain = MapMain::GetInstance();
-        mapMain->AddFillAction(c->Id, c->player->MapId, ParsedOperator[0], ParsedText1);
+        mapMain->AddFillAction(c->Id, c->player->MapId, ParsedOperator->at(0), ParsedText1);
     } else {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease define a function.");
     }
@@ -1275,7 +1280,7 @@ void CommandMain::CommandResizeMap() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
 
-    if (ParsedOperator[0].empty() || ParsedOperator[1].empty() || ParsedOperator[2].empty()) {
+    if (ParsedOperator->at(0).empty() || ParsedOperator->at(1).empty() || ParsedOperator[2].empty()) {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an X, Y, and Z value.");
         return;
     }
@@ -1284,9 +1289,9 @@ void CommandMain::CommandResizeMap() {
     int Z = 0;
 
     try {
-        X = stoi(ParsedOperator[0]);
-        Y = stoi(ParsedOperator[1]);
-        Z= stoi(ParsedOperator[2]);
+        X = stoi(ParsedOperator->at(0));
+        Y = stoi(ParsedOperator->at(1));
+        Z= stoi(ParsedOperator->at(2));
     } catch (const std::exception &ex) {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer X, Y, and Z value.");
         return;
@@ -1342,14 +1347,14 @@ void CommandMain::CommandMapRankBuildSet() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
 
-    if (ParsedOperator[0].empty()) {
+    if (ParsedOperator->at(0).empty()) {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide a rank value.");
         return;
     }
     int mapBuildRank = 0;
 
     try {
-        mapBuildRank = stoi(ParsedOperator[0]);
+        mapBuildRank = stoi(ParsedOperator->at(0));
     } catch (const std::exception &ex) {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer value.");
         return;
@@ -1367,14 +1372,14 @@ void CommandMain::CommandMapRankJoinSet() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
 
-    if (ParsedOperator[0].empty()) {
+    if (ParsedOperator->at(0).empty()) {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide a rank value.");
         return;
     }
     int mapJoinRank = 0;
 
     try {
-        mapJoinRank = stoi(ParsedOperator[0]);
+        mapJoinRank = stoi(ParsedOperator->at(0));
     } catch (const std::exception &ex) {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer value.");
         return;
@@ -1392,14 +1397,14 @@ void CommandMain::CommandMapRankShowSet() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
 
-    if (ParsedOperator[0].empty()) {
+    if (ParsedOperator->at(0).empty()) {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide a rank value.");
         return;
     }
     int mapShowRank = 0;
 
     try {
-        mapShowRank = stoi(ParsedOperator[0]);
+        mapShowRank = stoi(ParsedOperator->at(0));
     } catch (const std::exception &ex) {
         NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer value.");
         return;

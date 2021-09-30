@@ -44,7 +44,7 @@ class CommandMain : TaskItem {
         time_t FileDateLast;
         int CommandClientId;
         std::string ParsedCommand;
-        std::string ParsedOperator[COMMAND_OPERATORS_MAX];
+        std::vector<std::string> ParsedOperator[COMMAND_OPERATORS_MAX];
         std::string ParsedText0;
         std::string ParsedText1;
         std::string ParsedText2;
