@@ -499,7 +499,7 @@ void CommandMain::Load() {
     std::vector<int> toRemove;
     int i = 0;
     for(auto const &cmd : Commands) {
-        if (cmd.Internal == false && pl.SettingsDictionary.find(cmd.Id) == pl.SettingsDictionary.end()) {
+        if (!cmd.Internal && pl.SettingsDictionary.find(cmd.Id) == pl.SettingsDictionary.end()) {
             toRemove.push_back(i);
         }
         i++;
@@ -548,7 +548,7 @@ void CommandMain::Load() {
     // -- Build list of groups.
     CommandGroups.clear();
     for(auto &cmd : Commands) {
-        if (cmd.Group != "") {
+        if (!cmd.Group.empty()) {
             bool found = false;
             for(auto &grp : CommandGroups) {
                 if (Utils::InsensitiveCompare(grp.Name, cmd.Group)) {
@@ -591,7 +591,7 @@ CommandMain* CommandMain::GetInstance() {
     return Instance;
 }
 
-void CommandMain::CommandDo(const std::shared_ptr<NetworkClient> client, std::string input) {
+void CommandMain::CommandDo(const std::shared_ptr<NetworkClient>& client, const std::string& input) {
     CommandClientId = client->Id;
     std::vector<std::string> splitString = Utils::splitString(input);
     
@@ -621,7 +621,7 @@ void CommandMain::CommandDo(const std::shared_ptr<NetworkClient> client, std::st
     }
 
     bool found = false;
-    for(auto cmd : Commands) {
+    for(const auto& cmd : Commands) {
         if (!Utils::InsensitiveCompare(cmd.Name, ParsedCommand))
             continue;
 
@@ -639,7 +639,7 @@ void CommandMain::CommandDo(const std::shared_ptr<NetworkClient> client, std::st
                 Utils::replaceAll(functionName, "Lua:", "");
                 lm->TriggerCommand(functionName, client->Id, ParsedCommand, ParsedText0, ParsedText1, ParsedOperator[0], ParsedOperator[1], ParsedOperator[2], ParsedOperator[3], ParsedOperator[4]);
 
-            } else if (cmd.Function != NULL) {
+            } else if (cmd.Function != nullptr) {
                 cmd.Function();
             }
             found = true;
@@ -678,7 +678,7 @@ void CommandMain::CommandCommands() {
     for(auto  &cg : CommandGroups) {
         if (Utils::InsensitiveCompare(groupName, cg.Name) || Utils::InsensitiveCompare(groupName, allString)) {
             NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCommands:"); 
-            std::string textToSend = "";
+            std::string textToSend;
             for(auto &cm : Commands) {
                 if ((cm.RankShow > playerRank) || (cm.Rank > playerRank) || (cm.Hidden) || (!Utils::InsensitiveCompare(cm.Group, groupName) && !Utils::InsensitiveCompare(groupName, allString)))
                     continue;
@@ -690,7 +690,7 @@ void CommandMain::CommandCommands() {
                     textToSend = textAdd;
                 }
             }
-            if (textToSend.size() > 0) {
+            if (!textToSend.empty()) {
                 NetworkFunctions::SystemMessageNetworkSend(c->Id, textToSend);
             }
             found = true;
@@ -708,7 +708,7 @@ void CommandMain::CommandHelp() {
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
 
     bool found = false;
-    for(auto cmd : Commands) {
+    for(const auto& cmd : Commands) {
         if (!Utils::InsensitiveCompare(cmd.Name, ParsedOperator[0]))
             continue;
 
@@ -727,7 +727,7 @@ void CommandMain::CommandPlayers() {
      Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
      NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlayers:");
-    std::string textToSend = "";
+    std::string textToSend;
 
      for(auto const &nc : nm->roClients) {
          if (nc != nullptr && nc->player != nullptr && nc->player->tEntity->playerList != nullptr) {
@@ -742,7 +742,7 @@ void CommandMain::CommandPlayers() {
             }
          }
      }
-     if (textToSend.size() > 0) {
+     if (!textToSend.empty()) {
          NetworkFunctions::SystemMessageNetworkSend(c->Id, textToSend);
      }
 }
@@ -870,9 +870,9 @@ void CommandMain::CommandSaveMap() {
 
     MapMain* mm = MapMain::GetInstance();
     Files* fm = Files::GetInstance();
-    std::string mapDirectory = "";
+    std::string mapDirectory;
 
-    if (ParsedText0 != "") {
+    if (!ParsedText0.empty()) {
         mapDirectory = fm->GetFolder("Maps") + ParsedText0;
         if (mapDirectory.substr(mapDirectory.size()-2, 1) != "/") {
             mapDirectory += "/";
@@ -1074,10 +1074,10 @@ void CommandMain::CommandMaterials() {
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eMaterials:");
     Block* bm = Block::GetInstance();
-    std::string toSend = "";
+    std::string toSend;
     for (int i = 0; i < 255; ++i) {
         MapBlock block = bm->GetBlock(i);
-        std::string toAdd = "";
+        std::string toAdd;
         if (block.Special && block.RankPlace <= c->player->tEntity->playerList->PRank) {
             toAdd += "&e" + block.Name + " &f| ";
             if (64 - toSend.size() >= toAdd.size())
@@ -1100,9 +1100,9 @@ void CommandMain::CommandListMaps() {
 
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eMaps:");
-    std::string toSend = "";
+    std::string toSend;
     for(auto const &map : mapMain->_maps) {
-        std::string toAdd = "";
+        std::string toAdd;
         if (map.second->data.RankShow <= c->player->tEntity->playerList->PRank) {
             toAdd += "&e" + map.second->data.Name + " &f| ";
             if (64 - toSend.size() >= toAdd.size())
@@ -1260,7 +1260,7 @@ void CommandMain::CommandLoadMap() {
     std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
 
     Files* fm = Files::GetInstance();
-    std::string mapDirectory = "";
+    std::string mapDirectory;
 
     if (!ParsedText0.empty()) {
         mapDirectory = fm->GetFolder("Maps") + ParsedText0;
@@ -1511,8 +1511,8 @@ void CommandMain::CommandMapInfo() {
     textToSend += "&eDirectory: " + cMap->data.Directory + "<br>";
     textToSend += "&ePreview type: " + stringulate(cMap->data.overviewType) + "<br>";
     textToSend += "&eSize: " + stringulate(cMap->data.SizeX)  + "x" + stringulate(cMap->data.SizeY)  + "x" + stringulate(cMap->data.SizeZ) + "<br>";
-    int dataSize = mapMain->GetMapSize(cMap->data.SizeX, cMap->data.SizeY, cMap->data.SizeZ, 4);
-    int bitmaskSize = mapMain->GetMapSize(cMap->data.SizeX, cMap->data.SizeY, cMap->data.SizeZ, 1) / 8;
+    int dataSize = MapMain::GetMapSize(cMap->data.SizeX, cMap->data.SizeY, cMap->data.SizeZ, 4);
+    int bitmaskSize = MapMain::GetMapSize(cMap->data.SizeX, cMap->data.SizeY, cMap->data.SizeZ, 1) / 8;
 
     textToSend += "&eMem usage: " + stringulate((dataSize + bitmaskSize + bitmaskSize)/1000000.0) + "MB <br>";
     textToSend += "&eRanks: Build: " + stringulate(cMap->data.RankBuild) + " Join: " + stringulate(cMap->data.RankJoin) + " Show: " + stringulate(cMap->data.RankShow) + " <br>";
@@ -1579,7 +1579,7 @@ void CommandMain::CommandUserMaps() {
     std::string usermapDirectory = fm->GetFolder("Usermaps");
 
     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUsermaps:");
-    std::string textToSend = "";
+    std::string textToSend;
 
     if (std::filesystem::is_directory(usermapDirectory)) {
         for (const auto &entry : std::filesystem::directory_iterator(usermapDirectory)) {

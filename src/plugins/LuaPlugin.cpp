@@ -55,7 +55,7 @@ int dispatch(lua_State * L) {
     return ((*ptr).*func)(L);
 }
 
-void bail(lua_State *L, std::string msg) {
+void bail(lua_State *L, const std::string& msg) {
     Logger::LogAdd("Lua", "Fatal Error: " + msg + " " + lua_tostring(L, -1), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
 }
 
@@ -67,12 +67,9 @@ LuaPlugin::LuaPlugin() {
 
     TaskScheduler::RegisterTask("Lua", *this);
 
-
-
     state = luaL_newstate();
     luaL_openlibs(state);
     *static_cast<LuaPlugin**>(lua_getextraspace(this->state)) = this;
-    executionMutex;
 
     BindFunctions();
     RegisterEventListener();
@@ -397,7 +394,7 @@ int LuaPlugin::LuaMapBlockChange(lua_State *L) {
     std::shared_ptr<Map> map = mm->GetPointer(mapId);
 
     if (map != nullptr) {
-        map->BlockChange(playerNumber, X, Y, Z, type, Undo, physics, send, priority);
+        map->BlockChange(static_cast<short>(playerNumber), X, Y, Z, type, Undo, physics, send, priority);
     }
 
     return 0;
@@ -500,8 +497,9 @@ int LuaPlugin::LuaMessage(lua_State *L) {
     return 0;
 }
 
-void LuaPlugin::LoadFile(std::string path) {
-    std::lock_guard<std::recursive_mutex> pqlock(executionMutex);
+void LuaPlugin::LoadFile(const std::string& path) {
+    std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
+
     if(luaL_loadfile(this->state, path.c_str())) {
         bail(this->state, "Failed to load " + path);
         return;
@@ -513,8 +511,8 @@ void LuaPlugin::LoadFile(std::string path) {
     // -- File loaded successfully.
 }
 
-void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, std::string function, std::string args) {
-    std::lock_guard<std::recursive_mutex> pqlock(executionMutex);
+void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, const std::string& function, const std::string& args) {
+    std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(state, function.c_str());
     if (lua_isfunction(state, -1)) {
         lua_pushinteger(state, static_cast<lua_Integer>(mapId));
@@ -528,8 +526,8 @@ void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, std::
     }
 }
 
-void LuaPlugin::TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, std::string function) {
-    std::lock_guard<std::recursive_mutex> pqlock(executionMutex);
+void LuaPlugin::TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, const std::string& function) {
+    std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(state, function.c_str());
     if (!lua_checkstack(state, 1)) {
         Logger::LogAdd("Lua", "State is fucked", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
@@ -545,10 +543,10 @@ void LuaPlugin::TriggerPhysics(int mapId, unsigned short X, unsigned short Y, un
     }
 }
 
-void LuaPlugin::TriggerCommand(std::string function, int clientId, std::string parsedCmd, std::string text0,
-                               std::string text1, std::string op1, std::string op2, std::string op3, std::string op4,
-                               std::string op5) {
-    std::lock_guard<std::recursive_mutex> pqlock(executionMutex);
+void LuaPlugin::TriggerCommand(const std::string& function, int clientId, const std::string& parsedCmd, const std::string& text0,
+                               const std::string& text1, const std::string& op1, const std::string& op2, const std::string& op3, const std::string& op4,
+                               const std::string& op5) {
+    std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(state, function.c_str());
     if (lua_isfunction(state, -1)) {
         lua_pushinteger(state, static_cast<lua_Integer>(clientId));
@@ -566,9 +564,9 @@ void LuaPlugin::TriggerCommand(std::string function, int clientId, std::string p
     }
 }
 
-void LuaPlugin::TriggerBuildMode(std::string function, int clientId, int mapId, unsigned short X, unsigned short Y,
+void LuaPlugin::TriggerBuildMode(const std::string& function, int clientId, int mapId, unsigned short X, unsigned short Y,
                                  unsigned short Z, unsigned char mode, unsigned char block) {
-    std::lock_guard<std::recursive_mutex> pqlock(executionMutex);
+    std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(state, function.c_str());
     if (lua_isfunction(state, -1)) {
         lua_pushinteger(state, clientId);
@@ -611,7 +609,7 @@ int LuaPlugin::LuaMapBlockGetPlayer(lua_State *L) {
 
 int LuaPlugin::LuaClientGetTable(lua_State *L) {
     Network* nm = Network::GetInstance();
-    int numClients = nm->roClients.size();
+    int numClients = static_cast<int>(nm->roClients.size());
     int index = 1;
 
     lua_newtable(L);
@@ -658,7 +656,7 @@ int LuaPlugin::LuaClientGetIp(lua_State *L) {
     }
 
     int clientId = lua_tointeger(L, 1);
-    std::string result = "";
+    std::string result;
     Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> client = nm->GetClient(clientId);
     if (client != nullptr) {
@@ -678,7 +676,7 @@ int LuaPlugin::LuaClientGetLoginName(lua_State *L) {
     }
 
     int clientId = lua_tointeger(L, 1);
-    std::string result = "";
+    std::string result;
     Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> client = nm->GetClient(clientId);
 
@@ -735,7 +733,7 @@ int LuaPlugin::LuaClientGetEntity(lua_State *L) {
 }
 
 int LuaPlugin::LuaEntityGetTable(lua_State *L) {
-    int numEntities = Entity::_entities.size();
+    int numEntities = static_cast<int>(Entity::_entities.size());
     int index = 1;
 
     lua_newtable(L);
@@ -838,7 +836,7 @@ int LuaPlugin::LuaBuildModeStateSet(lua_State *L) {
     int buildState = lua_tointeger(L, 2);
 
     BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
-    buildModeMain->SetState(clientId, buildState);
+    buildModeMain->SetState(clientId, static_cast<char>(buildState));
 
     return 0;
 }
@@ -1002,7 +1000,7 @@ int LuaPlugin::LuaBuildModeStringGet(lua_State *L) {
     }
     int clientId = lua_tointeger(L, 1);
     int index = lua_tointeger(L, 2);
-    std::string val = "";
+    std::string val;
 
     BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
     val = buildModeMain->GetString(clientId, index);
@@ -1041,7 +1039,7 @@ int LuaPlugin::LuaEntityGetPlayer(lua_State *L) {
     int entityId = lua_tointeger(L, 1);
     int result = -1;
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
-    if (foundEntity != nullptr && foundEntity->playerList != NULL) {
+    if (foundEntity != nullptr && foundEntity->playerList != nullptr) {
         result = foundEntity->playerList->Number;
     }
 
@@ -1321,7 +1319,7 @@ int LuaPlugin::LuaBuildBoxPlayer(lua_State *L) {
     bool undo = (lua_tointeger(L, 13) > 0);
     bool physics = lua_toboolean(L, 14);
 
-    Build::BuildBoxPlayer(playerNumber, mapId, x0, y0, z0, x1, y1, z1, material, replaceMaterial, hollow, priority, undo, physics);
+    Build::BuildBoxPlayer(static_cast<short>(playerNumber), mapId, x0, y0, z0, x1, y1, z1, material, static_cast<char>(replaceMaterial), hollow, priority, undo, physics);
     return 0;
 }
 
@@ -1345,7 +1343,7 @@ int LuaPlugin::LuaBuildSpherePlayer(lua_State *L) {
     bool undo = (lua_tointeger(L, 11) > 0);
     bool physics = lua_toboolean(L, 12);
 
-    Build::BuildSpherePlayer(playerNumber, mapId, x, y, z, radius, material, replaceMaterial, hollow, priority, undo, physics);
+    Build::BuildSpherePlayer(static_cast<short>(playerNumber), mapId, x, y, z, radius, material, static_cast<char>(replaceMaterial), hollow, priority, undo, physics);
 
     return 0;
 }
@@ -1367,14 +1365,14 @@ int LuaPlugin::LuaBuildRankBox(lua_State *L) {
     int Rank = lua_tointeger(L, 8);
     int MaxRank = lua_tointeger(L, 9);
 
-    Build::BuildRankBox(mapId, X0, Y0, Z0, X1, Y1, Z1, Rank, MaxRank);
+    Build::BuildRankBox(mapId, X0, Y0, Z0, X1, Y1, Z1, static_cast<short>(Rank), static_cast<short>(MaxRank));
 
     return 0;
 }
 
 int LuaPlugin::LuaPlayerGetTable(lua_State *L) {
     Player_List* pll = Player_List::GetInstance();
-    int numEntities = pll->_pList.size();
+    int numEntities = static_cast<int>(pll->_pList.size());
     int index = 1;
 
     lua_newtable(L);
@@ -1404,7 +1402,7 @@ int LuaPlugin::LuaPlayerGetPrefix(lua_State *L) {
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
     PlayerListEntry* ple = pll->GetPointer(playerNumber);
-    std::string result = "";
+    std::string result;
 
     if (ple != nullptr) {
         RankItem ri = rm->GetRank(ple->PRank, false);
@@ -1427,7 +1425,7 @@ int LuaPlugin::LuaPlayerGetName(lua_State *L) {
     Player_List* pll = Player_List::GetInstance();
 
     PlayerListEntry* ple = pll->GetPointer(playerNumber);
-    std::string result = "";
+    std::string result;
 
     if (ple != nullptr) {
 
@@ -1450,7 +1448,7 @@ int LuaPlugin::LuaPlayerGetSuffix(lua_State *L) {
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
     PlayerListEntry* ple = pll->GetPointer(playerNumber);
-    std::string result = "";
+    std::string result;
 
     if (ple != nullptr) {
         RankItem ri = rm->GetRank(ple->PRank, false);
@@ -1472,7 +1470,7 @@ int LuaPlugin::LuaPlayerGetIp(lua_State *L) {
     Player_List* pll = Player_List::GetInstance();
 
     PlayerListEntry* ple = pll->GetPointer(playerNumber);
-    std::string result = "";
+    std::string result;
 
     if (ple != nullptr) {
         result = ple->IP;
@@ -1494,13 +1492,13 @@ int LuaPlugin::LuaPlayerGetOntime(lua_State *L) {
     Player_List* pll = Player_List::GetInstance();
 
     PlayerListEntry* ple = pll->GetPointer(playerNumber);
-    int result = -1;
+    double result = -1;
 
     if (ple != nullptr) {
         result = ple->OntimeCounter;
     }
 
-    lua_pushinteger(L, result);
+    lua_pushnumber(L, result);
     return 1;
 }
 
@@ -1898,7 +1896,7 @@ int LuaPlugin::LuaMapGetTable(lua_State *L) {
     }
 
     MapMain* mm = MapMain::GetInstance();
-    int numEntities = mm->_maps.size();
+    int numEntities = static_cast<int>(mm->_maps.size());
     int index = 1;
 
     lua_newtable(L);
@@ -1945,7 +1943,7 @@ int LuaPlugin::LuaMapBlockChangePlayer(lua_State *L) {
         return 0;
     }
 
-    map->BlockChange(playerId, X, Y, Z, type, undo, physic, send, priority);
+    map->BlockChange(static_cast<short>(playerId), X, Y, Z, type, undo, physic, send, priority);
     return 0;
 }
 
@@ -2172,7 +2170,7 @@ int LuaPlugin::LuaMapSetRankBuild(lua_State *L) {
     }
 
     int mapId = lua_tointeger(L, 1);
-    int newRank = lua_tointeger(L, 2);
+    short newRank = lua_tointeger(L, 2);
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> map = mm->GetPointer(mapId);
@@ -2194,7 +2192,7 @@ int LuaPlugin::LuaMapSetRankJoin(lua_State *L) {
     }
 
     int mapId = lua_tointeger(L, 1);
-    int newRank = lua_tointeger(L, 2);
+    short newRank = lua_tointeger(L, 2);
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> map = mm->GetPointer(mapId);
@@ -2216,7 +2214,7 @@ int LuaPlugin::LuaMapSetRankShow(lua_State *L) {
     }
 
     int mapId = lua_tointeger(L, 1);
-    int newRank = lua_tointeger(L, 2);
+    short newRank = lua_tointeger(L, 2);
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> map = mm->GetPointer(mapId);
@@ -2290,9 +2288,9 @@ int LuaPlugin::LuaMapAdd(lua_State *L) {
     }
 
     int mapId = lua_tointeger(L, 1);
-    int sizeX = lua_tointeger(L, 2);
-    int sizeY = lua_tointeger(L, 3);
-    int sizeZ = lua_tointeger(L, 4);
+    short sizeX = lua_tointeger(L, 2);
+    short sizeY = lua_tointeger(L, 3);
+    short sizeZ = lua_tointeger(L, 4);
     std::string name(lua_tostring(L, 5));
     MapMain* mm = MapMain::GetInstance();
 
@@ -2390,8 +2388,8 @@ int LuaPlugin::LuaMapExport(lua_State *L) {
         Logger::LogAdd("Lua", "LuaError: Map_Export called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
-    Vector3S startLoc;
-    Vector3S endLoc;
+    Vector3S startLoc{};
+    Vector3S endLoc{};
     int mapId = lua_tointeger(L, 1);
     startLoc.X = lua_tointeger(L, 2);
     startLoc.Y = lua_tointeger(L, 3);
@@ -2404,10 +2402,10 @@ int LuaPlugin::LuaMapExport(lua_State *L) {
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> givenMap = mm->GetPointer(mapId);
     
-    MinecraftLocation start;
+    MinecraftLocation start{};
     start.SetAsBlockCoords(startLoc);
     
-    MinecraftLocation end;
+    MinecraftLocation end{};
     end.SetAsBlockCoords(endLoc);
 
     if (givenMap != nullptr) {
@@ -2442,7 +2440,7 @@ int LuaPlugin::LuaMapImportPlayer(lua_State *L) {
     int playerNumber = lua_tointeger(L, 1);
     std::string fileName(lua_tostring(L, 2));
     int mapId = lua_tointeger(L, 3);
-    Vector3S placeLoc;
+    Vector3S placeLoc{};
     placeLoc.X = lua_tointeger(L, 4);
     placeLoc.Y = lua_tointeger(L, 5);
     placeLoc.Z = lua_tointeger(L, 6);
@@ -2452,7 +2450,7 @@ int LuaPlugin::LuaMapImportPlayer(lua_State *L) {
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> givenMap = mm->GetPointer(mapId);
     
-    MinecraftLocation start;
+    MinecraftLocation start{};
     start.SetAsBlockCoords(placeLoc);
 
      if (givenMap != nullptr) {
@@ -2471,7 +2469,7 @@ int LuaPlugin::LuaBlockGetTable(lua_State *L) {
     }
 
     Block* bm = Block::GetInstance();
-    int numEntities = bm->Blocks.size();
+    int numEntities = static_cast<int>(bm->Blocks.size());
     int index = 1;
 
     lua_newtable(L);
@@ -2608,7 +2606,7 @@ int LuaPlugin::LuaFolderGet(lua_State *L) {
 
 int LuaPlugin::LuaRankGetTable(lua_State *L) {
     Rank* rm = Rank::GetInstance();
-    int numRanks = rm->_ranks.size();
+    int numRanks = static_cast<int>(rm->_ranks.size());
     int index = 1;
 
     lua_newtable(L);
@@ -2747,7 +2745,7 @@ int LuaPlugin::LuaTeleporterGetTable(lua_State *L) {
     if (chosenMap == nullptr)
         return 0;
 
-    int numRanks = chosenMap->data.Teleporter.size();
+    int numRanks = static_cast<int>(chosenMap->data.Teleporter.size());
     int index = 1;
 
     lua_newtable(L);
@@ -2831,8 +2829,8 @@ int LuaPlugin::LuaTeleporterAdd(lua_State *L) {
     }
     int mapId = lua_tointeger(L, 1);
     std::string tpId(lua_tostring(L, 2));
-    Vector3S start;
-    Vector3S end;
+    Vector3S start{};
+    Vector3S end{};
     start.X = lua_tointeger(L, 3);
     start.Y = lua_tointeger(L, 4);
     start.Z = lua_tointeger(L, 5);
@@ -2922,7 +2920,7 @@ int LuaPlugin::LuaClientGetExtensions(lua_State *L) {
     if (client == nullptr || !client->LoggedIn)
         return 0;
 
-    int number = client->Extensions.size();
+    int number = static_cast<int>(client->Extensions.size());
      lua_newtable(L);
 
     if (number > 0) {
@@ -2949,17 +2947,17 @@ int LuaPlugin::LuaSelectionCuboidAdd(lua_State *L) {
     int clientId = lua_tointeger(L, 1);
     int selectionId = lua_tointeger(L, 2);
     std::string label(lua_tostring(L, 3));
-    Vector3S start;
-    Vector3S end;
+    Vector3S start{};
+    Vector3S end{};
     start.X = lua_tointeger(L, 4);
     start.Y = lua_tointeger(L, 5);
     start.Z = lua_tointeger(L, 6);
     end.X = lua_tointeger(L, 7);
     end.Y = lua_tointeger(L, 8);
     end.Z = lua_tointeger(L, 9);
-    int red = lua_tointeger(L, 10);
-    int green = lua_tointeger(L, 11);
-    int blue = lua_tointeger(L, 12);
+    short red = lua_tointeger(L, 10);
+    short green = lua_tointeger(L, 11);
+    short blue = lua_tointeger(L, 12);
     float opacity = lua_tonumber(L, 13);
 
     Network* nm = Network::GetInstance();

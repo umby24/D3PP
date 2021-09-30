@@ -59,7 +59,7 @@ class CommandMain : TaskItem {
         void Load();
         void Save();
         void MainFunc();
-        void CommandDo(const std::shared_ptr<NetworkClient> client, std::string input);
+        void CommandDo(const std::shared_ptr<NetworkClient>& client, const std::string& input);
         // -- Administrative
         void CommandKick();
         void CommandBan();

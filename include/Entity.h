@@ -16,9 +16,9 @@ class PlayerListEntry;
 class Player;
 
 struct BuildVariable {
-    unsigned short X;
-    unsigned short Y;
-    unsigned short Z;
+    float X;
+    float Y;
+    float Z;
     float Float;
     std::string String;
     int Long;
@@ -67,11 +67,11 @@ public:
     Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look);
 
     static std::shared_ptr<Entity> GetPointer(int id);
-    static std::shared_ptr<Entity> GetPointer(std::string name);
+    static std::shared_ptr<Entity> GetPointer(const std::string& name);
     static std::string GetDisplayname(int id);
     static void SetDisplayName(int id, std::string prefix, std::string name, std::string suffix);
     static void MessageToClients(int id, const std::string& message);
-    static void Add(std::shared_ptr<Entity> e);
+    static void Add(const std::shared_ptr<Entity>& e);
     static void Delete(int id);
 
     void Kill();

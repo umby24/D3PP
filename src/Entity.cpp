@@ -4,6 +4,7 @@
 
 #include "Entity.h"
 
+#include <utility>
 #include "Block.h"
 
 #include "Network.h"
@@ -43,7 +44,7 @@ void EntityMain::MainFunc() {
 
 int Entity::GetFreeId() {
     int id = 0;
-    bool found = false;
+    bool found;
     while (true) {
         found = (_entities.find(id) != _entities.end());
 
@@ -61,14 +62,14 @@ void Entity::SetDisplayName(int id, std::string prefix, std::string name, std::s
     if (e == nullptr)
         return;
 
-    e->Prefix = prefix;
-    e->Name = name;
-    e->Suffix = suffix;
+    e->Prefix = std::move(prefix);
+    e->Name = std::move(name);
+    e->Suffix = std::move(suffix);
     e->resend = true;
 }
 
 int Entity::GetFreeIdClient(int mapId) {
-    int id = 0;
+    int id;
     bool found = false;
     for (id = 0; id < 128; id++) {
         for(auto const &e : _entities) {
@@ -91,7 +92,7 @@ int Entity::GetFreeIdClient(int mapId) {
 
 Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look) : variables{} {
     Prefix = "";
-    Name = name;
+    Name = std::move(name);
     Suffix = "";
     Id = GetFreeId();
     ClientId = GetFreeIdClient(mapId);
@@ -141,7 +142,7 @@ std::string Entity::GetDisplayname(int id) {
     return e->Prefix + e->Name + e->Suffix;
 }
 
-std::shared_ptr<Entity> Entity::GetPointer(std::string name) {
+std::shared_ptr<Entity> Entity::GetPointer(const std::string& name) {
     for(auto const &e : _entities) {
         if (Utils::InsensitiveCompare(e.second->Name, name)) {
             return e.second;
@@ -405,7 +406,7 @@ void Entity::Send() {
                     continue;
 
                 if (nc->player->tEntity == bEntity.second) {
-                    NetworkFunctions::NetworkOutEntityPosition(nc->Id, 255, bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
+                    NetworkFunctions::NetworkOutEntityPosition(nc->Id, -1, bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
                 }
             }
         }
@@ -417,7 +418,7 @@ void Entity::Send() {
                     continue;
 
                 if (nc->player->tEntity == bEntity.second) {
-                    NetworkFunctions::NetworkOutEntityAdd(nc->Id, 255, Entity::GetDisplayname(bEntity.first), bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
+                    NetworkFunctions::NetworkOutEntityAdd(nc->Id, -1, Entity::GetDisplayname(bEntity.first), bEntity.second->X, bEntity.second->Y, bEntity.second->Z, bEntity.second->Rotation, bEntity.second->Look);
                 }
             }
         }
@@ -429,7 +430,7 @@ void Entity::Delete() {
 
 }
 
-void Entity::Add(std::shared_ptr<Entity> e) {
+void Entity::Add(const std::shared_ptr<Entity>& e) {
     _entities.insert(std::make_pair(e->Id, e));
     EventEntityAdd ea;
     ea.entityId = e->Id;
@@ -439,7 +440,7 @@ void Entity::Add(std::shared_ptr<Entity> e) {
 void Entity::SetModel(std::string modelName) {
     Network* nm = Network::GetInstance();
 
-    model = modelName;
+    model = std::move(modelName);
     std::shared_ptr<NetworkClient> myClient = nullptr;
     for(auto const &nc : nm->roClients) {
         if (!nc->LoggedIn)

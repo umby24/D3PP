@@ -33,7 +33,7 @@ void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& clien
 }
 
 void PacketHandlers::HandlePing(const std::shared_ptr<NetworkClient> &client) {
-    client->Ping = static_cast<int>((std::chrono::steady_clock::now() - client->PingSentTime).count());
+    client->Ping = static_cast<float>((std::chrono::steady_clock::now() - client->PingSentTime).count());
 }
 
 void PacketHandlers::HandleBlockChange(const std::shared_ptr<NetworkClient> &client) {
