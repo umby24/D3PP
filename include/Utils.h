@@ -1,6 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
-
+#define GLF __FILE__, __LINE__, __FUNCTION__
 #include <string>
 #include <vector>
 #include <iomanip>

@@ -583,10 +583,24 @@ void CommandMain::Load() {
     }
 
     Logger::LogAdd(MODULE_NAME, "File loaded [" + cmdFilename + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    time_t modTime = Utils::FileModTime(cmdFilename);
+    FileDateLast = modTime;
 }
 
 void CommandMain::MainFunc() {
+    if (SaveFile) {
+        Save();
+        SaveFile = false;
+    }
 
+    Files* f = Files::GetInstance();
+    std::string blockFile = f->GetFile(COMMAND_FILENAME);
+    time_t modTime = Utils::FileModTime(blockFile);
+
+    if (modTime != FileDateLast) {
+        Load();
+        FileDateLast = modTime;
+    }
 }
 
 CommandMain* CommandMain::GetInstance() {
