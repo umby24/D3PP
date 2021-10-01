@@ -8,7 +8,7 @@
 #include <string>
 #include <regex>
 
-const std::regex AllowedRegexp("[^A-Za-z0-9!\\^\\~$%&/()=?{}\t\\[\\]\\\\ ,\\\";.:\\-_#'+*<>|@\n]|&.$|&.(&.)");
+const std::regex AllowedRegexp("[^A-Za-z0-9!\\^\\~$%&\\/()=?{}\t\\[\\]\\\\ ,\\\";.:\\-_#'+*<>|@\n]");
 class NetworkClient;
 
 class Chat {
