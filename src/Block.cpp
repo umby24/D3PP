@@ -235,7 +235,7 @@ void Block::Save() {
     time_t modTime = Utils::FileModTime(blockFile);
     LastFileDate = modTime;
 
-    Logger::LogAdd(MODULE_NAME, "File saved.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File saved [" + blockFile + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void Block::MainFunc() {

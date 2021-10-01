@@ -113,7 +113,7 @@ void Network::Save() {
     oFile << std::setw(4) << j;
     oFile.close();
 
-    Logger::LogAdd(MODULE_NAME, "File Saved", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "File Saved [" + fileName + "]", LogType::NORMAL, GLF);
     lastModifiedTime = Utils::FileModTime(fileName);
 }
 
