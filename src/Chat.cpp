@@ -93,11 +93,11 @@ std::string Chat::StringMultiline(std::string input) {
     return result;
 }
 
-bool Chat::StringIV(std::string input) {
+bool Chat::StringIV(const std::string& input) {
     return std::regex_match(input, AllowedRegexp);
 }
 
-std::string Chat::StringGV(std::string input) {
+std::string Chat::StringGV(const std::string& input) {
     return std::regex_replace(input, AllowedRegexp, "#");
 }
 
@@ -187,7 +187,7 @@ void Chat::NetworkSend2All(int entityId, std::string message) {
     }
 }
 
-void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient> client, std::string input, char playerId) {
+void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, std::string input, char playerId) {
     if (CPE::GetClientExtVersion(client, LONG_MESSAGES_EXT_NAME) == 1){
         if (playerId == 1) {
             client->player->tEntity->ChatBuffer += input;
