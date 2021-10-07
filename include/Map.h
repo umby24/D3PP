@@ -6,6 +6,7 @@
 
 #ifndef D3PP_MAP_H
 #define D3PP_MAP_H
+#define GLF __FILE__, __LINE__, __FUNCTION__
 #include <string>
 #include <vector>
 #include <queue>
@@ -246,7 +247,7 @@ public:
     static int GetMapOffset(int x, int y, int z, int sizeX, int sizeY, int sizeZ, int blockSize) { return (x + y * sizeX + z * sizeX * sizeY) * blockSize;}
     static Vector3S GetMapExportSize(const std::string& filename);
     void MainFunc();
-    
+
     void AddSaveAction(int clientId, int mapId, const std::string& directory);
     void AddLoadAction(int clientId, int mapId, const std::string& directory);
     void AddResizeAction(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z);
@@ -280,6 +281,7 @@ private:
     int mapSettingsMaxChangesSec;
 
     int GetMaxActionId();
+    void AddAction(int clientId, int mapId, const MapActionItem &action);
     void HtmlStats(time_t time_);
 
     void MapListSave();

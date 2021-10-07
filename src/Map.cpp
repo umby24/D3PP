@@ -121,87 +121,61 @@ MapMain* MapMain::GetInstance() {
 
     return Instance;
 }
-
-void MapMain::AddSaveAction(int clientId, int mapId, const std::string& directory) {
-    int newActionId = GetMaxActionId();
+void MapMain::AddAction(int clientId, int mapId, const MapActionItem &action) {
     bool found = false;
+
     for(auto const &act : _mapActions) {
-        if (act.MapID == mapId && act.Action == MapAction::SAVE && act.Directory == directory) {
+        if (act.MapID == mapId && act.Action == action.Action) {
+
+            if (action.Action == MapAction::SAVE || action.Action == MapAction::LOAD) {
+                if (action.Directory == act.Directory)
+                    found = true;
+                else
+                    continue;
+            }
+
             found = true;
             break;
         }
     }
 
     if (!found) {
-        MapActionItem newAction {newActionId, clientId, mapId, MapAction::SAVE, "", directory};
-        _mapActions.push_back(newAction);
+        _mapActions.push_back(action);
     }
+}
+
+void MapMain::AddSaveAction(int clientId, int mapId, const std::string& directory) {
+    int newActionId = GetMaxActionId();
+    MapActionItem newAction {newActionId, clientId, mapId, MapAction::SAVE, "", directory};
+    AddAction(clientId, mapId, newAction);
 }
 
 void MapMain::AddLoadAction(int clientId, int mapId, const std::string& directory) {
     int newActionId = GetMaxActionId();
-    bool found = false;
-    for(auto const &act : _mapActions) {
-        if (act.MapID == mapId && act.Action == MapAction::LOAD && act.Directory == directory) {
-            found = true;
-            break;
-        }
-    }
-
-    if (!found) {
-        MapActionItem newAction {newActionId, clientId, mapId, MapAction::LOAD, "", directory};
-        _mapActions.push_back(newAction);
-    }
+    MapActionItem newAction {newActionId, clientId, mapId, MapAction::LOAD, "", directory};
+    _mapActions.push_back(newAction);
+    
 }
 
 void MapMain::AddResizeAction(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z) {
     int newActionId = GetMaxActionId();
-    bool found = false;
-    for(auto const &act : _mapActions) {
-        if (act.MapID == mapId && act.Action == MapAction::RESIZE) {
-            found = true;
-            break;
-        }
-    }
-
-    if (!found) {
-        MapActionItem newAction {newActionId, clientId, mapId, MapAction::RESIZE, "", "", X, Y, Z};
-        _mapActions.push_back(newAction);
-    }
+    MapActionItem newAction {newActionId, clientId, mapId, MapAction::RESIZE, "", "", X, Y, Z};
+    _mapActions.push_back(newAction);
+    
 }
 
 void MapMain::AddFillAction(int clientId, int mapId, std::string functionName, std::string argString) {
     int newActionId = GetMaxActionId();
-    bool found = false;
-
-    for(auto const &act : _mapActions) {
-        if (act.MapID == mapId && act.Action == MapAction::FILL) {
-            found = true;
-            break;
-        }
-    }
-
-    if (!found) {
-        MapActionItem newAction {newActionId, clientId, mapId, MapAction::FILL, std::move(functionName), "", 0, 0, 0, std::move(argString)};
-        _mapActions.push_back(newAction);
-    }
+    MapActionItem newAction {newActionId, clientId, mapId, MapAction::FILL, std::move(functionName), "", 0, 0, 0, std::move(argString)};
+    _mapActions.push_back(newAction);
+    
 }
 
 void MapMain::AddDeleteAction(int clientId, int mapId) {
     int newActionId = GetMaxActionId();
-    bool found = false;
-
-    for(auto const &act : _mapActions) {
-        if (act.MapID == mapId && act.Action == MapAction::DELETE) {
-            found = true;
-            break;
-        }
-    }
-
-    if (!found) {
-        MapActionItem newAction {newActionId, clientId, mapId, MapAction::DELETE};
-        _mapActions.push_back(newAction);
-    }
+    MapActionItem newAction {newActionId, clientId, mapId, MapAction::DELETE};
+    _mapActions.push_back(newAction);
+    
 }
 
 void MapMain::ActionProcessor() {
@@ -513,7 +487,7 @@ void MapMain::HtmlStats(time_t time_) {
         oStream << result;
         oStream.close();
     } else {
-        Logger::LogAdd(MODULE_NAME, "Couldn't open file :<" + memFile, LogType::WARNING, __FILE__, __LINE__, __FUNCTION__ );
+        Logger::LogAdd(MODULE_NAME, "Couldn't open file :<" + memFile, LogType::WARNING, GLF );
     }
 }
 
@@ -535,7 +509,7 @@ void MapMain::MapListSave() {
     pl.SaveFile();
 
     LastWriteTime = Utils::FileModTime(fName);
-    Logger::LogAdd(MODULE_NAME, "File saved. [" + fName + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File saved. [" + fName + "]", LogType::NORMAL, GLF);
 }
 
 void MapMain::MapListLoad() {
@@ -572,7 +546,7 @@ void MapMain::MapListLoad() {
     SaveFile = true;
 
     LastWriteTime = Utils::FileModTime(fName);
-    Logger::LogAdd(MODULE_NAME, "File loaded. [" + fName + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File loaded. [" + fName + "]", LogType::NORMAL, GLF);
 }
 
 int MapMain::Add(int id, short x, short y, short z, const std::string& name) {
@@ -652,7 +626,7 @@ void MapMain::MapSettingsLoad() {
     json j;
     std::ifstream iStream(mapSettingsFile);
     if (!iStream.is_open()) {
-        Logger::LogAdd(MODULE_NAME, "Failed to load Map settings, generating...", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Failed to load Map settings, generating...", LogType::WARNING, GLF);
         MapSettingsSave();
         return;
     }
@@ -667,7 +641,7 @@ void MapMain::MapSettingsLoad() {
     mapSettingsMaxChangesSec = j["Max_Changes_s"];
     mapSettingsLastWriteTime = Utils::FileModTime(mapSettingsFile);
 
-    Logger::LogAdd(MODULE_NAME, "File Loaded [" + mapSettingsFile + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File Loaded [" + mapSettingsFile + "]", LogType::NORMAL, GLF);
 }
 
 void MapMain::MapSettingsSave() {
@@ -683,7 +657,7 @@ void MapMain::MapSettingsSave() {
     ofstream.close();
 
     mapSettingsLastWriteTime = Utils::FileModTime(hbSettingsFile);
-    Logger::LogAdd(MODULE_NAME, "File Saved [" + hbSettingsFile + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File Saved [" + hbSettingsFile + "]", LogType::NORMAL, GLF);
 }
 
 bool Map::Resize(short x, short y, short z) {
@@ -755,7 +729,7 @@ void Map::Fill(const std::string& functionName, std::string paramString) {
     lp->TriggerMapFill(data.ID, data.SizeX, data.SizeY, data.SizeZ, "Mapfill_" + functionName, std::move(paramString));
 
     Resend();
-    Logger::LogAdd(MODULE_NAME, "Map '" + data.Name + "' filled.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Map '" + data.Name + "' filled.", LogType::NORMAL, GLF);
 }
 
 bool Map::Save(std::string directory) {
@@ -777,10 +751,10 @@ bool Map::Save(std::string directory) {
 
         std::filesystem::copy("temp.gz", directory + MAP_FILENAME_DATA, std::filesystem::copy_options::overwrite_existing);
     } catch (std::filesystem::filesystem_error& e) {
-        Logger::LogAdd(MODULE_NAME, "Could not copy mapfile: " + stringulate(e.what()), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Could not copy mapfile: " + stringulate(e.what()), LogType::L_ERROR, GLF);
     }
 
-    Logger::LogAdd(MODULE_NAME, "File saved [" + directory + MAP_FILENAME_DATA + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File saved [" + directory + MAP_FILENAME_DATA + "]", LogType::NORMAL, GLF);
 
     return true;
 }
@@ -847,7 +821,7 @@ void Map::SaveRankBoxFile(const std::string& directory) {
         pLoader.Write("Rank", rb.Rank);
     }
     pLoader.SaveFile();
-    Logger::LogAdd(MODULE_NAME, "File saved [" + directory + MAP_FILENAME_RANK + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File saved [" + directory + MAP_FILENAME_RANK + "]", LogType::NORMAL, GLF);
 }
 
 void Map::SaveTeleporterFile(const std::string& directory) {
@@ -869,7 +843,7 @@ void Map::SaveTeleporterFile(const std::string& directory) {
         pLoader.Write("Dest_Look", tp.second.DestLook);
     }
     pLoader.SaveFile();
-    Logger::LogAdd(MODULE_NAME, "File saved [" + directory + MAP_FILENAME_TELEPORTER + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File saved [" + directory + MAP_FILENAME_TELEPORTER + "]", LogType::NORMAL, GLF);
 }
 
 void Map::Load(std::string directory) {
@@ -916,7 +890,7 @@ void Map::Load(std::string directory) {
             }
         }
 
-        Logger::LogAdd(MODULE_NAME, "Map Loaded [" + directory + MAP_FILENAME_DATA + "] (" + stringulate(sizeX) + "x" + stringulate(sizeY) + "x" + stringulate(sizeZ) + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Map Loaded [" + directory + MAP_FILENAME_DATA + "] (" + stringulate(sizeX) + "x" + stringulate(sizeY) + "x" + stringulate(sizeZ) + ")", LogType::NORMAL, GLF);
     }
 
     // -- Load RankBox file
@@ -1053,7 +1027,7 @@ void Map::Reload() {
         data.loading = false;
         data.PhysicsStopped = false;
         data.BlockchangeStopped = false;
-        Logger::LogAdd(MODULE_NAME, "Map Reloaded [" + filenameData + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Map Reloaded [" + filenameData + "]", LogType::NORMAL, GLF);
     }
 }
 
@@ -1068,7 +1042,7 @@ void Map::Unload() {
     data.BlockchangeData.resize(1);
     data.PhysicData.resize(1);
     data.loaded = false;
-    Logger::LogAdd(MODULE_NAME, "Map unloaded (" + data.Name + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Map unloaded (" + data.Name + ")", LogType::NORMAL, GLF);
 }
 
 void Map::Send(int clientId) {
@@ -1086,10 +1060,10 @@ void Map::Send(int clientId) {
     std::vector<unsigned char> tempBuf(mapSize + 10);
     int tempBufferOffset = 0;
 
-    tempBuf.at(tempBufferOffset++) = mapSize / 16777216;
-    tempBuf.at(tempBufferOffset++) = mapSize / 65536;
-    tempBuf.at(tempBufferOffset++) = mapSize / 256;
-    tempBuf.at(tempBufferOffset++) = mapSize;
+    tempBuf.at(tempBufferOffset++) = static_cast<unsigned char>(mapSize >> 24);
+    tempBuf.at(tempBufferOffset++) = static_cast<unsigned char>(mapSize >> 16);
+    tempBuf.at(tempBufferOffset++) = static_cast<unsigned char>(mapSize >> 8);
+    tempBuf.at(tempBufferOffset++) = static_cast<unsigned char>(mapSize);
 
     int cbl = nc->CustomBlocksLevel;
 
@@ -1115,7 +1089,7 @@ void Map::Send(int clientId) {
     int compressedSize = GZIP::GZip_Compress(tempBuf2.data(), tempBuffer2Size, tempBuf.data(), tempBufferOffset);
 
     if (compressedSize == -1) {
-        Logger::LogAdd(MODULE_NAME, "Can't send the map: GZip Error", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Can't send the map: GZip Error", LogType::L_ERROR, GLF);
         nc->Kick("Mapsend error", false);
         return;
     }
@@ -1134,7 +1108,8 @@ void Map::Send(int clientId) {
         bytesSent += bytesInBlock;
         bytes2Send -= bytesInBlock;
     }
-
+    tempBuf.clear();
+    tempBuf2.clear();
     Packets::SendMapFinalize(clientId, data.SizeX, data.SizeY, data.SizeZ);
     CPE::AfterMapActions(nc);
 }
@@ -1457,7 +1432,7 @@ Vector3S MapMain::GetMapExportSize(const std::string& filename) {
     std::vector<unsigned char> tempData(10);
     int outputLen = GZIP::GZip_DecompressFromFile(tempData.data(), 10, filename);
     if (outputLen != 10) {
-        Logger::LogAdd(MODULE_NAME, "Map not imported: Error unzipping.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Map not imported: Error unzipping.", LogType::L_ERROR, GLF);
         return Vector3S{};
     }
     // -- Read version and size info
@@ -1467,7 +1442,7 @@ Vector3S MapMain::GetMapExportSize(const std::string& filename) {
     versionNumber |= tempData[2] << 16;
     versionNumber |= tempData[3] << 24;
     if (versionNumber != 1000) {
-        Logger::LogAdd(MODULE_NAME, "Map not imported, unknown version [" + filename + "]", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Map not imported, unknown version [" + filename + "]", LogType::L_ERROR, GLF);
         return Vector3S{};
     }
     Vector3S result;
@@ -1618,7 +1593,7 @@ void Map::MapExport(MinecraftLocation start, MinecraftLocation end, std::string 
     // -- compress it
     GZIP::GZip_CompressToFile(tempData.data(), mapSize+10, filename);
     tempData.clear();
-    Logger::LogAdd(MODULE_NAME, "Map exported (" + filename + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Map exported (" + filename + ")", LogType::NORMAL, GLF);
 }
 
 void Map::MapImport(std::string filename, MinecraftLocation location, short scaleX, short scaleY, short scaleZ) {
@@ -1626,7 +1601,7 @@ void Map::MapImport(std::string filename, MinecraftLocation location, short scal
     std::vector<unsigned char> tempData(10);
     int outputLen = GZIP::GZip_DecompressFromFile(tempData.data(), 10, filename);
     if (outputLen != 10) {
-        Logger::LogAdd(MODULE_NAME, "Map not imported: Error unzipping.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Map not imported: Error unzipping.", LogType::L_ERROR, GLF);
         return;
     }
     // -- Read version and size info
@@ -1636,7 +1611,7 @@ void Map::MapImport(std::string filename, MinecraftLocation location, short scal
     versionNumber |= tempData[2] << 16;
     versionNumber |= tempData[3] << 24;
     if (versionNumber != 1000) {
-        Logger::LogAdd(MODULE_NAME, "Map not imported, unknown version [" + filename + "]", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Map not imported, unknown version [" + filename + "]", LogType::L_ERROR, GLF);
         return;
     }
     Vector3S startLoc = location.GetAsBlockCoords();
@@ -1666,7 +1641,7 @@ void Map::MapImport(std::string filename, MinecraftLocation location, short scal
             }
         }
     }
-    Logger::LogAdd(MODULE_NAME, "Map imported. (" + filename + ").", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Map imported. (" + filename + ").", LogType::NORMAL, GLF);
     // -- If correct version, iterate through, apply scale, and map_block_change.
 }
 
