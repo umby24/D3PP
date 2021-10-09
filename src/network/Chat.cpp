@@ -4,16 +4,16 @@
 
 #include <events/EventChatAll.h>
 #include <events/EventChatMap.h>
-#include "Chat.h"
-#include "Network.h"
-#include "NetworkClient.h"
-#include "Player.h"
-#include "Player_List.h"
-#include "Entity.h"
-#include "Network_Functions.h"
+#include "network/Chat.h"
+#include "network/Network.h"
+#include "network/NetworkClient.h"
+#include "world/Player.h"
+#include "common/Player_List.h"
+#include "world/Entity.h"
+#include "network/Network_Functions.h"
 #include "Command.h"
 
-#include "Logger.h"
+#include "common/Logger.h"
 #include "Utils.h"
 #include "CPE.h"
 const int MaxStringLength = 65;

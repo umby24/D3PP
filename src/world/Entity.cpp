@@ -2,21 +2,21 @@
 // Created by Wande on 3/17/2021.
 //
 
-#include "Entity.h"
+#include "world/Entity.h"
 
 #include "Block.h"
 
-#include "Network.h"
-#include "NetworkClient.h"
-#include "Player.h"
-#include "Player_List.h"
+#include "network/Network.h"
+#include "network/NetworkClient.h"
+#include "world/Player.h"
+#include "common/Player_List.h"
 
-#include "Map.h"
-#include "Network_Functions.h"
-#include "Logger.h"
+#include "world/Map.h"
+#include "network/Network_Functions.h"
+#include "common/Logger.h"
 #include "Utils.h"
 #include "CPE.h"
-#include "Packets.h"
+#include "network/Packets.h"
 #include "EventSystem.h"
 #include "events/EventEntityAdd.h"
 #include "events/EventEntityDelete.h"

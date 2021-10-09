@@ -2,9 +2,9 @@
 // Created by Wande on 3/17/2021.
 //
 
-#include <Packets.h>
-#include "Network.h"
-#include "NetworkClient.h"
+#include <network/Packets.h>
+#include "network/Network.h"
+#include "network/NetworkClient.h"
 #include "Utils.h"
 #include "common/ByteBuffer.h"
 

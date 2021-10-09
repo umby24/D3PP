@@ -2,20 +2,20 @@
 #include <string>
 #include <thread>
 
-#include "Network.h"
+#include "network/Network.h"
 #include "Rank.h"
 #include "System.h"
-#include "Logger.h"
+#include "common/Logger.h"
 #include "Client.h"
 
 #include "Block.h"
-#include "Player.h"
-#include "Entity.h"
+#include "world/Player.h"
+#include "world/Entity.h"
 #include "BuildMode.h"
-#include "Heartbeat.h"
+#include "plugins/Heartbeat.h"
 #include "watchdog.h"
 
-#include "Player_List.h"
+#include "common/Player_List.h"
 #include "Command.h"
 #include "plugins/LuaPlugin.h"
 

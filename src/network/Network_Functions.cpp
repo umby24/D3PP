@@ -2,16 +2,16 @@
 // Created by Wande on 3/17/2021.
 //
 
-#include "Network_Functions.h"
-#include "Chat.h"
+#include "network/Network_Functions.h"
+#include "network/Chat.h"
 #include "Utils.h"
-#include "Packets.h"
-#include "Network.h"
-#include "NetworkClient.h"
+#include "network/Packets.h"
+#include "network/Network.h"
+#include "network/NetworkClient.h"
 #include "Block.h"
-#include "Player.h"
+#include "world/Player.h"
 #include "CPE.h"
-#include "MinecraftLocation.h"
+#include "common/MinecraftLocation.h"
 static std::shared_ptr<NetworkClient> GetPlayer(int id) {
     auto network = Network::GetInstance();
     auto result = network->GetClient(id);

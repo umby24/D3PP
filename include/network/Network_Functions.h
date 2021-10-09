@@ -6,7 +6,7 @@
 #define D3PP_NETWORK_FUNCTIONS_H
 #include <string>
 
-#include "MinecraftLocation.h"
+#include "common/MinecraftLocation.h"
 
 class NetworkFunctions {
 public:

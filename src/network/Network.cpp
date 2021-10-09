@@ -2,8 +2,8 @@
 // Created by unknown on 2/18/2021.
 //
 
-#include "Network.h"
-#include "NetworkClient.h"
+#include "network/Network.h"
+#include "network/NetworkClient.h"
 #include <iomanip>
 
 #include "json.hpp"
@@ -17,20 +17,21 @@ using json = nlohmann::json;
 #include "network/LinuxSockets.h"
 #endif
 
-#include "PacketHandlers.h"
-#include "Entity.h"
-#include "Player.h"
-#include "Files.h"
+#include "network/PacketHandlers.h"
+#include "world/Entity.h"
+#include "world/Player.h"
+#include "common/Files.h"
 #include "watchdog.h"
 #include "Client.h"
-#include "Logger.h"
+#include "common/Logger.h"
 #include "Utils.h"
 #include "EventSystem.h"
 #include "common/ByteBuffer.h"
 #include "events/EventClientAdd.h"
 #include "events/EventClientDelete.h"
 #include "CPE.h"
-#include "Packets.h"
+#include "network/Packets.h"
+#include "common/Configuration.h"
 
 const std::string MODULE_NAME = "Network";
 Network* Network::singleton_ = nullptr;
@@ -47,8 +48,7 @@ Network::Network() : clientMutex() {
     SaveFile = false;
 
     TaskItem networkMain;
-    networkMain.Interval = std::chrono::seconds(1);
-    networkMain.Main = [this] { MainFunc(); };
+    networkMain.Interval = std::chrono::seconds(1000);
     networkMain.Teardown = [this] { Stop(); };
     TaskScheduler::RegisterTask("Network_Main", networkMain);
 
@@ -79,42 +79,11 @@ Network::Network() : clientMutex() {
 }
 
 void Network::Load() {
-    json j;
-    Files* f = Files::GetInstance();
-    std::string fileName = f->GetFile(MODULE_NAME);
-    std::ifstream iFile(fileName);
-
-    if (!iFile.is_open()) {
-        this->Port = 25565;
-        Logger::LogAdd(MODULE_NAME, "File could not be loaded", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
-        return;
-    }
-
-    iFile >> j;
-    iFile.close();
-
-    this->Port = j["port"];
-
-    Logger::LogAdd(MODULE_NAME, "File loaded", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-    lastModifiedTime = Utils::FileModTime(fileName);
+    this->Port = Configuration::NetSettings.ListenPort;
 }
 
 void Network::Save() {
-    json j;
-    Files* f = Files::GetInstance();
-    std::string fileName = f->GetFile(MODULE_NAME);
-    j["port"] = this->Port;
-
-    std::ofstream oFile(fileName);
-    if (!oFile.is_open()) {
-        Logger::LogAdd(MODULE_NAME, "File could not be saved", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
-        return;
-    }
-    oFile << std::setw(4) << j;
-    oFile.close();
-
-    Logger::LogAdd(MODULE_NAME, "File Saved", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-    lastModifiedTime = Utils::FileModTime(fileName);
+    Configuration::NetSettings.ListenPort = this->Port;
 }
 
 void Network::Start() {
@@ -166,20 +135,6 @@ std::shared_ptr<NetworkClient> Network::GetClient(int id) {
 
 void Network::MainFunc() {
     watchdog::Watch("Main", "Before: Network MainFunc()", 1);
-
-    if (SaveFile) {
-        Save();
-        SaveFile = false;
-    }
-
-    Files* f = Files::GetInstance();
-    std::string networkFile = f->GetFile(MODULE_NAME);
-    time_t modTime = Utils::FileModTime(networkFile);
-
-    if (modTime != lastModifiedTime) {
-        Load();
-        lastModifiedTime = modTime;
-    }
 }
 
 void Network::HtmlStats() {

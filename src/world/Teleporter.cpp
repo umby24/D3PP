@@ -1,5 +1,5 @@
-#include "Teleporter.h"
-#include "Map.h"
+#include "world/Teleporter.h"
+#include "world/Map.h"
 
 bool Teleporter::AddTeleporter(std::shared_ptr<Map> map, std::string id, unsigned short x0, unsigned short x1, unsigned short y0, unsigned short y1, unsigned short z0, unsigned short z1, std::string destUniqueId, int destMapId, float x, float y, float z, float rot, float look) {
     if (x0 > x1) {

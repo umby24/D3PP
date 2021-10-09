@@ -1,5 +1,5 @@
 
-#include "MinecraftLocation.h"
+#include "common/MinecraftLocation.h"
 
 void MinecraftLocation::SetAsBlockCoords(Vector3S blockCoords) {
     Vector3S newLoc { ( blockCoords.X * 32), (blockCoords.Y * 32), ((blockCoords.Z * 32) + 51)};

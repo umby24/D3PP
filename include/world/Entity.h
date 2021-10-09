@@ -10,8 +10,8 @@
 #include <map>
 #include <memory>
 
-#include "TaskScheduler.h"
-#include "MinecraftLocation.h"
+#include "common/TaskScheduler.h"
+#include "common/MinecraftLocation.h"
 
 class PlayerListEntry;
 class Player;

@@ -5,8 +5,8 @@
 #include "Build.h"
 #include <cmath>
 #include <Utils.h>
-#include <Logger.h>
-#include "Map.h"
+#include <common/Logger.h>
+#include "world/Map.h"
 
 
 void Build::BuildLinePlayer(short playerNumber, int mapId, unsigned short X0, unsigned short Y0, unsigned short Z0,

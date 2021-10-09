@@ -3,12 +3,12 @@
 #include "CPE.h"
 
 #include "Client.h"
-#include "Player.h"
-#include "Entity.h"
-#include "Network.h"
-#include "NetworkClient.h"
-#include "Packets.h"
-#include "Map.h"
+#include "world/Player.h"
+#include "world/Entity.h"
+#include "network/Network.h"
+#include "network/NetworkClient.h"
+#include "network/Packets.h"
+#include "world/Map.h"
 
 void CPE::PreLoginExtensions(std::shared_ptr<NetworkClient> client) {
     if (GetClientExtVersion(client, CLICK_DISTANCE_EXT_NAME) == 1) {

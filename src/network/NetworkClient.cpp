@@ -2,19 +2,19 @@
 // Created by unknown on 8/24/21.
 //
 
-#include "NetworkClient.h"
+#include "network/NetworkClient.h"
 #include "Utils.h"
 #include <memory>
 #include <utility>
 #include "common/ByteBuffer.h"
-#include "Logger.h"
-#include "Network_Functions.h"
-#include "Player.h"
-#include "Network.h"
+#include "common/Logger.h"
+#include "network/Network_Functions.h"
+#include "world/Player.h"
+#include "network/Network.h"
 #include "CPE.h"
-#include "Packets.h"
-#include "Entity.h"
-#include "MinecraftLocation.h"
+#include "network/Packets.h"
+#include "world/Entity.h"
+#include "common/MinecraftLocation.h"
 #include "EventSystem.h"
 #include "events/EntityEventArgs.h"
 

@@ -3,9 +3,9 @@
 //
 
 #include "watchdog.h"
-#include "Files.h"
+#include "common/Files.h"
 #include "Utils.h"
-#include "Logger.h"
+#include "common/Logger.h"
 
 watchdog* watchdog::singleton_ = nullptr;
 

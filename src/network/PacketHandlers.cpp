@@ -2,21 +2,21 @@
 // Created by Wande on 3/30/2021.
 //
 
-#include "PacketHandlers.h"
+#include "network/PacketHandlers.h"
 
-#include "Chat.h"
-#include "Network.h"
-#include "NetworkClient.h"
+#include "network/Chat.h"
+#include "network/Network.h"
+#include "network/NetworkClient.h"
 #include "Client.h"
-#include "Player.h"
-#include "Entity.h"
-#include "Logger.h"
+#include "world/Player.h"
+#include "world/Entity.h"
+#include "common/Logger.h"
 #include "BuildMode.h"
 #include "CPE.h"
 #include "Utils.h"
 #include "common/ByteBuffer.h"
-#include "Packets.h"
-#include "MinecraftLocation.h"
+#include "network/Packets.h"
+#include "common/MinecraftLocation.h"
 
 void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& client) {
     char clientVersion = client->ReceiveBuffer->ReadByte();

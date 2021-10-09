@@ -1,17 +1,17 @@
 //
 // Created by Wande on 3/22/2021.
 //
-#include "Player_List.h"
+#include "common/Player_List.h"
 
-#include "Network.h"
-#include "NetworkClient.h"
-#include "Logger.h"
-#include "Files.h"
+#include "network/Network.h"
+#include "network/NetworkClient.h"
+#include "common/Logger.h"
+#include "common/Files.h"
 #include "Rank.h"
-#include "Player.h"
-#include "Network_Functions.h"
-#include "Entity.h"
-#include "TaskScheduler.h"
+#include "world/Player.h"
+#include "network/Network_Functions.h"
+#include "world/Entity.h"
+#include "common/TaskScheduler.h"
 #include "Utils.h"
 
 const std::string MODULE_NAME = "Player_List";

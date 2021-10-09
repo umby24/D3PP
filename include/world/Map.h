@@ -15,8 +15,8 @@
 #include <memory>
 #include <filesystem>
 
-#include "TaskScheduler.h"
-#include "MinecraftLocation.h"
+#include "common/TaskScheduler.h"
+#include "common/MinecraftLocation.h"
 
 class NetworkClient;
 enum MapAction {

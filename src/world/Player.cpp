@@ -2,18 +2,18 @@
 // Created by Wande on 3/21/2021.
 //
 
-#include "Player.h"
+#include "world/Player.h"
 #include <iomanip>
-#include <Network.h>
-#include <Map.h>
-#include "NetworkClient.h"
-#include "Entity.h"
-#include "Files.h"
-#include "Player_List.h"
-#include "Logger.h"
+#include <network/Network.h>
+#include <world/Map.h>
+#include "network/NetworkClient.h"
+#include "world/Entity.h"
+#include "common/Files.h"
+#include "common/Player_List.h"
+#include "common/Logger.h"
 #include "Utils.h"
-#include "Network_Functions.h"
-#include "Packets.h"
+#include "network/Network_Functions.h"
+#include "network/Packets.h"
 
 const std::string MODULE_NAME = "Player";
 PlayerMain* PlayerMain::Instance = nullptr;

@@ -2,23 +2,23 @@
 
 #include <filesystem>
 
-#include "Map.h"
-#include "Network_Functions.h"
-#include "Logger.h"
+#include "world/Map.h"
+#include "network/Network_Functions.h"
+#include "common/Logger.h"
 #include "Utils.h"
-#include "Network.h"
-#include "NetworkClient.h"
-#include "Player.h"
-#include "Entity.h"
+#include "network/Network.h"
+#include "network/NetworkClient.h"
+#include "world/Player.h"
+#include "world/Entity.h"
 #include "BuildMode.h"
-#include "Player_List.h"
+#include "common/Player_List.h"
 #include "Build.h"
 #include "Rank.h"
 #include "EventSystem.h"
 #include "Block.h"
-#include "MinecraftLocation.h"
+#include "common/MinecraftLocation.h"
 #include "CPE.h"
-#include "Files.h"
+#include "common/Files.h"
 
 // -- Events..
 #include "events/EventChatAll.h"

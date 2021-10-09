@@ -8,7 +8,7 @@
 #include <lua.hpp>
 #include <EventSystem.h>
 
-#include "TaskScheduler.h"
+#include "common/TaskScheduler.h"
 
 struct LuaFile {
     std::string FilePath;

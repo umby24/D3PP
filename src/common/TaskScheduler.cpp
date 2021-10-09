@@ -2,9 +2,9 @@
 // Created by unknown on 2/18/2021.
 //
 
-#include "TaskScheduler.h"
+#include "common/TaskScheduler.h"
 #include "Utils.h"
-#include "Logger.h"
+#include "common/Logger.h"
 
 const std::string MODULE_NAME = "Task Scheduler";
 std::map<std::string, TaskItem> TaskScheduler::_tasks;

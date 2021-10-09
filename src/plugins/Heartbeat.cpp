@@ -2,18 +2,18 @@
 // Created by unknown on 6/29/21.
 //
 
-#include "Heartbeat.h"
+#include "plugins/Heartbeat.h"
 
 
 #include "System.h"
-#include "TaskScheduler.h"
-#include "Network.h"
-#include "Player.h"
+#include "common/TaskScheduler.h"
+#include "network/Network.h"
+#include "world/Player.h"
 #include "network/httplib.h"
 #include "digestpp/digestpp.hpp"
-#include "Files.h"
+#include "common/Files.h"
 #include "Utils.h"
-#include "Logger.h"
+#include "common/Logger.h"
 
 const std::string MODULE_NAME = "Heartbeat";
 Heartbeat* Heartbeat::Instance = nullptr;

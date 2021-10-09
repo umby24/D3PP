@@ -1,16 +1,16 @@
 #include <Block.h>
 #include <plugins/LuaPlugin.h>
 #include "BuildMode.h"
-#include "Files.h"
+#include "common/Files.h"
 #include "common/PreferenceLoader.h"
-#include "Network.h"
-#include "NetworkClient.h"
-#include "Player.h"
-#include "Entity.h"
-#include "Map.h"
-#include "Logger.h"
+#include "network/Network.h"
+#include "network/NetworkClient.h"
+#include "world/Player.h"
+#include "world/Entity.h"
+#include "world/Map.h"
+#include "common/Logger.h"
 #include "Utils.h"
-#include "Network_Functions.h"
+#include "network/Network_Functions.h"
 
 BuildModeMain* BuildModeMain::Instance = nullptr;
 

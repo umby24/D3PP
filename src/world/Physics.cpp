@@ -2,9 +2,9 @@
 // Created by unknown on 7/2/21.
 //
 
-#include "Physics.h"
+#include "world/Physics.h"
 
-#include "Map.h"
+#include "world/Map.h"
 std::vector<BlockFillPhysics> Physics::_blockFill;
 
 /* Block falls straight down */

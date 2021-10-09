@@ -7,23 +7,23 @@
 #include <memory>
 
 #include "Rank.h"
-#include "Logger.h"
-#include "Chat.h"
+#include "common/Logger.h"
+#include "network/Chat.h"
 #include "Utils.h"
 
-#include "Network.h"
-#include "NetworkClient.h"
-#include "Player.h"
-#include "Player_List.h"
-#include "Entity.h"
+#include "network/Network.h"
+#include "network/NetworkClient.h"
+#include "world/Player.h"
+#include "common/Player_List.h"
+#include "world/Entity.h"
 
-#include "Network_Functions.h"
-#include "Packets.h"
+#include "network/Network_Functions.h"
+#include "network/Packets.h"
 
-#include "Map.h"
+#include "world/Map.h"
 #include "watchdog.h"
 #include "System.h"
-#include "Heartbeat.h"
+#include "plugins/Heartbeat.h"
 
 #include "CPE.h"
 
