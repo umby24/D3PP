@@ -19,6 +19,7 @@ public:
     static void HandleExtInfo(const std::shared_ptr<NetworkClient>& client);
     static void HandleExtEntry(const std::shared_ptr<NetworkClient>& client);
     static void HandleCustomBlockSupportLevel(const std::shared_ptr<NetworkClient>& client);
+    static void HandlePlayerClicked(const std::shared_ptr<NetworkClient>& client);
     static void HandleTwoWayPing(const std::shared_ptr<NetworkClient>& client);
 };
 

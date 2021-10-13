@@ -179,3 +179,9 @@ void Player::SendMap() {
     tEntity->SendPosOwn = true;
     tEntity->resend = true;
 }
+
+void Player::PlayerClicked(ClickButton button, ClickAction action, short yaw, short pitch, char targetEntity,
+                           Vector3S targetBlock, ClickTargetBlockFace blockFace) {
+
+    // -- Trigger a lua event.
+}

@@ -406,6 +406,12 @@ void Network::NetworkInput() {
                         nc->ReceiveBuffer->Shift(2);
                     }
                     break;
+                case 34: // -- CPE Player Clicked.
+                    if (nc->ReceiveBuffer->Size() >= 15) {
+                        nc->ReceiveBuffer->ReadByte();
+                        PacketHandlers::HandlePlayerClicked(nc);
+                        nc->ReceiveBuffer->Shift(15);
+                    }
                 case 43:
                     if (nc->ReceiveBuffer->Size() >= 4) {
                         nc->ReceiveBuffer->ReadByte();

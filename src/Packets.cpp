@@ -357,3 +357,36 @@ void Packets::SendTwoWayPing(const std::shared_ptr<NetworkClient>& client, unsig
         client->SendBuffer->Purge();
     }
 }
+
+void Packets::SendDefineBlock(const std::shared_ptr<NetworkClient> &client, BlockDefinition def) {
+    if (client->canSend && client->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(client->sendLock);
+        client->SendBuffer->Write((unsigned char)35);
+        client->SendBuffer->Write(def.blockId);
+        client->SendBuffer->Write(def.name);
+        client->SendBuffer->Write(static_cast<unsigned char>(def.solidity));
+        client->SendBuffer->Write(def.movementSpeed);
+        client->SendBuffer->Write(def.topTexture);
+        client->SendBuffer->Write(def.sideTexture);
+        client->SendBuffer->Write(def.bottomTexture);
+        client->SendBuffer->Write(def.transmitsLight);
+        client->SendBuffer->Write(def.walkSound);
+        client->SendBuffer->Write(def.fullBright);
+        client->SendBuffer->Write(def.shape);
+        client->SendBuffer->Write(def.drawType);
+        client->SendBuffer->Write(def.fogDensity);
+        client->SendBuffer->Write(def.fogR);
+        client->SendBuffer->Write(def.fogG);
+        client->SendBuffer->Write(def.fogB);
+        client->SendBuffer->Purge();
+    }
+}
+
+void Packets::SendRemoveBlock(const std::shared_ptr<NetworkClient> &client, unsigned char blockId) {
+    if (client->canSend && client->SendBuffer != nullptr) {
+        const std::scoped_lock<std::mutex> sLock(client->sendLock);
+        client->SendBuffer->Write((unsigned char)36);
+        client->SendBuffer->Write(blockId);
+        client->SendBuffer->Purge();
+    }
+}
