@@ -39,7 +39,7 @@ public:
 
      void SetState(int clientId, char state);
      char GetState(int clientId);
-     void SetCoordinate(int clientId, int index, unsigned short X, unsigned short Y, unsigned short Z);
+     void SetCoordinate(int clientId, int index, float X, float Y, float Z);
      unsigned short GetCoordinateX(int clientId, int index);
      unsigned short GetCoordinateY(int clientId, int index);
      unsigned short GetCoordinateZ(int clientId, int index);
@@ -63,7 +63,7 @@ private:
 
     void MainFunc();
     bool SaveFile;
-    bool hasLoaded;
+    bool hasLoaded{};
     time_t LastFileDate;
 };
 #endif

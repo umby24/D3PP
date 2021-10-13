@@ -44,7 +44,7 @@ class CommandMain : TaskItem {
         time_t FileDateLast;
         int CommandClientId;
         std::string ParsedCommand;
-        std::string ParsedOperator[COMMAND_OPERATORS_MAX];
+        std::vector<std::string> ParsedOperator[COMMAND_OPERATORS_MAX];
         std::string ParsedText0;
         std::string ParsedText1;
         std::string ParsedText2;
@@ -59,7 +59,7 @@ class CommandMain : TaskItem {
         void Load();
         void Save();
         void MainFunc();
-        void CommandDo(const std::shared_ptr<NetworkClient> client, std::string input);
+        void CommandDo(const std::shared_ptr<NetworkClient>& client, const std::string& input);
         // -- Administrative
         void CommandKick();
         void CommandBan();

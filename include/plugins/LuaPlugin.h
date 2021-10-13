@@ -29,21 +29,21 @@ public:
 
     static LuaPlugin* Instance;
     static LuaPlugin* GetInstance();
-    void TriggerCommand(std::string function, int clientId, std::string parsedCmd, std::string text0, std::string text1, std::string op1, std::string op2, std::string op3, std::string op4, std::string op5);
-    void TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, std::string function, std::string args);
-    void TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, std::string function);
-    void TriggerBuildMode(std::string function, int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char block);
+    void TriggerCommand(const std::string& function, int clientId, const std::string& parsedCmd, const std::string &text0, const std::string &text1, const std::string& op1, const std::string &op2, const std::string &op3, const std::string &op4, const std::string &op5);
+    void TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, const std::string& function, const std::string& args);
+    void TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, const std::string& function);
+    void TriggerBuildMode(const std::string &function, int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char block);
 private:
     std::recursive_mutex executionMutex;
     lua_State* state;
     std::map<std::string, LuaFile> _files;
     std::map<Event::DescriptorType, std::vector<LuaEvent>> _luaEvents;
 
-    void Init();
+    static void Init();
     void TimerMain();
     void MainFunc();
     void BindFunctions();
-    void LoadFile(std::string path);
+    void LoadFile(const std::string& path);
     // -- Lua interface functions :)
     // -- Client Functions
     int LuaClientGetTable(lua_State *L);

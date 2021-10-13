@@ -34,7 +34,7 @@ void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& clien
 }
 
 void PacketHandlers::HandlePing(const std::shared_ptr<NetworkClient> &client) {
-    client->Ping = static_cast<int>((std::chrono::steady_clock::now() - client->PingSentTime).count());
+    client->Ping = static_cast<float>((std::chrono::steady_clock::now() - client->PingSentTime).count());
 }
 
 void PacketHandlers::HandleBlockChange(const std::shared_ptr<NetworkClient> &client) {
@@ -126,7 +126,26 @@ void PacketHandlers::HandleTwoWayPing(const std::shared_ptr<NetworkClient> &clie
         return;
     }
 
-    short totalduration = static_cast<short>(clock() - timeval);
-    float secondsTaken = (float)totalduration / static_cast<float>(CLOCKS_PER_SEC);
+    auto totalDuration = static_cast<short>(clock() - timeval);
+    float secondsTaken = (float)totalDuration / static_cast<float>(CLOCKS_PER_SEC);
     client->Ping = secondsTaken;
+}
+
+void PacketHandlers::HandlePlayerClicked(const std::shared_ptr<NetworkClient> &client) {
+    unsigned char button = client->ReceiveBuffer->ReadByte();
+    unsigned char action = client->ReceiveBuffer->ReadByte();
+    short yaw = client->ReceiveBuffer->ReadShort();
+    short pitch = client->ReceiveBuffer->ReadShort();
+    char targetedEntity = static_cast<char>(client->ReceiveBuffer->ReadByte());
+    short targetBlockX = client->ReceiveBuffer->ReadShort();
+    short targetBlockY = client->ReceiveBuffer->ReadShort();
+    short targetBlockZ = client->ReceiveBuffer->ReadShort();
+    unsigned char targetedBlockFace = client->ReceiveBuffer->ReadByte();
+
+    auto cb = static_cast<ClickButton>(button);
+    auto ca = static_cast<ClickAction>(action);
+    Vector3S targetBlock {targetBlockX, targetBlockY, targetBlockZ};
+    auto bf = static_cast<ClickTargetBlockFace>(targetedBlockFace);
+
+    client->player->PlayerClicked(cb, ca, yaw, pitch, targetedEntity, targetBlock, bf);
 }

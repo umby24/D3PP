@@ -48,7 +48,7 @@ void Rank::Save() {
     time_t modTime = Utils::FileModTime(rankFile);
     LastFileDate = modTime;
 
-    Logger::LogAdd(MODULE_NAME, "File saved.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File saved [" + rankFile + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void Rank::MainFunc() {

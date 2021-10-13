@@ -77,9 +77,54 @@ void Logger::Add(struct LogMessage message) {
         else
             Utils::padTo(message.File, 15);
 
-        std::cout << "\x1B[37m" << message.File << "| ";
-        std::cout << "\x1B[33m" << message.Module << ": ";
-        std::cout << "\x1B[97m" << message.Message << std::endl;
+        char buffer[255];
+        std::tm bt {};
+#if defined(__unix__)
+        localtime_r(&message.Time, &bt);
+#elif defined(_MSC_VER)
+        localtime_s(&bt, (const time_t*)&message.Time);
+#else
+        static std::mutex mtx;
+        std::lock_guard<std::mutex> lock(mtx);
+        bt = *std::localtime((const time_t*)(&message.Time));
+#endif
+
+        strftime(buffer, sizeof(buffer), "%H:%M:%S", &bt);
+        std::cout << "[" << buffer << "] ";
+
+        switch(message.Type) {
+            case LogType::VERBOSE:
+                std::cout << "\x1B[30m[Verbose] ";
+                std::cout << "\x1B[37m" << message.File << "| ";
+                std::cout << "\x1B[33m" << message.Module << ": ";
+                break;
+            case LogType::DEBUG:
+                std::cout << "\x1B[30m[Debug] ";
+                std::cout << "\x1B[37m" << message.File << "| ";
+                std::cout << message.Module << ": ";
+                break;
+            case LogType::WARNING:
+                std::cout << "\x1B[93m[Warning] ";
+                std::cout << "\x1B[37m" << message.File << "| ";
+                std::cout << message.Module << ": ";
+                break;
+            case LogType::L_ERROR:
+                std::cout << "\x1B[91m[Error]\x1B[37m ";
+                std::cout << message.File << "| ";
+                std::cout << message.Module << ": ";
+                break;
+            case LogType::CHAT:
+                std::cout << "\x1B[36m[Chat]\x1B[97m ";
+                break;
+            case LogType::COMMAND:
+                std::cout << "\x1B[32m[Command]\x1B[97m ";
+                break;
+            case LogType::NORMAL:
+                std::cout << "\x1B[92m[Info]\x1B[97m ";
+                break;
+        }
+
+        std::cout << message.Message << std::endl;
     }
 }
 

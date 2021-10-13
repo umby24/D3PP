@@ -1,6 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
-
+#define GLF __FILE__, __LINE__, __FUNCTION__
 #include <string>
 #include <vector>
 #include <iomanip>
@@ -13,6 +13,32 @@ std::string stringulate(ValueType v)
     oss << std::setprecision(6) << std::fixed;
     oss << v;
     return oss.str();
+}
+
+template<typename InputIt>
+std::string join(InputIt first,
+                 InputIt last,
+                 const std::string& separator = ", ", const std::string& concluder = "")
+{
+    if (first == last)
+    {
+        return concluder;
+    }
+
+    std::stringstream ss;
+    ss << *first;
+    ++first;
+
+    while (first != last)
+    {
+        ss << separator;
+        ss << *first;
+        ++first;
+    }
+
+    ss << concluder;
+
+    return ss.str();
 }
 
 class Utils

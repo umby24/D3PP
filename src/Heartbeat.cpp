@@ -117,7 +117,7 @@ void Heartbeat::Save() {
     ofstream.close();
 
     FileDateLast = Utils::FileModTime(hbSettingsFile);
-    Logger::LogAdd(MODULE_NAME, "File Saved", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File Saved [" + hbSettingsFile + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void Heartbeat::MainFunc() {
