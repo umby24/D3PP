@@ -26,8 +26,6 @@ class ServerSocket;
 class Network {
 public:
     Network();
-    void Save();
-    void Load();
     void Start();
     void Stop();
     static Network* GetInstance();
@@ -42,7 +40,6 @@ protected:
 private:
     void UpdateNetworkStats();
     void HtmlStats();
-    void MainFunc();
     void NetworkEvents();
     void NetworkOutputSend();
     void NetworkOutput();

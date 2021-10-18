@@ -18,6 +18,7 @@
 #include "common/Player_List.h"
 #include "Command.h"
 #include "plugins/LuaPlugin.h"
+#include "common/Configuration.h"
 
 using namespace std;
 
@@ -37,20 +38,22 @@ int main()
             }
             catch (const std::exception& e)
             {
-                std::cout << "AHHH" << e.what() << std::endl;
+                std::cout << "An Exception occured: " << e.what() << std::endl;
                 //DBG_FAIL(e.what());
             }
             catch (...)
             {
-                //DBG_FAIL("Unknown exception.");
+                std::cout << "Unknown exception occured, exiting.";
+                std::abort();
             }
         }
-        std::cout << "Unhandled exception" << std::endl; std::abort();
     }
     );
  //   _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF);
     srand(time(nullptr));
     Logger::LogAdd("Main", "====== Welcome to D3PP =====", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Configuration* config = Configuration::GetInstance();
+
     Block *b = Block::GetInstance();
     Rank *r = Rank::GetInstance();
     System *s = System::GetInstance();
@@ -66,8 +69,7 @@ int main()
     TaskScheduler::RunSetupTasks();
     System::IsRunning = true;
     System::startTime = time(nullptr);
-    n->Load();
-    n->Save();
+    
     n->Start();
     
     std::thread mainThread(mainLoop);

@@ -16,7 +16,8 @@
         "Playerlist": "[Main][Data]playerdb.sqlite3",
         "Map_List": "[Main][Data]Map_List.txt",
         "Map_Settings": "[Main][Data]Map_Settings.txt",
-        "Map_HTML": "[Main][HTML]Maps.html"
+        "Map_HTML": "[Main][HTML]Maps.html",
+        "configuration": "[Main][Data]Configuration.json"
     },
     "folders": {
         "Data": "Data/",

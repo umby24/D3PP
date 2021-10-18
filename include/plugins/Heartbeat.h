@@ -8,20 +8,18 @@
 #include <chrono>
 
 #include "common/TaskScheduler.h"
-#include "json.hpp"
+
 
 const char *const CLASSICUBE_NET_URL = "http://www.classicube.net";
 const char *const CLASSICUBE_HEARTBEAT_PATH = "/server/heartbeat/";
 
 const std::string HEARTBEAT_FILE_NAME = "Heartbeat_HTML";
-using json = nlohmann::json;
+
 
 class Heartbeat : TaskItem {
 public:
     Heartbeat();
     static std::string CreateSalt();
-    void Load();
-    void Save();
     void Init();
     void MainFunc();
     void Beat();
@@ -32,10 +30,7 @@ private:
     std::string salt;
     std::string serverUrl;
     bool isPublic;
-    bool SaveFile;
-    bool LoadFile;
     time_t lastBeat;
-    time_t FileDateLast;
 };
 
 #endif //D3PP_HEARTBEAT_H

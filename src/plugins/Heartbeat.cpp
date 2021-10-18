@@ -11,9 +11,11 @@
 #include "world/Player.h"
 #include "network/httplib.h"
 #include "digestpp/digestpp.hpp"
-#include "common/Files.h"
 #include "Utils.h"
 #include "common/Logger.h"
+#include "common/Configuration.h"
+#include "json.hpp"
+using json = nlohmann::json;
 
 const std::string MODULE_NAME = "Heartbeat";
 Heartbeat* Heartbeat::Instance = nullptr;
@@ -26,11 +28,11 @@ void Heartbeat::Beat() {
     httplib::Client cli(CLASSICUBE_NET_URL);
 
     httplib::Params params;
-    params.emplace("name", System::ServerName);
-    params.emplace("port", stringulate(nMain->Port));
+    params.emplace("name", Configuration::GenSettings.name);
+    params.emplace("port", stringulate(Configuration::NetSettings.ListenPort));
     params.emplace("users", stringulate(nMain->roClients.size()));
-    params.emplace("max", stringulate(pMain->MaxPlayers));
-    params.emplace("public", isPublic ? "true" : "false");
+    params.emplace("max", stringulate(Configuration::NetSettings.MaxPlayers));
+    params.emplace("public", Configuration::NetSettings.Public ? "true" : "false");
     params.emplace("version", "7");
     params.emplace("salt", salt);
     params.emplace("software", "&eD3PP");
@@ -52,15 +54,11 @@ void Heartbeat::Beat() {
 }
 
 Heartbeat::Heartbeat() {
-    SaveFile = false;
-    LoadFile = true;
     salt = "";
     isPublic = false;
     lastBeat = time(nullptr);
-    FileDateLast = 0;
 
     this->Setup = [this] { Init(); };
-    this->Main = [this] { MainFunc(); };
     this->Interval = std::chrono::seconds(1);
     TaskScheduler::RegisterTask(MODULE_NAME, *this);
 }
@@ -77,65 +75,10 @@ std::string Heartbeat::CreateSalt() {
 
 void Heartbeat::Init() {
     salt = CreateSalt();
-    Load();
 }
 
-void Heartbeat::Load() {
-    Files* fm = Files::GetInstance();
-    std::string hbSettingsFile = fm->GetFile("Heartbeat");
-    json j;
-    std::ifstream iStream(hbSettingsFile);
-    if (!iStream.is_open()) {
-        Logger::LogAdd(MODULE_NAME, "Failed to load heartbeat settings, generating...", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
-        Save();
-        return;
-    }
-
-    try {
-        iStream >> j;
-    } catch (int exception) {
-        return;
-    }
-    iStream.close();
-
-    isPublic = j["Public"];
-    FileDateLast = Utils::FileModTime(hbSettingsFile);
-
-    Logger::LogAdd(MODULE_NAME, "File Loaded", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-}
-
-void Heartbeat::Save() {
-    Files* fm = Files::GetInstance();
-    std::string hbSettingsFile = fm->GetFile("Heartbeat");
-    json j;
-    j["Public"] = isPublic;
-
-    std::ofstream ofstream(hbSettingsFile);
-
-    ofstream << std::setw(4) << j;
-    ofstream.flush();
-    ofstream.close();
-
-    FileDateLast = Utils::FileModTime(hbSettingsFile);
-    Logger::LogAdd(MODULE_NAME, "File Saved", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-}
 
 void Heartbeat::MainFunc() {
-    if (SaveFile) {
-        Save();
-        SaveFile = false;
-    }
-
-    Files* fm = Files::GetInstance();
-    std::string hbSettingsFile = fm->GetFile("Heartbeat");
-
-    time_t currentTime = Utils::FileModTime(hbSettingsFile);
-    if (FileDateLast != currentTime || LoadFile) { // -- Check settings file for changes every 1 second.
-        Load();
-        LoadFile = false;
-        FileDateLast = currentTime;
-    }
-
     if (time(nullptr) - lastBeat > 30) { // -- Heartbeat every 30 seconds.
         Beat();
     }

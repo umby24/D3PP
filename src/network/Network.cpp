@@ -4,10 +4,6 @@
 
 #include "network/Network.h"
 #include "network/NetworkClient.h"
-#include <iomanip>
-
-#include "json.hpp"
-using json = nlohmann::json;
 
 #ifndef __linux__
 #include "network/WindowsServerSockets.h"
@@ -76,14 +72,7 @@ Network::Network() : clientMutex() {
     networkInputProcessor.Interval = std::chrono::milliseconds(0);
     networkInputProcessor.Main = [this] { NetworkInput(); };
     TaskScheduler::RegisterTask("Network_Input_Do", networkInputProcessor);
-}
-
-void Network::Load() {
     this->Port = Configuration::NetSettings.ListenPort;
-}
-
-void Network::Save() {
-    Configuration::NetSettings.ListenPort = this->Port;
 }
 
 void Network::Start() {
@@ -131,10 +120,6 @@ std::shared_ptr<NetworkClient> Network::GetClient(int id) {
     }
 
     return result;
-}
-
-void Network::MainFunc() {
-    watchdog::Watch("Main", "Before: Network MainFunc()", 1);
 }
 
 void Network::HtmlStats() {
@@ -302,7 +287,6 @@ void Network::NetworkInput() {
         int maxRepeat = 10;
         while (nc->ReceiveBuffer->Size() > 0 && maxRepeat > 0 && nc->canReceive) {
             unsigned char commandByte = nc->ReceiveBuffer->PeekByte();
-            //nc->InputAddOffset(-1);
             nc->LastTimeEvent = time(nullptr);
 
             switch(commandByte) {
