@@ -86,7 +86,7 @@ void Network::Start() {
     listenSocket->Listen();
     isListening = true;
 
-    Logger::LogAdd(MODULE_NAME, "Network server started on port " + stringulate(this->Port), LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Network server started on port " + stringulate(this->Port), LogType::NORMAL, GLF);
 }
 
 void Network::Stop() {
@@ -107,7 +107,7 @@ void Network::Stop() {
 
     listenSocket->Stop();
     isListening = false;
-    Logger::LogAdd(MODULE_NAME, "Network server stopped", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Network server stopped", LogType::NORMAL, GLF);
 }
 
 std::shared_ptr<NetworkClient> Network::GetClient(int id) {
@@ -164,7 +164,7 @@ void Network::HtmlStats() {
         oStream << result;
         oStream.close();
     } else {
-        Logger::LogAdd(MODULE_NAME, "Couldn't open file :<" + memFile, LogType::WARNING, __FILE__, __LINE__, __FUNCTION__ );
+        Logger::LogAdd(MODULE_NAME, "Couldn't open file :<" + memFile, LogType::WARNING, GLF );
     }
 }
 
@@ -346,6 +346,12 @@ void Network::NetworkInput() {
                         nc->ReceiveBuffer->Shift(2);
                     }
                     break;
+                case 34: // -- CPE Player Clicked.
+                    if (nc->ReceiveBuffer->Size() >= 15) {
+                        nc->ReceiveBuffer->ReadByte();
+                        PacketHandlers::HandlePlayerClicked(nc);
+                        nc->ReceiveBuffer->Shift(15);
+                    }
                 case 43:
                     if (nc->ReceiveBuffer->Size() >= 4) {
                         nc->ReceiveBuffer->ReadByte();
@@ -353,8 +359,9 @@ void Network::NetworkInput() {
                         nc->ReceiveBuffer->Shift(4);
                     }
                     break;
+
                 default:
-                    Logger::LogAdd(MODULE_NAME, "Unknown Packet Received [" + stringulate((int)commandByte) + "]", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+                    Logger::LogAdd(MODULE_NAME, "Unknown Packet Received [" + stringulate((int)commandByte) + "]", LogType::WARNING, GLF);
                     nc->Kick("Invalid Packet", true);
             }
 
@@ -378,7 +385,7 @@ void Network::DeleteClient(int clientId, const std::string& message, bool sendTo
     ecd.clientId = clientId;
     Dispatcher::post(ecd);
 
-    Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(clientId) + "] [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(clientId) + "] [" + message + "]", LogType::NORMAL, GLF);
     client->clientSocket->Disconnect();
 
     std::scoped_lock<std::mutex> sLock(clientMutex);

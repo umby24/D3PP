@@ -5,7 +5,7 @@ The [D3classic](https://github.com/umby24/D3classic) server, ported to C++.
 Porting it for better maintainability and for fun.
 
 ## Roadmap
- - Port the primary server functionality (See issue #1)
+ - ~~Port the primary server functionality (See issue #1)~~
  - First pass refactor
  - Bring up to date with latest CPE
  - Second pass refactor
@@ -13,7 +13,7 @@ Porting it for better maintainability and for fun.
 
 ## Not slated to port
 
-Currently there are a few parts of the existing D3 server that I'm not planning to port. Those are:
+Currently, there are a few parts of the existing D3 server that I'm not planning to port. Those are:
  - Map Overview Images
  - Multi-Language support
  - Building text from a font .png file

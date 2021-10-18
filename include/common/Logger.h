@@ -9,8 +9,11 @@ const int LOG_FILE_SIZE_MAX = 1000000;
 const int LOG_SIZE_MAX = 1000;
 
 enum LogType {
+    VERBOSE = -3,
+    DEBUG,
     NORMAL = 0,
     CHAT = 1,
+    COMMAND,
     WARNING = 5,
     L_ERROR = 10
 };

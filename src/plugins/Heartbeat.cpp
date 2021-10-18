@@ -77,7 +77,6 @@ void Heartbeat::Init() {
     salt = CreateSalt();
 }
 
-
 void Heartbeat::MainFunc() {
     if (time(nullptr) - lastBeat > 30) { // -- Heartbeat every 30 seconds.
         Beat();

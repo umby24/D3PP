@@ -40,7 +40,7 @@ void PlayerMain::Save() {
     time_t modTime = Utils::FileModTime(fileName);
     LastFileDate = modTime;
 
-    Logger::LogAdd(MODULE_NAME, "File saved.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File saved [" + fileName + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 PlayerMain::PlayerMain() {
@@ -178,4 +178,10 @@ void Player::SendMap() {
     Entities.clear(); // -- Bounce our entities
     tEntity->SendPosOwn = true;
     tEntity->resend = true;
+}
+
+void Player::PlayerClicked(ClickButton button, ClickAction action, short yaw, short pitch, char targetEntity,
+                           Vector3S targetBlock, ClickTargetBlockFace blockFace) {
+
+    // -- Trigger a lua event.
 }

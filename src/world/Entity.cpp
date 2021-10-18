@@ -4,6 +4,7 @@
 
 #include "world/Entity.h"
 
+#include <utility>
 #include "Block.h"
 
 #include "network/Network.h"
@@ -38,7 +39,7 @@ void EntityMain::MainFunc() {
 
 int Entity::GetFreeId() {
     int id = 0;
-    bool found = false;
+    bool found;
     while (true) {
         found = (AllEntities.find(id) != AllEntities.end());
 
@@ -56,14 +57,14 @@ void Entity::SetDisplayName(int id, std::string prefix, std::string name, std::s
     if (e == nullptr)
         return;
 
-    e->Prefix = prefix;
-    e->Name = name;
-    e->Suffix = suffix;
+    e->Prefix = std::move(prefix);
+    e->Name = std::move(name);
+    e->Suffix = std::move(suffix);
     e->resend = true;
 }
 
 int Entity::GetFreeIdClient(int mapId) {
-    int id = 0;
+    int id;
     bool found = false;
     for (id = 0; id < 128; id++) {
         for(auto const &e : AllEntities) {
@@ -87,7 +88,7 @@ int Entity::GetFreeIdClient(int mapId) {
 
 Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look) : variables{}, Location{rotation, look} {
     Prefix = "";
-    Name = name;
+    Name = std::move(name);
     Suffix = "";
     Id = GetFreeId();
     ClientId = GetFreeIdClient(mapId);
@@ -159,7 +160,7 @@ std::string Entity::GetDisplayname(int id) {
     return e->Prefix + e->Name + e->Suffix;
 }
 
-std::shared_ptr<Entity> Entity::GetPointer(std::string name) {
+std::shared_ptr<Entity> Entity::GetPointer(const std::string& name) {
     for(auto const &e : AllEntities) {
         if (Utils::InsensitiveCompare(e.second->Name, name)) {
             return e.second;
@@ -199,7 +200,7 @@ void Entity::Spawn() {
     for(auto const &nc : n->roClients) {
         if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
             continue;
-            
+
         if (nc->player->MapId != MapID)
             continue;
 
@@ -210,7 +211,7 @@ void Entity::Spawn() {
 void Entity::Despawn() {
     Network* n = Network::GetInstance();
     std::shared_ptr<Entity> selfPointer = GetPointer(Id);
-    
+
     {
         std::scoped_lock<std::mutex> pLock(entityMutex);
         AllEntities.erase(Id);
@@ -219,7 +220,7 @@ void Entity::Despawn() {
     for(auto const &nc : n->roClients) {
         if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
             continue;
-            
+
         if (nc->player->MapId != MapID)
             continue;
 
@@ -261,7 +262,7 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> currentMap = mm->GetPointer(MapID);
-    
+
     if (SendPos <= priority) {
         Location = location;
 
@@ -286,7 +287,7 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
                 NetworkFunctions::SystemMessageNetworkSend2All(mapId, mapChangeMessage);
                 nm->data.Clients += 1;
                 int oldMapId = MapID;
-                
+
                 if (currentMap != nullptr)
                     currentMap->data.Clients -= 1;
 
@@ -298,7 +299,7 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
                 emc.oldMapId = oldMapId;
                 emc.newMapId = MapID;
                 Dispatcher::post(emc);
-                
+
                 if (associatedClient != nullptr) {
                     associatedClient->player->MapId = MapID;
                     associatedClient->player->SendMap();
@@ -382,7 +383,7 @@ void Entity::Add(std::shared_ptr<Entity> e) {
 void Entity::SetModel(std::string modelName) {
     Network* nm = Network::GetInstance();
 
-    model = modelName;
+    model = std::move(modelName);
     std::shared_ptr<NetworkClient> myClient = nullptr;
     for(auto const &nc : nm->roClients) {
         if (!nc->LoggedIn)

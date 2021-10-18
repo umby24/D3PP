@@ -1,5 +1,5 @@
-#include <Block.h>
 #include <plugins/LuaPlugin.h>
+
 #include "BuildMode.h"
 #include "common/Files.h"
 #include "common/PreferenceLoader.h"
@@ -22,9 +22,8 @@ std::shared_ptr<NetworkClient> getClientById(int clientId) {
     return nc;
 }
 
-BuildModeMain::BuildModeMain() {
+BuildModeMain::BuildModeMain()  {
     SaveFile = false;
-    hasLoaded = false;
     LastFileDate = 0;
 
     this->Interval = std::chrono::seconds(1);
@@ -52,7 +51,7 @@ void BuildModeMain::Load() {
     _buildmodes.clear();
 
     for (auto const &item : pl.SettingsDictionary) {
-        if (item.first.empty() || item.second.size() == 0)
+        if (item.first.empty() || item.second.empty())
             continue;
 
         pl.SelectGroup(item.first);
@@ -66,7 +65,6 @@ void BuildModeMain::Load() {
     }
 
     SaveFile = true;
-    hasLoaded = true;
     LastFileDate = Utils::FileModTime(filePath);
     Logger::LogAdd(MODULE_NAME, "File loaded [" + filePath + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
@@ -134,7 +132,7 @@ void BuildModeMain::Distribute(int clientId, int mapId, unsigned short X, unsign
 
     std::shared_ptr<Map> playerMap = mm->GetPointer(mapId);
 
-    if (_buildmodes[buildMode].Plugin == "") {
+    if (_buildmodes[buildMode].Plugin.empty()) {
         playerMap->BlockChange(nc, X, Y, Z, mode, blockType);
     } else {
         BlockResend queuedItem{};
@@ -175,7 +173,7 @@ void BuildModeMain::SetMode(int clientId, std::string mode) {
     std::shared_ptr<NetworkClient> c = getClientById(clientId);
 
     if (c->player && c->player->tEntity) {
-        c->player->tEntity->BuildMode = mode;
+        c->player->tEntity->BuildMode = std::move(mode);
         Resend(clientId);
     }
 }
@@ -208,7 +206,7 @@ char BuildModeMain::GetState(int clientId) {
     return result;
 }
 
-void BuildModeMain::SetCoordinate(int clientId, int index, unsigned short X, unsigned short Y, unsigned short Z) {
+void BuildModeMain::SetCoordinate(int clientId, int index, float X, float Y, float Z) {
     std::shared_ptr<NetworkClient> nc = getClientById(clientId);
 
     if (nc == nullptr)
@@ -353,11 +351,11 @@ void BuildModeMain::SetString(int clientId, int index, std::string val) {
     if (index > Client_Player_Buildmode_Variables)
         return;
 
-    nc->player->tEntity->variables[index].String = val;
+    nc->player->tEntity->variables[index].String = std::move(val);
 }
 
 std::string BuildModeMain::GetString(int clientId, int index) {
-    std::string result = "";
+    std::string result;
     std::shared_ptr<NetworkClient> nc = getClientById(clientId);
 
     if (nc == nullptr)

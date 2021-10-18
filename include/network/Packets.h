@@ -7,6 +7,7 @@
 
 #include <string>
 #include <memory>
+#include "CustomBlocks.h"
 
 class NetworkClient;
 
@@ -41,5 +42,7 @@ public:
     static void SendHackControl(std::shared_ptr<NetworkClient> client, bool flying, bool noClip, bool speeding, bool respawn, bool thirdPerson, short jumpHeight);
     static void SendExtAddEntity2(std::shared_ptr<NetworkClient> client, unsigned char entityId, std::string name, std::string skin, short X, short Y, short Z, unsigned char rotation, unsigned char look);
     static void SendTwoWayPing(const std::shared_ptr<NetworkClient>& client, unsigned char direction, short timeVal);
+    static void SendDefineBlock(const std::shared_ptr<NetworkClient>& client, BlockDefinition def);
+    static void SendRemoveBlock(const std::shared_ptr<NetworkClient>& client, unsigned char blockId);
 };
 #endif //D3PP_PACKETS_H

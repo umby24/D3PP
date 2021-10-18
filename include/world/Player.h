@@ -11,6 +11,7 @@
 
 #include "json.hpp"
 #include "common/TaskScheduler.h"
+#include "common/MinecraftLocation.h"
 
 struct EntityShort;
 class Entity;
@@ -22,6 +23,27 @@ enum KillMode {
     GLOBAL_SPAWN,
     KICK,
     BAN
+};
+
+enum ClickButton {
+    LEFT = 0,
+    RIGHT,
+    MIDDLE
+};
+
+enum ClickAction {
+    Pressed = 0,
+    Released
+};
+
+enum ClickTargetBlockFace {
+    AwayX = 0,
+    TowardsX,
+    AwayY,
+    TowardY,
+    AwayZ,
+    TowardZ,
+    NONE
 };
 
 class PlayerMain : TaskItem {
@@ -71,6 +93,7 @@ public:
     // -- Methods
     Player();
     void SendMap();
+    void PlayerClicked(ClickButton button, ClickAction action, short yaw, short pitch, char targetEntity, Vector3S targetBlock, ClickTargetBlockFace blockFace);
 };
 
 #endif //D3PP_PLAYER_H
