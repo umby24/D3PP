@@ -806,6 +806,12 @@ void CommandMain::CommandChangeRank() {
     Rank* rm = Rank::GetInstance();
 
     std::string playerName = ParsedOperator->at(0);
+
+    if (!Utils::IsNumeric(ParsedOperator->at(1))) {
+        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eThe second parameter should be a number!");
+        return;
+    }
+
     int rankVal = std::stoi(ParsedOperator->at(1));
     std::string reason = ParsedText2;
 

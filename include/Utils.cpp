@@ -143,3 +143,9 @@ short Utils::GreenVal(int colorVal) {
 short Utils::BlueVal(int colorVal) {
     return (colorVal & 0xFF0000) >> 16;
 }
+
+bool Utils::IsNumeric(std::string input) {
+    std::string::const_iterator it = input.begin();
+    while (it != input.end() && std::isdigit(*it)) ++it;
+    return !input.empty() && it == input.end();
+}
