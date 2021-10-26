@@ -116,14 +116,12 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     newEntity->SpawnSelf = true;
     newEntity->Spawn();
 
-    System* sMain = System::GetInstance();
     std::string motd = MapMain::GetMapMOTDOverride(spawnMap->data.ID);
 
     if (motd.empty())
-        motd = sMain->Motd;
+        motd = Configuration::GenSettings.motd;
 
-    NetworkFunctions::SystemLoginScreen(c->Id, System::ServerName, motd, currentRank.OnClient);
-
+    NetworkFunctions::SystemLoginScreen(c->Id, Configuration::GenSettings.name, motd, currentRank.OnClient);
 
     c->player->SendMap();
 

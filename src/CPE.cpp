@@ -1,7 +1,7 @@
 #include <System.h>
 #include <Utils.h>
 #include "CPE.h"
-
+#include "common/Configuration.h"
 #include "Client.h"
 #include "world/Player.h"
 #include "world/Entity.h"
@@ -13,8 +13,7 @@
 void CPE::PreLoginExtensions(std::shared_ptr<NetworkClient> client) {
     if (GetClientExtVersion(client, CLICK_DISTANCE_EXT_NAME) == 1) {
         // -- do click distance things
-        System* sm = System::GetInstance();
-        Packets::SendClickDistance(client, sm->ClickDistance);
+        Packets::SendClickDistance(client, Configuration::GenSettings.ClickDistance);
     }
     if (GetClientExtVersion(client, CUSTOM_BLOCKS_EXT_NAME) == 1) {
         Packets::SendCustomBlockSupportLevel(client, 1);
