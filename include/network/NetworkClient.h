@@ -38,7 +38,7 @@ public:
 
     int Id;
     std::string IP;
-
+    unsigned char lastPacket;
     time_t DisconnectTime;
     time_t LastTimeEvent;
     int UploadRate;

@@ -8,6 +8,7 @@
 
 #include "Rank.h"
 #include "common/Logger.h"
+#include "common/Configuration.h"
 #include "network/Chat.h"
 #include "Utils.h"
 
@@ -21,7 +22,6 @@
 #include "network/Packets.h"
 
 #include "world/Map.h"
-#include "watchdog.h"
 #include "System.h"
 #include "plugins/Heartbeat.h"
 
@@ -62,15 +62,15 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
         preLoginCorrect = false;
         Logger::LogAdd(MODULE_NAME, "Empty Name provided: " + stringulate(version), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         c->Kick("Invalid name", true);
-    } else if (n->roClients.size() > pm->MaxPlayers) {
+    } else if (n->roClients.size() > Configuration::NetSettings.MaxPlayers) {
         preLoginCorrect = false;
         Logger::LogAdd(MODULE_NAME, "Login Failed: Server is full", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         c->Kick("Server is full", true);
-    } else if (mm->GetPointer(pm->spawnMapId) == nullptr) {
+    } else if (mm->GetPointer(Configuration::GenSettings.SpawnMapId) == nullptr) {
          preLoginCorrect = false;
         Logger::LogAdd(MODULE_NAME, "Login Failed: Spawnmap invalid", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         c->Kick("&eSpawnmap Invalid", true);
-    } else if (pm->NameVerification && c->IP != "127.0.0.1" && (!hbm->VerifyName(name, mppass))) {
+    } else if (Configuration::NetSettings.VerifyNames && c->IP != "127.0.0.1" && (!hbm->VerifyName(name, mppass))) {
         preLoginCorrect = false;
         Logger::LogAdd(MODULE_NAME, "Login Failed: failed name verification", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         c->Kick("&eName verification failed", true);
@@ -100,8 +100,8 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     }
 
     c->GlobalChat = entry->GlobalChat;
-    std::shared_ptr<Map> spawnMap = mm->GetPointer(pm->spawnMapId);
-    std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(name, pm->spawnMapId, spawnMap->data.SpawnX, spawnMap->data.SpawnY, spawnMap->data.SpawnZ, spawnMap->data.SpawnRot, spawnMap->data.SpawnLook, c);
+    std::shared_ptr<Map> spawnMap = mm->GetPointer(Configuration::GenSettings.SpawnMapId);
+    std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(name, Configuration::GenSettings.SpawnMapId, spawnMap->data.SpawnX, spawnMap->data.SpawnY, spawnMap->data.SpawnZ, spawnMap->data.SpawnRot, spawnMap->data.SpawnLook, c);
     RankItem currentRank = rm->GetRank(entry->PRank, false);
 
     newEntity->buildMaterial = -1;
@@ -109,6 +109,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     newEntity->model = "default";
     
     c->player->tEntity = newEntity;
+    c->player->MapId = spawnMap->data.ID;
     c->LoggedIn = true;
     Entity::Add(newEntity);
     Entity::SetDisplayName(newEntity->Id, currentRank.Prefix, name, currentRank.Suffix);
@@ -123,14 +124,12 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 
     NetworkFunctions::SystemLoginScreen(c->Id, System::ServerName, motd, currentRank.OnClient);
 
-    c->player->MapId = spawnMap->data.ID;
+
     c->player->SendMap();
-
-
 
     Logger::LogAdd(MODULE_NAME, "Player Logged in (IP:" + c->IP + " Name:" + name + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(newEntity->Id) + "&e' logged in");
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, pm->WelcomeMessage);
+    NetworkFunctions::SystemMessageNetworkSend(c->Id, Configuration::GenSettings.WelcomeMessage);
     
     EventClientLogin ecl;
     ecl.clientId = c->Id;
@@ -138,13 +137,16 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 
     { // -- Spawn other entities too.
         for(auto const &e : Entity::AllEntities) {
-            if (e.second->MapID != spawnMap->data.ID || e.first == newEntity->Id)
+            if (e.second->MapID != spawnMap->data.ID)
                 continue;
             
             c->SpawnEntity(e.second);
         }
     }
-
+    newEntity->SendPosOwn = true;
+    newEntity->HandleMove();
+    NetworkFunctions::NetworkOutEntityPosition(c->Id, -1, newEntity->Location);
+    NetworkFunctions::NetworkOutEntityAdd(c->Id, -1, "umby24", newEntity->Location);
     spawnMap->data.Clients += 1;
     pl->SaveFile = true;
 }

@@ -52,7 +52,7 @@ void Dispatcher::post( const Event& event )
 {
     Event::DescriptorType type = event.type();
 
-    if( _observers.find( type ) == _observers.end() )
+    if (_observers.find(type) == _observers.end())
         return;
 
     auto&& observers = _observers.at( type );

@@ -86,7 +86,7 @@ int Entity::GetFreeIdClient(int mapId) {
 }
 
 
-Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look) : variables{}, Location{rotation, look} {
+Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look) : variables{}, Location{static_cast<unsigned char>(rotation), static_cast<unsigned char>(look)} {
     Prefix = "";
     Name = std::move(name);
     Suffix = "";
@@ -105,12 +105,12 @@ Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rot
     BuildState = 0;
     BuildMode = "Normal";
     playerList = nullptr;
-    Vector3S locAsBlocks {X*32, Y*32, Z*32-51};
+    Vector3F locAsBlocks {X, Y, Z};
     Location.SetAsPlayerCoords(locAsBlocks);
     associatedClient = nullptr;
 }
 
-Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look, std::shared_ptr<NetworkClient> c) : variables{}, Location{rotation, look} {
+Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look, std::shared_ptr<NetworkClient> c) : variables{}, Location{static_cast<unsigned char>(rotation), static_cast<unsigned char>(look)} {
     Prefix = "";
     Name = name;
     Suffix = "";
@@ -129,7 +129,7 @@ Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rot
     BuildState = 0;
     BuildMode = "Normal";
     playerList = nullptr;
-    Vector3S locAsBlocks {X*32, Y*32, Z*32-51};
+    Vector3F locAsBlocks {X, Y, Z};
     Location.SetAsPlayerCoords(locAsBlocks);
     associatedClient = c;
 }
@@ -240,13 +240,17 @@ void Entity::Kill() {
         Dispatcher::post(ed);
 
         NetworkFunctions::SystemMessageNetworkSend2All(MapID, "&c" + Name + " died.");
-        MinecraftLocation spawnLoc {cm->data.SpawnRot, cm->data.SpawnLook, cm->data.SpawnX, cm->data.SpawnY, cm->data.SpawnZ};
+
+        MinecraftLocation spawnLoc {static_cast<unsigned char>(cm->data.SpawnRot), static_cast<unsigned char>(cm->data.SpawnLook) };
+        Vector3F spawnCoords = {cm->data.SpawnX, cm->data.SpawnY, cm->data.SpawnZ};
+        spawnLoc.SetAsPlayerCoords(spawnCoords);
+
         PositionSet(MapID, spawnLoc, 5, true);
     }
 }
 
 void Entity::HandleMove() {
-    EntityEventArgs moveEvent(ENTITY_EVENT_MOVED);
+    EntityEventArgs moveEvent(&EntityEventArgs::moveDescriptor);
     moveEvent.entityId = Id;
     Dispatcher::post(moveEvent);
 
@@ -257,8 +261,6 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
     if (location == Location) {
         return;
     }
-
-    HandleMove();
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> currentMap = mm->GetPointer(MapID);
@@ -321,6 +323,8 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
             }
         }
     }
+
+    HandleMove();
 }
 
 void Entity::PositionCheck() {
@@ -346,7 +350,9 @@ void Entity::PositionCheck() {
             } else if (tp.second.DestMapId != -1) {
                 destMapId = tp.second.DestMapId;
             }
-            MinecraftLocation tpDest {tp.second.DestRot, tp.second.DestLook, tp.second.DestX, tp.second.DestY, tp.second.DestZ};
+            MinecraftLocation tpDest {static_cast<unsigned char>(tp.second.DestRot), static_cast<unsigned char>(tp.second.DestLook) };
+            Vector3F destLoc {tp.second.DestX, tp.second.DestY, tp.second.DestZ};
+            tpDest.SetAsPlayerCoords(destLoc);
 
             PositionSet(destMapId, tpDest, 10, true);
             break;
@@ -369,7 +375,7 @@ void Entity::Delete() {
 
 }
 
-void Entity::Add(std::shared_ptr<Entity> e) {
+void Entity::Add(const std::shared_ptr<Entity> &e) {
     {
         std::scoped_lock<std::mutex> pLock(entityMutex);
         AllEntities.insert(std::make_pair(e->Id, e));

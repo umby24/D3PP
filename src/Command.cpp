@@ -588,11 +588,6 @@ void CommandMain::Load() {
 }
 
 void CommandMain::MainFunc() {
-    if (SaveFile) {
-        Save();
-        SaveFile = false;
-    }
-
     Files* f = Files::GetInstance();
     std::string blockFile = f->GetFile(COMMAND_FILENAME);
     time_t modTime = Utils::FileModTime(blockFile);
@@ -879,9 +874,9 @@ void CommandMain::CommandChangeMap() {
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> mi = mm->GetPointer(ParsedText0);
     if (mi != nullptr) {
-        MinecraftLocation spawnLoc {mi->data.SpawnRot, mi->data.SpawnLook};
-        Vector3S spawnBlockCoords {mi->data.SpawnX, mi->data.SpawnY, mi->data.SpawnZ};
-        spawnLoc.SetAsBlockCoords(spawnBlockCoords);
+        MinecraftLocation spawnLoc {static_cast<unsigned char>(mi->data.SpawnRot), static_cast<unsigned char>(mi->data.SpawnLook)};
+        Vector3F spawnBlockCoords {mi->data.SpawnX, mi->data.SpawnY, mi->data.SpawnZ};
+        spawnLoc.SetAsPlayerCoords(spawnBlockCoords);
         c->player->tEntity->PositionSet(mi->data.ID, spawnLoc, 255, true);
 
     } else {

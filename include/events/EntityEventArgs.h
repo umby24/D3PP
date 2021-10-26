@@ -13,8 +13,10 @@
 
 class EntityEventArgs : public Event {
 public:
-    EntityEventArgs(DescriptorType inDescript);
-    DescriptorType descriptor = "ENTITY_MOVED";
+    EntityEventArgs(const DescriptorType* inDescript);
+    const DescriptorType* descriptor;
+    constexpr static DescriptorType moveDescriptor = ENTITY_EVENT_MOVED;
+    constexpr static DescriptorType spawnDescriptor = ENTITY_EVENT_SPAWN;
     [[nodiscard]] DescriptorType type() const override;
     
     int entityId;

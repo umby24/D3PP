@@ -49,29 +49,14 @@ enum ClickTargetBlockFace {
 class PlayerMain : TaskItem {
 public:
     PlayerMain();
-    std::string WelcomeMessage;
-    int MaxPlayers;
-    bool NameVerification;
-    KillMode killMode;
-    int killMapId;
-    int killSpawnX;
-    int killSpawnY;
-    int killSpawnZ;
-    int killSpawnRot;
-    int killSpawnLook;
-    int spawnMapId;
+
     static PlayerMain* GetInstance();
     static int GetFreeNameId();
 private:
     static PlayerMain* Instance;
-    bool SaveFile;
-    time_t LastFileDate;
     time_t OntimeCounter;
-    std::string fileName;
 
     void MainFunc();
-    void Load();
-    void Save();
 };
 
 class Player : TaskItem {

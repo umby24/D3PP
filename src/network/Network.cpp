@@ -292,6 +292,7 @@ void Network::NetworkInput() {
             switch(commandByte) {
                 case 0: // -- Login
                     if (nc->ReceiveBuffer->Size() >= 1 + 1 + 64 + 64 + 1) {
+                        nc->lastPacket = 0;
                         nc->ReceiveBuffer->ReadByte();
                         PacketHandlers::HandleHandshake(nc);
                         nc->ReceiveBuffer->Shift(1 + 1 + 64 + 64 + 1);
@@ -299,6 +300,7 @@ void Network::NetworkInput() {
                     break;
                 case 1: // -- Ping
                     if (nc->ReceiveBuffer->Size() >= 1) {
+                        nc->lastPacket = 1;
                         nc->ReceiveBuffer->ReadByte();
                         PacketHandlers::HandlePing(nc);
                         nc->ReceiveBuffer->Shift(1);
@@ -306,6 +308,7 @@ void Network::NetworkInput() {
                     break;
                 case 5: // -- Block Change
                     if (nc->ReceiveBuffer->Size() >= 9) {
+                        nc->lastPacket = 5;
                         nc->ReceiveBuffer->ReadByte();
                         PacketHandlers::HandleBlockChange(nc);
                         nc->ReceiveBuffer->Shift(9);
@@ -313,6 +316,7 @@ void Network::NetworkInput() {
                     break;
                 case 8: // -- Player Movement
                     if (nc->ReceiveBuffer->Size() >= 10) {
+                        nc->lastPacket = 8;
                         nc->ReceiveBuffer->ReadByte();
                         PacketHandlers::HandlePlayerTeleport(nc);
                         nc->ReceiveBuffer->Shift(10);
@@ -320,6 +324,7 @@ void Network::NetworkInput() {
                     break;
                 case 13: // -- Chat Message
                     if (nc->ReceiveBuffer->Size() >= 66) {
+                        nc->lastPacket = 13;
                         nc->ReceiveBuffer->ReadByte();
                         PacketHandlers::HandleChatPacket(nc);
                         nc->ReceiveBuffer->Shift(66);
@@ -327,6 +332,7 @@ void Network::NetworkInput() {
                     break;
                 case 16: // -- CPe ExtInfo
                     if (nc->ReceiveBuffer->Size() >= 67) {
+                        nc->lastPacket = 16;
                         nc->ReceiveBuffer->ReadByte();
                         PacketHandlers::HandleExtInfo(nc);
                         nc->ReceiveBuffer->Shift(67);
@@ -334,6 +340,7 @@ void Network::NetworkInput() {
                     break;
                 case 17: // -- CPE ExtEntry
                     if (nc->ReceiveBuffer->Size() >= 1 + 64 + 4) {
+                        nc->lastPacket = 17;
                         nc->ReceiveBuffer->ReadByte();
                         PacketHandlers::HandleExtEntry(nc);
                         nc->ReceiveBuffer->Shift(69);
@@ -341,6 +348,7 @@ void Network::NetworkInput() {
                     break;
                 case 19: // -- CPE Custom Block Support
                     if (nc->ReceiveBuffer->Size() >= 2) {
+                        nc->lastPacket = 19;
                         nc->ReceiveBuffer->ReadByte();
                         PacketHandlers::HandleCustomBlockSupportLevel(nc);
                         nc->ReceiveBuffer->Shift(2);
@@ -348,10 +356,12 @@ void Network::NetworkInput() {
                     break;
                 case 34: // -- CPE Player Clicked.
                     if (nc->ReceiveBuffer->Size() >= 15) {
+                        nc->lastPacket = 34;
                         nc->ReceiveBuffer->ReadByte();
                         PacketHandlers::HandlePlayerClicked(nc);
                         nc->ReceiveBuffer->Shift(15);
                     }
+                    break;
                 case 43:
                     if (nc->ReceiveBuffer->Size() >= 4) {
                         nc->ReceiveBuffer->ReadByte();

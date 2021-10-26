@@ -57,7 +57,6 @@ class CommandMain : TaskItem {
         CommandMain();
         void Init();
         void Load();
-        void Save();
         void MainFunc();
         void CommandDo(const std::shared_ptr<NetworkClient>& client, const std::string& input);
         // -- Administrative

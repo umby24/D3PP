@@ -1,6 +1,6 @@
 #include "events/EntityEventArgs.h"
 
-EntityEventArgs::EntityEventArgs(DescriptorType inDescript) {
+EntityEventArgs::EntityEventArgs(const DescriptorType* inDescript) {
     descriptor = inDescript;
 }
 
@@ -10,5 +10,5 @@ int EntityEventArgs::Push(lua_State *L) {
 }
 
 Event::DescriptorType EntityEventArgs::type() const {
-    return descriptor;
+    return *descriptor;
 }

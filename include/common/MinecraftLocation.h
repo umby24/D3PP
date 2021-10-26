@@ -5,6 +5,12 @@
 #ifndef D3PP_MINECRAFTLOCATION_H
 #define D3PP_MINECRAFTLOCATION_H
 
+struct Vector3F {
+    float X;
+    float Y;
+    float Z;
+};
+
 struct Vector3S {
     short X;
     short Y;
@@ -26,6 +32,7 @@ public:
 
     void SetAsBlockCoords(Vector3S blockCoords);
     void SetAsPlayerCoords(Vector3S playerCoords);
+    void SetAsPlayerCoords(Vector3F playerCoords);
     Vector3S GetAsBlockCoords();
 
     bool operator==(const MinecraftLocation &other) {

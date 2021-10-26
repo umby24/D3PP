@@ -76,6 +76,8 @@ add_executable(
   hello_test
   Testing/hello_test.cc
   include/Utils.cpp
+        src/EventSystem.cpp
+        src/events/EntityEventArgs.cpp
         Testing/utils_test.cc)
 
 target_link_libraries(

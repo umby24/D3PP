@@ -130,7 +130,7 @@ void NetworkFunctions::NetworkOutEntityAdd(int clientId, char playerId, std::str
     if (CPE::GetClientExtVersion(c, EXT_PLAYER_LIST_EXT_NAME) < 2) {
         Packets::SendSpawnEntity(clientId, playerId, name, location.X(), location.Y(), location.Z(), rotation, look);
     } else {
-        Packets::SendExtAddEntity2(c, playerId, name, name, location.X(), location.Y(), location.Z(), rotation, look);
+        Packets::SendExtAddEntity2(c, static_cast<unsigned char>(playerId), name, name, location.X(), location.Y(), location.Z(), rotation, look);
     }
 }
 

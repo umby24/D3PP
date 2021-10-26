@@ -80,7 +80,8 @@ NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
 }
 
 void NetworkClient::SubEvents() {
-    eventSubId = Dispatcher::subscribe(ENTITY_EVENT_MOVED, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    eventSubId = Dispatcher::subscribe(EntityEventArgs::moveDescriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EntityEventArgs::spawnDescriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
 }
 
 void NetworkClient::HandleEvent(const Event& e) {
@@ -129,7 +130,7 @@ void NetworkClient::Kick(const std::string& message, bool hide) {
 void NetworkClient::SpawnEntity(std::shared_ptr<Entity> e) {
     Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
-    if (e->Id != player->tEntity->Id && !e->SpawnSelf) {
+    if (e->Id != player->tEntity->Id) {
         EntityShort s{};
         s.Id = e->Id;
         s.ClientId = e->ClientId;
@@ -137,7 +138,7 @@ void NetworkClient::SpawnEntity(std::shared_ptr<Entity> e) {
         // -- spawn them :)
         NetworkFunctions::NetworkOutEntityAdd(Id, s.ClientId, Entity::GetDisplayname(s.Id), e->Location);
         CPE::PostEntityActions(selfPointer, e);
-    } else {
+    } else if (e->SpawnSelf){
         NetworkFunctions::NetworkOutEntityAdd(Id, -1, Entity::GetDisplayname(e->Id), e->Location);
         CPE::PostEntityActions(selfPointer, e);
         e->SpawnSelf = false;
