@@ -35,6 +35,7 @@ class Command {
         std::function<void()> Function;
         bool Internal;
         bool Hidden;
+        bool CanConsole;
 };
 
 class CommandMain : TaskItem {

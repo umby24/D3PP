@@ -28,6 +28,7 @@
 #include "CPE.h"
 #include "network/Packets.h"
 #include "common/Configuration.h"
+#include "ConsoleClient.h"
 
 const std::string MODULE_NAME = "Network";
 Network* Network::singleton_ = nullptr;
@@ -111,6 +112,10 @@ void Network::Stop() {
 }
 
 std::shared_ptr<IMinecraftClient> Network::GetClient(int id) {
+    if (id == -200) {
+        return ConsoleClient::GetInstance();
+    }
+
     std::shared_ptr<IMinecraftClient> result = nullptr;
 
     for(auto const &nc : roClients) {

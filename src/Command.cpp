@@ -42,6 +42,7 @@ void CommandMain::Init() {
     kickCommand.Hidden = false;
     kickCommand.Rank = 0;
     kickCommand.RankShow = 0;
+    kickCommand.CanConsole = true;
     kickCommand.Function = [this] { CommandMain::CommandKick(); };
     Commands.push_back(kickCommand);
 
@@ -52,6 +53,7 @@ void CommandMain::Init() {
     banCommand.Hidden = false;
     banCommand.Rank = 0;
     banCommand.RankShow = 0;
+    banCommand.CanConsole = true;
     banCommand.Function = [this] { CommandMain::CommandBan(); };
     Commands.push_back(banCommand);
 
@@ -61,6 +63,7 @@ void CommandMain::Init() {
     unbanCommand.Internal = true;
     unbanCommand.Hidden = false;
     unbanCommand.Rank = 0;
+    unbanCommand.CanConsole = true;
     unbanCommand.RankShow = 0;
     unbanCommand.Function = [this] { CommandMain::CommandUnban(); };
     Commands.push_back(unbanCommand);
@@ -72,6 +75,7 @@ void CommandMain::Init() {
     stopcmd.Hidden = false;
     stopcmd.Rank = 0;
     stopcmd.RankShow = 0;
+    stopcmd.CanConsole = true;
     stopcmd.Function = [this] { CommandMain::CommandStop(); };
     Commands.push_back(stopcmd);
 
@@ -82,6 +86,7 @@ void CommandMain::Init() {
     unstopCmd.Hidden = false;
     unstopCmd.Rank = 0;
     unstopCmd.RankShow = 0;
+    unstopCmd.CanConsole = true;
     unstopCmd.Function = [this] { CommandMain::CommandUnStop(); };
     Commands.push_back(unstopCmd);
 
@@ -92,6 +97,7 @@ void CommandMain::Init() {
     muteCmd.Hidden = false;
     muteCmd.Rank = 0;
     muteCmd.RankShow = 0;
+    muteCmd.CanConsole = true;
     muteCmd.Function = [this] { CommandMain::CommandMute(); };
     Commands.push_back(muteCmd);
 
@@ -102,6 +108,7 @@ void CommandMain::Init() {
     unMuteCmd.Hidden = false;
     unMuteCmd.Rank = 0;
     unMuteCmd.RankShow = 0;
+    unMuteCmd.CanConsole = true;
     unMuteCmd.Function = [this] { CommandMain::CommandUnmute(); };
     Commands.push_back(unMuteCmd);
 
@@ -112,6 +119,7 @@ void CommandMain::Init() {
     listCommands.Hidden = false;
     listCommands.Rank = 0;
     listCommands.RankShow = 0;
+    listCommands.CanConsole = true;
     listCommands.Function = [this] { CommandMain::CommandCommands(); };
     Commands.push_back(listCommands);
 
@@ -122,6 +130,7 @@ void CommandMain::Init() {
     helpCommand.Hidden = false;
     helpCommand.Rank = 0;
     helpCommand.RankShow = 0;
+    helpCommand.CanConsole = true;
     helpCommand.Function = [this] { CommandMain::CommandHelp(); };
     Commands.push_back(helpCommand);
 
@@ -132,6 +141,7 @@ void CommandMain::Init() {
     listPlayers.Hidden = false;
     listPlayers.Rank = 0;
     listPlayers.RankShow = 0;
+    listPlayers.CanConsole = true;
     listPlayers.Function = [this] { CommandMain::CommandPlayers(); };
     Commands.push_back(listPlayers);
 
@@ -142,6 +152,7 @@ void CommandMain::Init() {
     pInfoCmd.Hidden = false;
     pInfoCmd.Rank = 0;
     pInfoCmd.RankShow = 0;
+    pInfoCmd.CanConsole = true;
     pInfoCmd.Function = [this] { CommandMain::CommandPlayerInfo(); };
     Commands.push_back(pInfoCmd);
 
@@ -152,6 +163,7 @@ void CommandMain::Init() {
     pingCommand.Hidden = false;
     pingCommand.Rank = 0;
     pingCommand.RankShow = 0;
+    pingCommand.CanConsole = true;
     pingCommand.Function = [this] { CommandMain::CommandPing(); };
     Commands.push_back(pingCommand);
 
@@ -162,6 +174,7 @@ void CommandMain::Init() {
     globalCommand.Hidden = false;
     globalCommand.Rank = 0;
     globalCommand.RankShow = 0;
+    globalCommand.CanConsole = true;
     globalCommand.Function = [this] { CommandMain::CommandGlobal(); };
     Commands.push_back(globalCommand);
 
@@ -172,6 +185,7 @@ void CommandMain::Init() {
     changeMapCommand.Hidden = false;
     changeMapCommand.Rank = 0;
     changeMapCommand.RankShow = 0;
+    changeMapCommand.CanConsole = false;
     changeMapCommand.Function = [this] { CommandMain::CommandChangeMap(); };
     Commands.push_back(changeMapCommand);
 
@@ -182,6 +196,7 @@ void CommandMain::Init() {
     changeRankCommand.Hidden = false;
     changeRankCommand.Rank = 0;
     changeRankCommand.RankShow = 0;
+    changeRankCommand.CanConsole = true;
     changeRankCommand.Function = [this] { CommandMain::CommandChangeRank(); };
     Commands.push_back(changeRankCommand);
 
@@ -192,6 +207,7 @@ void CommandMain::Init() {
     mapSaveCommand.Hidden = false;
     mapSaveCommand.Rank = 0;
     mapSaveCommand.RankShow = 0;
+    mapSaveCommand.CanConsole = false;
     mapSaveCommand.Function = [this] { CommandMain::CommandSaveMap(); };
     Commands.push_back(mapSaveCommand);
 
@@ -202,6 +218,7 @@ void CommandMain::Init() {
     getRankCommand.Hidden = false;
     getRankCommand.Rank = 0;
     getRankCommand.RankShow = 0;
+    getRankCommand.CanConsole = true;
     getRankCommand.Function = [this] { CommandMain::CommandGetRank(); };
     Commands.push_back(getRankCommand);
 
@@ -212,6 +229,7 @@ void CommandMain::Init() {
     setMaterialCommand.Hidden = false;
     setMaterialCommand.Rank = 0;
     setMaterialCommand.RankShow = 0;
+    setMaterialCommand.CanConsole = false;
     setMaterialCommand.Function = [this] { CommandMain::CommandSetMaterial(); };
     Commands.push_back(setMaterialCommand);
 
@@ -222,6 +240,7 @@ void CommandMain::Init() {
     materialList.Hidden = false;
     materialList.Rank = 0;
     materialList.RankShow = 0;
+    materialList.CanConsole = true;
     materialList.Function = [this] { CommandMain::CommandMaterials(); };
     Commands.push_back(materialList);
 
@@ -232,6 +251,7 @@ void CommandMain::Init() {
     undoTime.Hidden = false;
     undoTime.Rank = 0;
     undoTime.RankShow = 0;
+    undoTime.CanConsole = false;
     undoTime.Function = [this] { CommandMain::CommandUndoTime(); };
     Commands.push_back(undoTime);
 
@@ -242,6 +262,7 @@ void CommandMain::Init() {
     undoPLayer.Hidden = false;
     undoPLayer.Rank = 0;
     undoPLayer.RankShow = 0;
+    undoPLayer.CanConsole = true;
     undoPLayer.Function = [this] { CommandMain::CommandUndoPlayer(); };
     Commands.push_back(undoPLayer);
 
@@ -252,6 +273,7 @@ void CommandMain::Init() {
     undoCmd.Hidden = false;
     undoCmd.Rank = 0;
     undoCmd.RankShow = 0;
+    undoCmd.CanConsole = false;
     undoCmd.Function = [this] { CommandMain::CommandUndo(); };
     Commands.push_back(undoCmd);
 
@@ -263,6 +285,7 @@ void CommandMain::Init() {
     mapList.Hidden = false;
     mapList.Rank = 0;
     mapList.RankShow = 0;
+    mapList.CanConsole = true;
     mapList.Function = [this] { CommandMain::CommandListMaps(); };
     Commands.push_back(mapList);
 
@@ -273,6 +296,7 @@ void CommandMain::Init() {
     serverInfo.Hidden = false;
     serverInfo.Rank = 0;
     serverInfo.RankShow = 0;
+    serverInfo.CanConsole = true;
     serverInfo.Function = [this] { CommandMain::CommandServerInfo(); };
     Commands.push_back(serverInfo);
 
@@ -283,6 +307,7 @@ void CommandMain::Init() {
     logCommand.Hidden = false;
     logCommand.Rank = 0;
     logCommand.RankShow = 0;
+    logCommand.CanConsole = false;
     logCommand.Function = [this] { CommandMain::CommandLogLast(); };
     Commands.push_back(logCommand);
 
@@ -293,6 +318,7 @@ void CommandMain::Init() {
     tpCommand.Hidden = false;
     tpCommand.Rank = 0;
     tpCommand.RankShow = 0;
+    tpCommand.CanConsole = false;
     tpCommand.Function = [this] { CommandMain::CommandTeleport(); };
     Commands.push_back(tpCommand);
 
@@ -303,6 +329,7 @@ void CommandMain::Init() {
     bringCommand.Hidden = false;
     bringCommand.Rank = 0;
     bringCommand.RankShow = 0;
+    bringCommand.CanConsole = false;
     bringCommand.Function = [this] { CommandMain::CommandBring(); };
     Commands.push_back(bringCommand);
 
@@ -313,6 +340,7 @@ void CommandMain::Init() {
     mLoadCommand.Hidden = false;
     mLoadCommand.Rank = 0;
     mLoadCommand.RankShow = 0;
+    mLoadCommand.CanConsole = false;
     mLoadCommand.Function = [this] { CommandMain::CommandLoadMap(); };
     Commands.push_back(mLoadCommand);
 
@@ -323,6 +351,7 @@ void CommandMain::Init() {
     mResizeCmd.Hidden = false;
     mResizeCmd.Rank = 0;
     mResizeCmd.RankShow = 0;
+    mResizeCmd.CanConsole = false;
     mResizeCmd.Function = [this] { CommandMain::CommandResizeMap(); };
     Commands.push_back(mResizeCmd);
 
@@ -333,6 +362,7 @@ void CommandMain::Init() {
     mfillCommand.Hidden = false;
     mfillCommand.Rank = 0;
     mfillCommand.RankShow = 0;
+    mfillCommand.CanConsole = false;
     mfillCommand.Function = [this] { CommandMain::CommandMapFill(); };
     Commands.push_back(mfillCommand);
 
@@ -343,6 +373,7 @@ void CommandMain::Init() {
     mRename.Hidden = false;
     mRename.Rank = 0;
     mRename.RankShow = 0;
+    mRename.CanConsole = false;
     mRename.Function = [this] { CommandMain::CommandRenameMap(); };
     Commands.push_back(mRename);
 
@@ -353,6 +384,7 @@ void CommandMain::Init() {
     mDelete.Hidden = false;
     mDelete.Rank = 0;
     mDelete.RankShow = 0;
+    mDelete.CanConsole = false;
     mDelete.Function = [this] { CommandMain::CommandDeleteMap(); };
     Commands.push_back(mDelete);
 
@@ -363,6 +395,7 @@ void CommandMain::Init() {
     mAdd.Hidden = false;
     mAdd.Rank = 0;
     mAdd.RankShow = 0;
+    mAdd.CanConsole = true;
     mAdd.Function = [this] { CommandMain::CommandAddMap(); };
     Commands.push_back(mAdd);
 
@@ -373,6 +406,7 @@ void CommandMain::Init() {
     mrbs.Hidden = false;
     mrbs.Rank = 0;
     mrbs.RankShow = 0;
+    mrbs.CanConsole = false;
     mrbs.Function = [this] { CommandMain::CommandMapRankBuildSet(); };
     Commands.push_back(mrbs);
 
@@ -383,6 +417,7 @@ void CommandMain::Init() {
     mrss.Hidden = false;
     mrss.Rank = 0;
     mrss.RankShow = 0;
+    mrss.CanConsole = false;
     mrss.Function = [this] { CommandMain::CommandMapRankShowSet(); };
     Commands.push_back(mrss);
 
@@ -393,6 +428,7 @@ void CommandMain::Init() {
     mrjs.Hidden = false;
     mrjs.Rank = 0;
     mrjs.RankShow = 0;
+    mrjs.CanConsole = false;
     mrjs.Function = [this] { CommandMain::CommandMapRankJoinSet(); };
     Commands.push_back(mrjs);
 
@@ -403,6 +439,7 @@ void CommandMain::Init() {
     mStopPhys.Hidden = false;
     mStopPhys.Rank = 0;
     mStopPhys.RankShow = 0;
+    mStopPhys.CanConsole = false;
     mStopPhys.Function = [this] { CommandMain::CommandStopPhysics(); };
     Commands.push_back(mStopPhys);
 
@@ -413,6 +450,7 @@ void CommandMain::Init() {
     mStartPhys.Hidden = false;
     mStartPhys.Rank = 0;
     mStartPhys.RankShow = 0;
+    mStopPhys.CanConsole = false;
     mStartPhys.Function = [this] { CommandMain::CommandStartPhysics(); };
     Commands.push_back(mStartPhys);
 
@@ -423,6 +461,7 @@ void CommandMain::Init() {
     mSetSpawn.Hidden = false;
     mSetSpawn.Rank = 0;
     mSetSpawn.RankShow = 0;
+    mSetSpawn.CanConsole = false;
     mSetSpawn.Function = [this] { CommandMain::CommandSetSpawn(); };
     Commands.push_back(mSetSpawn);
 
@@ -433,6 +472,7 @@ void CommandMain::Init() {
     mSetKillSpawn.Hidden = false;
     mSetKillSpawn.Rank = 0;
     mSetKillSpawn.RankShow = 0;
+    mSetKillSpawn.CanConsole = false;
     mSetKillSpawn.Function = [this] { CommandMain::CommandSetKilLSpawn(); };
     Commands.push_back(mSetKillSpawn);
 
@@ -443,6 +483,7 @@ void CommandMain::Init() {
     mTeleporters.Hidden = false;
     mTeleporters.Rank = 0;
     mTeleporters.RankShow = 0;
+    mTeleporters.CanConsole = false;
     mTeleporters.Function = [this] { CommandMain::CommandTeleporters(); };
     Commands.push_back(mTeleporters);
 
@@ -453,6 +494,7 @@ void CommandMain::Init() {
     cDeleteTp.Hidden = false;
     cDeleteTp.Rank = 0;
     cDeleteTp.RankShow = 0;
+    cDeleteTp.CanConsole = false;
     cDeleteTp.Function = [this] { CommandMain::CommandDeleteTeleporter(); };
     Commands.push_back(cDeleteTp);
 
@@ -463,6 +505,7 @@ void CommandMain::Init() {
     mapInfo.Hidden = false;
     mapInfo.Rank = 0;
     mapInfo.RankShow = 0;
+    mapInfo.CanConsole = false;
     mapInfo.Function = [this] { CommandMain::CommandMapInfo(); };
     Commands.push_back(mapInfo);
 
@@ -473,6 +516,7 @@ void CommandMain::Init() {
     usermaps.Hidden = false;
     usermaps.Rank = 0;
     usermaps.RankShow = 0;
+    usermaps.CanConsole = true;
     usermaps.Function = [this] { CommandMain::CommandUserMaps(); };
     Commands.push_back(usermaps);
 
@@ -483,6 +527,7 @@ void CommandMain::Init() {
     placeCmd.Hidden = false;
     placeCmd.Rank = 0;
     placeCmd.RankShow = 0;
+    placeCmd.CanConsole = false;
     placeCmd.Function = [this] { CommandMain::CommandPlace(); };
     Commands.push_back(placeCmd);
     Load();
@@ -638,7 +683,10 @@ void CommandMain::CommandDo(const std::shared_ptr<IMinecraftClient>& client, con
         if (!Utils::InsensitiveCompare(cmd.Name, ParsedCommand))
             continue;
 
-        if (client->GetRank() < cmd.Rank) {
+        if (client->GetId() == -200 && !cmd.CanConsole) {
+            Logger::LogAdd(MODULE_NAME, "This command is not accessible via console!", LogType::L_ERROR, GLF);
+            found = true;
+        }else if (client->GetRank() < cmd.Rank) {
             client->SendChat("&eYou are not allowed to use this command.");
             found = true;
         } else {

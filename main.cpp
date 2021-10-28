@@ -6,7 +6,6 @@
 #include "Rank.h"
 #include "System.h"
 #include "common/Logger.h"
-#include "Client.h"
 
 #include "Block.h"
 #include "world/Player.h"
@@ -19,6 +18,8 @@
 #include "Command.h"
 #include "plugins/LuaPlugin.h"
 #include "common/Configuration.h"
+#include "ConsoleClient.h"
+#include "network/Network_Functions.h"
 
 using namespace std;
 
@@ -83,12 +84,22 @@ int main()
 }
 
 void MainConsole() {
+    auto cc = ConsoleClient::GetInstance();
+    CommandMain* cm = CommandMain::GetInstance();
     std::string input;
 
     while (System::IsRunning) {
         getline(cin, input);
-        if (input == "q" || input == "quit") {
+        if (input.empty()) {
+            continue;
+        }
+
+        if (input.substr(0, 1) == "/") {
+            cm->CommandDo(cc, input.substr(1));
+        } else if (input == "q" || input == "quit") {
             System::IsRunning = false;
+        } else {
+            NetworkFunctions::SystemMessageNetworkSend2All(-1, "&c[&fCONSOLE&c]:&f " + input);
         }
     }
 }

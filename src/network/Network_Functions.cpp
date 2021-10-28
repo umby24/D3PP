@@ -37,6 +37,13 @@ void NetworkFunctions::SystemRedScreen(int clientId, std::string message) {
 }
 
 void NetworkFunctions::SystemMessageNetworkSend(int clientId, std::string message, int type) {
+    if (clientId == CONSOLE_CLIENT_ID) {
+        Network* n = Network::GetInstance();
+        std::shared_ptr<IMinecraftClient> c = n->GetClient(CONSOLE_CLIENT_ID);
+        c->SendChat(message);
+        return;
+    }
+
     Utils::replaceAll(message, "\n", "");
     Utils::replaceAll(message, "<br>", "\n");
     message = Chat::StringMultiline(message);
