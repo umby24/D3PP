@@ -134,11 +134,24 @@ Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rot
     associatedClient = c;
 }
 
-std::shared_ptr<Entity> Entity::GetPointer(int id) {
-    if (AllEntities.find(id) == AllEntities.end())
-        return nullptr;
+std::shared_ptr<Entity> Entity::GetPointer(int id, bool isClientId) {
+    if (!isClientId) {
+        if (AllEntities.find(id) == AllEntities.end())
+            return nullptr;
 
-    return AllEntities.at(id);
+        return AllEntities.at(id);
+    }
+
+    std::shared_ptr<Entity> result = nullptr;
+
+    for (auto const &e : AllEntities) {
+        if (e.second->associatedClient->GetId() == id) {
+            result = e.second;
+            break;
+        }
+    }
+
+    return result;
 }
 
 void Entity::MessageToClients(int id, const std::string& message) {
@@ -146,7 +159,7 @@ void Entity::MessageToClients(int id, const std::string& message) {
 
     for(auto const &nc : n->roClients) {
         if (nc->player->tEntity->Id == id) {
-            NetworkFunctions::SystemMessageNetworkSend(nc->Id, message);
+            NetworkFunctions::SystemMessageNetworkSend(nc->GetId(), message);
         }
     }
 }

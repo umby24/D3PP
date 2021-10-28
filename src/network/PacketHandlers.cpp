@@ -26,10 +26,10 @@ void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& clien
     Utils::TrimString(clientName);
 
     if (!client->LoggedIn && client->DisconnectTime == 0 && isCpe != 66) {
-        Client::Login(client->Id, clientName, mppass, clientVersion);
+        Client::Login(client->GetId(), clientName, mppass, clientVersion);
     } else if (isCpe == 66 && !client->LoggedIn && client->DisconnectTime == 0) { // -- CPE capable Client
         Logger::LogAdd("Network", "CPE Client Detected", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-        Client::LoginCpe(client->Id, clientName, mppass, clientVersion); 
+        Client::LoginCpe(client->GetId(), clientName, mppass, clientVersion);
     }
 }
 
@@ -48,7 +48,7 @@ void PacketHandlers::HandleBlockChange(const std::shared_ptr<NetworkClient> &cli
         return;
 
     BuildModeMain* bmm = BuildModeMain::GetInstance();
-    bmm->Distribute(client->Id, client->player->tEntity->MapID, X, Y, Z, (Mode > 0), Type);
+    bmm->Distribute(client->GetId(), client->player->tEntity->MapID, X, Y, Z, (Mode > 0), Type);
 }
 
 void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &client) {
@@ -62,9 +62,9 @@ void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &
         client->ReceiveBuffer->ReadByte();
     }
 
-    unsigned short X = (unsigned short)client->ReceiveBuffer->ReadShort();
-    unsigned short Z = (unsigned short)client->ReceiveBuffer->ReadShort();
-    unsigned short Y = (unsigned short)client->ReceiveBuffer->ReadShort();
+    auto X = (unsigned short)client->ReceiveBuffer->ReadShort();
+    auto Z = (unsigned short)client->ReceiveBuffer->ReadShort();
+    auto Y = (unsigned short)client->ReceiveBuffer->ReadShort();
     char R = client->ReceiveBuffer->ReadByte();
     char L = client->ReceiveBuffer->ReadByte();
     MinecraftLocation inputLocation {R, L, X, Y, Z};
@@ -114,7 +114,7 @@ void PacketHandlers::HandleCustomBlockSupportLevel(const std::shared_ptr<Network
     client->CustomBlocksLevel = supportLevel;
 
     Logger::LogAdd("CPE", "CPE Process complete.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-    Client::Login(client->Id, client->player->LoginName, client->player->MPPass, client->player->ClientVersion);
+    Client::Login(client->GetId(), client->player->LoginName, client->player->MPPass, client->player->ClientVersion);
 }
 
 void PacketHandlers::HandleTwoWayPing(const std::shared_ptr<NetworkClient> &client) {

@@ -110,11 +110,12 @@ void Network::Stop() {
     Logger::LogAdd(MODULE_NAME, "Network server stopped", LogType::NORMAL, GLF);
 }
 
-std::shared_ptr<NetworkClient> Network::GetClient(int id) {
-    std::shared_ptr<NetworkClient> result = nullptr;
+std::shared_ptr<IMinecraftClient> Network::GetClient(int id) {
+    std::shared_ptr<IMinecraftClient> result = nullptr;
+
     for(auto const &nc : roClients) {
-        if (nc->Id == id) {
-            result = nc;
+        if (nc->GetId() == id) {
+            result = std::static_pointer_cast<IMinecraftClient>(nc);
             break;
         }
     }
@@ -135,7 +136,7 @@ void Network::HtmlStats() {
     for (auto const& nc : roClients) {
         if (nc->LoggedIn && nc->player != nullptr) {
             clientTable += "<tr>";
-            clientTable += "<td>" + stringulate(nc->Id) + "</td>";
+            clientTable += "<td>" + stringulate(nc->GetId()) + "</td>";
             clientTable += "<td>" + nc->player->LoginName + "</td>";
             clientTable += "<td>" + stringulate(nc->player->ClientVersion) + "</td>";
             clientTable += "<td>" + nc->IP + "</td>";
@@ -195,7 +196,7 @@ void Network::NetworkEvents() {
 
             if (newClient != nullptr && newClient->GetSocketFd() != -1) {
                 NetworkClient newNcClient(std::move(newClient));
-                int clientId = newNcClient.Id;
+                int clientId = newNcClient.GetId();
                 {
                     std::scoped_lock<std::mutex> sLock(clientMutex);
 
@@ -215,7 +216,8 @@ void Network::NetworkEvents() {
             }
         } else if (e == ServerSocketEvent::SOCKET_EVENT_DATA) {
             int clientId = static_cast<int>(listenSocket->GetEventSocket());
-            std::shared_ptr<NetworkClient> client = GetClient(clientId);
+            std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(GetClient(clientId));
+
             if (client->canReceive) {
                 auto* receiveBuf = new char[1026];
                 receiveBuf[1024] = 99;
@@ -240,13 +242,12 @@ void Network::NetworkEvents() {
     }
     for(auto const &nc : roClients) {
         if (nc->DisconnectTime > 0 && nc->DisconnectTime < time(nullptr)) {
-            DeleteClient(nc->Id, "Forced Disconnect", true);
+            DeleteClient(nc->GetId(), "Forced Disconnect", true);
+            break;
+        } else if (nc->LastTimeEvent + NETWORK_CLIENT_TIMEOUT < time(nullptr)) {
+            DeleteClient(nc->GetId(), "Timeout", true);
             break;
         }
-//        } else if (nc.second->LastTimeEvent + NETWORK_CLIENT_TIMEOUT < time(nullptr)) {
-//            DeleteClient(nc.first, "Timeout", true);
-//            break;
-//        }
     }
     watchdog::Watch("Network", "End Events", 2);
 }
@@ -382,7 +383,7 @@ void Network::NetworkInput() {
 }
 
 void Network::DeleteClient(int clientId, const std::string& message, bool sendToAll) {
-    std::shared_ptr<NetworkClient> client = GetClient(clientId);
+    std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(GetClient(clientId));
     if (client == nullptr)
         return;
 

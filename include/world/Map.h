@@ -18,7 +18,7 @@
 #include "common/TaskScheduler.h"
 #include "common/MinecraftLocation.h"
 
-class NetworkClient;
+class IMinecraftClient;
 enum MapAction {
     SAVE = 0,
     LOAD,
@@ -191,7 +191,7 @@ public:
     bool Resize(short x, short y, short z);
     void Fill(const std::string& functionName, std::string paramString);
     void BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1, unsigned short Z1, bool undo, bool physic, unsigned char priority);
-    void BlockChange(const std::shared_ptr<NetworkClient>& client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type);
+    void BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type);
     void BlockChange (short playerNumber, unsigned short X, unsigned short Y, unsigned short Z, unsigned char type, bool undo, bool physic, bool send, unsigned char priority);
     void ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z);
     bool Save(std::string directory);

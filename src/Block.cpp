@@ -5,7 +5,6 @@
 #include "Block.h"
 
 #include "common/PreferenceLoader.h"
-#include "common/TaskScheduler.h"
 #include "Utils.h"
 #include "common/Files.h"
 #include "common/Logger.h"

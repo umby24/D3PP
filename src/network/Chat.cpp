@@ -121,7 +121,7 @@ void Chat::NetworkSend2Player(int entityId, std::string message, std::string pla
                     if (Utils::InsensitiveCompare(nc->player->tEntity->Name, playerName)) {
                         em->lastPrivateMessage = playerName;
                         Logger::LogAdd("Chat", em->Name + " > " + nc->player->tEntity->Name + ": " + message, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
-                        NetworkFunctions::SystemMessageNetworkSend(nc->Id, message1);
+                        NetworkFunctions::SystemMessageNetworkSend(nc->GetId(), message1);
 
                         std::string message0 = "&c@ " + Entity::GetDisplayname(nc->player->tEntity->Id) + "&f: " +message;
                         Entity::MessageToClients(entityId, message0);

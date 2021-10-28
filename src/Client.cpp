@@ -41,13 +41,13 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     Rank *rm = Rank::GetInstance();
     Heartbeat* hbm = Heartbeat::GetInstance();
 
-    std::shared_ptr<NetworkClient> c = n->GetClient(clientId);
+    std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(n->GetClient(clientId));
 
     c->player = std::make_unique<Player>();
     c->player->LoginName = name;
     c->player->MPPass = mppass;
     c->player->ClientVersion = version;
-    c->player->myClientId = c->Id;
+    c->player->myClientId = c->GetId();
 
     bool preLoginCorrect = true;
     if (version != 7) {
@@ -121,16 +121,16 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     if (motd.empty())
         motd = Configuration::GenSettings.motd;
 
-    NetworkFunctions::SystemLoginScreen(c->Id, Configuration::GenSettings.name, motd, currentRank.OnClient);
+    NetworkFunctions::SystemLoginScreen(c->GetId(), Configuration::GenSettings.name, motd, currentRank.OnClient);
 
     c->player->SendMap();
 
     Logger::LogAdd(MODULE_NAME, "Player Logged in (IP:" + c->IP + " Name:" + name + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(newEntity->Id) + "&e' logged in");
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, Configuration::GenSettings.WelcomeMessage);
+    NetworkFunctions::SystemMessageNetworkSend(c->GetId(), Configuration::GenSettings.WelcomeMessage);
     
     EventClientLogin ecl;
-    ecl.clientId = c->Id;
+    ecl.clientId = c->GetId();
     Dispatcher::post(ecl);
 
     { // -- Spawn other entities too.
@@ -143,8 +143,8 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     }
     newEntity->SendPosOwn = true;
     newEntity->HandleMove();
-    NetworkFunctions::NetworkOutEntityPosition(c->Id, -1, newEntity->Location);
-    NetworkFunctions::NetworkOutEntityAdd(c->Id, -1, "umby24", newEntity->Location);
+   // NetworkFunctions::NetworkOutEntityPosition(c->GetId(), -1, newEntity->Location);
+  //  NetworkFunctions::NetworkOutEntityAdd(c->GetId(), -1, "umby24", newEntity->Location);
     spawnMap->data.Clients += 1;
     pl->SaveFile = true;
 }
@@ -152,7 +152,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 void Client::LoginCpe(int clientId, std::string name, std::string mppass, char version) {
     Network *n = Network::GetInstance();
 
-    std::shared_ptr<NetworkClient> c = n->GetClient(clientId);
+    std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(n->GetClient(clientId));
 
     c->player = std::make_unique<Player>();
     c->player->LoginName = name;
@@ -183,7 +183,7 @@ void Client::LoginCpe(int clientId, std::string name, std::string mppass, char v
 void Client::Logout(int clientId, std::string message, bool showtoall) {
     Network *n = Network::GetInstance();
     MapMain *mm = MapMain::GetInstance();
-    std::shared_ptr<NetworkClient> c = n->GetClient(clientId);
+    std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(n->GetClient(clientId));
     if (!c || c == nullptr || c == NULL) {
         return;
     }

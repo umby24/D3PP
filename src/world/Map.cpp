@@ -1048,7 +1048,7 @@ void Map::Unload() {
 void Map::Send(int clientId) {
     Network* nMain = Network::GetInstance();
     Block* bMain = Block::GetInstance();
-    std::shared_ptr<NetworkClient> nc = nMain->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> nc = nMain->GetClient(clientId);
 
     if (nc == nullptr)
         return;
@@ -1065,7 +1065,7 @@ void Map::Send(int clientId) {
     tempBuf.at(tempBufferOffset++) = static_cast<unsigned char>(mapSize >> 8);
     tempBuf.at(tempBufferOffset++) = static_cast<unsigned char>(mapSize);
 
-    int cbl = nc->CustomBlocksLevel;
+    int cbl = nc->GetCustomBlocksLevel();
 
     for (int i = 0; i < mapSize-1; i++) {
         int index = i * MAP_BLOCK_ELEMENT_SIZE;
@@ -1127,7 +1127,7 @@ void Map::Resend() {
 
     for (auto const &me : Entity::AllEntities) {
         if (me.second->MapID == data.ID) {
-            Vector3S newLocation{data.SizeX+16, data.SizeY+16, data.SizeZ+16};
+            Vector3S newLocation{static_cast<short>(data.SizeX+16), static_cast<short>(data.SizeY+16), static_cast<short>(data.SizeZ+16)};
             me.second->Location.SetAsPlayerCoords(newLocation);
         }
     }
@@ -1138,12 +1138,12 @@ void Map::Resend() {
 
 }
 
-void Map::BlockChange(const std::shared_ptr<NetworkClient>& client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type) {
-    if (client == nullptr || client->player->tEntity == nullptr || client->player->tEntity->playerList == nullptr)
+void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type) {
+    if (client == nullptr)
         return;
 
-    if (client->player->tEntity->playerList->Stopped) {
-        NetworkFunctions::SystemMessageNetworkSend(client->Id, "&eYou are not allowed to build (stopped).");
+    if (client->IsStopped()) {
+        NetworkFunctions::SystemMessageNetworkSend(client->GetId(), "&eYou are not allowed to build (stopped).");
         return;
     }
     
@@ -1153,9 +1153,9 @@ void Map::BlockChange(const std::shared_ptr<NetworkClient>& client, unsigned sho
         int blockOffset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
         auto &rawBlock = data.Data.at(blockOffset);
         unsigned char rawNewType = 0;
-
+        std::shared_ptr<Entity> clientEntity = Entity::GetPointer(client->GetId(), true);
         MapBlock oldType = bm->GetBlock(rawBlock);
-        client->player->tEntity->lastMaterial = type;
+        clientEntity->lastMaterial = type;
         int blockRank = BlockGetRank(X, Y, Z);
 
         if (mode > 0)
@@ -1168,21 +1168,21 @@ void Map::BlockChange(const std::shared_ptr<NetworkClient>& client, unsigned sho
             return;
         }
 
-        if (client->player->tEntity->playerList->PRank < oldType.RankDelete) {
-            NetworkFunctions::SystemMessageNetworkSend(client->Id, "&eYou are not allowed to delete this block type.");
-            NetworkFunctions::NetworkOutBlockSet(client->Id, X, Y, Z, oldType.OnClient);
+        if (client->GetRank() < oldType.RankDelete) {
+            NetworkFunctions::SystemMessageNetworkSend(client->GetId(), "&eYou are not allowed to delete this block type.");
+            NetworkFunctions::NetworkOutBlockSet(client->GetId(), X, Y, Z, oldType.OnClient);
             return;
-        } else if (client->player->tEntity->playerList->PRank < newType.RankPlace) {
-            NetworkFunctions::SystemMessageNetworkSend(client->Id, "&eYou are not allowed to build this block type.");
-            NetworkFunctions::NetworkOutBlockSet(client->Id, X, Y, Z, oldType.OnClient);
+        } else if (client->GetRank()  < newType.RankPlace) {
+            NetworkFunctions::SystemMessageNetworkSend(client->GetId(), "&eYou are not allowed to build this block type.");
+            NetworkFunctions::NetworkOutBlockSet(client->GetId(), X, Y, Z, oldType.OnClient);
             return;
-        } else if (client->player->tEntity->playerList->PRank < blockRank) {
-            NetworkFunctions::SystemMessageNetworkSend(client->Id, "&eYou are not allowed to build here.");
-            NetworkFunctions::NetworkOutBlockSet(client->Id, X, Y, Z, oldType.OnClient);
+        } else if (client->GetRank()  < blockRank) {
+            NetworkFunctions::SystemMessageNetworkSend(client->GetId(), "&eYou are not allowed to build here.");
+            NetworkFunctions::NetworkOutBlockSet(client->GetId(), X, Y, Z, oldType.OnClient);
             return;
         }
         EventMapBlockChangeClient mbc;
-        mbc.playerId = client->player->tEntity->playerList->Number;
+        mbc.playerId = clientEntity->playerList->Number;
         mbc.mapId = data.ID;
         mbc.X = X;
         mbc.Y = Y;
@@ -1191,7 +1191,7 @@ void Map::BlockChange(const std::shared_ptr<NetworkClient>& client, unsigned sho
         mbc.mode = mode;
         Dispatcher::post(mbc);
 
-        BlockChange(client->player->tEntity->playerList->Number, X, Y, Z, rawNewType, true, true, true, 250);
+        BlockChange(clientEntity->playerList->Number, X, Y, Z, rawNewType, true, true, true, 250);
         QueueBlockChange(X, Y, Z, 250, -1);
         // -- PluginEventBlockCreate (one for delete, one for create.)
 

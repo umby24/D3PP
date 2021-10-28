@@ -13,7 +13,7 @@
 #include "common/TaskScheduler.h"
 
 class Network;
-class NetworkClient;
+class IMinecraftClient;
 
 const int COMMAND_OPERATORS_MAX = 5;
 const std::string COMMAND_FILENAME = "Command";
@@ -58,7 +58,7 @@ class CommandMain : TaskItem {
         void Init();
         void Load();
         void MainFunc();
-        void CommandDo(const std::shared_ptr<NetworkClient>& client, const std::string& input);
+        void CommandDo(const std::shared_ptr<IMinecraftClient>& client, const std::string& input);
         // -- Administrative
         void CommandKick();
         void CommandBan();

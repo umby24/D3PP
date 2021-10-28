@@ -12,11 +12,6 @@
 #include "world/Player.h"
 #include "CPE.h"
 #include "common/MinecraftLocation.h"
-static std::shared_ptr<NetworkClient> GetPlayer(int id) {
-    auto network = Network::GetInstance();
-    auto result = network->GetClient(id);
-    return result;
-}
 
 void NetworkFunctions::SystemLoginScreen(int clientId, std::string message0, std::string message1, char opMode) {
     message0 = Chat::StringGV(message0);
@@ -79,7 +74,7 @@ void NetworkFunctions::SystemMessageNetworkSend2All(int mapId, std::string messa
                     continue;
                 }
                 if (mapId == -1 || nc->player->MapId == mapId) {
-                    Packets::SendChatMessage(nc->Id, text, type);
+                    Packets::SendChatMessage(nc->GetId(), text, type);
                 }
             }
         }
@@ -90,7 +85,8 @@ void NetworkFunctions::NetworkOutBlockSet(int clientId, short x, short y, short 
     Network* n = Network::GetInstance();
     Block* b = Block::GetInstance();
     MapBlock mb = b->GetBlock(type);
-    std::shared_ptr<NetworkClient> nc = n->GetClient(clientId);
+    std::shared_ptr<NetworkClient> nc = std::static_pointer_cast<NetworkClient>(n->GetClient(clientId));
+
     if (nc->LoggedIn) {
         if (mb.CpeLevel > nc->CustomBlocksLevel) {
             type = mb.CpeReplace;
@@ -115,13 +111,13 @@ void NetworkFunctions::NetworkOutBlockSet2Map(int mapId, unsigned short x, unsig
             onClient = mb.CpeReplace;
         }
 
-        Packets::SendBlockChange(nc->Id, x, y, z, onClient);
+        Packets::SendBlockChange(nc->GetId(), x, y, z, onClient);
     }
 }
 
 void NetworkFunctions::NetworkOutEntityAdd(int clientId, char playerId, std::string name, MinecraftLocation& location) {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(clientId);
 
     Utils::padTo(name, 64);
 
@@ -130,7 +126,7 @@ void NetworkFunctions::NetworkOutEntityAdd(int clientId, char playerId, std::str
     if (CPE::GetClientExtVersion(c, EXT_PLAYER_LIST_EXT_NAME) < 2) {
         Packets::SendSpawnEntity(clientId, playerId, name, location.X(), location.Y(), location.Z(), rotation, look);
     } else {
-        Packets::SendExtAddEntity2(c, static_cast<unsigned char>(playerId), name, name, location.X(), location.Y(), location.Z(), rotation, look);
+        Packets::SendExtAddEntity2(std::static_pointer_cast<NetworkClient>(c), static_cast<unsigned char>(playerId), name, name, location.X(), location.Y(), location.Z(), rotation, look);
     }
 }
 

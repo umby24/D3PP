@@ -416,7 +416,7 @@ int LuaPlugin::LuaMapBlockChangeClient(lua_State *L) {
     unsigned char mode = lua_tointeger(L, 6);
     unsigned char type = lua_tointeger(L, 7);
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> client = nm->GetClient(clientId);
+    std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> map = mm->GetPointer(mapId);
@@ -617,7 +617,7 @@ int LuaPlugin::LuaClientGetTable(lua_State *L) {
     if (numClients > 0) {
         for (auto const &nc : nm->roClients) {
             lua_pushinteger(L, index++);
-            lua_pushinteger(L, nc->Id);
+            lua_pushinteger(L, nc->GetId());
             lua_settable(L, -3);
         }
     }
@@ -638,7 +638,7 @@ int LuaPlugin::LuaClientGetMapId(lua_State *L) {
     int clientId = lua_tointeger(L, 1);
     int result = -1;
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> client = nm->GetClient(clientId);
+    std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
     if (client != nullptr) {
         result = client->player->MapId;
     }
@@ -658,7 +658,7 @@ int LuaPlugin::LuaClientGetIp(lua_State *L) {
     int clientId = lua_tointeger(L, 1);
     std::string result;
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> client = nm->GetClient(clientId);
+    std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
     if (client != nullptr) {
         result = client->IP;
     }
@@ -678,10 +678,10 @@ int LuaPlugin::LuaClientGetLoginName(lua_State *L) {
     int clientId = lua_tointeger(L, 1);
     std::string result;
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> client = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> client = nm->GetClient(clientId);
 
     if (client != nullptr) {
-        result = client->player->LoginName;
+        result = client->GetLoginName();
     }
 
     lua_pushstring(L, result.c_str());
@@ -700,7 +700,7 @@ int LuaPlugin::LuaClientGetLoggedIn(lua_State *L) {
     int result = -1;
 
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> client = nm->GetClient(clientId);
+    std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
 
     if (client != nullptr) {
         result = client->LoggedIn;
@@ -721,11 +721,13 @@ int LuaPlugin::LuaClientGetEntity(lua_State *L) {
     int clientId = lua_tointeger(L, 1);
     int result = -1;
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> client = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> client = nm->GetClient(clientId);
 
     if (client != nullptr) {
-        if (client->player != nullptr && client->player->tEntity != nullptr)
-            result = client->player->tEntity->Id;
+        std::shared_ptr<Entity> clientEntity = Entity::GetPointer(clientId, true);
+
+        if (clientEntity != nullptr)
+            result = clientEntity->Id;
     }
 
     lua_pushinteger(L, result);
@@ -813,11 +815,14 @@ int LuaPlugin::LuaBuildModeGet(lua_State *L) {
     }
     int clientId = lua_tointeger(L, 1);
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> networkClient= nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> networkClient= nm->GetClient(clientId);
 
-    if (networkClient != nullptr && networkClient->LoggedIn) {
-        std::string clientBuildMode = networkClient->player->tEntity->BuildMode;
-        lua_pushstring(L, clientBuildMode.c_str());
+    if (networkClient != nullptr) {
+        std::shared_ptr<Entity> clientEntity = Entity::GetPointer(clientId, true);
+
+        if (clientEntity != nullptr) {
+            lua_pushstring(L, clientEntity->BuildMode.c_str());
+        }
     } else {
         lua_pushstring(L, "");
     }
@@ -850,10 +855,13 @@ int LuaPlugin::LuaBuildModeStateGet(lua_State *L) {
     }
     int clientId = lua_tointeger(L, 1);
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> networkClient= nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> networkClient= nm->GetClient(clientId);
 
     if (networkClient != nullptr) {
-        lua_pushinteger(L, networkClient->player->tEntity->BuildState);
+        std::shared_ptr<Entity> e = Entity::GetPointer(clientId, true);
+        if (e != nullptr) {
+            lua_pushinteger(L, e->BuildState);
+        }
     } else {
         lua_pushinteger(L, -1);
     }
@@ -1247,8 +1255,8 @@ int LuaPlugin::LuaEntityPositionSet(lua_State *L) {
 
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
     if (foundEntity != nullptr) {
-        MinecraftLocation newLoc{rotation, look};
-        Vector3S blockCoords { X, Y, Z };
+        MinecraftLocation newLoc{static_cast<unsigned char>(rotation), static_cast<unsigned char>(look)};
+        Vector3S blockCoords { static_cast<short>(X), static_cast<short>(Y), static_cast<short>(Z) };
         newLoc.SetAsBlockCoords(blockCoords);
         foundEntity->PositionSet(mapId, newLoc, 10, true);
     }
@@ -2566,12 +2574,10 @@ int LuaPlugin::LuaClientGetExtension(lua_State *L) {
     std::string extension(lua_tostring(L, 2));
     int result = 0;
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(clientId);
 
     if (c != nullptr) {
-        if (c->LoggedIn && c->CPE) {
-            result = CPE::GetClientExtVersion(c, extension);
-        }
+        result = CPE::GetClientExtVersion(c, extension);
     }
 
     lua_pushinteger(L, result);
@@ -2918,7 +2924,7 @@ int LuaPlugin::LuaClientGetExtensions(lua_State *L) {
 
     int clientId = lua_tointeger(L, 1);
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> client = nm->GetClient(clientId);
+    auto client = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
     
     if (client == nullptr || !client->LoggedIn)
         return 0;
@@ -2964,7 +2970,7 @@ int LuaPlugin::LuaSelectionCuboidAdd(lua_State *L) {
     float opacity = lua_tonumber(L, 13);
 
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+    auto nc = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
     if (nc == nullptr)
         return 0;
     
@@ -2983,7 +2989,8 @@ int LuaPlugin::LuaSelectionCuboidDelete(lua_State *L) {
     int clientId = lua_tointeger(L, 1);
     int selectionId = lua_tointeger(L, 2);
      Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+    auto nc = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
+
     if (nc == nullptr)
         return 0;
 
@@ -3001,12 +3008,13 @@ int LuaPlugin::LuaGetHeldBlock(lua_State *L) {
 
     int clientId = lua_tointeger(L, 1);
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> nc = nm->GetClient(clientId);
     if (nc == nullptr)
         return 0;
+    std::shared_ptr<Entity> e = Entity::GetPointer(clientId, true);
 
-    if (nc->LoggedIn && nc->player && nc->player->tEntity) {
-        lua_pushinteger(L, nc->player->tEntity->heldBlock);
+    if (e != nullptr) {
+        lua_pushinteger(L, e->heldBlock);
         return 1;
     }
 
@@ -3026,7 +3034,7 @@ int LuaPlugin::LuaSetHeldBlock(lua_State *L) {
     int canChange = lua_tointeger(L, 3);
 
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+    auto nc = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
 
     if (nc == nullptr)
         return 0;
@@ -3051,13 +3059,14 @@ int LuaPlugin::LuaChangeModel(lua_State *L) {
     std::string model(lua_tostring(L, 2));
 
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> nc = nm->GetClient(clientId);
 
     if (nc == nullptr)
         return 0;
+    std::shared_ptr<Entity> e = Entity::GetPointer(clientId, true);
 
-    if (nc->LoggedIn && nc->CPE && nc->player) {
-        nc->player->tEntity->SetModel(model);
+    if (e != nullptr) {
+        e->SetModel(model);
     }
 
     return 0;
@@ -3078,7 +3087,7 @@ int LuaPlugin::LuaSetWeather(lua_State *L) {
         return 0;
 
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+    auto nc = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
 
     if (nc == nullptr || !nc->LoggedIn)
         return 0;
@@ -3127,7 +3136,7 @@ int LuaPlugin::LuaClientSetBlockPermissions(lua_State *L) {
     bool canDelete = lua_toboolean(L, 4);
 
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+    auto nc = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
 
     if (nc == nullptr || !nc->LoggedIn)
         return 0;
@@ -3178,7 +3187,7 @@ int LuaPlugin::LuaClientHackcontrolSend(lua_State *L) {
     int jumpHeight = lua_tointeger(L, 7);
 
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> nc = nm->GetClient(clientId);
+    auto nc = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
 
     if (nc == nullptr || !nc->LoggedIn)
         return 0;

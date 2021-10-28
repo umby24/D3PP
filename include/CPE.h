@@ -21,17 +21,17 @@
 
 #include <memory>
 
-class NetworkClient;
+class IMinecraftClient;
 class Entity;
 
 class CPE {
     public:
-    static int GetClientExtVersion(std::shared_ptr<NetworkClient> client, std::string extension);
-    static void PreLoginExtensions(std::shared_ptr<NetworkClient> client);
-    static void AfterMapActions(std::shared_ptr<NetworkClient> client);
-    static void AfterLoginActions(std::shared_ptr<NetworkClient> client);
+    static int GetClientExtVersion(std::shared_ptr<IMinecraftClient> client, std::string extension);
+    static void PreLoginExtensions(std::shared_ptr<IMinecraftClient> client);
+    static void AfterMapActions(std::shared_ptr<IMinecraftClient> client);
+    static void AfterLoginActions(std::shared_ptr<IMinecraftClient> client);
     static void PreEntityActions();
-    static void PostEntityActions(std::shared_ptr<NetworkClient> client, std::shared_ptr<Entity> postEntity);
+    static void PostEntityActions(std::shared_ptr<IMinecraftClient> client, std::shared_ptr<Entity> postEntity);
     //static std::map<std::string, int> SupportedExtensions { std::pair<std::string, int>("CustomBlocks", 1)};
 };
 #endif

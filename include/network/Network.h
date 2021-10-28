@@ -20,6 +20,8 @@
 
 #include "common/TaskScheduler.h"
 
+
+class IMinecraftClient;
 class NetworkClient;
 class ServerSocket;
 
@@ -30,7 +32,7 @@ public:
     void Stop();
     static Network* GetInstance();
     static Network* singleton_;
-    std::shared_ptr<NetworkClient> GetClient(int id);
+    std::shared_ptr<IMinecraftClient> GetClient(int id);
     std::vector<std::shared_ptr<NetworkClient>> roClients;
 
     int Port;

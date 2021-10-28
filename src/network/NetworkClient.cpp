@@ -17,6 +17,7 @@
 #include "common/MinecraftLocation.h"
 #include "EventSystem.h"
 #include "events/EntityEventArgs.h"
+#include "common/Player_List.h"
 
 #ifndef __linux__
 #include "network/WindowsSockets.h"
@@ -54,7 +55,7 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) : Selections(MAX_S
     GlobalChat = false;
     IP = clientSocket->GetSocketIp();
     SubEvents();
-    Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", LogType::NORMAL, __FILE__, __LINE__, __PRETTY_FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
@@ -123,13 +124,12 @@ void NetworkClient::Kick(const std::string& message, bool hide) {
         DisconnectTime = time(nullptr) + 1;
         LoggedIn = false;
         player->LogoutHide = hide;
-        Logger::LogAdd(MODULE_NAME, "Client Kicked [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __PRETTY_FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Client Kicked [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     }
 }
 
 void NetworkClient::SpawnEntity(std::shared_ptr<Entity> e) {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+    std::shared_ptr<NetworkClient> selfPointer = GetSelfPointer();
     if (e->Id != player->tEntity->Id) {
         EntityShort s{};
         s.Id = e->Id;
@@ -146,8 +146,7 @@ void NetworkClient::SpawnEntity(std::shared_ptr<Entity> e) {
 }
 
 void NetworkClient::DespawnEntity(std::shared_ptr<Entity> e) {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+    std::shared_ptr<NetworkClient> selfPointer = GetSelfPointer();
 
     int iterator = 0;
     for(auto const &vEntity : player->Entities) {
@@ -162,9 +161,8 @@ void NetworkClient::DespawnEntity(std::shared_ptr<Entity> e) {
     NetworkFunctions::NetworkOutEntityDelete(Id, e->ClientId);
 }
 
-void NetworkClient::HoldThis(unsigned char blockType, bool canChange) const {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+void NetworkClient::HoldThis(unsigned char blockType, bool canChange) {
+    std::shared_ptr<NetworkClient> selfPointer = GetSelfPointer();
     if (CPE::GetClientExtVersion(selfPointer, HELDBLOCK_EXT_NAME) != 1) {
         return;
     }
@@ -179,8 +177,7 @@ void NetworkClient::CreateSelection(unsigned char selectionId, std::string label
     if (startX > endX || startY > endY || startZ > endZ)
         return;
 
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+    std::shared_ptr<NetworkClient> selfPointer = GetSelfPointer();
 
     if (CPE::GetClientExtVersion(selfPointer, SELECTION_CUBOID_EXT_NAME) <= 0)
         return;
@@ -193,8 +190,7 @@ void NetworkClient::CreateSelection(unsigned char selectionId, std::string label
 }
 
 void NetworkClient::DeleteSelection(unsigned char selectionId) {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+    std::shared_ptr<NetworkClient> selfPointer = GetSelfPointer();
 
     if (CPE::GetClientExtVersion(selfPointer, SELECTION_CUBOID_EXT_NAME) <= 0)
         return;
@@ -207,8 +203,7 @@ void NetworkClient::DeleteSelection(unsigned char selectionId) {
 }
 
 void NetworkClient::SetWeather(int weatherType) {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+    std::shared_ptr<NetworkClient> selfPointer = GetSelfPointer();
 
     if (CPE::GetClientExtVersion(selfPointer, EXT_WEATHER_CONTROL_EXT_NAME) <= 0)
         return;
@@ -220,8 +215,7 @@ void NetworkClient::SetWeather(int weatherType) {
 }
 
 void NetworkClient::SendHackControl(bool canFly, bool noclip, bool speeding, bool spawnControl, bool thirdperson, int jumpHeight) {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+    std::shared_ptr<NetworkClient> selfPointer = GetSelfPointer();
 
     if (CPE::GetClientExtVersion(selfPointer, HACKCONTROL_EXT_NAME) <= 0)
         return;
@@ -230,8 +224,7 @@ void NetworkClient::SendHackControl(bool canFly, bool noclip, bool speeding, boo
 }
 
 void NetworkClient::SetBlockPermissions(int blockId, bool canPlace, bool canDelete) {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> selfPointer = nm->GetClient(this->Id);
+    std::shared_ptr<NetworkClient> selfPointer = GetSelfPointer();
 
     if (CPE::GetClientExtVersion(selfPointer, BLOCK_PERMISSIONS_EXT_NAME) <= 0)
         return;
@@ -281,4 +274,45 @@ NetworkClient::~NetworkClient() {
     }
 
     Dispatcher::unsubscribe(eventSubId);
+}
+
+void NetworkClient::SendChat(std::string message) {
+    NetworkFunctions::SystemMessageNetworkSend(Id, message);
+}
+
+std::shared_ptr<NetworkClient> NetworkClient::GetSelfPointer() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<NetworkClient> selfPointer = std::static_pointer_cast<NetworkClient>(nm->GetClient(this->Id));
+    return selfPointer;
+}
+
+int NetworkClient::GetRank() {
+    if (!LoggedIn || !player)
+        return 0;
+
+    return player->tEntity->playerList->PRank;
+}
+
+bool NetworkClient::IsStopped() {
+    if (!LoggedIn || !player)
+        return false;
+
+    return player->tEntity->playerList->Stopped;
+}
+
+int NetworkClient::GetPing() {
+    return Ping;
+}
+
+std::string NetworkClient::GetLoginName() {
+    return player->LoginName;
+}
+
+bool NetworkClient::GetGlobalChat() {
+    return GlobalChat;
+}
+
+void NetworkClient::SetGlobalChat(bool active) {
+    GlobalChat = active;
+    player->tEntity->playerList->SetGlobal(active);
 }
