@@ -37,6 +37,7 @@ void NetworkFunctions::SystemRedScreen(int clientId, std::string message) {
 }
 
 void NetworkFunctions::SystemMessageNetworkSend(int clientId, std::string message, int type) {
+    Utils::replaceAll(message, "\n", "");
     Utils::replaceAll(message, "<br>", "\n");
     message = Chat::StringMultiline(message);
     message = Chat::StringGV(message);
@@ -57,6 +58,7 @@ void NetworkFunctions::SystemMessageNetworkSend(int clientId, std::string messag
 
 void NetworkFunctions::SystemMessageNetworkSend2All(int mapId, std::string message, int type) {
     Network* n = Network::GetInstance();
+    Utils::replaceAll(message, "\n", "");
     Utils::replaceAll(message, "<br>", "\n");
     message = Chat::StringMultiline(message);
     message = Chat::StringGV(message);
