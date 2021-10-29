@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <CustomBlocks.h>
 
 #include "network/Network.h"
 #include "Rank.h"
@@ -67,6 +68,7 @@ int main()
     Heartbeat* hb = Heartbeat::GetInstance();
     LuaPlugin* llll = LuaPlugin::GetInstance();
     watchdog* wd = watchdog::GetInstance();
+    CustomBlocks* cb = CustomBlocks::GetInstance();
     TaskScheduler::RunSetupTasks();
     System::IsRunning = true;
     System::startTime = time(nullptr);

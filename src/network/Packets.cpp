@@ -365,19 +365,19 @@ void Packets::SendDefineBlock(const std::shared_ptr<NetworkClient> &client, Bloc
         client->SendBuffer->Write(def.blockId);
         client->SendBuffer->Write(def.name);
         client->SendBuffer->Write(static_cast<unsigned char>(def.solidity));
-        client->SendBuffer->Write(def.movementSpeed);
-        client->SendBuffer->Write(def.topTexture);
-        client->SendBuffer->Write(def.sideTexture);
-        client->SendBuffer->Write(def.bottomTexture);
-        client->SendBuffer->Write(def.transmitsLight);
-        client->SendBuffer->Write(def.walkSound);
-        client->SendBuffer->Write(def.fullBright);
-        client->SendBuffer->Write(def.shape);
-        client->SendBuffer->Write(def.drawType);
-        client->SendBuffer->Write(def.fogDensity);
-        client->SendBuffer->Write(def.fogR);
-        client->SendBuffer->Write(def.fogG);
-        client->SendBuffer->Write(def.fogB);
+        client->SendBuffer->Write(static_cast<unsigned char>(def.movementSpeed));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.topTexture));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.sideTexture));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.bottomTexture));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.transmitsLight));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.walkSound));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.fullBright));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.shape));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.drawType));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.fogDensity));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.fogR));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.fogG));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.fogB));
         client->SendBuffer->Purge();
     }
 }

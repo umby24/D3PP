@@ -33,5 +33,6 @@ class CPE {
     static void PreEntityActions();
     static void PostEntityActions(std::shared_ptr<IMinecraftClient> client, std::shared_ptr<Entity> postEntity);
     //static std::map<std::string, int> SupportedExtensions { std::pair<std::string, int>("CustomBlocks", 1)};
+    static void DuringMapActions(std::shared_ptr<IMinecraftClient> client);
 };
 #endif

@@ -1096,6 +1096,7 @@ void Map::Send(int clientId) {
 
     compressedSize += (1024 - (compressedSize % 1024));
     Packets::SendMapInit(clientId);
+    CPE::DuringMapActions(nc);
     int bytes2Send = compressedSize;
     int bytesSent = 0;
 

@@ -4,7 +4,12 @@
 
 #ifndef D3PP_CUSTOMBLOCKS_H
 #define D3PP_CUSTOMBLOCKS_H
+#define CUSTOM_BLOCK_FILE_NAME "BlockDefs"
 #include <string>
+#include <map>
+#include <vector>
+#include "common/TaskScheduler.h"
+
 enum BlockSolidity {
     Walkthrough = 0,
     Swimthrough,
@@ -36,11 +41,24 @@ public:
     char fogB;
 };
 
-class CustomBlocks {
+class CustomBlocks : public TaskItem {
+public:
+    CustomBlocks();
+
+    static CustomBlocks* GetInstance();
+
+    void MainFunc();
     void Load();
     void Save();
-    void Add();
+    void Add(BlockDefinition blockDef);
+    std::vector<BlockDefinition> GetBlocks();
     void Remove();
-    
+private:
+    static CustomBlocks* instance;
+    bool isModified;
+    time_t lastModified;
+
+    std::map<unsigned char, BlockDefinition> _blockDefintiions;
 };
+
 #endif //D3PP_CUSTOMBLOCKS_H

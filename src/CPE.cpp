@@ -9,6 +9,7 @@
 #include "network/NetworkClient.h"
 #include "network/Packets.h"
 #include "world/Map.h"
+#include "CustomBlocks.h"
 
 void CPE::PreLoginExtensions(std::shared_ptr<IMinecraftClient> client) {
     auto concrete = std::static_pointer_cast<NetworkClient>(client);
@@ -24,9 +25,22 @@ void CPE::PreLoginExtensions(std::shared_ptr<IMinecraftClient> client) {
     }
 }
 
+void CPE::DuringMapActions(std::shared_ptr<IMinecraftClient> client) {
+    auto concrete = std::static_pointer_cast<NetworkClient>(client);
+
+    if (GetClientExtVersion(client, BLOCK_DEFS_EXT_NAME) == 1) {
+        CustomBlocks* cb = CustomBlocks::GetInstance();
+        std::vector<BlockDefinition> blocks = cb->GetBlocks();
+
+        for(auto const &b : blocks) {
+            Packets::SendDefineBlock(concrete, b);
+        }
+    }
+}
+
 int CPE::GetClientExtVersion(std::shared_ptr<IMinecraftClient> client, std::string extension) {
     std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(client);
-    if (!c->LoggedIn || !c->CPE)
+    if (!c->CPE)
         return 0;
 
     if (c->Extensions.find(extension) == c->Extensions.end()) {
