@@ -38,7 +38,7 @@ class Logger
         std::vector<LogMessage> Messages;
     protected:
         void Add(struct LogMessage message);
-
+        void SubColorCodes(std::string &input);
         static Logger* singleton_;
     private:
         int Timer;

@@ -124,6 +124,7 @@ void Logger::Add(struct LogMessage message) {
                 break;
         }
 
+        SubColorCodes(message.Message);
         std::cout << message.Message << std::endl;
     }
 }
@@ -169,4 +170,22 @@ void Logger::SizeCheck() {
         Utils::replaceAll(Filename, "[date]", std::to_string(fileTime));
         fileStream.open(Filename);
     }
+}
+
+void Logger::SubColorCodes(std::string &input) {
+    Utils::replaceAll(input, "&1", "\x1B[34m");
+    Utils::replaceAll(input, "&2", "\x1B[32m");
+    Utils::replaceAll(input, "&3", "\x1B[36m");
+    Utils::replaceAll(input, "&4", "\x1B[31m");
+    Utils::replaceAll(input, "&5", "\x1B[35m");
+    Utils::replaceAll(input, "&6", "\x1B[33m");
+    Utils::replaceAll(input, "&7", "\x1B[90m");
+    Utils::replaceAll(input, "&8", "\x1B[30m");
+    Utils::replaceAll(input, "&9", "\x1B[94m");
+    Utils::replaceAll(input, "&a", "\x1B[92m");
+    Utils::replaceAll(input, "&b", "\x1B[96m");
+    Utils::replaceAll(input, "&c", "\x1B[91m");
+    Utils::replaceAll(input, "&d", "\x1B[95m");
+    Utils::replaceAll(input, "&e", "\x1B[93m");
+    Utils::replaceAll(input, "&f", "\x1B[97m");
 }
