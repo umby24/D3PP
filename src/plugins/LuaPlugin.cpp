@@ -1,6 +1,7 @@
 #include "plugins/LuaPlugin.h"
 
 #include <filesystem>
+#include <events/PlayerEventArgs.h>
 
 #include "world/Map.h"
 #include "network/Network_Functions.h"
@@ -115,6 +116,7 @@ void LuaPlugin::RegisterEventListener() {
     Dispatcher::subscribe(EventMapBlockChangeClient{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
     Dispatcher::subscribe(EventMapBlockChangePlayer{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
     Dispatcher::subscribe(EventTimer{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(PlayerClickEventArgs::clickDescriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
 }
 
 void LuaPlugin::HandleEvent(const Event& event) {

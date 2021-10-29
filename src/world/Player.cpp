@@ -5,6 +5,7 @@
 #include "world/Player.h"
 #include <network/Network.h>
 #include <world/Map.h>
+#include <events/PlayerEventArgs.h>
 #include "network/NetworkClient.h"
 #include "world/Entity.h"
 #include "common/Player_List.h"
@@ -86,6 +87,15 @@ void Player::SendMap() {
 
 void Player::PlayerClicked(ClickButton button, ClickAction action, short yaw, short pitch, char targetEntity,
                            Vector3S targetBlock, ClickTargetBlockFace blockFace) {
-
+    PlayerClickEventArgs event;
+    event.playerId = this->tEntity->playerList->Number;
+    event.button = button;
+    event.action = action;
+    event.yaw = yaw;
+    event.pitch = pitch;
+    event.targetEntity = targetEntity;
+    event.targetBlock = targetBlock;
+    event.blockFace = blockFace;
+    Dispatcher::post(event);
     // -- Trigger a lua event.
 }
