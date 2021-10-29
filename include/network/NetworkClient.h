@@ -18,6 +18,7 @@ class ByteBuffer;
 class Player;
 class Entity;
 class Event;
+struct BlockDefinition;
 
 class IMinecraftClient {
 public:
@@ -33,6 +34,8 @@ public:
     virtual bool IsStopped() = 0;
     virtual void SendChat(std::string message) = 0;
     virtual void Kick(const std::string& message, bool hide) = 0;
+    virtual void SendDefineBlock(BlockDefinition newBlock) = 0;
+    virtual void SendDeleteBlock(unsigned char blockId) = 0;
 };
 
 class NetworkClient : public IMinecraftClient {
@@ -94,6 +97,9 @@ public:
     void SetWeather(int weatherType);
     void SendHackControl(bool canFly, bool noclip, bool speeding, bool spawnControl, bool thirdperson, int jumpHeight);
     void SetBlockPermissions(int blockId, bool canPlace, bool canDelete);
+
+    void SendDefineBlock(BlockDefinition newBlock) override;
+    void SendDeleteBlock(unsigned char blockId) override;
 private:
     int Id;
     int eventSubId;

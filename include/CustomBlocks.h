@@ -52,7 +52,7 @@ public:
     void Save();
     void Add(BlockDefinition blockDef);
     std::vector<BlockDefinition> GetBlocks();
-    void Remove();
+    void Remove(unsigned char blockId);
 private:
     static CustomBlocks* instance;
     bool isModified;

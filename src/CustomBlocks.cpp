@@ -148,3 +148,11 @@ std::vector<BlockDefinition> CustomBlocks::GetBlocks() {
 
     return result;
 }
+
+void CustomBlocks::Remove(unsigned char blockId) {
+    if (_blockDefintiions.contains(blockId)) {
+        isModified = true;
+        _blockDefintiions.erase(blockId);
+        return;
+    }
+}

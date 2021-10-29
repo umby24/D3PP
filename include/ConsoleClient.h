@@ -10,6 +10,7 @@
 #include "Utils.h"
 
 class IMinecraftClient;
+struct BlockDefinition;
 
 class ConsoleClient : public IMinecraftClient {
 public:
@@ -29,7 +30,8 @@ public:
         Logger::LogAdd("CONSOLE", message, LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     }
     void Kick(const std::string& message, bool hide) { /* noop */ }
-
+    void SendDefineBlock(BlockDefinition newBlock) override;
+    void SendDeleteBlock(unsigned char blockId) override { }
 private:
     static std::shared_ptr<ConsoleClient> instance;
 };

@@ -7,7 +7,7 @@
 #include <string>
 #include <mutex>
 
-const float SYSTEM_VERSION_NUMBER = 0.06;
+const float SYSTEM_VERSION_NUMBER = 0.07;
 
 class System  {
 public:

@@ -3,5 +3,10 @@
 //
 
 #include "ConsoleClient.h"
+#include "CustomBlocks.h"
 
 std::shared_ptr<ConsoleClient> ConsoleClient::instance = nullptr;
+
+void ConsoleClient::SendDefineBlock(BlockDefinition newBlock) {
+
+}

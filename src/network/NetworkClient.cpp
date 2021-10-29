@@ -316,3 +316,11 @@ void NetworkClient::SetGlobalChat(bool active) {
     GlobalChat = active;
     player->tEntity->playerList->SetGlobal(active);
 }
+
+void NetworkClient::SendDefineBlock(BlockDefinition newBlock) {
+    Packets::SendDefineBlock(GetSelfPointer(), newBlock);
+}
+
+void NetworkClient::SendDeleteBlock(unsigned char blockId) {
+    Packets::SendRemoveBlock(GetSelfPointer(), blockId);
+}

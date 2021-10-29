@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <events/PlayerEventArgs.h>
+#include <CustomBlocks.h>
 
 #include "world/Map.h"
 #include "network/Network_Functions.h"
@@ -256,6 +257,10 @@ void LuaPlugin::BindFunctions() {
     lua_register(state, "Block_Get_Rank_Place", &dispatch<&LuaPlugin::LuaBlockGetRankPlace>);
     lua_register(state, "Block_Get_Rank_Delete", &dispatch<&LuaPlugin::LuaBlockGetRankDelete>);
     lua_register(state, "Block_Get_Client_Type", &dispatch<&LuaPlugin::LuaBlockGetClientType>);
+    lua_register(state, "CreateGlobalBlock", &dispatch<&LuaPlugin::LuaCreateBlock>);
+    lua_register(state, "DeleteGlobalBlock", &dispatch<&LuaPlugin::LuaDeleteBlock>);
+    lua_register(state, "CreateClientBlock", &dispatch<&LuaPlugin::LuaCreateBlockClient>);
+    lua_register(state, "DeleteClientBlock", &dispatch<&LuaPlugin::LuaDeleteBlockClient>);
     // -- Rank Functions
     lua_register(state, "Rank_Get_Table", &dispatch<&LuaPlugin::LuaRankGetTable>);
     lua_register(state, "Rank_Add", &dispatch<&LuaPlugin::LuaRankAdd>);
@@ -3249,6 +3254,167 @@ int LuaPlugin::LuaMapHackcontrolSet(lua_State *L) {
         return 0;
 
     map->SetHackControl(canFly, noclip, speeding, spawnControl, thirdperson, jumpHeight);
+    return 0;
+}
+
+int LuaPlugin::LuaCreateBlock(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 16) {
+        Logger::LogAdd("Lua", "LuaError: BlockGlobalCreate called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int blockId = lua_tointeger(L, 1);
+    std::string blockName(lua_tostring(L, 2));
+    int solidity = lua_tointeger(L, 3);
+    int movementSpeed = lua_tointeger(L, 4);
+    int topTexture = lua_tointeger(L, 5);
+    int sideTexture = lua_tointeger(L, 6);
+    int bottomTexture = lua_tointeger(L, 7);
+    bool transmitsLight = lua_toboolean(L, 8);
+    int walkSound = lua_tointeger(L, 9);
+    bool fullBright = lua_toboolean(L, 10);
+    int shape = lua_tointeger(L, 11);
+    int drawType = lua_tointeger(L, 12);
+    int fogDensity = lua_tointeger(L, 13);
+    int fogR = lua_tointeger(L, 14);
+    int fogG = lua_tointeger(L, 15);
+    int fogB = lua_tointeger(L, 16);
+
+    if (blockId == 0) {
+        Logger::LogAdd("Lua", "LuaError: You cannot redefine the air block!", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    if (blockId > 255 || topTexture > 255 || bottomTexture > 255 || sideTexture > 255) {
+        Logger::LogAdd("Lua", "LuaError: Invalid argument, blockid or texture cannot be more than 255.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    BlockDefinition newBlock { static_cast<unsigned char>(blockId),
+                               blockName,
+                               static_cast<BlockSolidity>(solidity),
+                               static_cast<char>(movementSpeed),
+                               static_cast<char>(topTexture),
+                               static_cast<char>(sideTexture),
+                               static_cast<char>(bottomTexture),
+                               transmitsLight,
+                               static_cast<char>(walkSound),
+                               fullBright,
+                               static_cast<char>(shape),
+                               static_cast<char>(drawType),
+                               static_cast<char>(fogDensity),
+                               static_cast<char>(fogR),
+                               static_cast<char>(fogG),
+                               static_cast<char>(fogB)
+    };
+
+    Block* b = Block::GetInstance();
+    CustomBlocks* cb = CustomBlocks::GetInstance();
+
+    b->Blocks[blockId].OnClient = blockId;
+    b->Blocks[blockId].Name = blockName;
+    b->SaveFile = true;
+    cb->Add(newBlock);
+
+    return 0;
+}
+
+int LuaPlugin::LuaDeleteBlock(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: BlockDelete called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int blockId = lua_tointeger(L, 1);
+    CustomBlocks* cb = CustomBlocks::GetInstance();
+    cb->Remove(blockId);
+
+    Block* b = Block::GetInstance();
+    b->Blocks[blockId].OnClient = 4;
+    b->Blocks[blockId].Name = "Invalid";
+    b->SaveFile = true;
+
+    return 0;
+}
+
+int LuaPlugin::LuaCreateBlockClient(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 17) {
+        Logger::LogAdd("Lua", "LuaError: BlockCreateClient called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    int blockId = lua_tointeger(L, 1);
+    std::string blockName(lua_tostring(L, 2));
+    int solidity = lua_tointeger(L, 3);
+    int movementSpeed = lua_tointeger(L, 4);
+    int topTexture = lua_tointeger(L, 5);
+    int sideTexture = lua_tointeger(L, 6);
+    int bottomTexture = lua_tointeger(L, 7);
+    bool transmitsLight = lua_toboolean(L, 8);
+    int walkSound = lua_tointeger(L, 9);
+    bool fullBright = lua_toboolean(L, 10);
+    int shape = lua_tointeger(L, 11);
+    int drawType = lua_tointeger(L, 12);
+    int fogDensity = lua_tointeger(L, 13);
+    int fogR = lua_tointeger(L, 14);
+    int fogG = lua_tointeger(L, 15);
+    int fogB = lua_tointeger(L, 16);
+    int clientId = lua_tointeger(L, 17);
+
+    if (blockId == 0) {
+        Logger::LogAdd("Lua", "LuaError: You cannot redefine the air block!", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    if (blockId > 255 || topTexture > 255 || bottomTexture > 255 || sideTexture > 255) {
+        Logger::LogAdd("Lua", "LuaError: Invalid argument, blockid or texture cannot be more than 255.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+    BlockDefinition newBlock { static_cast<unsigned char>(blockId),
+                               blockName,
+                               static_cast<BlockSolidity>(solidity),
+                               static_cast<char>(movementSpeed),
+                               static_cast<char>(topTexture),
+                               static_cast<char>(sideTexture),
+                               static_cast<char>(bottomTexture),
+                               transmitsLight,
+                               static_cast<char>(walkSound),
+                               fullBright,
+                               static_cast<char>(shape),
+                               static_cast<char>(drawType),
+                               static_cast<char>(fogDensity),
+                               static_cast<char>(fogR),
+                               static_cast<char>(fogG),
+                               static_cast<char>(fogB)
+    };
+    Network* n = Network::GetInstance();
+    std::shared_ptr<IMinecraftClient> client = n->GetClient(clientId);
+    if (client != nullptr) {
+        client->SendDefineBlock(newBlock);
+    }
+    return 0;
+}
+
+int LuaPlugin::LuaDeleteBlockClient(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: BlockDeleteClient called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int blockId = lua_tointeger(L, 1);
+    int clientId = lua_tointeger(L, 2);
+    Network* n = Network::GetInstance();
+    std::shared_ptr<IMinecraftClient> client = n->GetClient(clientId);
+
+    if (client != nullptr) {
+        client->SendDeleteBlock(blockId);
+    }
+
     return 0;
 }
 

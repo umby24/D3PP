@@ -189,13 +189,18 @@ private:
     int LuaHotkeyAdd(lua_State *L);
     int LuaHotkeyRemove(lua_State *L);
     int LuaMapHackcontrolSet(lua_State *L);
-
+    int LuaCreateBlock(lua_State *L);
+    int LuaDeleteBlock(lua_State *L);
+    int LuaCreateBlockClient(lua_State *L);
+    int LuaDeleteBlockClient(lua_State *L);
     // -- Event executors
     void LuaDoEventTimer();
 
     void RegisterEventListener();
 
     void HandleEvent(const Event &event);
+
+
 };
 
 #endif
