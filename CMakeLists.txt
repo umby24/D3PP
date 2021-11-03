@@ -33,7 +33,7 @@ endif()
 #______________________________________________________________
 # WINDOWS BUILD REQUIREMENTS
 #--------------------------------------------------------------
-if (WIN32)
+if (NOT MSVC AND WIN32)
    link_libraries(ws2_32 wsock32)
    find_package(ZLIB REQUIRED)
    find_package( Threads )
@@ -53,11 +53,17 @@ add_executable(D3PP main.cpp src/common/Files.cpp include/common/Files.h src/com
  include/plugins/LuaPlugin.h src/plugins/LuaPlugin.cpp include/Undo.h include/world/Physics.h src/Undo.cpp src/world/Physics.cpp include/Build.h src/Build.cpp include/EventSystem.h src/EventSystem.cpp include/events/EventTimer.h include/events/EventClientAdd.h include/events/EventClientDelete.h include/events/EventClientLogin.h include/events/EventClientLogout.h include/events/EventEntityAdd.h include/events/EventEntityDelete.h include/events/EventEntityPositionSet.h include/events/EventEntityDie.h include/events/EventMapAdd.h include/events/EventMapActionDelete.h include/events/EventMapActionResize.h include/events/EventMapActionFill.h include/events/EventMapActionSave.h include/events/EventMapActionLoad.h include/events/EventMapBlockChange.h include/events/EventMapBlockChangeClient.h include/events/EventMapBlockChangePlayer.h include/events/EventChatMap.h include/events/EventChatAll.h include/events/EventChatPrivate.h include/events/EventEntityMapChange.h src/events/EventChatAll.cpp src/events/EventChatMap.cpp src/events/EventClientAdd.cpp src/events/EventClientDelete.cpp src/events/EventClientLogin.cpp src/events/EventClientLogout.cpp src/events/EventEntityAdd.cpp src/events/EventEntityDelete.cpp src/events/EventEntityDie.cpp include/CustomBlocks.h
  src/events/EventEntityMapChange.cpp src/events/EventEntityPositionSet.cpp src/events/EventMapActionDelete.cpp src/events/EventMapActionFill.cpp src/events/EventMapActionLoad.cpp src/events/EventMapActionResize.cpp src/events/EventMapActionSave.cpp src/events/EventMapAdd.cpp src/events/EventMapBlockChange.cpp src/events/EventMapBlockChangeClient.cpp src/events/EventMapBlockChangePlayer.cpp src/events/EventTimer.cpp include/common/ByteBuffer.h src/common/ByteBuffer.cpp include/network/NetworkClient.h src/network/NetworkClient.cpp include/common/MinecraftLocation.h src/common/MinecraftLocation.cpp include/events/EntityEventArgs.h src/events/EntityEventArgs.cpp include/common/Configuration.h src/common/Configuration.cpp src/ConsoleClient.cpp include/ConsoleClient.h src/CustomBlocks.cpp src/events/PlayerEventArgs.cpp include/events/PlayerEventArgs.h)
 
-target_link_libraries(D3PP sqlite3)
-target_link_libraries(D3PP lua)
+
 #
 if (MSVC)
-    target_link_libraries(D3PP zlibd)
+    find_package(ZLIB REQUIRED)
+    find_package(Lua REQUIRED)
+    find_package(unofficial-sqlite3 CONFIG REQUIRED)
+    target_link_libraries(D3PP PRIVATE unofficial::sqlite3::sqlite3)
+    target_link_libraries(D3PP PRIVATE ZLIB::ZLIB)
+    target_include_directories(D3PP PRIVATE ${LUA_INCLUDE_DIR})
+    target_link_libraries(D3PP PRIVATE ${LUA_LIBRARIES})
+
     if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
         #target_link_options(D3PP PUBLIC "LINKER:/libpath:D:/Documents/git/vcpkg/installed/x64-windows/debug/lib/")
         target_link_options(D3PP PUBLIC "LINKER:/libpath:D:/Documents/git/vcpkg/installed/x86-windows/debug/lib/")
@@ -67,6 +73,8 @@ if (MSVC)
 
 else()
     target_link_libraries(D3PP z)
+    target_link_libraries(D3PP sqlite3)
+    target_link_libraries(D3PP lua)
 endif ()
 
 

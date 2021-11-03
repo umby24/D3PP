@@ -111,6 +111,9 @@ bool Utils::InsensitiveCompare(std::string first, std::string second) {
 }
 
 int Utils::RandomNumber(int max) {
+    if (1.0 >= max) {
+        return 1;
+    }
     std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_real_distribution<double> dist(1.0, max);

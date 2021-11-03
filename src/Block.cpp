@@ -64,6 +64,10 @@ void Block::LoadOld() {
     
     Logger::LogAdd(MODULE_NAME, "Importing old block file, Blocks.json will be overwritten.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     Blocks.clear();
+    for (auto i = 0; i < 255; i++) { // -- Pre-pop..
+        struct MapBlock shell { i };
+        Blocks.push_back(shell);
+    }
     PreferenceLoader pl("Block.txt", "Data/");
     pl.LoadFile();
     
@@ -74,6 +78,7 @@ void Block::LoadOld() {
         pl.SelectGroup(item.first);
         struct MapBlock newItem;
         newItem.Id = stoi(item.first);
+        Logger::LogAdd(MODULE_NAME, "Loading " + stringulate(item.first), LogType::DEBUG, GLF);
         newItem.Name = pl.Read("Name", "Unknown");
         newItem.OnClient = pl.Read("On_Client", 4);
         newItem.Physics = pl.Read("Physic", 0);
