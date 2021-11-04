@@ -80,7 +80,7 @@ struct KillSettings {
     void LoadFromJson(json &j) {
         if (j.is_object() && !j["Kill"].is_null()) {
             killMapId = j["Kill"]["mapId"];
-            MinecraftLocation ks { j["Kill"]["rotation"], j["Kill"]["look"] };
+            MinecraftLocation ks { static_cast<char>(j["Kill"]["rotation"].get<int>()), static_cast<char>(j["Kill"]["look"].get<int>()) };
             Vector3S ksVec { j["Kill"]["x"], j["Kill"]["y"], j["Kill"]["z"]};
             ks.SetAsBlockCoords(ksVec);
             killSpawn = ks;

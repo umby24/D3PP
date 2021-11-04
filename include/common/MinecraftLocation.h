@@ -26,8 +26,8 @@ public:
     const short X() { return Location.X; };
     const short Y() { return Location.Y; };
     const short Z() { return Location.Z; };
-    unsigned char Rotation;
-    unsigned char Look;
+    float Rotation;
+    float Look;
     Vector3S Location;
 
     void SetAsBlockCoords(Vector3S blockCoords);

@@ -157,6 +157,8 @@ void LuaPlugin::HandleEvent(const Event& event) {
 }
 
 void LuaPlugin::BindFunctions() {
+    // -- Network functions:
+    lua_register(state, "Network_Out_Block_Set", &dispatch<&LuaPlugin::LuaNetworkOutBlockSet>);
     // -- client functions:
     lua_register(state, "Client_Get_Table", &dispatch<&LuaPlugin::LuaClientGetTable>);
     lua_register(state, "Client_Get_Map_ID", &dispatch<&LuaPlugin::LuaClientGetMapId>);
@@ -1144,7 +1146,8 @@ int LuaPlugin::LuaEntityGetRotation(lua_State *L) {
     int entityId = lua_tointeger(L, 1);
     float result = -1;
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
-    if (foundEntity != nullptr) {
+
+	if (foundEntity != nullptr) {
         result = foundEntity->Location.Rotation;
     }
 
@@ -3413,6 +3416,31 @@ int LuaPlugin::LuaDeleteBlockClient(lua_State *L) {
 
     if (client != nullptr) {
         client->SendDeleteBlock(blockId);
+    }
+
+    return 0;
+}
+
+int LuaPlugin::LuaNetworkOutBlockSet(lua_State* L)
+{
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 5) {
+        Logger::LogAdd("Lua", "LuaError: NetworkOutBlockSet called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int clientId = lua_tointeger(L, 1);
+    int blockX = lua_tointeger(L, 2);
+    int blockY = lua_tointeger(L, 3);
+    int blockZ = lua_tointeger(L, 4);
+    int blockType = lua_tointeger(L, 5);
+
+    Network* n = Network::GetInstance();
+    std::shared_ptr<IMinecraftClient> client = n->GetClient(clientId);
+
+    if (client != nullptr) {
+        NetworkFunctions::NetworkOutBlockSet(clientId, blockX, blockY, blockZ, static_cast<unsigned char>(blockType));
     }
 
     return 0;

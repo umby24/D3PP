@@ -67,7 +67,9 @@ void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &
     auto Y = (unsigned short)client->ReceiveBuffer->ReadShort();
     char R = client->ReceiveBuffer->ReadByte();
     char L = client->ReceiveBuffer->ReadByte();
-    MinecraftLocation inputLocation {R, L, X, Y, Z};
+    float rot = (R / 255.0) * 360;
+    float look = (L / 255.0) * 360;
+    MinecraftLocation inputLocation { rot, look, X, Y, Z};
 
     if (!client->LoggedIn || !client->player->tEntity)
         return;

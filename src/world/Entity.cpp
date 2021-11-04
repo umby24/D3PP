@@ -86,7 +86,7 @@ int Entity::GetFreeIdClient(int mapId) {
 }
 
 
-Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look) : variables{}, Location{static_cast<unsigned char>(rotation), static_cast<unsigned char>(look)} {
+Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look) : variables{}, Location{rotation, look} {
     Prefix = "";
     Name = std::move(name);
     Suffix = "";
@@ -110,7 +110,7 @@ Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rot
     associatedClient = nullptr;
 }
 
-Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look, std::shared_ptr<NetworkClient> c) : variables{}, Location{static_cast<unsigned char>(rotation), static_cast<unsigned char>(look)} {
+Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look, std::shared_ptr<NetworkClient> c) : variables{}, Location{rotation, look} {
     Prefix = "";
     Name = name;
     Suffix = "";
@@ -286,7 +286,7 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
         eps.mapId = mapId;
         eps.x = Location.X() / 32.0;
         eps.y = Location.Y() / 32.0;
-        eps.z = (Location.Z() +51) / 32.0;
+        eps.z = (Location.Z() -51) / 32.0;
         eps.rotation = Location.Rotation;
         eps.look = Location.Look;
         eps.priority = priority;

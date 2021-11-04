@@ -193,6 +193,7 @@ private:
     int LuaDeleteBlock(lua_State *L);
     int LuaCreateBlockClient(lua_State *L);
     int LuaDeleteBlockClient(lua_State *L);
+    int LuaNetworkOutBlockSet(lua_State* L);
     // -- Event executors
     void LuaDoEventTimer();
 
