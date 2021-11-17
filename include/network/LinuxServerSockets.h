@@ -9,6 +9,7 @@
 #include <memory>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <netdb.h>
 
 #define MAXIMUM_CONNECTIONS 255

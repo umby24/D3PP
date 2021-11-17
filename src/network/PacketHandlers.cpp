@@ -19,10 +19,10 @@
 #include "common/MinecraftLocation.h"
 
 void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& client) {
-    char clientVersion = client->ReceiveBuffer->ReadByte();
+	const char clientVersion = static_cast<char>(client->ReceiveBuffer->ReadByte());
     std::string clientName = client->ReceiveBuffer->ReadString();
-    std::string mppass = client->ReceiveBuffer->ReadString();
-    char isCpe = client->ReceiveBuffer->ReadByte();
+	const std::string mppass = client->ReceiveBuffer->ReadString();
+	const char isCpe = static_cast<char>(client->ReceiveBuffer->ReadByte());
     Utils::TrimString(clientName);
 
     if (!client->LoggedIn && client->DisconnectTime == 0 && isCpe != 66) {
@@ -38,17 +38,17 @@ void PacketHandlers::HandlePing(const std::shared_ptr<NetworkClient> &client) {
 }
 
 void PacketHandlers::HandleBlockChange(const std::shared_ptr<NetworkClient> &client) {
-    short X = client->ReceiveBuffer->ReadShort();
-    short Z = client->ReceiveBuffer->ReadShort();
-    short Y = client->ReceiveBuffer->ReadShort();
-    char Mode = (client->ReceiveBuffer->ReadByte() & 255);
-    char Type = (client->ReceiveBuffer->ReadByte() & 255);
+	const short x = client->ReceiveBuffer->ReadShort();
+	const short z = client->ReceiveBuffer->ReadShort();
+	const short y = client->ReceiveBuffer->ReadShort();
+	const char mode = static_cast<char>(client->ReceiveBuffer->ReadByte() & 255);
+	const char type = static_cast<char>(client->ReceiveBuffer->ReadByte() & 255);
 
     if (!client->LoggedIn || !client->player->tEntity)
         return;
 
     BuildModeMain* bmm = BuildModeMain::GetInstance();
-    bmm->Distribute(client->GetId(), client->player->tEntity->MapID, X, Y, Z, (Mode > 0), Type);
+    bmm->Distribute(client->GetId(), client->player->tEntity->MapID, x, y, z, (mode > 0), type);
 }
 
 void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &client) {
@@ -62,14 +62,15 @@ void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &
         client->ReceiveBuffer->ReadByte();
     }
 
-    auto X = (unsigned short)client->ReceiveBuffer->ReadShort();
-    auto Z = (unsigned short)client->ReceiveBuffer->ReadShort();
-    auto Y = (unsigned short)client->ReceiveBuffer->ReadShort();
-    char R = client->ReceiveBuffer->ReadByte();
-    char L = client->ReceiveBuffer->ReadByte();
-    float rot = (R / 255.0) * 360;
-    float look = (L / 255.0) * 360;
-    MinecraftLocation inputLocation { rot, look, X, Y, Z};
+    const auto X = static_cast<unsigned short>(client->ReceiveBuffer->ReadShort());
+    const auto Z = static_cast<unsigned short>(client->ReceiveBuffer->ReadShort());
+    const auto Y = static_cast<unsigned short>(client->ReceiveBuffer->ReadShort());
+    const char R = static_cast<char>(client->ReceiveBuffer->ReadByte());
+    const char L = static_cast<char>(client->ReceiveBuffer->ReadByte());
+    const float rot = static_cast<float>((R / 255.0) * 360);
+    const float look = static_cast<float>(L / 255.0 * 360);
+
+    const MinecraftLocation inputLocation { rot, look, X, Y, Z};
 
     if (!client->LoggedIn || !client->player->tEntity)
         return;
@@ -79,7 +80,7 @@ void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &
 }
 
 void PacketHandlers::HandleChatPacket(const std::shared_ptr<NetworkClient> &client) {
-    char playerId = client->ReceiveBuffer->ReadByte();
+	const char playerId = client->ReceiveBuffer->ReadByte();
     std::string message = client->ReceiveBuffer->ReadString();
     Utils::TrimString(message);
     if (client->LoggedIn && client->player->tEntity) {
@@ -89,7 +90,7 @@ void PacketHandlers::HandleChatPacket(const std::shared_ptr<NetworkClient> &clie
 
 void PacketHandlers::HandleExtInfo(const std::shared_ptr<NetworkClient> &client) {
     std::string appName = client->ReceiveBuffer->ReadString();
-    short extensions = client->ReceiveBuffer->ReadShort();
+    const short extensions = client->ReceiveBuffer->ReadShort();
     client->CPE = true;
     
     if (extensions == 0) {
@@ -112,7 +113,7 @@ void PacketHandlers::HandleExtEntry(const std::shared_ptr<NetworkClient> &client
 }
 
 void PacketHandlers::HandleCustomBlockSupportLevel(const std::shared_ptr<NetworkClient> &client) {
-    unsigned char supportLevel = client->ReceiveBuffer->ReadByte();
+	const unsigned char supportLevel = client->ReceiveBuffer->ReadByte();
     client->CustomBlocksLevel = supportLevel;
 
     Logger::LogAdd("CPE", "CPE Process complete.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
@@ -120,34 +121,34 @@ void PacketHandlers::HandleCustomBlockSupportLevel(const std::shared_ptr<Network
 }
 
 void PacketHandlers::HandleTwoWayPing(const std::shared_ptr<NetworkClient> &client) {
-    unsigned char direction = client->ReceiveBuffer->ReadByte();
-    short timeval = client->ReceiveBuffer->ReadShort();
+	const unsigned char direction = client->ReceiveBuffer->ReadByte();
+	const short timeval = client->ReceiveBuffer->ReadShort();
 
     if (direction == 0) {
         Packets::SendTwoWayPing(client, direction, timeval);
         return;
     }
 
-    auto totalDuration = static_cast<short>(clock() - timeval);
-    float secondsTaken = (float)totalDuration / static_cast<float>(CLOCKS_PER_SEC);
+	const auto totalDuration = static_cast<short>(clock() - timeval);
+	const float secondsTaken = static_cast<float>(totalDuration) / static_cast<float>(CLOCKS_PER_SEC);
     client->Ping = secondsTaken;
 }
 
 void PacketHandlers::HandlePlayerClicked(const std::shared_ptr<NetworkClient> &client) {
     unsigned char button = client->ReceiveBuffer->ReadByte();
     unsigned char action = client->ReceiveBuffer->ReadByte();
-    short yaw = client->ReceiveBuffer->ReadShort();
-    short pitch = client->ReceiveBuffer->ReadShort();
-    char targetedEntity = static_cast<char>(client->ReceiveBuffer->ReadByte());
-    short targetBlockX = client->ReceiveBuffer->ReadShort();
-    short targetBlockY = client->ReceiveBuffer->ReadShort();
-    short targetBlockZ = client->ReceiveBuffer->ReadShort();
+    const short yaw = client->ReceiveBuffer->ReadShort();
+    const short pitch = client->ReceiveBuffer->ReadShort();
+    const char targetedEntity = static_cast<char>(client->ReceiveBuffer->ReadByte());
+    const short targetBlockX = client->ReceiveBuffer->ReadShort();
+    const short targetBlockY = client->ReceiveBuffer->ReadShort();
+    const short targetBlockZ = client->ReceiveBuffer->ReadShort();
     unsigned char targetedBlockFace = client->ReceiveBuffer->ReadByte();
 
-    auto cb = static_cast<ClickButton>(button);
-    auto ca = static_cast<ClickAction>(action);
-    Vector3S targetBlock {targetBlockX, targetBlockY, targetBlockZ};
-    auto bf = static_cast<ClickTargetBlockFace>(targetedBlockFace);
+    const auto cb = static_cast<ClickButton>(button);
+    const auto ca = static_cast<ClickAction>(action);
+    const Vector3S targetBlock {targetBlockX, targetBlockY, targetBlockZ};
+    const auto bf = static_cast<ClickTargetBlockFace>(targetedBlockFace);
 
     client->player->PlayerClicked(cb, ca, yaw, pitch, targetedEntity, targetBlock, bf);
 }
