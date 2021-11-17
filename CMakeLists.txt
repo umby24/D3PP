@@ -74,7 +74,12 @@ if (MSVC)
 else()
     target_link_libraries(D3PP z)
     target_link_libraries(D3PP sqlite3)
-    target_link_libraries(D3PP lua)
+    find_package(Lua)
+    if (Lua_FOUND)
+        include_directories(${Lua_INCLUDE_DIRS})
+        target_link_libraries(D3PP ${LUA_LIBRARIES})
+        MESSAGE(STATUS "Lua DIR: " ${LUA_LIBRARIES})
+    endif ()
 endif ()
 
 
