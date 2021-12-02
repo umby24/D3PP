@@ -130,10 +130,11 @@ void NetworkFunctions::NetworkOutEntityAdd(int clientId, char playerId, std::str
 
     Utils::padTo(name, 64);
 
-    unsigned char rotation = location.Rotation/360*256.0;
-    unsigned char look = location.Look/360*256.0;
+    unsigned char rotation = static_cast<unsigned char>((location.Rotation/360)*256.0);
+    unsigned char look = static_cast<unsigned char>((location.Look/360)*256.0);
+
     if (CPE::GetClientExtVersion(c, EXT_PLAYER_LIST_EXT_NAME) < 2) {
-        Packets::SendSpawnEntity(clientId, playerId, name, location.X(), location.Y(), location.Z(), rotation, look);
+        Packets::SendSpawnEntity(clientId, playerId, name, location.X(), location.Y(), location.Z(), static_cast<char>(rotation), static_cast<char>(look));
     } else {
         Packets::SendExtAddEntity2(std::static_pointer_cast<NetworkClient>(c), static_cast<unsigned char>(playerId), name, name, location.X(), location.Y(), location.Z(), rotation, look);
     }
@@ -144,5 +145,7 @@ void NetworkFunctions::NetworkOutEntityDelete(int clientId, char playerId) {
 }
 
 void NetworkFunctions::NetworkOutEntityPosition(int clientId, char playerId, MinecraftLocation& location) {
-    Packets::SendPlayerTeleport(clientId, playerId, location.X(), location.Y(), location.Z(), location.Rotation, location.Look);
+    unsigned char rotation = static_cast<unsigned char>((location.Rotation / 360) * 256.0);
+    unsigned char look = static_cast<unsigned char>((location.Look / 360) * 256.0);
+    Packets::SendPlayerTeleport(clientId, playerId, location.X(), location.Y(), location.Z(), static_cast<char>(rotation), static_cast<char>(look));
 }

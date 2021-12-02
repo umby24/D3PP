@@ -26,11 +26,11 @@ CommandMain::CommandMain() : ParsedOperator{} {
     SaveFile = false;
     FileDateLast = 0;
     CommandClientId = -1;
-    ParsedOperator->push_back("");
-    ParsedOperator->push_back("");
-    ParsedOperator->push_back("");
-    ParsedOperator->push_back("");
-    ParsedOperator->push_back("");
+    ParsedOperator.push_back("");
+    ParsedOperator.push_back("");
+    ParsedOperator.push_back("");
+    ParsedOperator.push_back("");
+    ParsedOperator.push_back("");
     TaskScheduler::RegisterTask("Commands", *this);
 }
 
@@ -659,9 +659,9 @@ void CommandMain::CommandDo(const std::shared_ptr<IMinecraftClient>& client, con
     ParsedCommand = splitString[0];
 
     for (int i = 0; i < COMMAND_OPERATORS_MAX; i++) {
-        ParsedOperator->at(i) = "";
+        ParsedOperator[i] = "";
         if (i+1 < splitString.size()) {
-            ParsedOperator->at(i) = splitString[i + 1];
+            ParsedOperator.at(i) = splitString[i + 1];
         }
     }
 
@@ -684,21 +684,21 @@ void CommandMain::CommandDo(const std::shared_ptr<IMinecraftClient>& client, con
             continue;
 
         if (client->GetId() == -200 && !cmd.CanConsole) {
-            Logger::LogAdd(MODULE_NAME, "This command is not accessible via console!", LogType::L_ERROR, GLF);
+            Logger::LogAdd(MODULE_NAME, "&cThis command is not accessible via console!", LogType::L_ERROR, GLF);
             found = true;
         }else if (client->GetRank() < cmd.Rank) {
             client->SendChat("&eYou are not allowed to use this command.");
             found = true;
         } else {
             if (!cmd.Hidden) {
-                Logger::LogAdd(MODULE_NAME, "Player '" + client->GetLoginName() + "' used command /" + ParsedCommand + " (" + join(ParsedOperator->begin(), ParsedOperator->end()) + ")", LogType::COMMAND, __FILE__, __LINE__, __FUNCTION__);
+                Logger::LogAdd(MODULE_NAME, "Player '" + client->GetLoginName() + "' used command /" + ParsedCommand + " (" + join(ParsedOperator.begin(), ParsedOperator.end()) + ")", LogType::COMMAND, __FILE__, __LINE__, __FUNCTION__);
             }
             if (!cmd.Plugin.empty()) {
                 // -- Run plugin based command
                 LuaPlugin* lm = LuaPlugin::GetInstance();
                 std::string functionName = cmd.Plugin;
                 Utils::replaceAll(functionName, "Lua:", "");
-                lm->TriggerCommand(functionName, client->GetId(), ParsedCommand, ParsedText0, ParsedText1, ParsedOperator->at(0), ParsedOperator->at(1), ParsedOperator->at(2), ParsedOperator->at(3), ParsedOperator->at(4));
+                lm->TriggerCommand(functionName, client->GetId(), ParsedCommand, ParsedText0, ParsedText1, ParsedOperator.at(0), ParsedOperator.at(1), ParsedOperator.at(2), ParsedOperator.at(3), ParsedOperator.at(4));
 
             } else if (cmd.Function != nullptr) {
                 cmd.Function();
@@ -718,7 +718,7 @@ void CommandMain::CommandCommands() {
     if (c == nullptr)
         return;
 
-    std::string groupName = ParsedOperator->at(0);
+    std::string groupName = ParsedOperator.at(0);
     short playerRank = c->GetRank();
     std::string allString = "all";
 
@@ -770,7 +770,7 @@ void CommandMain::CommandHelp() {
 
     bool found = false;
     for(const auto& cmd : Commands) {
-        if (!Utils::InsensitiveCompare(cmd.Name, ParsedOperator->at(0)))
+        if (!Utils::InsensitiveCompare(cmd.Name, ParsedOperator.at(0)))
             continue;
 
         c->SendChat("&eCommand Help:");
@@ -780,7 +780,7 @@ void CommandMain::CommandHelp() {
     }
 
     if (!found) {
-        c->SendChat("&eCan't find command '" + ParsedOperator->at(0) + "'");
+        c->SendChat("&eCan't find command '" + ParsedOperator.at(0) + "'");
     }
 }
 
@@ -814,9 +814,9 @@ void CommandMain::CommandPlayerInfo() {
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
 
-    PlayerListEntry* ple = pll->GetPointer(ParsedOperator->at(0));
+    PlayerListEntry* ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
     RankItem ri = rm->GetRank(ple->PRank, false);
@@ -847,20 +847,20 @@ void CommandMain::CommandChangeRank() {
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
 
-    std::string playerName = ParsedOperator->at(0);
+    std::string playerName = ParsedOperator.at(0);
 
-    if (!Utils::IsNumeric(ParsedOperator->at(1))) {
+    if (!Utils::IsNumeric(ParsedOperator.at(1))) {
         c->SendChat("&eThe second parameter should be a number!");
         return;
     }
 
-    int rankVal = std::stoi(ParsedOperator->at(1));
+    int rankVal = std::stoi(ParsedOperator.at(1));
     std::string reason = ParsedText2;
 
     if (rankVal >= -32768 && rankVal <= 32767) {
-        PlayerListEntry* ple = pll->GetPointer(ParsedOperator->at(0));
+        PlayerListEntry* ple = pll->GetPointer(ParsedOperator.at(0));
         if (ple == nullptr) {
-            c->SendChat("&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+            c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
             return;
         }
         if (c->GetRank() <= ple->PRank) {
@@ -888,10 +888,10 @@ void CommandMain::CommandGlobal() {
     std::string offString = "off";
     std::string falseString = "false";
 
-    if (Utils::InsensitiveCompare(ParsedOperator->at(0), onString) || Utils::InsensitiveCompare(ParsedOperator->at(0), trueString)) {
+    if (Utils::InsensitiveCompare(ParsedOperator.at(0), onString) || Utils::InsensitiveCompare(ParsedOperator.at(0), trueString)) {
         c->SetGlobalChat(true);
         c->SendChat("&eGlobal chat is now on by default.");
-    } else if (Utils::InsensitiveCompare(ParsedOperator->at(0), offString) || Utils::InsensitiveCompare(ParsedOperator->at(0), falseString)) {
+    } else if (Utils::InsensitiveCompare(ParsedOperator.at(0), offString) || Utils::InsensitiveCompare(ParsedOperator.at(0), falseString)) {
         c->SetGlobalChat(false);
         c->SendChat("&eGlobal chat is now off by default.");
     } else {
@@ -964,14 +964,14 @@ void CommandMain::CommandGetRank() {
     Rank* rm = Rank::GetInstance();
     PlayerListEntry* ple;
     
-    if (ParsedOperator->at(0).empty()) {
+    if (ParsedOperator.at(0).empty()) {
         ple = clientEntity->playerList;
     } else {
-        ple = pll->GetPointer(ParsedOperator->at(0));
+        ple = pll->GetPointer(ParsedOperator.at(0));
     }
     
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
 
@@ -1008,9 +1008,9 @@ void CommandMain::CommandKick() {
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator->at(0));
+    ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
     std::string kickReason = (ParsedText1.empty() ? "&eYou were kicked." : ParsedText1);
@@ -1029,9 +1029,9 @@ void CommandMain::CommandBan() {
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator->at(0));
+    ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
     std::string banReason = (ParsedText1.empty() ? "&eYou were banned." : ParsedText1);
@@ -1049,9 +1049,9 @@ void CommandMain::CommandUnban() {
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator->at(0));
+    ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
     if (c->GetRank() > ple->PRank) {
@@ -1068,9 +1068,9 @@ void CommandMain::CommandStop() {
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator->at(0));
+    ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
     std::string stopReason = (ParsedText1.empty() ? "&eYou were stopped." : ParsedText1);
@@ -1088,9 +1088,9 @@ void CommandMain::CommandUnStop() {
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator->at(0));
+    ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
     if (c->GetRank() > ple->PRank) {
@@ -1107,17 +1107,17 @@ void CommandMain::CommandMute() {
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator->at(0));
+    ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
-    if ((ParsedOperator->at(1).empty())) {
-        ParsedOperator->at(1) = "99999";
+    if ((ParsedOperator.at(1).empty())) {
+        ParsedOperator.at(1) = "99999";
     }
 
     if (c->GetRank() > ple->PRank) {
-        ple->Mute(stoi(ParsedOperator->at(1)), "Muted by " + c->GetLoginName());
+        ple->Mute(stoi(ParsedOperator.at(1)), "Muted by " + c->GetLoginName());
     } else {
         c->SendChat("&eCan't mute someone ranked higher than you.");
         return;
@@ -1131,9 +1131,9 @@ void CommandMain::CommandUnmute() {
     Rank* rm = Rank::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator->at(0));
+    ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
     if (c->GetRank() > ple->PRank) {
@@ -1218,8 +1218,8 @@ void CommandMain::CommandLogLast() {
 
     int numLines = 10;
 
-    if (!ParsedOperator->at(0).empty()) {
-        numLines = stoi(ParsedOperator->at(0));
+    if (!ParsedOperator.at(0).empty()) {
+        numLines = stoi(ParsedOperator.at(0));
     }
     c->SendChat("&eLog:");
     Logger* logMain = Logger::GetInstance();
@@ -1240,8 +1240,8 @@ void CommandMain::CommandUndoTime() {
 
     int timeAmount = 60;
 
-    if (!ParsedOperator->at(0).empty()) {
-        timeAmount = stoi(ParsedOperator->at(0));
+    if (!ParsedOperator.at(0).empty()) {
+        timeAmount = stoi(ParsedOperator.at(0));
     }
     if (timeAmount > 3600)
         timeAmount = 3600;
@@ -1255,16 +1255,16 @@ void CommandMain::CommandUndoPlayer() {
     Player_List* playerList= Player_List::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
-    PlayerListEntry* entry= playerList->GetPointer(ParsedOperator->at(0));
+    PlayerListEntry* entry= playerList->GetPointer(ParsedOperator.at(0));
     if (entry == nullptr) {
-        c->SendChat("&eUnable to find a player named '" + ParsedOperator->at(0) + "'.");
+        c->SendChat("&eUnable to find a player named '" + ParsedOperator.at(0) + "'.");
         return;
     }
 
     int timeAmount = 60;
 
-    if (!ParsedOperator->at(1).empty()) {
-        timeAmount = stoi(ParsedOperator->at(1));
+    if (!ParsedOperator.at(1).empty()) {
+        timeAmount = stoi(ParsedOperator.at(1));
     }
     if (timeAmount > 3600)
         timeAmount = 3600;
@@ -1281,8 +1281,8 @@ void CommandMain::CommandUndo() {
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     int timeAmount = 60;
 
-    if (!ParsedOperator->at(0).empty()) {
-        timeAmount = stoi(ParsedOperator->at(0));
+    if (!ParsedOperator.at(0).empty()) {
+        timeAmount = stoi(ParsedOperator.at(0));
     }
     if (timeAmount > 3600)
         timeAmount = 3600;
@@ -1297,10 +1297,10 @@ void CommandMain::CommandTeleport() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
-    std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator->at(0));
+    std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator.at(0));
 
     if (entry == nullptr) {
-        c->SendChat("&eUnable to find a player named '" + ParsedOperator->at(0) + "'.");
+        c->SendChat("&eUnable to find a player named '" + ParsedOperator.at(0) + "'.");
         return;
     }
 
@@ -1311,10 +1311,10 @@ void CommandMain::CommandBring() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
-    std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator->at(0));
+    std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator.at(0));
 
     if (entry == nullptr) {
-        c->SendChat("&eUnable to find a player named '" + ParsedOperator->at(0) + "'.");
+        c->SendChat("&eUnable to find a player named '" + ParsedOperator.at(0) + "'.");
         return;
     }
 
@@ -1325,9 +1325,9 @@ void CommandMain::CommandMapFill() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
-    if (!ParsedOperator->at(0).empty()) {
+    if (!ParsedOperator.at(0).empty()) {
         MapMain* mapMain = MapMain::GetInstance();
-        mapMain->AddFillAction(c->GetId(), e->MapID, ParsedOperator->at(0), ParsedText1);
+        mapMain->AddFillAction(c->GetId(), e->MapID, ParsedOperator.at(0), ParsedText1);
     } else {
         c->SendChat("&ePlease define a function.");
     }
@@ -1353,7 +1353,7 @@ void CommandMain::CommandResizeMap() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
-    if (ParsedOperator->at(0).empty() || ParsedOperator->at(1).empty() || ParsedOperator[2].empty()) {
+    if (ParsedOperator.at(0).empty() || ParsedOperator.at(1).empty() || ParsedOperator[2].empty()) {
         c->SendChat("&ePlease provide an X, Y, and Z value.");
         return;
     }
@@ -1362,9 +1362,9 @@ void CommandMain::CommandResizeMap() {
     int Z = 0;
 
     try {
-        X = stoi(ParsedOperator->at(0));
-        Y = stoi(ParsedOperator->at(1));
-        Z= stoi(ParsedOperator->at(2));
+        X = stoi(ParsedOperator.at(0));
+        Y = stoi(ParsedOperator.at(1));
+        Z= stoi(ParsedOperator.at(2));
     } catch (const std::exception &ex) {
         c->SendChat("&ePlease provide an integer X, Y, and Z value.");
         return;
@@ -1421,14 +1421,14 @@ void CommandMain::CommandMapRankBuildSet() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
-    if (ParsedOperator->at(0).empty()) {
+    if (ParsedOperator.at(0).empty()) {
         c->SendChat("&ePlease provide a rank value.");
         return;
     }
     int mapBuildRank = 0;
 
     try {
-        mapBuildRank = stoi(ParsedOperator->at(0));
+        mapBuildRank = stoi(ParsedOperator.at(0));
     } catch (const std::exception &ex) {
         c->SendChat("&ePlease provide an integer value.");
         return;
@@ -1447,14 +1447,14 @@ void CommandMain::CommandMapRankJoinSet() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
-    if (ParsedOperator->at(0).empty()) {
+    if (ParsedOperator.at(0).empty()) {
         c->SendChat("&ePlease provide a rank value.");
         return;
     }
     int mapJoinRank = 0;
 
     try {
-        mapJoinRank = stoi(ParsedOperator->at(0));
+        mapJoinRank = stoi(ParsedOperator.at(0));
     } catch (const std::exception &ex) {
         c->SendChat("&ePlease provide an integer value.");
         return;
@@ -1473,14 +1473,14 @@ void CommandMain::CommandMapRankShowSet() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
-    if (ParsedOperator->at(0).empty()) {
+    if (ParsedOperator.at(0).empty()) {
         c->SendChat("&ePlease provide a rank value.");
         return;
     }
     int mapShowRank = 0;
 
     try {
-        mapShowRank = stoi(ParsedOperator->at(0));
+        mapShowRank = stoi(ParsedOperator.at(0));
     } catch (const std::exception &ex) {
         c->SendChat("&ePlease provide an integer value.");
         return;

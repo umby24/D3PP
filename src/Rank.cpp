@@ -58,8 +58,8 @@ void Rank::MainFunc() {
     }
 
     Files* f = Files::GetInstance();
-    std::string blockFile = f->GetFile(RANK_FILE_NAME);
-    time_t modTime = Utils::FileModTime(blockFile);
+    const std::string blockFile = f->GetFile(RANK_FILE_NAME);
+    const time_t modTime = Utils::FileModTime(blockFile);
 
     if (modTime != LastFileDate) {
         Load();

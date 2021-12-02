@@ -33,6 +33,14 @@ public:
     void TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, const std::string& function, const std::string& args);
     void TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, const std::string& function);
     void TriggerBuildMode(const std::string &function, int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char block);
+protected:
+    // -- Client Functions
+    int LuaClientGetTable(lua_State* L);
+    int LuaClientGetMapId(lua_State* L);
+    int LuaClientGetIp(lua_State* L);
+    int LuaClientGetLoginName(lua_State* L);
+    int LuaClientGetLoggedIn(lua_State* L);
+    int LuaClientGetEntity(lua_State* L);
 private:
     std::recursive_mutex executionMutex;
     lua_State* state;
@@ -45,13 +53,8 @@ private:
     void BindFunctions();
     void LoadFile(const std::string& path);
     // -- Lua interface functions :)
-    // -- Client Functions
-    int LuaClientGetTable(lua_State *L);
-    int LuaClientGetMapId(lua_State *L);
-    int LuaClientGetIp(lua_State *L);
-    int LuaClientGetLoginName(lua_State *L);
-    int LuaClientGetLoggedIn(lua_State *L);
-    int LuaClientGetEntity(lua_State *L);
+    int luaopen_luad3Client(lua_State* L);
+    static const struct luaL_Reg d3ClientLib[];
     // -- Build Mode
     int LuaBuildModeSet(lua_State *L);
     int LuaBuildModeGet(lua_State *L);

@@ -87,8 +87,8 @@ void Packets::SendSpawnEntity(int clientId, char playerId, std::string name, sho
         c->SendBuffer->Write(x);
         c->SendBuffer->Write(z);
         c->SendBuffer->Write(y);
-        c->SendBuffer->Write(static_cast<unsigned char>(rotation/360*256));
-        c->SendBuffer->Write(static_cast<unsigned char>(look/360*256));
+        c->SendBuffer->Write(static_cast<unsigned char>((rotation*255)/360));
+        c->SendBuffer->Write(static_cast<unsigned char>((look*255)/360));
         c->SendBuffer->Purge();
     }
 }
@@ -102,8 +102,8 @@ void Packets::SendPlayerTeleport(int clientId, char playerId, short x, short y, 
         c->SendBuffer->Write(x);
         c->SendBuffer->Write(z);
         c->SendBuffer->Write(y);
-        c->SendBuffer->Write(static_cast<unsigned char>(rotation/360*256));
-        c->SendBuffer->Write(static_cast<unsigned char>(look/360*256));
+        c->SendBuffer->Write(static_cast<unsigned char>(rotation));
+        c->SendBuffer->Write(static_cast<unsigned char>(look));
         c->SendBuffer->Purge();
     }
 }

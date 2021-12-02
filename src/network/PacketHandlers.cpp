@@ -67,8 +67,8 @@ void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &
     const auto Y = static_cast<unsigned short>(client->ReceiveBuffer->ReadShort());
     const char R = static_cast<char>(client->ReceiveBuffer->ReadByte());
     const char L = static_cast<char>(client->ReceiveBuffer->ReadByte());
-    const float rot = static_cast<float>((R / 255.0) * 360);
-    const float look = static_cast<float>(L / 255.0 * 360);
+    const auto rot = static_cast<float>((R / 255.0) * 360);
+    const auto look = static_cast<float>((L / 255.0) * 360);
 
     const MinecraftLocation inputLocation { rot, look, X, Y, Z};
 

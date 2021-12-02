@@ -275,12 +275,13 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
         return;
     }
 
+    Location = location;
+
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> currentMap = mm->GetPointer(MapID);
-
-    if (SendPos <= priority) {
-        Location = location;
-
+    
+        
+    //Logger::LogAdd(MODULE_NAME, "Rotation: " + stringulate(Location.Rotation) + " Look: " + stringulate(Location.Look), LogType::DEBUG, GLF);
         EventEntityPositionSet eps;
         eps.entityId = Id;
         eps.mapId = mapId;
@@ -322,20 +323,21 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
 
                 if (sendOwn)
                     SendPosOwn = true;
-            } else {
+            }
+            else {
                 MessageToClients(Id, "&eYou are not allowed to join map '" + nm->data.Name + "'");
             }
-        } else {
-            PositionCheck();
-            if (currentMap != nullptr) {
-                if (sendOwn || !SendPosOwn) {
-                    SendPos = priority;
-                    if (sendOwn)
-                        SendPosOwn = true;
-                }
+        }
+        PositionCheck();
+        if (currentMap != nullptr) {
+            if (sendOwn || !SendPosOwn) {
+                SendPos = priority;
+                if (sendOwn)
+                    SendPosOwn = true;
             }
         }
-    }
+    
+    
 
     HandleMove();
 }

@@ -61,7 +61,65 @@ void bail(lua_State *L, const std::string& msg) {
     Logger::LogAdd("Lua", "Fatal Error: " + msg + " " + lua_tostring(L, -1), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
 }
 
+static int l_add_block(lua_State *L)
+{
+    int nArgs = lua_gettop(L);
+    if (nArgs != 2)
+    {
+        Logger::LogAdd("Lua", "Invalid num args", LogType::L_ERROR, GLF);
+        return 0;
+    }
+    std::string blockName(luaL_checkstring(L, 1));
+    int clientId = luaL_checkinteger(L, 2);
 
+    MapBlock newBlock{ 127, blockName, clientId, 0, "", 0, 0, false, false, "", "", 0, 0, 0, 0, false, false, 0, 0, 0 };
+    Block* bm = Block::GetInstance();
+    bm->Blocks[127] = newBlock;
+
+    return 0;
+}
+
+static const struct luaL_Reg d3BlocksLib[] = {
+    {"add", l_add_block},
+    {NULL, NULL}
+};
+
+const struct luaL_Reg LuaPlugin::d3ClientLib[] = {
+    {"getall", &dispatch<&LuaPlugin::LuaClientGetTable>},
+    {"getmap", &dispatch<&LuaPlugin::LuaClientGetMapId>},
+    {"getip", &dispatch<&LuaPlugin::LuaClientGetIp>},
+    {"getloginname",  &dispatch<&LuaPlugin::LuaClientGetLoginName>},
+    {"isloggedin", &dispatch<&LuaPlugin::LuaClientGetLoggedIn>},
+    {"getentity", &dispatch<&LuaPlugin::LuaClientGetEntity>},
+    {NULL, NULL}
+};
+
+int luaopen_luad3blocks(lua_State *L)
+{
+    lua_getglobal(L, "d3blocks");
+    if (lua_isnil(L, -1))
+    {
+        lua_pop(L, 1);
+        lua_newtable(L);
+    }
+    luaL_setfuncs(L, d3BlocksLib, 0);
+    lua_setglobal(L, "d3blocks");
+    return 1;
+}
+
+
+int LuaPlugin::luaopen_luad3Client(lua_State *L)
+{
+    lua_getglobal(L, "d3client");
+    if (lua_isnil(L, -1))
+    {
+        lua_pop(L, 1);
+        lua_newtable(L);
+    }
+    luaL_setfuncs(L, LuaPlugin::d3ClientLib, 0);
+    lua_setglobal(L, "d3client");
+    return 1;
+}
 LuaPlugin::LuaPlugin() {
     this->Setup = [this] { Init(); };
     this->Main = [this] { MainFunc(); };
@@ -71,6 +129,9 @@ LuaPlugin::LuaPlugin() {
 
     state = luaL_newstate();
     luaL_openlibs(state);
+    luaopen_luad3blocks(state);
+    luaopen_luad3Client(state);
+
     *static_cast<LuaPlugin**>(lua_getextraspace(this->state)) = this;
 
     BindFunctions();
@@ -987,7 +1048,7 @@ int LuaPlugin::LuaBuildModeFloatGet(lua_State *L) {
     BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
     val = buildModeMain->GetFloat(clientId, index);
 
-    lua_pushnumber(L, static_cast<lua_Number>(val));
+    lua_pushnumber(L, val);
     return 1;
 }
 
@@ -1093,10 +1154,10 @@ int LuaPlugin::LuaEntityGetX(lua_State *L) {
     float result = -1;
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
     if (foundEntity != nullptr) {
-        result = foundEntity->Location.X()/32.0;
+        result = foundEntity->Location.GetAsBlockCoords().X;
     }
 
-    lua_pushnumber(L, static_cast<lua_Number>(result));
+    lua_pushnumber(L, result);
     return 1;
 }
 
@@ -1111,10 +1172,10 @@ int LuaPlugin::LuaEntityGetY(lua_State *L) {
     float result = -1;
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
     if (foundEntity != nullptr) {
-        result = foundEntity->Location.Y()/32.0;
+        result = foundEntity->Location.GetAsBlockCoords().Y;
     }
 
-    lua_pushnumber(L, static_cast<lua_Number>(result));
+    lua_pushnumber(L, result);
     return 1;
 }
 
@@ -1129,10 +1190,10 @@ int LuaPlugin::LuaEntityGetZ(lua_State *L) {
     float result = -1;
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
     if (foundEntity != nullptr) {
-        result = (foundEntity->Location.Z()+51)/32;
+        result = foundEntity->Location.GetAsBlockCoords().Z;
     }
 
-    lua_pushnumber(L, static_cast<lua_Number>(result));
+    lua_pushnumber(L, result);
     return 1;
 }
 
@@ -1151,7 +1212,7 @@ int LuaPlugin::LuaEntityGetRotation(lua_State *L) {
         result = foundEntity->Location.Rotation;
     }
 
-    lua_pushnumber(L, static_cast<lua_Number>(result));
+    lua_pushnumber(L, result);
     return 1;
 }
 
@@ -1162,9 +1223,9 @@ int LuaPlugin::LuaEntityGetLook(lua_State *L) {
         Logger::LogAdd("Lua", "LuaError: ENTITY_GET_Look called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
-    int entityId = lua_tointeger(L, 1);
+    const int entityId = lua_tointeger(L, 1);
     float result = -1;
-    std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
+    const std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
     if (foundEntity != nullptr) {
         result = foundEntity->Location.Look;
     }
