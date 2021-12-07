@@ -2,13 +2,12 @@
 #define D3PP_LUA_PLUGIN_H
 
 #include <string>
-#include <chrono>
-#include <memory>
 #include <map>
-#include <lua.hpp>
 #include <EventSystem.h>
 
 #include "common/TaskScheduler.h"
+
+struct lua_State;
 
 struct LuaFile {
     std::string FilePath;

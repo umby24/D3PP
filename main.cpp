@@ -14,7 +14,7 @@
 #include "BuildMode.h"
 #include "plugins/Heartbeat.h"
 #include "watchdog.h"
-
+#include "common/Files.h"
 #include "common/Player_List.h"
 #include "Command.h"
 #include "plugins/LuaPlugin.h"
@@ -54,6 +54,7 @@ int main()
  //   _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF);
     srand(time(nullptr));
     Logger::LogAdd("Main", "====== Welcome to D3PP =====", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Files *fm = Files::GetInstance();
     Configuration* config = Configuration::GetInstance();
 
     Block *b = Block::GetInstance();

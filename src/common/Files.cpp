@@ -54,10 +54,12 @@ std::string Files::GetFolder(std::string name) {
 }
 
 void Files::LoadDefault() {
-    Logger::LogAdd(MODULE_NAME, "Files.json not found, generating default.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    std::cout << "Files.json not found, generating default.\n";
+
     folders = { {"Main", ""}, {"Data", "Data/"}, {"Heartbeat", "Heartbeat/"}, {"Logs", "Logs/"}, {"HTML", "HTML/"} };
     files = {{"Answer", "[Main][Data]Answer.txt"}, {"Block", "[Main][Data]Block.txt"}, {"Log", "[Main][Logs]Log_[i].txt"},
-    {"Map_List", "[Main][Data]MapList.txt"}, {"Map_HTML", "[Main][HTML]Maps.html"}};
+    {"Map_List", "[Main][Data]MapList.txt"}, {"Map_HTML", "[Main][HTML]Maps.html"}, {"Playerlist", "[Main][Data]playerlist.sqlite3"}, {"Watchdog_HTML", "[Main][HTML]Watchdog.html"},
+    {"Build_Mode", "[Main][Data]Buildmode.txt"}, {"Command", "[Main][Data]Commands.json"}, {"configuration", "[Main][Data]Config.json"}};
 }
 
 void Files::Load() {

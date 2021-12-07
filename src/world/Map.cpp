@@ -1165,9 +1165,6 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
             rawNewType = oldType.AfterDelete;
 
         MapBlock newType = bm->GetBlock(rawNewType);
-        if (rawBlock == rawNewType) {
-            return;
-        }
 
         if (client->GetRank() < oldType.RankDelete) {
             NetworkFunctions::SystemMessageNetworkSend(client->GetId(), "&eYou are not allowed to delete this block type.");

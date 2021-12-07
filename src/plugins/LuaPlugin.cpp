@@ -64,6 +64,7 @@ void bail(lua_State *L, const std::string& msg) {
 static int l_add_block(lua_State *L)
 {
     int nArgs = lua_gettop(L);
+    
     if (nArgs != 2)
     {
         Logger::LogAdd("Lua", "Invalid num args", LogType::L_ERROR, GLF);

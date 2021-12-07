@@ -6,6 +6,7 @@
 #include "common/Files.h"
 #include "Utils.h"
 #include "common/Logger.h"
+#include <time.h>
 
 watchdog* watchdog::singleton_ = nullptr;
 
@@ -107,7 +108,16 @@ void watchdog::HtmlStats(time_t time_) {
     time_t duration = finishTime - start_time;
     char buffer[255];
     struct tm *tme_info = new tm{};
-    localtime_s(tme_info, &finishTime);
+    #if defined(__unix__)
+        localtime_r(&finishTime, tme_info);
+    #elif defined(_MSC_VER)
+        localtime_s(tme_info, &finishTime);
+    #else
+        static std::mutex mtx;
+        std::lock_guard<std::mutex> lock(mtx);
+        bt = *std::localtime((const time_t*)(&last.Time));
+    #endif
+    
     strftime(buffer, sizeof(buffer), "%H:%M:%S  %m-%d-%Y", tme_info);
     std::string meh(buffer);
     std::string genTimeStr = "[GEN_TIME]";

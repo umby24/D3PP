@@ -120,6 +120,10 @@ void Packets::SendDespawnEntity(int clientId, char playerId) {
 
 void Packets::SendChatMessage(int clientId, std::string message, char location) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
+
+	if (c == nullptr || c == NULL)
+        return;
+
     if (c->canSend && c->SendBuffer != nullptr) {
         const std::scoped_lock sLock(c->sendLock);
         c->SendBuffer->Write(static_cast<unsigned char>(13));

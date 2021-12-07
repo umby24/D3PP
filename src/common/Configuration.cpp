@@ -38,7 +38,15 @@ void Configuration::Load() {
 
     json j;
     std::ifstream inFile(filePath);
-    inFile >> j;
+    try {
+        inFile >> j;
+         Configuration::NetSettings.LoadFromJson(j);
+        Configuration::GenSettings.LoadFromJson(j);
+        Configuration::killSettings.LoadFromJson(j);
+    } catch (int Exception) {
+        Logger::LogAdd("Configuration", "Error loading config file! using defaults.", LogType::L_ERROR, GLF);
+    }
+
     inFile.close();
 
     Configuration::NetSettings.LoadFromJson(j);
@@ -60,6 +68,7 @@ void Configuration::Save() {
 
     std::ofstream outFile(filePath);
     outFile << std::setw(4) << j;
+    outFile.flush();
     outFile.close();
 
     Logger::LogAdd("Configuration", "Configuration Saved.", LogType::NORMAL, GLF);
