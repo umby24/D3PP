@@ -52,26 +52,10 @@ private:
     void BindFunctions();
     void LoadFile(const std::string& path);
     // -- Lua interface functions :)
-    int luaopen_luad3Client(lua_State* L);
-    static const struct luaL_Reg d3ClientLib[];
     // -- Build Mode
-    int LuaBuildModeSet(lua_State *L);
-    int LuaBuildModeGet(lua_State *L);
-    int LuaBuildModeStateSet(lua_State *L);
-    int LuaBuildModeStateGet(lua_State *L);
-    int LuaBuildModeCoordinateSet(lua_State *L);
-    int LuaBuildModeCoordinateGet(lua_State *L);
-    int LuaBuildModeLongSet(lua_State *L);
-    int LuaBuildModeLongGet(lua_State *L);
-    int LuaBuildModeFloatSet(lua_State *L);
-    int LuaBuildModeFloatGet(lua_State *L);
-    int LuaBuildModeStringSet(lua_State *L);
-    int LuaBuildModeStringGet(lua_State *L);
+
     // -- Build Functions
-    int LuaBuildLinePlayer(lua_State *L);
-    int LuaBuildBoxPlayer(lua_State *L);
-    int LuaBuildSpherePlayer(lua_State *L);
-    int LuaBuildRankBox(lua_State *L);
+
     // -- Entity Functions
     int LuaEntityGetTable(lua_State *L);
     int LuaEntityAdd(lua_State *L);
