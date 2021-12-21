@@ -115,7 +115,7 @@ void watchdog::HtmlStats(time_t time_) {
     #else
         static std::mutex mtx;
         std::lock_guard<std::mutex> lock(mtx);
-        bt = *std::localtime((const time_t*)(&last.Time));
+        tme_info = std::localtime((const time_t*)(&finishTime));
     #endif
     
     strftime(buffer, sizeof(buffer), "%H:%M:%S  %m-%d-%Y", tme_info);

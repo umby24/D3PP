@@ -1180,7 +1180,7 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
             return;
         }
         EventMapBlockChangeClient mbc;
-        mbc.playerId = clientEntity->playerList->Number;
+        mbc.clientId = client->GetId();
         mbc.mapId = data.ID;
         mbc.X = X;
         mbc.Y = Y;

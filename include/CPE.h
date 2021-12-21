@@ -20,6 +20,7 @@
 #define BLOCK_DEFS_EXT_NAME "BlockDefinitions"
 
 #include <memory>
+#include <string>
 
 class IMinecraftClient;
 class Entity;
