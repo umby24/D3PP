@@ -15,6 +15,7 @@
 
 struct EntityShort;
 class Entity;
+class Map;
 
 using json = nlohmann::json;
 
@@ -77,8 +78,11 @@ public:
 
     // -- Methods
     Player();
+    void ChangeMap(std::shared_ptr<Map> map);
     void SendMap();
     void PlayerClicked(ClickButton button, ClickAction action, short yaw, short pitch, char targetEntity, Vector3S targetBlock, ClickTargetBlockFace blockFace);
+private:
+    void DespawnEntities();
 };
 
 #endif //D3PP_PLAYER_H

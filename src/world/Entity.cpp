@@ -225,11 +225,6 @@ void Entity::Despawn() {
     Network* n = Network::GetInstance();
     std::shared_ptr<Entity> selfPointer = GetPointer(Id);
 
-    {
-        std::scoped_lock<std::mutex> pLock(entityMutex);
-        AllEntities.erase(Id);
-    }
-
     for(auto const &nc : n->roClients) {
         if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
             continue;
@@ -274,70 +269,35 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
     if (location == Location) {
         return;
     }
-
+    if (mapId < 0) {
+        return;
+    }
     Location = location;
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> currentMap = mm->GetPointer(MapID);
-    
-        
-    //Logger::LogAdd(MODULE_NAME, "Rotation: " + stringulate(Location.Rotation) + " Look: " + stringulate(Location.Look), LogType::DEBUG, GLF);
-        EventEntityPositionSet eps;
-        eps.entityId = Id;
-        eps.mapId = mapId;
-        eps.x = Location.X() / 32.0;
-        eps.y = Location.Y() / 32.0;
-        eps.z = (Location.Z() -51) / 32.0;
-        eps.rotation = Location.Rotation;
-        eps.look = Location.Look;
-        eps.priority = priority;
-        eps.sendOwnClient = sendOwn;
-        Dispatcher::post(eps);
 
-        if (mapId != MapID) { // -- Changing map
-            std::shared_ptr<Map> nm = mm->GetPointer(mapId);
-            if (playerList == nullptr || playerList->PRank >= nm->data.RankJoin) {
-                std::string entityName = GetDisplayname(Id);
-                std::string mapChangeMessage = "&ePlayer '" + entityName + "&e' changed to map '" + nm->data.Name + "'";
-                NetworkFunctions::SystemMessageNetworkSend2All(MapID, mapChangeMessage);
-                NetworkFunctions::SystemMessageNetworkSend2All(mapId, mapChangeMessage);
-                nm->data.Clients += 1;
-                int oldMapId = MapID;
+    EventEntityPositionSet eps;
+    eps.entityId = Id;
+    eps.mapId = mapId;
+    eps.x = Location.X() / 32.0;
+    eps.y = Location.Y() / 32.0;
+    eps.z = (Location.Z() -51) / 32.0;
+    eps.rotation = Location.Rotation;
+    eps.look = Location.Look;
+    eps.priority = priority;
+    eps.sendOwnClient = sendOwn;
+    Dispatcher::post(eps);
 
-                if (currentMap != nullptr)
-                    currentMap->data.Clients -= 1;
+    PositionCheck();
 
-                MapID = mapId;
-                ClientId = GetFreeIdClient(mapId);
-
-                EventEntityMapChange emc;
-                emc.entityId = Id;
-                emc.oldMapId = oldMapId;
-                emc.newMapId = MapID;
-                Dispatcher::post(emc);
-
-                if (associatedClient != nullptr) {
-                    associatedClient->player->MapId = MapID;
-                    associatedClient->player->SendMap();
-                }
-
-                if (sendOwn)
-                    SendPosOwn = true;
-            }
-            else {
-                MessageToClients(Id, "&eYou are not allowed to join map '" + nm->data.Name + "'");
-            }
+    if (currentMap != nullptr) {
+        if (sendOwn || !SendPosOwn) {
+            SendPos = priority;
+            if (sendOwn)
+                SendPosOwn = true;
         }
-        PositionCheck();
-        if (currentMap != nullptr) {
-            if (sendOwn || !SendPosOwn) {
-                SendPos = priority;
-                if (sendOwn)
-                    SendPosOwn = true;
-            }
-        }
-    
-    
+    }
 
     HandleMove();
 }
@@ -382,20 +342,11 @@ void Entity::PositionCheck() {
     }
 }
 
-void Entity::Send() {
-
-}
-
-void Entity::Delete() {
-
-}
-
 void Entity::Add(const std::shared_ptr<Entity> &e) {
     {
         std::scoped_lock<std::mutex> pLock(entityMutex);
         AllEntities.insert(std::make_pair(e->Id, e));
     }
-
     EventEntityAdd ea;
     ea.entityId = e->Id;
     Dispatcher::post(ea);

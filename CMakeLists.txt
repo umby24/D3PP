@@ -80,7 +80,9 @@ enable_testing()
 add_executable(
   hello_test
   Testing/hello_test.cc
+  Testing/world/entity_test.cc
   include/Utils.cpp
+  src/world/Entity.cpp
         src/EventSystem.cpp
         src/events/EntityEventArgs.cpp
         Testing/utils_test.cc)

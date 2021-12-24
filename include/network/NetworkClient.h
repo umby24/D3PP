@@ -36,6 +36,8 @@ public:
     virtual void Kick(const std::string& message, bool hide) = 0;
     virtual void SendDefineBlock(BlockDefinition newBlock) = 0;
     virtual void SendDeleteBlock(unsigned char blockId) = 0;
+    virtual void SpawnEntity(std::shared_ptr<Entity> e) = 0;
+    virtual void DespawnEntity(std::shared_ptr<Entity> e) = 0;
 };
 
 class NetworkClient : public IMinecraftClient {
@@ -88,8 +90,8 @@ public:
     bool GetGlobalChat() override;
     void SetGlobalChat(bool active) override;
 
-    void SpawnEntity(std::shared_ptr<Entity> e);
-    void DespawnEntity(std::shared_ptr<Entity> e);
+    void SpawnEntity(std::shared_ptr<Entity> e) override;
+    void DespawnEntity(std::shared_ptr<Entity> e) override;
     void SendChat(std::string message) override;
     void HoldThis(unsigned char blockType, bool canChange);
     void CreateSelection(unsigned char selectionId, std::string label, short startX, short startY, short startZ, short endX, short endY, short endZ, short red, short green, short blue, short opacity);

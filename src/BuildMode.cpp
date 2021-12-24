@@ -147,18 +147,15 @@ void BuildModeMain::Resend(int clientId) {
     std::vector<int> toRemove;
     MapMain* mapMain= MapMain::GetInstance();
 
-    for(auto i = 0; i< _resendBlocks.size(); i++) {
-        if (_resendBlocks.at(i).clientId != clientId)
-            continue;
-
-        BlockResend &toResend = _resendBlocks.at(i);
+    while(!_resendBlocks.empty()) {
+        BlockResend &toResend = _resendBlocks.at(0);
 
         std::shared_ptr<Map> thisMap = mapMain->GetPointer(toResend.mapId);
         if (thisMap != nullptr) {
             int blockType = thisMap->GetBlockType(toResend.X, toResend.Y, toResend.Z);
             NetworkFunctions::NetworkOutBlockSet(clientId, toResend.X, toResend.Y, toResend.Z, blockType);
         }
-        _resendBlocks.erase(_resendBlocks.begin() + i);
+        _resendBlocks.erase(_resendBlocks.begin());
     }
 }
 

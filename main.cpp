@@ -21,6 +21,7 @@
 #include "common/Configuration.h"
 #include "ConsoleClient.h"
 #include "network/Network_Functions.h"
+#include "world/Map.h"
 
 using namespace std;
 
@@ -70,6 +71,8 @@ int main()
     LuaPlugin* llll = LuaPlugin::GetInstance();
     watchdog* wd = watchdog::GetInstance();
     CustomBlocks* cb = CustomBlocks::GetInstance();
+    MapMain* mm = MapMain::GetInstance();
+
     TaskScheduler::RunSetupTasks();
     System::IsRunning = true;
     System::startTime = time(nullptr);

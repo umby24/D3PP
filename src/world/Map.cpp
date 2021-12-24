@@ -316,7 +316,7 @@ void MapMain::MapBlockChange() {
                 }
             }
             watchdog::Watch("Map_Blockchanging", "End thread-slope", 2);
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
 }
 
@@ -333,7 +333,6 @@ void MapMain::MapBlockPhysics() {
                 continue;
 
             std::sort(map.second->data.PhysicsQueue.begin(), map.second->data.PhysicsQueue.end(), comparePhysicsTime);
-            watchdog::Watch("Map_Physic", "After: std::sort", 1);
             int counter = 0;
             while (!map.second->data.PhysicsQueue.empty()) {
                 MapBlockDo item = map.second->data.PhysicsQueue.at(0);
@@ -362,7 +361,7 @@ void MapMain::MapBlockPhysics() {
             }
         }
         watchdog::Watch("Map_Physic", "End Thread-Slope", 2);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(3));
     }
 }
 
@@ -1368,7 +1367,7 @@ void Map::QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z
 
     int offset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, 1);
 
-    bool physItemFound = (data.PhysicData.at(std::ceil(offset / 8)) & (1 << (offset % 8)) != 0);
+    bool physItemFound = (data.PhysicData.at(std::ceil(offset / 8)) & (1 << (offset % 8))) != 0;
 
     if (!physItemFound) {
         int mbdIndex = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
@@ -1725,4 +1724,24 @@ void Map::SetBlockData(Vector3S location, MapBlockData mbData) {
     data.Data.at(index+1) = mbData.metadata;
     data.Data.at(index + 2 ) = (mbData.lastPlayer & 0xFF00) >> 8;
     data.Data.at(index + 3) = mbData.lastPlayer & 0xFF;
+}
+
+std::vector<int> Map::GetEntities() {
+    std::vector<int> result;
+
+    for (auto const &e : Entity::AllEntities) {
+        if (e.second->MapID == data.ID)
+            result.push_back(e.second->Id);
+    }
+
+    return result;
+}
+
+void Map::RemoveEntity(std::shared_ptr<Entity> e) {
+    data.Clients -= 1;
+
+}
+
+void Map::AddEntity(std::shared_ptr<Entity> e) {
+
 }

@@ -6,7 +6,6 @@
 #include <gtest/gtest.h>
 #include "Utils.h"
 #include "EventSystem.h"
-#include "events/EntityEventArgs.h"
 
 TEST(UtilsTest, IsNumericBasic) {
     bool actualResult1 = Utils::IsNumeric("1234");

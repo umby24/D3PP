@@ -32,6 +32,8 @@ public:
     void Kick(const std::string& message, bool hide) { /* noop */ }
     void SendDefineBlock(BlockDefinition newBlock) override;
     void SendDeleteBlock(unsigned char blockId) override { }
+    void SpawnEntity(std::shared_ptr<Entity> e) override { }
+    void DespawnEntity(std::shared_ptr<Entity> e) override { }
 private:
     static std::shared_ptr<ConsoleClient> instance;
 };

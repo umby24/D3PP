@@ -923,10 +923,16 @@ void CommandMain::CommandChangeMap() {
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
 
     if (mi != nullptr) {
-        MinecraftLocation spawnLoc {static_cast<unsigned char>(mi->data.SpawnRot), static_cast<unsigned char>(mi->data.SpawnLook)};
-        Vector3F spawnBlockCoords {mi->data.SpawnX, mi->data.SpawnY, mi->data.SpawnZ};
-        spawnLoc.SetAsPlayerCoords(spawnBlockCoords);
-        clientEntity->PositionSet(mi->data.ID, spawnLoc, 255, true);
+        if (mi->data.RankJoin > c->GetRank()) {
+            Entity::MessageToClients(clientEntity->Id, "&eYou are not allowed to join map '" + mi->data.Name + "'");
+            return;
+        }
+        auto concrete = std::static_pointer_cast<NetworkClient>(c);
+        concrete->player->ChangeMap(mi);
+//        MinecraftLocation spawnLoc {static_cast<unsigned char>(mi->data.SpawnRot), static_cast<unsigned char>(mi->data.SpawnLook)};
+//        Vector3F spawnBlockCoords {mi->data.SpawnX, mi->data.SpawnY, mi->data.SpawnZ};
+//        spawnLoc.SetAsPlayerCoords(spawnBlockCoords);
+//        clientEntity->PositionSet(mi->data.ID, spawnLoc, 255, true);
 
     } else {
         c->SendChat("&eUnable to find map '" + ParsedText0 + "'.");
@@ -1521,9 +1527,10 @@ void CommandMain::CommandSetSpawn() {
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
-    cMap->data.SpawnX = clientEntity->Location.X() / 32.0;
-    cMap->data.SpawnY = clientEntity->Location.Y() / 32.0;
-    cMap->data.SpawnZ = clientEntity->Location.Z() / 32.0;
+    Vector3S spawnLoc = clientEntity->Location.GetAsBlockCoords();
+    cMap->data.SpawnX = spawnLoc.X;
+    cMap->data.SpawnY = spawnLoc.Y;
+    cMap->data.SpawnZ = spawnLoc.Z;
     cMap->data.SpawnRot = clientEntity->Location.Rotation;
     cMap->data.SpawnLook = clientEntity->Location.Look;
     c->SendChat("&eSpawn updated.");
@@ -1536,9 +1543,10 @@ void CommandMain::CommandSetKilLSpawn() {
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
-    cMap->data.SpawnX = clientEntity->Location.X() / 32.0;
-    cMap->data.SpawnY = clientEntity->Location.Y() / 32.0;
-    cMap->data.SpawnZ = clientEntity->Location.Z() / 32.0;
+    Vector3S spawnLoc = clientEntity->Location.GetAsBlockCoords();
+    cMap->data.SpawnX = spawnLoc.X;
+    cMap->data.SpawnY = spawnLoc.Y;
+    cMap->data.SpawnZ = spawnLoc.Z;
     cMap->data.SpawnRot = clientEntity->Location.Rotation;
     cMap->data.SpawnLook = clientEntity->Location.Look;
     c->SendChat("&eKill Spawn updated.");

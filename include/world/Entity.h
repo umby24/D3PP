@@ -81,10 +81,8 @@ public:
     void PositionSet(int mapId, MinecraftLocation location, unsigned char priority, bool sendOwn);
     void SetModel(std::string modelName);
     void HandleMove();
-    static void Send();
     static int GetFreeId();
     static int GetFreeIdClient(int mapId);
-    void Delete();
     void Resend(int id);
 
     static std::map<int, std::shared_ptr<Entity>> AllEntities;

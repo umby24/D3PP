@@ -143,8 +143,6 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     }
     newEntity->SendPosOwn = true;
     newEntity->HandleMove();
-   // NetworkFunctions::NetworkOutEntityPosition(c->GetId(), -1, newEntity->Location);
-  //  NetworkFunctions::NetworkOutEntityAdd(c->GetId(), -1, "umby24", newEntity->Location);
     spawnMap->data.Clients += 1;
     pl->SaveFile = true;
 }

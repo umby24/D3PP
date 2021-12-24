@@ -70,74 +70,78 @@ void Physics::BlockPhysics20(std::shared_ptr<Map> physMap, int x, int y, int z) 
 
 /* More realistic fluid (D3 Fluid) */
 void Physics::BlockPhysics21(std::shared_ptr<Map> physMap, int x, int y, int z) {
-    int currentBlock = physMap->GetBlockType(x, y, z);
-    int blockBelow = physMap->GetBlockType(x, y, z-1);
-
-    if (blockBelow == 0) {
-        physMap->BlockMove(x, y, z, x, y, z-1, true, true, 1);
+    if (physMap == nullptr) {
         return;
     }
-    // -- This is a flood-search algorithm..
-    char BlockFillArray[Physics_Fill_X][Physics_Fill_Y];
-    for(auto px = 0; px < Physics_Fill_X; px++) {
-        for (int py = 0; py < Physics_Fill_Y; ++py) {
-            BlockFillArray[px][py] = 0;
-        }
-    }
-
-    _blockFill.clear();
-    BlockFillPhysics item {static_cast<short>(x), static_cast<short>(y), static_cast<short>(z)};
-    _blockFill.push_back(item);
-
-    bool found = false;
-    BlockFillPhysics pointed;
-    while (!_blockFill.empty()) {
-        pointed = _blockFill.at(0);
-        _blockFill.erase(_blockFill.begin());
-
-        if (physMap->GetBlockType(pointed.X, pointed.Y, pointed.Z-1) == 0) {
-            found = true;
-            physMap->BlockMove(x, y, z, pointed.X, pointed.Y, pointed.Z-1, true, true, 1);
-        } else {
-            if (physMap->GetBlockType(pointed.X+1, pointed.Y, pointed.Z) == 0 && BlockFillArray[pointed.X + 1][pointed.Y] == 0) {
-                BlockFillArray[pointed.X + 1][pointed.Y] = 1;
-                BlockFillPhysics newItem;
-                newItem.X = pointed.X + 1;
-                newItem.Y = pointed.Y;
-                newItem.Z = pointed.Z;
-                _blockFill.push_back(newItem);
-            }
-
-            if (physMap->GetBlockType(pointed.X-1, pointed.Y, pointed.Z) == 0 && BlockFillArray[pointed.X -1][pointed.Y] == 0) {
-                BlockFillArray[pointed.X - 1][pointed.Y] = 1;
-                BlockFillPhysics newItem;
-                newItem.X = pointed.X - 1;
-                newItem.Y = pointed.Y;
-                newItem.Z = pointed.Z;
-                _blockFill.push_back(newItem);
-            }
-
-            if (physMap->GetBlockType(pointed.X, pointed.Y+1, pointed.Z) == 0 && BlockFillArray[pointed.X][pointed.Y+1] == 0) {
-                BlockFillArray[pointed.X][pointed.Y+1] = 1;
-                BlockFillPhysics newItem;
-                newItem.X = pointed.X ;
-                newItem.Y = pointed.Y+1;
-                newItem.Z = pointed.Z;
-                _blockFill.push_back(newItem);
-            }
-
-            if (physMap->GetBlockType(pointed.X, pointed.Y-1, pointed.Z) == 0 && BlockFillArray[pointed.X][pointed.Y-1] == 0) {
-                BlockFillArray[pointed.X][pointed.Y-1] = 1;
-                BlockFillPhysics newItem;
-                newItem.X = pointed.X;
-                newItem.Y = pointed.Y -1;
-                newItem.Z = pointed.Z;
-                _blockFill.push_back(newItem);
-            }
-        }
-
-        if (_blockFill.size() > Max_Water_Search || found) {
-            _blockFill.clear();
-        }
-    }
+//
+//    int currentBlock = physMap->GetBlockType(x, y, z);
+//    int blockBelow = physMap->GetBlockType(x, y, z-1);
+//
+//    if (blockBelow == 0) {
+//        physMap->BlockMove(x, y, z, x, y, z-1, true, true, 1);
+//        return;
+//    }
+//    // -- This is a flood-search algorithm..
+//    char BlockFillArray[Physics_Fill_X][Physics_Fill_Y];
+//    for(auto px = 0; px < Physics_Fill_X; px++) {
+//        for (int py = 0; py < Physics_Fill_Y; ++py) {
+//            BlockFillArray[px][py] = 0;
+//        }
+//    }
+//
+//    _blockFill.clear();
+//    BlockFillPhysics item {static_cast<short>(x), static_cast<short>(y), static_cast<short>(z)};
+//    _blockFill.push_back(item);
+//
+//    bool found = false;
+//    BlockFillPhysics pointed;
+//    while (!_blockFill.empty()) {
+//        pointed = _blockFill.at(0);
+//        _blockFill.erase(_blockFill.begin());
+//
+//        if (physMap->GetBlockType(pointed.X, pointed.Y, pointed.Z-1) == 0) {
+//            found = true;
+//            physMap->BlockMove(x, y, z, pointed.X, pointed.Y, pointed.Z-1, true, true, 1);
+//        } else {
+//            if (physMap->GetBlockType(pointed.X+1, pointed.Y, pointed.Z) == 0 && BlockFillArray[pointed.X + 1][pointed.Y] == 0) {
+//                BlockFillArray[pointed.X + 1][pointed.Y] = 1;
+//                BlockFillPhysics newItem;
+//                newItem.X = pointed.X + 1;
+//                newItem.Y = pointed.Y;
+//                newItem.Z = pointed.Z;
+//                _blockFill.push_back(newItem);
+//            }
+//
+//            if (physMap->GetBlockType(pointed.X-1, pointed.Y, pointed.Z) == 0 && BlockFillArray[pointed.X -1][pointed.Y] == 0) {
+//                BlockFillArray[pointed.X - 1][pointed.Y] = 1;
+//                BlockFillPhysics newItem;
+//                newItem.X = pointed.X - 1;
+//                newItem.Y = pointed.Y;
+//                newItem.Z = pointed.Z;
+//                _blockFill.push_back(newItem);
+//            }
+//
+//            if (physMap->GetBlockType(pointed.X, pointed.Y+1, pointed.Z) == 0 && BlockFillArray[pointed.X][pointed.Y+1] == 0) {
+//                BlockFillArray[pointed.X][pointed.Y+1] = 1;
+//                BlockFillPhysics newItem;
+//                newItem.X = pointed.X ;
+//                newItem.Y = pointed.Y+1;
+//                newItem.Z = pointed.Z;
+//                _blockFill.push_back(newItem);
+//            }
+//
+//            if (physMap->GetBlockType(pointed.X, pointed.Y-1, pointed.Z) == 0 && BlockFillArray[pointed.X][pointed.Y-1] == 0) {
+//                BlockFillArray[pointed.X][pointed.Y-1] = 1;
+//                BlockFillPhysics newItem;
+//                newItem.X = pointed.X;
+//                newItem.Y = pointed.Y -1;
+//                newItem.Z = pointed.Z;
+//                _blockFill.push_back(newItem);
+//            }
+//        }
+//
+//        if (_blockFill.size() > Max_Water_Search || found) {
+//            _blockFill.clear();
+//        }
+//    }
 }

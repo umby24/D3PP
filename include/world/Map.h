@@ -19,6 +19,8 @@
 #include "common/MinecraftLocation.h"
 
 class IMinecraftClient;
+class Entity;
+
 enum MapAction {
     SAVE = 0,
     LOAD,
@@ -220,6 +222,10 @@ public:
     void SetEnvColors(int red, int green, int blue, int type);
     void SetMapAppearance(std::string url, int sideblock, int edgeblock, int sidelevel);
     void SetHackControl(bool canFly, bool noclip, bool speeding, bool spawnControl, bool thirdperson, int jumpHeight);
+
+    std::vector<int> GetEntities();
+    void RemoveEntity(std::shared_ptr<Entity> e);
+    void AddEntity(std::shared_ptr<Entity> e);
     std::mutex BlockChangeMutex;
 protected:
 

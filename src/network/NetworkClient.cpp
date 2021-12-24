@@ -6,6 +6,7 @@
 #include "Utils.h"
 #include <memory>
 #include <utility>
+#include <events/EventEntityAdd.h>
 #include "common/ByteBuffer.h"
 #include "common/Logger.h"
 #include "network/Network_Functions.h"
@@ -17,6 +18,8 @@
 #include "common/MinecraftLocation.h"
 #include "EventSystem.h"
 #include "events/EntityEventArgs.h"
+#include "events/EventEntityAdd.h"
+#include "events/EventEntityDelete.h"
 #include "common/Player_List.h"
 
 #ifndef __linux__
@@ -82,7 +85,8 @@ NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
 
 void NetworkClient::SubEvents() {
     eventSubId = Dispatcher::subscribe(EntityEventArgs::moveDescriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EntityEventArgs::spawnDescriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventEntityAdd::descriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventEntityDelete::descriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
 }
 
 void NetworkClient::HandleEvent(const Event& e) {
@@ -102,6 +106,9 @@ void NetworkClient::HandleEvent(const Event& e) {
     } else if (stringulate(e.type()) == ENTITY_EVENT_SPAWN) {
         const EntityEventArgs& ea = static_cast<const EntityEventArgs&>(e);
         std::shared_ptr<Entity> eventEntity = Entity::GetPointer(ea.entityId);
+        if (eventEntity == nullptr) {
+            return;
+        }
         if (eventEntity->Id != player->tEntity->Id)
             NetworkFunctions::NetworkOutEntityAdd(Id, eventEntity->ClientId, Entity::GetDisplayname(ea.entityId), eventEntity->Location);
         else
