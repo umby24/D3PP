@@ -7,6 +7,7 @@
 #include "network/NetworkClient.h"
 #include "Utils.h"
 #include "common/ByteBuffer.h"
+#include "CPE.h"
 
 static std::shared_ptr<NetworkClient> GetPlayer(int id) {
     auto network = Network::GetInstance();
@@ -369,9 +370,18 @@ void Packets::SendDefineBlock(const std::shared_ptr<NetworkClient> &client, Bloc
         client->SendBuffer->Write(def.name);
         client->SendBuffer->Write(static_cast<unsigned char>(def.solidity));
         client->SendBuffer->Write(static_cast<unsigned char>(def.movementSpeed));
-        client->SendBuffer->Write(static_cast<unsigned char>(def.topTexture));
-        client->SendBuffer->Write(static_cast<unsigned char>(def.sideTexture));
-        client->SendBuffer->Write(static_cast<unsigned char>(def.bottomTexture));
+
+        if (CPE::GetClientExtVersion(client, EXTENDED_TEXTURES_EXT_NAME) != 1) {
+            client->SendBuffer->Write(static_cast<unsigned char>(def.topTexture & 0xFF));
+            client->SendBuffer->Write(static_cast<unsigned char>(def.leftTexture & 0xFF));
+            client->SendBuffer->Write(static_cast<unsigned char>(def.bottomTexture & 0xFF));
+        }
+        else {
+            client->SendBuffer->Write(def.topTexture);
+            client->SendBuffer->Write(def.leftTexture);
+            client->SendBuffer->Write(def.bottomTexture);
+        }
+
         client->SendBuffer->Write(static_cast<unsigned char>(def.transmitsLight));
         client->SendBuffer->Write(static_cast<unsigned char>(def.walkSound));
         client->SendBuffer->Write(static_cast<unsigned char>(def.fullBright));
@@ -390,6 +400,51 @@ void Packets::SendRemoveBlock(const std::shared_ptr<NetworkClient> &client, unsi
         const std::scoped_lock sLock(client->sendLock);
         client->SendBuffer->Write(static_cast<unsigned char>(36));
         client->SendBuffer->Write(blockId);
+        client->SendBuffer->Purge();
+    }
+}
+
+void Packets::SendDefineBlockExt(const std::shared_ptr<NetworkClient>& client, BlockDefinition def)
+{
+    if (client->canSend && client->SendBuffer != nullptr) {
+        const std::scoped_lock sLock(client->sendLock);
+        client->SendBuffer->Write(static_cast<unsigned char>(37));
+        client->SendBuffer->Write(def.blockId);
+        client->SendBuffer->Write(def.name);
+        client->SendBuffer->Write(static_cast<unsigned char>(def.solidity));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.movementSpeed));
+
+        if (CPE::GetClientExtVersion(client, EXTENDED_TEXTURES_EXT_NAME) != 1) {
+            client->SendBuffer->Write(static_cast<unsigned char>(def.topTexture & 0xFF));
+            client->SendBuffer->Write(static_cast<unsigned char>(def.leftTexture & 0xFF));
+            client->SendBuffer->Write(static_cast<unsigned char>(def.rightTexture & 0xFF));
+            client->SendBuffer->Write(static_cast<unsigned char>(def.frontTexture & 0xFF));
+            client->SendBuffer->Write(static_cast<unsigned char>(def.backTexture & 0xFF));
+            client->SendBuffer->Write(static_cast<unsigned char>(def.bottomTexture & 0xFF));
+        }
+        else {
+            client->SendBuffer->Write(def.topTexture);
+            client->SendBuffer->Write(def.leftTexture);
+            client->SendBuffer->Write(def.rightTexture);
+            client->SendBuffer->Write(def.frontTexture);
+            client->SendBuffer->Write(def.backTexture);
+            client->SendBuffer->Write(def.bottomTexture);
+        }
+
+        client->SendBuffer->Write(static_cast<unsigned char>(def.transmitsLight));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.walkSound));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.fullBright));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.minX));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.minZ));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.minY));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.maxX));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.maxZ));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.maxY));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.drawType));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.fogDensity));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.fogR));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.fogG));
+        client->SendBuffer->Write(static_cast<unsigned char>(def.fogB));
         client->SendBuffer->Purge();
     }
 }

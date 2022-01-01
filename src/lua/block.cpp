@@ -11,6 +11,7 @@ const struct luaL_Reg LuaBlockLib::lib[] = {
         {"placerank", &LuaBlockGetRankPlace},
         {"deleterank", &LuaBlockGetRankDelete},
         {"clienttype", &LuaBlockGetClientType},
+        {"create", &LuaBlockCreate},
         {NULL, NULL}
 };
 
@@ -116,4 +117,36 @@ int LuaBlockLib::LuaBlockGetClientType(lua_State* L) {
     lua_pushinteger(L, be.OnClient);
 
     return 1;
+}
+
+int LuaBlockLib::LuaBlockCreate(lua_State* L)
+{
+    int nArgs = lua_gettop(L);
+
+    if (nArgs < 2)
+    {
+        Logger::LogAdd("Lua", "LuaError: Block.Create invalid number of arguments", LogType::L_ERROR, GLF);
+        return 0;
+    }
+
+    int blockId = luaL_checkinteger(L, 1);
+    if (blockId <= 66) {
+        Logger::LogAdd("Lua", "LuaError: Please don't redefine the blocks under #66!", LogType::L_ERROR, GLF);
+        return 0;
+    }
+
+    std::string blockName(luaL_checkstring(L, 2));
+    int clientId = luaL_checkinteger(L, 3);
+    // -- opt: physics, physics plugin, phystime, physRandom.
+    int physics = luaL_optinteger(L, 4, 0);
+    std::string physicsPlugin(luaL_optstring(L, 5, ""));
+    int physicsTime = luaL_optinteger(L, 6, 0);
+    int physicsRandom = luaL_optinteger(L, 7, 0);
+
+    MapBlock newBlock{ blockId, blockName, clientId, physics, physicsPlugin, physicsTime, physicsRandom, false, false, "", "", 0, 0, 0, 0, false, false, 0, 0, 0};
+    Block* bm = Block::GetInstance();
+    bm->Blocks[blockId] = newBlock;
+    bm->SaveFile = true;
+
+    return 0;
 }

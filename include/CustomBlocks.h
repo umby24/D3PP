@@ -27,12 +27,21 @@ public:
     std::string name;
     BlockSolidity solidity;
     char movementSpeed;
-    char topTexture;
-    char sideTexture;
-    char bottomTexture;
+    short topTexture;
+    short leftTexture;
+    short rightTexture;
+    short frontTexture;
+    short backTexture;
+    short bottomTexture;
     bool transmitsLight;
     char walkSound;
     bool fullBright;
+    char minX;
+    char minY;
+    char minZ;
+    char maxX;
+    char maxY;
+    char maxZ;
     char shape;
     char drawType;
     char fogDensity;
@@ -53,6 +62,8 @@ public:
     void Add(BlockDefinition blockDef);
     std::vector<BlockDefinition> GetBlocks();
     void Remove(unsigned char blockId);
+    bool HasDef(int blockId);
+    BlockDefinition GetDef(int blockId);
 private:
     static CustomBlocks* instance;
     bool isModified;

@@ -28,12 +28,20 @@ void CPE::PreLoginExtensions(std::shared_ptr<IMinecraftClient> client) {
 void CPE::DuringMapActions(std::shared_ptr<IMinecraftClient> client) {
     auto concrete = std::static_pointer_cast<NetworkClient>(client);
 
-    if (GetClientExtVersion(client, BLOCK_DEFS_EXT_NAME) == 1) {
-        CustomBlocks* cb = CustomBlocks::GetInstance();
-        std::vector<BlockDefinition> blocks = cb->GetBlocks();
+    CustomBlocks* cb = CustomBlocks::GetInstance();
+    std::vector<BlockDefinition> blocks = cb->GetBlocks();
 
+    if (GetClientExtVersion(client, BLOCK_DEFS_EXT_NAME) == 1 && GetClientExtVersion(client, BLOCK_DEFS_EXTENDED_EXT_NAME) != 2) {
         for(auto const &b : blocks) {
             Packets::SendDefineBlock(concrete, b);
+        }
+    }
+    else if (GetClientExtVersion(client, BLOCK_DEFS_EXTENDED_EXT_NAME) == 2) {
+        for (auto const& b : blocks) {
+            if (b.shape == 0)
+                Packets::SendDefineBlock(concrete, b); // -- Sprites must be defined using normal define block packet first :) 
+            else
+                Packets::SendDefineBlockExt(concrete, b);
         }
     }
 }

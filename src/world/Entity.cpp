@@ -272,9 +272,16 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
     if (mapId < 0) {
         return;
     }
+    MapMain* mm = MapMain::GetInstance();
+    
+    if (mapId != MapID && associatedClient != nullptr) {
+        associatedClient->player->ChangeMap(mm->GetPointer(mapId));
+        return;
+    }
+
     Location = location;
 
-    MapMain* mm = MapMain::GetInstance();
+
     std::shared_ptr<Map> currentMap = mm->GetPointer(MapID);
 
     EventEntityPositionSet eps;

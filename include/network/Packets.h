@@ -44,5 +44,6 @@ public:
     static void SendTwoWayPing(const std::shared_ptr<NetworkClient>& client, unsigned char direction, short timeVal);
     static void SendDefineBlock(const std::shared_ptr<NetworkClient>& client, BlockDefinition def);
     static void SendRemoveBlock(const std::shared_ptr<NetworkClient>& client, unsigned char blockId);
+    static void SendDefineBlockExt(const std::shared_ptr<NetworkClient>& client, BlockDefinition def);
 };
 #endif //D3PP_PACKETS_H

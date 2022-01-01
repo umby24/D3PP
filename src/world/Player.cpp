@@ -83,6 +83,15 @@ void Player::SendMap() {
     myMap->Send(myClientId);
     tEntity->SendPosOwn = true;
     tEntity->resend = true;
+    Network* nm = Network::GetInstance();
+    auto myClient = nm->GetClient(myClientId);
+
+    if (myClientId != -1 && myClient != nullptr) {
+        auto entities = myMap->GetEntities();
+        for (auto const& eId : entities) {
+            myClient->SpawnEntity(Entity::GetPointer(eId));
+        }
+    }
 }
 
 void Player::PlayerClicked(ClickButton button, ClickAction action, short yaw, short pitch, char targetEntity,
@@ -117,10 +126,8 @@ void Player::ChangeMap(std::shared_ptr<Map> map) {
 
         MapId = map->data.ID; // -- Set our new map ID
         currentMap->RemoveEntity(tEntity);
-        map->AddEntity(tEntity)
-        map->data.Clients += 1;
-        currentMap->data.Clients -= 1;
-
+        map->AddEntity(tEntity);
+        tEntity->MapID = MapId;
         tEntity->ClientId = Entity::GetFreeIdClient(MapId);
 
         EventEntityMapChange emc;
@@ -144,6 +151,7 @@ void Player::ChangeMap(std::shared_ptr<Map> map) {
         tEntity->Location = mapSpawn;
         tEntity->SendPosOwn = true;
         tEntity->SpawnSelf = true;
+
         tEntity->HandleMove();
         tEntity->Spawn(); // -- Spawn us on other entities.
     }

@@ -45,9 +45,48 @@ void CustomBlocks::Load() {
         loadedItem.name = item["name"];
         loadedItem.solidity = static_cast<BlockSolidity>(item["solidity"]);
         loadedItem.movementSpeed = static_cast<char>(item["movespeed"].get<int>());
-        loadedItem.topTexture = static_cast<char>(item["topTexture"].get<int>());
-        loadedItem.sideTexture = static_cast<char>(item["sideTexture"].get<int>());
-        loadedItem.bottomTexture = static_cast<char>(item["bottomTexture"].get<int>());
+        loadedItem.topTexture = item["topTexture"].get<int>();
+        if (!item["sideTexture"].is_null()) {
+            loadedItem.leftTexture = item["sideTexture"].get<short>();
+            loadedItem.rightTexture = item["sideTexture"].get<short>();
+            loadedItem.frontTexture = item["sideTexture"].get<short>();
+            loadedItem.backTexture = item["sideTexture"].get<short>();
+        }
+        
+        loadedItem.minX = 0; loadedItem.minY = 0; loadedItem.minZ = 0;
+        loadedItem.maxX = 16; loadedItem.maxY = 16; loadedItem.maxZ = 16;
+        // -- cust blocks extended..
+        if (!item["leftTexture"].is_null())
+            loadedItem.leftTexture = item["leftTexture"].get<short>();
+
+        if (!item["rightTexture"].is_null())
+            loadedItem.rightTexture = item["rightTexture"].get<short>();
+
+        if (!item["frontTexture"].is_null())
+            loadedItem.frontTexture = item["frontTexture"].get<short>();
+
+        if (!item["backTexture"].is_null())
+            loadedItem.backTexture = item["backTexture"].get<short>();
+        
+        if (!item["minX"].is_null())
+            loadedItem.minX = item["minX"].get<int>();
+
+        if (!item["minY"].is_null())
+            loadedItem.minY = item["minY"].get<int>();
+
+        if (!item["minZ"].is_null())
+            loadedItem.minZ = item["minZ"].get<int>();
+
+        if (!item["maxX"].is_null())
+            loadedItem.maxX = item["maxX"].get<int>();
+
+        if (!item["maxY"].is_null())
+            loadedItem.maxY = item["maxY"].get<int>();
+
+        if (!item["maxZ"].is_null())
+            loadedItem.maxZ = item["maxZ"].get<int>();
+
+        loadedItem.bottomTexture = item["bottomTexture"].get<short>();
         loadedItem.transmitsLight = item["transmitsLight"];
         loadedItem.walkSound = static_cast<char>(item["walkSound"].get<int>());
         loadedItem.fullBright = item["fullBright"];
@@ -59,6 +98,7 @@ void CustomBlocks::Load() {
         loadedItem.fogR = static_cast<char>(item["fogB"].get<int>());
         Add(loadedItem);
     }
+    isModified = false;
     isModified = false;
     Logger::LogAdd("CustomBlocks", "Loaded " + stringulate(_blockDefintiions.size()) + " custom blocks.", LogType::NORMAL, GLF);
 }
@@ -85,7 +125,17 @@ void CustomBlocks::Save() {
         j[index]["solidity"] = pair.second.solidity;
         j[index]["movespeed"] = pair.second.movementSpeed;
         j[index]["topTexture"] = pair.second.topTexture;
-        j[index]["sideTexture"] = pair.second.sideTexture;
+        j[index]["leftTexture"] = pair.second.leftTexture;
+        j[index]["rightTexture"] = pair.second.rightTexture;
+        j[index]["frontTexture"] = pair.second.frontTexture;
+        j[index]["backTexture"] = pair.second.backTexture;
+        j[index]["minX"] = pair.second.minX;
+        j[index]["minY"] = pair.second.minY;
+        j[index]["minZ"] = pair.second.minZ;
+        j[index]["maxX"] = pair.second.maxX;
+        j[index]["maxY"] = pair.second.maxY;
+        j[index]["maxZ"] = pair.second.maxZ;
+
         j[index]["bottomTexture"] = pair.second.bottomTexture;
         j[index]["transmitsLight"] = pair.second.transmitsLight;
         j[index]["walkSound"] = pair.second.walkSound;
@@ -155,4 +205,17 @@ void CustomBlocks::Remove(unsigned char blockId) {
         _blockDefintiions.erase(blockId);
         return;
     }
+}
+
+bool CustomBlocks::HasDef(int blockId)
+{
+    return _blockDefintiions.contains(blockId);
+}
+
+BlockDefinition CustomBlocks::GetDef(int blockId)
+{
+    if (_blockDefintiions.contains(blockId))
+        return _blockDefintiions[blockId];
+
+    return BlockDefinition();
 }

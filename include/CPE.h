@@ -18,6 +18,8 @@
 #define PLAYER_CLICK_EXT_NAME "PlayerClick"
 #define TWOWAY_PING_EXT_NAME "TwoWayPing"
 #define BLOCK_DEFS_EXT_NAME "BlockDefinitions"
+#define BLOCK_DEFS_EXTENDED_EXT_NAME "BlockDefinitionsExt"
+#define EXTENDED_TEXTURES_EXT_NAME "ExtendedTextures"
 
 #include <memory>
 #include <string>

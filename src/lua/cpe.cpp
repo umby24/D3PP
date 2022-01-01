@@ -33,6 +33,8 @@ const struct luaL_Reg LuaCPELib::lib[] = {
         {"deleteblockdef", &LuaDeleteBlock},
         {"createclientblockdef", &LuaCreateBlockClient},
         {"deleteclientblockdef", &LuaDeleteBlockClient},
+        {"setblockext", &LuaSetBlockExt},
+        {"setblockextclient", &LuaSetBlockExtClient},
        {NULL, NULL}
 };
 
@@ -442,20 +444,25 @@ int LuaCPELib::LuaCreateBlock(lua_State* L) {
         Logger::LogAdd("Lua", "LuaError: You cannot redefine the air block!", LogType::WARNING, GLF);
         return 0;
     }
-    if (blockId > 255 || topTexture > 255 || bottomTexture > 255 || sideTexture > 255) {
-        Logger::LogAdd("Lua", "LuaError: Invalid argument, blockid or texture cannot be more than 255.", LogType::WARNING, GLF);
+    if (blockId > 255) {
+        Logger::LogAdd("Lua", "LuaError: Invalid argument, blockid cannot be more than 255.", LogType::WARNING, GLF);
         return 0;
     }
+
     BlockDefinition newBlock{ static_cast<unsigned char>(blockId),
                                blockName,
                                static_cast<BlockSolidity>(solidity),
                                static_cast<char>(movementSpeed),
-                               static_cast<char>(topTexture),
-                               static_cast<char>(sideTexture),
-                               static_cast<char>(bottomTexture),
+                               topTexture,
+                               sideTexture,
+                                sideTexture,
+                                sideTexture,
+                                sideTexture,
+                              bottomTexture,
                                transmitsLight,
                                static_cast<char>(walkSound),
                                fullBright,
+                                0,0,0,16,16,16,
                                static_cast<char>(shape),
                                static_cast<char>(drawType),
                                static_cast<char>(fogDensity),
@@ -495,6 +502,114 @@ int LuaCPELib::LuaDeleteBlock(lua_State* L) {
     return 0;
 }
 
+int LuaCPELib::LuaSetBlockExt(lua_State* L)
+{
+    // -- Args: blockId, topText, leftText, rightText, frontText, backText, bottomText, minX, minY, minZ, maxX, maxY, maxZ.
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 13) {
+        Logger::LogAdd("Lua", "LuaError: SetBlockExt called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+    
+    Block* b = Block::GetInstance();
+    CustomBlocks* cb = CustomBlocks::GetInstance();
+
+    int blockId = luaL_checkinteger(L, 1);
+
+    if (!cb->HasDef(blockId)) {
+        Logger::LogAdd("Lua", "LuaError: Attempt to set block ext on non-existing block. Create it using CPE.CreateBlockDef first", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    int topTexture = luaL_checkinteger(L, 2);
+    int leftTexture = luaL_checkinteger(L, 3);
+    int rightTexture = luaL_checkinteger(L, 4);
+    int frontTexture = luaL_checkinteger(L, 5);
+    int backTexture = luaL_checkinteger(L, 6);
+    int bottomTexture = luaL_checkinteger(L, 7);
+    int minX = luaL_checkinteger(L, 8);
+    int minY = luaL_checkinteger(L, 9);
+    int minZ = luaL_checkinteger(L, 10);
+    int maxX = luaL_checkinteger(L, 11);
+    int maxY = luaL_checkinteger(L, 12);
+    int maxZ = luaL_checkinteger(L, 13);
+
+    auto def = cb->GetDef(blockId);
+    def.topTexture = topTexture;
+    def.leftTexture = leftTexture;
+    def.rightTexture = rightTexture;
+    def.frontTexture = frontTexture;
+    def.backTexture = backTexture;
+    def.bottomTexture = bottomTexture;
+    def.minX = minX;
+    def.minY = minY;
+    def.minZ = minZ;
+    def.maxX = maxX;
+    def.maxY = maxY;
+    def.maxZ = maxZ;
+    cb->Add(def); // -- will upate :) 
+
+    return 0;
+}
+
+int LuaCPELib::LuaSetBlockExtClient(lua_State* L)
+{
+    // -- Args: blockId, topText, leftText, rightText, frontText, backText, bottomText, minX, minY, minZ, maxX, maxY, maxZ.
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 14) {
+        Logger::LogAdd("Lua", "LuaError: SetBlockExtClient called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    Block* b = Block::GetInstance();
+    CustomBlocks* cb = CustomBlocks::GetInstance();
+
+    int blockId = luaL_checkinteger(L, 1);
+
+    if (!cb->HasDef(blockId)) {
+        Logger::LogAdd("Lua", "LuaError: Attempt to set block ext on non-existing block. Create it using CPE.CreateBlockDef first", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    int topTexture = luaL_checkinteger(L, 2);
+    int leftTexture = luaL_checkinteger(L, 3);
+    int rightTexture = luaL_checkinteger(L, 4);
+    int frontTexture = luaL_checkinteger(L, 5);
+    int backTexture = luaL_checkinteger(L, 6);
+    int bottomTexture = luaL_checkinteger(L, 7);
+    int minX = luaL_checkinteger(L, 8);
+    int minY = luaL_checkinteger(L, 9);
+    int minZ = luaL_checkinteger(L, 10);
+    int maxX = luaL_checkinteger(L, 11);
+    int maxY = luaL_checkinteger(L, 12);
+    int maxZ = luaL_checkinteger(L, 13);
+    int clientId = luaL_checkinteger(L, 14);
+
+    auto def = cb->GetDef(blockId);
+    def.topTexture = topTexture;
+    def.leftTexture = leftTexture;
+    def.rightTexture = rightTexture;
+    def.frontTexture = frontTexture;
+    def.backTexture = backTexture;
+    def.bottomTexture = bottomTexture;
+    def.minX = minX;
+    def.minY = minY;
+    def.minZ = minZ;
+    def.maxX = maxX;
+    def.maxY = maxY;
+    def.maxZ = maxZ;
+
+    Network* n = Network::GetInstance();
+    std::shared_ptr<IMinecraftClient> client = n->GetClient(clientId);
+    if (client != nullptr) {
+        client->SendDefineBlock(def);
+    }
+
+    return 0;
+}
+
 int LuaCPELib::LuaCreateBlockClient(lua_State* L) {
     int nArgs = lua_gettop(L);
 
@@ -525,20 +640,25 @@ int LuaCPELib::LuaCreateBlockClient(lua_State* L) {
         return 0;
     }
 
-    if (blockId > 255 || topTexture > 255 || bottomTexture > 255 || sideTexture > 255) {
-        Logger::LogAdd("Lua", "LuaError: Invalid argument, blockid or texture cannot be more than 255.", LogType::WARNING, GLF);
+    if (blockId > 255) {
+        Logger::LogAdd("Lua", "LuaError: Invalid argument, blockid cannot be more than 255.", LogType::WARNING, GLF);
         return 0;
     }
+
     BlockDefinition newBlock{ static_cast<unsigned char>(blockId),
                                blockName,
                                static_cast<BlockSolidity>(solidity),
                                static_cast<char>(movementSpeed),
                                static_cast<char>(topTexture),
                                static_cast<char>(sideTexture),
+                                static_cast<char>(sideTexture),
+                                static_cast<char>(sideTexture),
+                                static_cast<char>(sideTexture),
                                static_cast<char>(bottomTexture),
                                transmitsLight,
                                static_cast<char>(walkSound),
                                fullBright,
+                                0,0,0,16,16,16,
                                static_cast<char>(shape),
                                static_cast<char>(drawType),
                                static_cast<char>(fogDensity),

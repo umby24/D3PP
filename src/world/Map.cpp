@@ -304,14 +304,15 @@ void MapMain::MapBlockChange() {
                         unsigned char priority = chg.Priority;
                         unsigned char currentMat = m.second->GetBlockType(x, y, z);
 
-                        //if (currentMat != oldMat) {
+                        if (currentMat != oldMat) {
                             NetworkFunctions::NetworkOutBlockSet2Map(m.first, x, y, z, currentMat);
-                      //  }
-//                        int offset = MapMain::GetMapOffset(x, y, z, m.second->data.SizeX, m.second->data.SizeY, m.second->data.SizeZ, 1);
-//                        if (std::ceil(offset / 8) < m.second->data.BlockchangeData.size()) {
-//                            m.second->data.BlockchangeData.at(std::ceil(offset / 8)) = m.second->data.BlockchangeData.at(std::ceil(offset / 8)) & ~(1 << (offset % 8)); // -- Set bitmask
-//                        }
+                        }
+                        int offset = MapMain::GetMapOffset(x, y, z, m.second->data.SizeX, m.second->data.SizeY, m.second->data.SizeZ, 1);
                         m.second->data.ChangeQueue.pop();
+                        if ((std::ceil(offset / 8)) >= m.second->data.BlockchangeData.size()) {
+                            continue;
+                        }
+                        m.second->data.BlockchangeData.at(std::ceil(offset / 8)) = m.second->data.BlockchangeData.at(std::ceil(offset / 8)) & ~(1 << (offset % 8)); // -- Set bitmask
                     }
                 }
             }
@@ -742,6 +743,8 @@ bool Map::Save(std::string directory) {
 
     std::filesystem::create_directory(directory);
     SaveConfigFile(directory);
+    SaveRankBoxFile(directory);
+    SaveTeleporterFile(directory);
     GZIP::GZip_CompressToFile(data.Data.data(), mapDataSize, "temp.gz");
 
     try {
@@ -877,7 +880,7 @@ void Map::Load(std::string directory) {
                     unsigned char point = data.Data.at(index);
                     MapBlock b = blockMain->GetBlock(point);
 
-                    if (b.ReplaceOnLoad >= 0)
+                    if (b.ReplaceOnLoad > 0)
                         data.Data.at(index) = static_cast<char>(b.ReplaceOnLoad);
 
                     data.blockCounter.at(point) += 1;
@@ -940,6 +943,28 @@ void Map::LoadConfigFile(std::string directory) {
     data.ThirdPerson = (pLoader.Read("Allow_Thirdperson", 1) > 0);
     data.Weather = (pLoader.Read("Allow_Weatherchange", 1) > 0);
     data.JumpHeight = pLoader.Read("Jumpheight", -1);
+    // -- Sanity checks
+    if (data.JumpHeight > 1000 || data.JumpHeight < -1)
+        data.JumpHeight = -1;
+    if (data.RankBuild > 65535 || data.RankBuild < 0)
+        data.RankBuild = 0;
+    if (data.RankJoin > 65535 || data.RankJoin < 0)
+        data.RankJoin = 0;
+    if (data.RankShow > 65535 || data.RankShow < 0)
+        data.RankShow = 0;
+    if (data.SaveInterval > 1000 || data.SaveInterval < 0)
+        data.SaveInterval = 10;
+    if (data.SkyColor < -1)
+        data.SkyColor = -1;
+    if (data.FogColor < -1)
+        data.FogColor = -1;
+    if (data.CloudColor < -1)
+        data.CloudColor = -1;
+    if (data.alight < -1)
+        data.alight = -1;
+    if (data.dlight < -1)
+        data.dlight = -1;
+
 }
 
 void Map::LoadRankBoxFile(std::string directory) {
@@ -1267,6 +1292,12 @@ void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z,
         return;
     }
     int offset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, 1);
+
+    bool bcItemFound = (data.BlockchangeData.at(std::ceil(offset / 8)) & (1 << (offset % 8))) != 0;
+
+    if (bcItemFound)
+        return;
+
     MapBlockChanged changeItem { X, Y, Z, priority, oldType};
     const std::scoped_lock<std::mutex> sLock(data.bcMutex);
     data.ChangeQueue.push(changeItem);
@@ -1743,5 +1774,6 @@ void Map::RemoveEntity(std::shared_ptr<Entity> e) {
 }
 
 void Map::AddEntity(std::shared_ptr<Entity> e) {
+    data.Clients += 1;
 
 }

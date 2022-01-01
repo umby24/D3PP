@@ -52,27 +52,27 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     bool preLoginCorrect = true;
     if (version != 7) {
         preLoginCorrect = false;
-        Logger::LogAdd(MODULE_NAME, "Unknown Client version: " + stringulate(version), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Unknown Client version: " + stringulate(version), LogType::L_ERROR, GLF);
         c->Kick("Unknown client version", true);
     } else if (Chat::StringIV(name)) {
         preLoginCorrect = false;
-        Logger::LogAdd(MODULE_NAME, "Invalid Name: " + name, LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Invalid Name: " + name, LogType::L_ERROR, GLF);
         c->Kick("Invalid name", true);
     } else if (name.empty()) {
         preLoginCorrect = false;
-        Logger::LogAdd(MODULE_NAME, "Empty Name provided: " + stringulate(version), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Empty Name provided: " + stringulate(version), LogType::L_ERROR, GLF);
         c->Kick("Invalid name", true);
     } else if (n->roClients.size() > Configuration::NetSettings.MaxPlayers) {
         preLoginCorrect = false;
-        Logger::LogAdd(MODULE_NAME, "Login Failed: Server is full", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Login Failed: Server is full", LogType::L_ERROR, GLF);
         c->Kick("Server is full", true);
     } else if (mm->GetPointer(Configuration::GenSettings.SpawnMapId) == nullptr) {
          preLoginCorrect = false;
-        Logger::LogAdd(MODULE_NAME, "Login Failed: Spawnmap invalid", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Login Failed: Spawnmap invalid", LogType::L_ERROR, GLF);
         c->Kick("&eSpawnmap Invalid", true);
     } else if (Configuration::NetSettings.VerifyNames && c->IP != "127.0.0.1" && (!hbm->VerifyName(name, mppass))) {
         preLoginCorrect = false;
-        Logger::LogAdd(MODULE_NAME, "Login Failed: failed name verification", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Login Failed: failed name verification", LogType::L_ERROR, GLF);
         c->Kick("&eName verification failed", true);
     }
     
@@ -113,8 +113,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     c->LoggedIn = true;
     Entity::Add(newEntity);
     Entity::SetDisplayName(newEntity->Id, currentRank.Prefix, name, currentRank.Suffix);
-    newEntity->SpawnSelf = true;
-    newEntity->Spawn();
+
 
     std::string motd = MapMain::GetMapMOTDOverride(spawnMap->data.ID);
 
@@ -125,7 +124,10 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 
     c->player->SendMap();
 
-    Logger::LogAdd(MODULE_NAME, "Player Logged in (IP:" + c->IP + " Name:" + name + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    newEntity->SpawnSelf = true;
+    newEntity->Spawn();
+
+    Logger::LogAdd(MODULE_NAME, "Player Logged in (IP:" + c->IP + " Name:" + name + ")", LogType::NORMAL, GLF);
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(newEntity->Id) + "&e' logged in");
     NetworkFunctions::SystemMessageNetworkSend(c->GetId(), Configuration::GenSettings.WelcomeMessage);
     
@@ -143,7 +145,8 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     }
     newEntity->SendPosOwn = true;
     newEntity->HandleMove();
-    spawnMap->data.Clients += 1;
+    spawnMap->AddEntity(newEntity);
+
     pl->SaveFile = true;
 }
 
@@ -157,7 +160,7 @@ void Client::LoginCpe(int clientId, std::string name, std::string mppass, char v
     c->player->MPPass = mppass;
     c->CPE = true;
     c->player->ClientVersion = version;
-    Packets::SendExtInfo(c, "D3PP Server Alpha", 17);
+    Packets::SendExtInfo(c, "D3PP Server Alpha", 19);
     Packets::SendExtEntry(c, CUSTOM_BLOCKS_EXT_NAME, 1);
     Packets::SendExtEntry(c, HELDBLOCK_EXT_NAME, 1);
     Packets::SendExtEntry(c, CLICK_DISTANCE_EXT_NAME, 1);
@@ -175,7 +178,10 @@ void Client::LoginCpe(int clientId, std::string name, std::string mppass, char v
     Packets::SendExtEntry(c, PLAYER_CLICK_EXT_NAME, 1);
     Packets::SendExtEntry(c, TWOWAY_PING_EXT_NAME, 1);
     Packets::SendExtEntry(c, BLOCK_DEFS_EXT_NAME, 1);
-    Logger::LogAdd(MODULE_NAME, "LoginCPE complete", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Packets::SendExtEntry(c, BLOCK_DEFS_EXTENDED_EXT_NAME, 2);
+    Packets::SendExtEntry(c, EXTENDED_TEXTURES_EXT_NAME, 1);
+
+    Logger::LogAdd(MODULE_NAME, "LoginCPE complete", LogType::NORMAL, GLF);
 }
 
 void Client::Logout(int clientId, std::string message, bool showtoall) {
@@ -189,12 +195,12 @@ void Client::Logout(int clientId, std::string message, bool showtoall) {
         return;
     }
 
-    Logger::LogAdd(MODULE_NAME, "Player logged out (IP: " + c->IP + " Name: " + c->player->LoginName + " Message: " + message + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Player logged out (IP: " + c->IP + " Name: " + c->player->LoginName + " Message: " + message + ")", LogType::NORMAL, GLF);
 
     if (c->player && c->player->tEntity) {
         std::shared_ptr<Map> currentMap = mm->GetPointer(c->player->tEntity->MapID);
         if (currentMap != nullptr) {
-            currentMap->data.Clients -= 1;
+            currentMap->RemoveEntity(c->player->tEntity);
         }
 
         if (showtoall && !c->player->LogoutHide) {

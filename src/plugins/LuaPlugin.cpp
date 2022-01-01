@@ -325,9 +325,6 @@ void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, const
 void LuaPlugin::TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, const std::string& function) {
     std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(state, function.c_str());
-    if (!lua_checkstack(state, 1)) {
-        Logger::LogAdd("Lua", "State is fucked", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-    }
     if (lua_isfunction(state, -1)) {
         lua_pushinteger(state, static_cast<lua_Integer>(mapId));
         lua_pushinteger(state, static_cast<lua_Integer>(X));

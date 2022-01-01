@@ -29,6 +29,9 @@ protected:
     static int LuaMapHackcontrolSet(lua_State* L);
     static int LuaCreateBlock(lua_State* L);
     static int LuaDeleteBlock(lua_State* L);
+    static int LuaSetBlockExt(lua_State* L);
+    static int LuaSetBlockExtClient(lua_State* L);
+
     static int LuaCreateBlockClient(lua_State* L);
     static int LuaDeleteBlockClient(lua_State* L);
 private:

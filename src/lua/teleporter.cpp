@@ -80,7 +80,7 @@ int LuaTeleporterLib::LuaTeleporterGetBox(lua_State* L) {
 
     if (chosenMap->data.Teleporter.find(tpId) == chosenMap->data.Teleporter.end())
         return 0;
-
+    
     lua_pushinteger(L, chosenMap->data.Teleporter[tpId].X0);
     lua_pushinteger(L, chosenMap->data.Teleporter[tpId].Y0);
     lua_pushinteger(L, chosenMap->data.Teleporter[tpId].Z0);
@@ -154,25 +154,25 @@ int LuaTeleporterLib::LuaTeleporterAdd(lua_State* L) {
 
     if (chosenMap->data.Teleporter.find(tpId) != chosenMap->data.Teleporter.end())
         return 0;
+    Teleporter::AddTeleporter(chosenMap, tpId, start.X, end.X, start.Y, end.Y, start.Z, end.Z, destMapUniqueId, destMapId, DestX, DestY, DestZ, DestRot, DestLook);
+    //MapTeleporterElement newTp{
+    //    tpId,
+    //    start.X,
+    //    start.Y,
+    //    start.Z,
+    //    end.X,
+    //    end.Y,
+    //    end.Z,
+    //    destMapUniqueId,
+    //    destMapId,
+    //    DestX,
+    //    DestY,
+    //    DestZ,
+    //    DestRot,
+    //    DestLook
+    //};
 
-    MapTeleporterElement newTp{
-        tpId,
-        start.X,
-        start.Y,
-        start.Z,
-        end.X,
-        end.Y,
-        end.Z,
-        destMapUniqueId,
-        destMapId,
-        DestX,
-        DestY,
-        DestZ,
-        DestRot,
-        DestLook
-    };
-
-    chosenMap->data.Teleporter.insert(std::make_pair(tpId, newTp));
+    //chosenMap->data.Teleporter.insert(std::make_pair(tpId, newTp));
 
     return 0;
 }

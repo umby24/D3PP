@@ -24,7 +24,7 @@ files.each {|file| # For each include file we found
 	fileResult = []
 	bFile = File.new(file, "r")
 	while (line = bFile.gets)
-		line = line.gsub("Network_Out_Block_Set", "")
+		line = line.gsub("Network_Out_Block_Set", "Network.setblock")
 		line = line.gsub("Client_Get_Table", "Client.getall")
 		line = line.gsub("Client_Get_Map_ID", "Client.getmap")
 		line = line.gsub("Client_Get_IP", "Client.getip")

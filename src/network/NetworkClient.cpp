@@ -325,9 +325,18 @@ void NetworkClient::SetGlobalChat(bool active) {
 }
 
 void NetworkClient::SendDefineBlock(BlockDefinition newBlock) {
-    Packets::SendDefineBlock(GetSelfPointer(), newBlock);
+    if (CPE::GetClientExtVersion(GetSelfPointer(), BLOCK_DEFS_EXT_NAME) == 0)
+        return;
+
+    if (CPE::GetClientExtVersion(GetSelfPointer(), BLOCK_DEFS_EXTENDED_EXT_NAME) != 2)
+        Packets::SendDefineBlock(GetSelfPointer(), newBlock);
+    else
+        Packets::SendDefineBlockExt(GetSelfPointer(), newBlock);
 }
 
 void NetworkClient::SendDeleteBlock(unsigned char blockId) {
+    if (CPE::GetClientExtVersion(GetSelfPointer(), BLOCK_DEFS_EXT_NAME) == 0)
+        return;
+
     Packets::SendRemoveBlock(GetSelfPointer(), blockId);
 }
