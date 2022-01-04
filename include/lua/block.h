@@ -16,6 +16,10 @@ protected:
     static int LuaBlockGetRankDelete(lua_State* L);
     static int LuaBlockGetClientType(lua_State* L);
     static int LuaBlockCreate(lua_State* L);
+    static int LuaBlockSetRankPlace(lua_State* L);
+    static int LuaBlockSetRankDelete(lua_State* L);
+    static int LuaBlockSetKills(lua_State* L);
+    static int LuaBlockSetPhysics(lua_State* L);
 private:
 };
 

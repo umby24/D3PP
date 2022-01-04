@@ -10,6 +10,10 @@ const struct luaL_Reg LuaBlockLib::lib[] = {
         {"name", &LuaBlockGetName},
         {"placerank", &LuaBlockGetRankPlace},
         {"deleterank", &LuaBlockGetRankDelete},
+        {"setplacerank", &LuaBlockSetRankPlace},
+        {"setdeleterank", &LuaBlockSetRankDelete},
+        {"setphysics", &LuaBlockSetPhysics},
+        {"setkills", &LuaBlockSetKills},
         {"clienttype", &LuaBlockGetClientType},
         {"create", &LuaBlockCreate},
         {NULL, NULL}
@@ -148,5 +152,96 @@ int LuaBlockLib::LuaBlockCreate(lua_State* L)
     bm->Blocks[blockId] = newBlock;
     bm->SaveFile = true;
 
+    return 0;
+}
+
+int LuaBlockLib::LuaBlockSetRankPlace(lua_State* L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Block_Set_Rank_Place() called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    int blockId = luaL_checkinteger(L, 1);
+    int setRank = luaL_checkinteger(L, 2);
+
+    Block* bm = Block::GetInstance();
+    MapBlock be = bm->GetBlock(blockId);
+
+    be.RankPlace = setRank;
+    bm->Blocks[be.Id] = be;
+    bm->SaveFile = true;
+    return 0;
+}
+
+int LuaBlockLib::LuaBlockSetRankDelete(lua_State* L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Block_Set_Rank_Delete() called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    int blockId = luaL_checkinteger(L, 1);
+    int setRank = luaL_checkinteger(L, 2);
+
+    Block* bm = Block::GetInstance();
+    MapBlock be = bm->GetBlock(blockId);
+
+    be.RankDelete = setRank;
+    bm->Blocks[be.Id] = be;
+    bm->SaveFile = true;
+    return 0;
+}
+
+int LuaBlockLib::LuaBlockSetKills(lua_State* L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Block_Set_Kills() called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    int blockId = luaL_checkinteger(L, 1);
+    bool kills = luaL_checkinteger(L, 2) > 0;
+    
+    Block* bm = Block::GetInstance();
+    MapBlock be = bm->GetBlock(blockId);
+
+    be.Kills = kills;
+    bm->Blocks[be.Id] = be;
+    bm->SaveFile = true;
+    return 0;
+}
+
+int LuaBlockLib::LuaBlockSetPhysics(lua_State* L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 7) {
+        Logger::LogAdd("Lua", "LuaError: Block_Set_Physics() called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    int blockId = luaL_checkinteger(L, 1);
+    int physics = luaL_checkinteger(L, 2);
+    bool onLoad = luaL_checkinteger(L, 3) > 0;
+    std::string physPlugin(luaL_checkstring(L, 4));
+    int physRandom = luaL_checkinteger(L, 5);
+    bool repeat = luaL_checkinteger(L, 6);
+    int physTime = luaL_checkinteger(L, 7);
+    // -- physics, onload, plugin, random, repeat, time,
+    Block* bm = Block::GetInstance();
+    MapBlock be = bm->GetBlock(blockId);
+
+    be.Physics = physics;
+    be.PhysicsOnLoad = onLoad;
+    be.PhysicsPlugin = physPlugin;
+    be.PhysicsRandom = physRandom;
+    be.PhysicsRepeat = repeat;
+    be.PhysicsTime = physTime;
+
+    bm->Blocks[be.Id] = be;
+    bm->SaveFile = true;
     return 0;
 }

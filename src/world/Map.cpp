@@ -1225,9 +1225,11 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
         return;
     }
     Vector3S locationVector {static_cast<short>(X), static_cast<short>(Y), static_cast<short>(Z)};
+
     Block* bm = Block::GetInstance();
     int blockOffset = MapMain::GetMapOffset(X, Y, Z, data.SizeX, data.SizeY, data.SizeZ, MAP_BLOCK_ELEMENT_SIZE);
     auto roData = GetBlockData(locationVector);
+
 
     EventMapBlockChange event;
     event.playerNumber = playerNumber;
@@ -1241,7 +1243,8 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
     Dispatcher::post(event); // -- Post this event out!
 
     MapBlock oldType = bm->GetBlock(roData.type);
-    MapBlock newType = bm->GetBlock(type);
+  //  MapBlock newType = bm->GetBlock(type);
+
 
     if (type != roData.type && undo) {
         Undo::Add(playerNumber, data.ID, X, Y, Z, oldType.Id, roData.lastPlayer);
@@ -1249,11 +1252,12 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
     if (type != roData.type && send) {
         QueueBlockChange(X, Y, Z, priority, oldType.Id);
     }
-    data.blockCounter.at(roData.type)--;
-    data.blockCounter.at(type)++;
+  //  data.blockCounter.at(roData.type)--;
+  //  data.blockCounter.at(type)++;
     roData.type = type;
     roData.lastPlayer = playerNumber;
     SetBlockData(locationVector, roData);
+
 
     if (physic) {
         for (int ix = -1; ix < 2; ix++) {
