@@ -10,3 +10,5 @@ cmake-build-mingw64/
 Logs/
 obj/
 *.exe
+.cache/
+cmake-build-*/

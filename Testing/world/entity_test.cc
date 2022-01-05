@@ -46,3 +46,21 @@ TEST(EntityTest, GetPointerTest) {
     auto nothingPointer = Entity::GetPointer(0, true);
     assert(nothingPointer == nullptr);
 }
+TEST(EntityTest, GetFreeIdTest) {
+    auto newEPointer = std::make_shared<Entity>("testEntity", 0, 1, 2, 3, 4, 5);
+    Entity::Add(newEPointer);
+
+    assert(newEPointer->Id == 0);
+    assert(Entity::GetFreeId() == 1);
+}
+
+TEST(EntityTest, SetDisplayNameTest) {
+    Entity::SetDisplayName(123, "givenPrefix", "givenName", "givenSuffix");
+    auto newEPointer = std::make_shared<Entity>("testEntity", 0, 1, 2, 3, 4, 5);
+    Entity::Add(newEPointer);
+
+    Entity::SetDisplayName(0, "givenPrefix", "givenName", "givenSuffix");
+    assert(newEPointer->Suffix == "givenSuffix");
+    assert(newEPointer->Name == "givenName");
+    assert(newEPointer->Prefix == "givenPrefix");
+}

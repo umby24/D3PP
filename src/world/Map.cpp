@@ -587,8 +587,8 @@ int MapMain::Add(int id, short x, short y, short z, const std::string& name) {
     newMap->data.SizeX = x;
     newMap->data.SizeY = y;
     newMap->data.SizeZ = z;
-    newMap->data.SpawnX = x/2;
-    newMap->data.SpawnY = y/2;
+    newMap->data.SpawnX = static_cast<float>(x/2.0);
+    newMap->data.SpawnY = static_cast<float>(y/2.0);
     newMap->data.SpawnZ = z/1.5;
     newMap->data.loaded = true;
     newMap->data.loading = false;
@@ -956,22 +956,31 @@ void Map::LoadConfigFile(std::string directory) {
     // -- Sanity checks
     if (data.JumpHeight > 1000 || data.JumpHeight < -1)
         data.JumpHeight = -1;
-    if (data.RankBuild > 65535 || data.RankBuild < 0)
+
+    if (data.RankBuild > SHRT_MAX || data.RankBuild < 0)
         data.RankBuild = 0;
-    if (data.RankJoin > 65535 || data.RankJoin < 0)
+
+    if (data.RankJoin > SHRT_MAX || data.RankJoin < 0)
         data.RankJoin = 0;
-    if (data.RankShow > 65535 || data.RankShow < 0)
+
+    if (data.RankShow > SHRT_MAX || data.RankShow < 0)
         data.RankShow = 0;
+
     if (data.SaveInterval > 1000 || data.SaveInterval < 0)
         data.SaveInterval = 10;
+
     if (data.SkyColor < -1)
         data.SkyColor = -1;
+
     if (data.FogColor < -1)
         data.FogColor = -1;
+
     if (data.CloudColor < -1)
         data.CloudColor = -1;
+
     if (data.alight < -1)
         data.alight = -1;
+
     if (data.dlight < -1)
         data.dlight = -1;
 
