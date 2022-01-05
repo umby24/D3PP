@@ -332,13 +332,20 @@ void MapMain::MapBlockPhysics() {
         for(auto const &map : _maps) {
             if (map.second->data.PhysicsStopped)
                 continue;
+            {
+                std::scoped_lock<std::mutex> myLock(map.second->data.physicsQueueMutex);
+                std::sort(map.second->data.PhysicsQueue.begin(), map.second->data.PhysicsQueue.end(), comparePhysicsTime);
+            }
 
-            std::sort(map.second->data.PhysicsQueue.begin(), map.second->data.PhysicsQueue.end(), comparePhysicsTime);
             int counter = 0;
             while (!map.second->data.PhysicsQueue.empty()) {
                 MapBlockDo item = map.second->data.PhysicsQueue.at(0);
                 if (item.time < std::chrono::steady_clock::now()) {
-                    map.second->data.PhysicsQueue.erase(map.second->data.PhysicsQueue.begin());
+                    {
+                        std::scoped_lock<std::mutex> myLock(map.second->data.physicsQueueMutex);
+                        map.second->data.PhysicsQueue.erase(map.second->data.PhysicsQueue.begin());
+                    }
+
                     bool isBlockInBounds = map.second->BlockInBounds(item.X, item.Y, item.Z);
 
                     if (!isBlockInBounds)
@@ -450,8 +457,11 @@ void MapMain::HtmlStats(time_t time_) {
             mapTable += "<td><i>See Memory.html</i></td>\n";
         else
             mapTable += "<td>0 MB (unloaded)</td>\n";
-
-        mapTable += "<td>" + stringulate(m.second->data.PhysicsQueue.size()) + "</td>\n";
+        {
+            const std::scoped_lock<std::mutex> lock(m.second->data.physicsQueueMutex);
+            mapTable += "<td>" + stringulate(m.second->data.PhysicsQueue.size()) + "</td>\n";
+        }
+        
         {
             const std::scoped_lock<std::mutex> sLock(m.second->data.bcMutex);
             mapTable += "<td>" + stringulate(m.second->data.ChangeQueue.size()) + "</td>\n";
@@ -1035,7 +1045,7 @@ void Map::Reload() {
                     unsigned char rawBlock = data.Data.at(offset);
                     MapBlock b = blockMain->GetBlock(rawBlock);
 
-                    if (b.ReplaceOnLoad >= 0)
+                    if (b.ReplaceOnLoad > 0)
                         data.Data.at(offset) = b.ReplaceOnLoad;
 
                     data.blockCounter.at(rawBlock) += 1;
@@ -1413,6 +1423,7 @@ void Map::QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z
         std::string physPlugin = blockEntry.PhysicsPlugin;
 
         if (blockPhysics > 0 || !physPlugin.empty()) {
+            std::scoped_lock<std::mutex> lock(data.physicsQueueMutex);
             data.PhysicData.at(std::ceil(offset / 8)) |= (1 << (offset % 8)); // -- Set bitmask
             auto physTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(blockEntry.PhysicsTime + Utils::RandomNumber(blockEntry.PhysicsRandom));
 

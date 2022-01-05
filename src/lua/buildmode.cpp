@@ -74,6 +74,8 @@ int LuaBuildModeLib::LuaBuildModeGet(lua_State* L) {
 
         if (clientEntity != nullptr) {
             lua_pushstring(L, clientEntity->BuildMode.c_str());
+        } else {
+            lua_pushstring(L, "");
         }
     }
     else {

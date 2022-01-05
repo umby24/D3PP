@@ -162,6 +162,7 @@ CustomBlocks::CustomBlocks() : _blockDefintiions() {
     this->Teardown = [this] { Save(); };
     this->Main = [this] { MainFunc(); };
     this->Interval = std::chrono::seconds(1);
+    lastModified = 0;
     TaskScheduler::RegisterTask("CustomBlocks", *this);
 }
 

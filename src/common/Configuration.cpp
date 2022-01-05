@@ -24,7 +24,8 @@ Configuration::Configuration() {
     this->Main = [this] { MainFunc(); };
     this->Setup = [this] { Load(); };
     this->Teardown = [this] { Save(); };
-
+    saveFile = false;
+    
     TaskScheduler::RegisterTask("Configuration", *this);
 }
 

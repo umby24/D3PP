@@ -65,8 +65,8 @@ int LuaCPELib::LuaClientGetExtension(lua_State* L) {
         return 0;
     }
 
-    int clientId = lua_tointeger(L, 1);
-    std::string extension(lua_tostring(L, 2));
+    int clientId = luaL_checkinteger(L, 1);
+    std::string extension(luaL_checkstring(L, 2));
     int result = 0;
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(clientId);

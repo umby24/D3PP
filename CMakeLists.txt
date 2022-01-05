@@ -3,11 +3,13 @@ include_directories(include/)
 # set the project name
 project(D3PP)
 set(CMAKE_COMPILER_)
+set (MALLOC_CHECK_ 3)
 # set project standard
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-
+set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 
 include(FetchContent)
 FetchContent_Declare(

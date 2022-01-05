@@ -32,3 +32,17 @@ TEST(EntityTest, EntitySpawns) {
 TEST(EntityTest, EntityDespawns) {
 
 }
+
+TEST(EntityTest, GetPointerTest) {
+    auto ePointer = Entity::GetPointer(2);
+    assert(ePointer == nullptr);
+
+    auto newEPointer = std::make_shared<Entity>("testEntity", 0, 1, 2, 3, 4, 5);
+    Entity::Add(newEPointer);
+
+    auto extPointer = Entity::GetPointer(0);
+    assert(extPointer == newEPointer);
+
+    auto nothingPointer = Entity::GetPointer(0, true);
+    assert(nothingPointer == nullptr);
+}

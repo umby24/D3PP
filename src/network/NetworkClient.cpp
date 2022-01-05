@@ -104,18 +104,25 @@ void NetworkClient::HandleEvent(const Event& e) {
         else
             NetworkFunctions::NetworkOutEntityPosition(Id, -1, eventEntity->Location);
     } else if (stringulate(e.type()) == ENTITY_EVENT_SPAWN) {
-        const EntityEventArgs& ea = static_cast<const EntityEventArgs&>(e);
+        const EventEntityAdd& ea = static_cast<const EventEntityAdd&>(e);
         std::shared_ptr<Entity> eventEntity = Entity::GetPointer(ea.entityId);
         if (eventEntity == nullptr) {
             return;
         }
+        if (eventEntity->MapID != player->tEntity->MapID)
+            return;
         if (eventEntity->Id != player->tEntity->Id)
             NetworkFunctions::NetworkOutEntityAdd(Id, eventEntity->ClientId, Entity::GetDisplayname(ea.entityId), eventEntity->Location);
         else
             NetworkFunctions::NetworkOutEntityAdd(Id, -1, Entity::GetDisplayname(ea.entityId), eventEntity->Location);
     } else if (stringulate(e.type()) == ENTITY_EVENT_DESPAWN) {
-        const EntityEventArgs& ea = static_cast<const EntityEventArgs&>(e);
+        const EventEntityDelete& ea = static_cast<const EventEntityDelete&>(e);
         std::shared_ptr<Entity> eventEntity = Entity::GetPointer(ea.entityId);
+        
+        if (eventEntity->MapID != player->tEntity->MapID)
+            return;
+
+        NetworkFunctions::NetworkOutEntityDelete(Id, eventEntity->ClientId);
     }
 }
 
@@ -130,8 +137,10 @@ void NetworkClient::Kick(const std::string& message, bool hide) {
     if (DisconnectTime == 0) {
         DisconnectTime = time(nullptr) + 1;
         LoggedIn = false;
-        player->LogoutHide = hide;
-        Logger::LogAdd(MODULE_NAME, "Client Kicked [" + message + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+        if (player != nullptr) {
+            player->LogoutHide = hide;
+        }
+        Logger::LogAdd(MODULE_NAME, "Client Kicked [" + message + "]", LogType::NORMAL, GLF);
     }
 }
 

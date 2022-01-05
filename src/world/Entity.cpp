@@ -145,6 +145,9 @@ std::shared_ptr<Entity> Entity::GetPointer(int id, bool isClientId) {
     std::shared_ptr<Entity> result = nullptr;
 
     for (auto const &e : AllEntities) {
+        if (e.second == nullptr || e.second->associatedClient == nullptr)
+            continue;
+            
         if (e.second->associatedClient->GetId() == id) {
             result = e.second;
             break;
@@ -350,9 +353,14 @@ void Entity::PositionCheck() {
 }
 
 void Entity::Add(const std::shared_ptr<Entity> &e) {
+    if (e == nullptr) {
+        return;
+    }
+
     {
         std::scoped_lock<std::mutex> pLock(entityMutex);
-        AllEntities.insert(std::make_pair(e->Id, e));
+        auto myPair = std::make_pair(e->Id, e);
+        AllEntities.insert(myPair);
     }
     EventEntityAdd ea;
     ea.entityId = e->Id;

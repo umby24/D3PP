@@ -163,7 +163,7 @@ void BuildModeMain::SetMode(int clientId, std::string mode) {
     std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
 
     if (ne != nullptr) {
-        ne->BuildMode = std::move(mode);
+        ne->BuildMode = mode;
         Resend(clientId);
     }
 }

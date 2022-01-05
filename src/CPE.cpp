@@ -47,15 +47,21 @@ void CPE::DuringMapActions(std::shared_ptr<IMinecraftClient> client) {
 }
 
 int CPE::GetClientExtVersion(std::shared_ptr<IMinecraftClient> client, std::string extension) {
+    if (client == nullptr)
+        return 0;
+
     std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(client);
+    if (c == nullptr)
+        return 0;
+
     if (!c->CPE)
         return 0;
 
-    if (c->Extensions.find(extension) == c->Extensions.end()) {
+    if (!c->Extensions.contains(extension)) {
         return 0;
     }
 
-    return c->Extensions[extension];
+    return c->Extensions.at(extension);
 }
 
 void CPE::AfterMapActions(std::shared_ptr<IMinecraftClient> client) {
