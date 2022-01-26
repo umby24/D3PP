@@ -7,6 +7,8 @@
 #include "world/Map.h"
 std::vector<BlockFillPhysics> Physics::_blockFill;
 
+using namespace D3PP::world;
+
 /* Block falls straight down */
 void Physics::BlockPhysics10(std::shared_ptr<Map> physMap, int x, int y, int z) {
     int currentBlock = physMap->GetBlockType(x, y, z);

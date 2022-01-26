@@ -19,6 +19,9 @@
 const std::string MODULE_NAME = "Command";
 CommandMain* CommandMain::Instance = nullptr;
 
+using namespace D3PP::world;
+using namespace D3PP::Common;
+
 CommandMain::CommandMain() : ParsedOperator{} {
     this->Setup = [this] { Init(); };
     this->Main = [this] { MainFunc(); };
@@ -26,11 +29,11 @@ CommandMain::CommandMain() : ParsedOperator{} {
     SaveFile = false;
     FileDateLast = 0;
     CommandClientId = -1;
-    ParsedOperator.push_back("");
-    ParsedOperator.push_back("");
-    ParsedOperator.push_back("");
-    ParsedOperator.push_back("");
-    ParsedOperator.push_back("");
+    ParsedOperator.emplace_back("");
+    ParsedOperator.emplace_back("");
+    ParsedOperator.emplace_back("");
+    ParsedOperator.emplace_back("");
+    ParsedOperator.emplace_back("");
     TaskScheduler::RegisterTask("Commands", *this);
 }
 
@@ -923,16 +926,14 @@ void CommandMain::CommandChangeMap() {
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
 
     if (mi != nullptr) {
-        if (mi->data.RankJoin > c->GetRank()) {
-            Entity::MessageToClients(clientEntity->Id, "&eYou are not allowed to join map '" + mi->data.Name + "'");
+        MapPermissions perms = mi->GetMapPermissions();
+        if (perms.RankJoin > c->GetRank()) {
+            Entity::MessageToClients(clientEntity->Id, "&eYou are not allowed to join map '" + mi->Name() + "'");
             return;
         }
         auto concrete = std::static_pointer_cast<NetworkClient>(c);
         concrete->player->ChangeMap(mi);
-//        MinecraftLocation spawnLoc {static_cast<unsigned char>(mi->data.SpawnRot), static_cast<unsigned char>(mi->data.SpawnLook)};
-//        Vector3F spawnBlockCoords {mi->data.SpawnX, mi->data.SpawnY, mi->data.SpawnZ};
-//        spawnLoc.SetAsPlayerCoords(spawnBlockCoords);
-//        clientEntity->PositionSet(mi->data.ID, spawnLoc, 255, true);
+        clientEntity->PositionSet(mi->ID, mi->GetSpawn(), 255, true);
 
     } else {
         c->SendChat("&eUnable to find map '" + ParsedText0 + "'.");
@@ -1175,7 +1176,7 @@ void CommandMain::CommandMaterials() {
     }
 }
 
-void CommandMain::CommandListMaps() {
+void CommandMain::CommandListMaps() const {
     Network* nm = Network::GetInstance();
     MapMain* mapMain = MapMain::GetInstance();
 
@@ -1184,8 +1185,9 @@ void CommandMain::CommandListMaps() {
     std::string toSend;
     for(auto const &map : mapMain->_maps) {
         std::string toAdd;
-        if (map.second->data.RankShow <= c->GetRank()) {
-            toAdd += "&e" + map.second->data.Name + " &f| ";
+        MapPermissions perms = map.second->GetMapPermissions();
+        if (perms.RankShow <= c->GetRank()) {
+            toAdd += "&e" + map.second->Name() + " &f| ";
             if (64 - toSend.size() >= toAdd.size())
                 toSend += toAdd;
             else {
@@ -1200,7 +1202,7 @@ void CommandMain::CommandListMaps() {
     }
 }
 
-void CommandMain::CommandServerInfo() {
+void CommandMain::CommandServerInfo() const {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     std::string serverRunTime = stringulate(time(nullptr) - System::startTime / 120.0);
@@ -1395,7 +1397,7 @@ void CommandMain::CommandRenameMap() {
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
-    cMap->data.Name = ParsedText0;
+    //cMap->Name() = ParsedText0;
     mapMain->SaveFile = true;
     c->SendChat("&eMap Renamed.");
 }
@@ -1445,7 +1447,11 @@ void CommandMain::CommandMapRankBuildSet() {
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
-    cMap->data.RankBuild = mapBuildRank;
+
+    MapPermissions currentPerms = cMap->GetMapPermissions();
+    currentPerms.RankBuild = mapBuildRank;
+    cMap->SetMapPermissions(currentPerms);
+
     c->SendChat("&eRank updated.");
 }
 
@@ -1471,7 +1477,11 @@ void CommandMain::CommandMapRankJoinSet() {
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
-    cMap->data.RankJoin = mapJoinRank;
+
+    MapPermissions currentPerms = cMap->GetMapPermissions();
+    currentPerms.RankJoin = mapJoinRank;
+    cMap->SetMapPermissions(currentPerms);
+
     c->SendChat("&eRank updated.");
 }
 
@@ -1497,7 +1507,11 @@ void CommandMain::CommandMapRankShowSet() {
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
-    cMap->data.RankShow = mapShowRank;
+
+    MapPermissions currentPerms = cMap->GetMapPermissions();
+    currentPerms.RankShow = mapShowRank;
+    cMap->SetMapPermissions(currentPerms);
+
     c->SendChat("&eRank updated.");
 }
 
@@ -1507,7 +1521,7 @@ void CommandMain::CommandStopPhysics() {
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
-    cMap->data.PhysicsStopped = true;
+    cMap->PhysicsStopped = true;
     c->SendChat("&ePhysics stopped.");
 }
 
@@ -1517,7 +1531,7 @@ void CommandMain::CommandStartPhysics() {
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
-    cMap->data.PhysicsStopped = false;
+    cMap->PhysicsStopped = false;
     c->SendChat("&ePhysics started.");
 }
 
@@ -1527,12 +1541,7 @@ void CommandMain::CommandSetSpawn() {
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
-    Vector3S spawnLoc = clientEntity->Location.GetAsBlockCoords();
-    cMap->data.SpawnX = spawnLoc.X;
-    cMap->data.SpawnY = spawnLoc.Y;
-    cMap->data.SpawnZ = spawnLoc.Z;
-    cMap->data.SpawnRot = clientEntity->Location.Rotation;
-    cMap->data.SpawnLook = clientEntity->Location.Look;
+    cMap->SetSpawn(clientEntity->Location);
     c->SendChat("&eSpawn updated.");
 }
 
@@ -1543,12 +1552,7 @@ void CommandMain::CommandSetKilLSpawn() {
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
-    Vector3S spawnLoc = clientEntity->Location.GetAsBlockCoords();
-    cMap->data.SpawnX = spawnLoc.X;
-    cMap->data.SpawnY = spawnLoc.Y;
-    cMap->data.SpawnZ = spawnLoc.Z;
-    cMap->data.SpawnRot = clientEntity->Location.Rotation;
-    cMap->data.SpawnLook = clientEntity->Location.Look;
+    cMap->SetSpawn(clientEntity->Location);
     c->SendChat("&eKill Spawn updated.");
 }
 
@@ -1561,15 +1565,15 @@ void CommandMain::CommandTeleporters() {
 
     c->SendChat("&eTeleporters:");
     std::string text;
-    for(auto const &tp : cMap->data.Teleporter) {
-        std::string textAdd = "&e" + tp.first + " &f| ";
-        if (64 - text.size() >= textAdd.size())
-            text+= textAdd;
-        else {
-            c->SendChat(text);
-            text= textAdd;
-        }
-    }
+//    for(auto const &tp : cMap->data.Teleporter) {
+//        std::string textAdd = "&e" + tp.first + " &f| ";
+//        if (64 - text.size() >= textAdd.size())
+//            text+= textAdd;
+//        else {
+//            c->SendChat(text);
+//            text= textAdd;
+//        }
+//    }
     if (!text.empty()) {
         c->SendChat(text);
     }
@@ -1586,13 +1590,13 @@ void CommandMain::CommandDeleteTeleporter() {
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
-    bool tpFound = cMap->data.Teleporter.find(ParsedText0) != cMap->data.Teleporter.end();
-    if (tpFound) {
-        cMap->data.Teleporter.erase(ParsedText0);
-        c->SendChat("&eTeleporter deleted.");
-    } else {
-        c->SendChat("&eTeleporter not found.");
-    }
+//    bool tpFound = cMap->data.Teleporter.find(ParsedText0) != cMap->data.Teleporter.end();
+//    if (tpFound) {
+//        cMap->data.Teleporter.erase(ParsedText0);
+//        c->SendChat("&eTeleporter deleted.");
+//    } else {
+//        c->SendChat("&eTeleporter not found.");
+//    }
 }
 
 void CommandMain::CommandMapInfo() {
@@ -1602,32 +1606,33 @@ void CommandMain::CommandMapInfo() {
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
     std::string textToSend = "&eMapInfo:<br>";
-    textToSend += "&eName: " + cMap->data.Name + "<br>";
-    textToSend += "&eId: " + stringulate(cMap->data.ID) + "<br>";
-    textToSend += "&eUnique ID: " + cMap->data.UniqueID + "<br>";
-    textToSend += "&eDirectory: " + cMap->data.Directory + "<br>";
-    textToSend += "&ePreview type: " + stringulate(cMap->data.overviewType) + "<br>";
-    textToSend += "&eSize: " + stringulate(cMap->data.SizeX)  + "x" + stringulate(cMap->data.SizeY)  + "x" + stringulate(cMap->data.SizeZ) + "<br>";
-    int dataSize = MapMain::GetMapSize(cMap->data.SizeX, cMap->data.SizeY, cMap->data.SizeZ, 4);
-    int bitmaskSize = MapMain::GetMapSize(cMap->data.SizeX, cMap->data.SizeY, cMap->data.SizeZ, 1) / 8;
+    textToSend += "&eName: " + cMap->Name() + "<br>";
+    textToSend += "&eId: " + stringulate(cMap->ID) + "<br>";
+    textToSend += "&eDirectory: " + cMap->filePath + "<br>";
+    Vector3S mapSize = cMap->GetSize();
+    textToSend += "&eSize: " + stringulate(mapSize.X)  + "x" + stringulate(mapSize.Y)  + "x" + stringulate(mapSize.Z) + "<br>";
+    MapPermissions perms = cMap->GetMapPermissions();
 
-    textToSend += "&eMem usage: " + stringulate((dataSize + bitmaskSize + bitmaskSize)/1000000.0) + "MB <br>";
-    textToSend += "&eRanks: Build: " + stringulate(cMap->data.RankBuild) + " Join: " + stringulate(cMap->data.RankJoin) + " Show: " + stringulate(cMap->data.RankShow) + " <br>";
-    textToSend += "&ePhysics Queue: " + stringulate(cMap->data.PhysicsQueue.size());
-    if (cMap->data.PhysicsStopped) {
+    textToSend += "&eRanks: Build: " + stringulate(perms.RankBuild) + " Join: " + stringulate(perms.RankJoin) + " Show: " + stringulate(perms.RankShow) + " <br>";
+    textToSend += "&ePhysics Queue: " + stringulate(cMap->PhysicsQueue.size());
+
+    if (cMap->PhysicsStopped) {
         textToSend += "&cPhysics Stopped&f<br>";
     } else {
         textToSend += "<br>";
     }
+
     {
-        const std::scoped_lock<std::mutex> sLock(cMap->data.bcMutex);
-        textToSend += "&eBlocksend Queue: " + stringulate(cMap->data.ChangeQueue.size());
+        const std::scoped_lock<std::mutex> sLock(cMap->bcMutex);
+        textToSend += "&eBlocksend Queue: " + stringulate(cMap->ChangeQueue.size());
     }
-    if (cMap->data.BlockchangeStopped) {
+
+    if (cMap->BlockchangeStopped) {
         textToSend += "&Block Changes Stopped&f<br>";
     } else {
         textToSend += "<br>";
     }
+
     c->SendChat(textToSend);
 }
 
@@ -1641,9 +1646,10 @@ void CommandMain::CommandPlace() {
     if (blockCoords.X< 0) blockCoords.X = 0;
     if (blockCoords.Y< 0) blockCoords.Y= 0;
     if (blockCoords.Z< 0) blockCoords.Z= 0;
-    if (blockCoords.X>cMap->data.SizeX-1) blockCoords.X = cMap->data.SizeX-1;
-    if (blockCoords.Y>cMap->data.SizeY-1) blockCoords.Y = cMap->data.SizeY-1;
-    if (blockCoords.Z>cMap->data.SizeZ-1) blockCoords.Z = cMap->data.SizeZ-1;
+    Vector3S mapSize = cMap->GetSize();
+    if (blockCoords.X>mapSize.X-1) blockCoords.X = mapSize.X-1;
+    if (blockCoords.Y>mapSize.Y-1) blockCoords.Y = mapSize.Y-1;
+    if (blockCoords.Z>mapSize.Z-1) blockCoords.Z = mapSize.Z-1;
 
     bool found = false;
     unsigned char blockToPlace = 0;

@@ -33,6 +33,9 @@
 
 const std::string MODULE_NAME = "Client";
 
+using namespace D3PP::world;
+using namespace D3PP::Common;
+
 void Client::Login(int clientId, std::string name, std::string mppass, char version) {
     Network *n = Network::GetInstance();
     PlayerMain *pm = PlayerMain::GetInstance();
@@ -101,7 +104,9 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 
     c->GlobalChat = entry->GlobalChat;
     std::shared_ptr<Map> spawnMap = mm->GetPointer(Configuration::GenSettings.SpawnMapId);
-    std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(name, Configuration::GenSettings.SpawnMapId, spawnMap->data.SpawnX, spawnMap->data.SpawnY, spawnMap->data.SpawnZ, spawnMap->data.SpawnRot, spawnMap->data.SpawnLook, c);
+    MinecraftLocation spawnLocation = spawnMap->GetSpawn();
+
+    std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(name, Configuration::GenSettings.SpawnMapId, spawnLocation, c);
     RankItem currentRank = rm->GetRank(entry->PRank, false);
 
     newEntity->buildMaterial = -1;
@@ -109,13 +114,13 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     newEntity->model = "default";
     
     c->player->tEntity = newEntity;
-    c->player->MapId = spawnMap->data.ID;
+    c->player->MapId = spawnMap->ID;
     c->LoggedIn = true;
     Entity::Add(newEntity);
     Entity::SetDisplayName(newEntity->Id, currentRank.Prefix, name, currentRank.Suffix);
 
 
-    std::string motd = MapMain::GetMapMOTDOverride(spawnMap->data.ID);
+    std::string motd = MapMain::GetMapMOTDOverride(spawnMap->ID);
 
     if (motd.empty())
         motd = Configuration::GenSettings.motd;
@@ -137,7 +142,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 
     { // -- Spawn other entities too.
         for(auto const &e : Entity::AllEntities) {
-            if (e.second->MapID != spawnMap->data.ID)
+            if (e.second->MapID != spawnMap->ID)
                 continue;
             
             c->SpawnEntity(e.second);
@@ -194,7 +199,7 @@ void Client::Logout(int clientId, std::string message, bool showtoall) {
     if (!c->LoggedIn) {
         return;
     }
-
+    c->LoggedIn = false;
     Logger::LogAdd(MODULE_NAME, "Player logged out (IP: " + c->IP + " Name: " + c->player->LoginName + " Message: " + message + ")", LogType::NORMAL, GLF);
 
     if (c->player && c->player->tEntity) {

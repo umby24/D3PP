@@ -9,7 +9,7 @@
 using json = nlohmann::json;
 NetworkSettings Configuration::NetSettings { 32, 25565, true, false};
 GeneralSettings Configuration::GenSettings { "D3PP Server", "Welcome to D3PP!","&cWelcome to D3PP", "INFO", 1,160, 3, true };
-KillSettings Configuration::killSettings { 1, MinecraftLocation{ 0, 0, 0, 0, 0} };
+KillSettings Configuration::killSettings { 1, MinecraftLocation{ 0, 0, Vector3S((short)0, (short)0, (short)0)} };
 Configuration* Configuration::_instance = nullptr;
 
 Configuration* Configuration::GetInstance() {

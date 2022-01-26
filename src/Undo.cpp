@@ -6,6 +6,7 @@
 #include "world/Map.h"
 
 Undo* Undo::Instance = nullptr;
+using namespace D3PP::world;
 
 Undo *Undo::GetInstance() {
     if (Instance == nullptr)

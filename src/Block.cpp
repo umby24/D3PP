@@ -224,7 +224,7 @@ void Block::Load() {
         }
     }
 
-    Logger::LogAdd(MODULE_NAME, "File loaded.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
+    Logger::LogAdd(MODULE_NAME, "File loaded [" + filePath + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
     hasLoaded = true;
     time_t modTime = Utils::FileModTime(filePath);
     LastFileDate = modTime;

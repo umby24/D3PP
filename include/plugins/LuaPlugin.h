@@ -19,6 +19,7 @@ struct LuaEvent {
     Event::DescriptorType type;
     clock_t lastRun;
     long duration;
+    int mapId;
 };
 
 class LuaPlugin : TaskItem {

@@ -68,7 +68,7 @@ class CommandMain : TaskItem {
         void CommandUnStop();
         void CommandMute();
         void CommandUnmute();
-        void CommandServerInfo();
+        void CommandServerInfo() const;
         void CommandLogLast();
         void CommandGetRank();
 
@@ -81,7 +81,7 @@ class CommandMain : TaskItem {
         void CommandPing();
         void CommandChangeMap();
 
-        void CommandListMaps();
+        void CommandListMaps() const;
         void CommandChangeRank();
         void CommandTeleport();
         void CommandBring();

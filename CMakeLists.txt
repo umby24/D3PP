@@ -8,8 +8,8 @@ set (MALLOC_CHECK_ 3)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+#set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+#set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 
 include(FetchContent)
 FetchContent_Declare(
@@ -26,10 +26,10 @@ endif ()
 
 set(D3PP_SOURCE_FILES src/common/Files.cpp include/common/Files.h src/common/Logger.cpp include/common/Logger.h include/Utils.cpp include/Utils.h src/Block.cpp include/Block.h src/common/TaskScheduler.cpp include/common/TaskScheduler.h src/network/Network.cpp include/network/Network.h src/Rank.cpp include/Rank.h src/watchdog.cpp include/watchdog.h src/System.cpp include/System.h src/network/Chat.cpp include/network/Chat.h include/network/LinuxSockets.h include/network/WindowsSockets.h src/network/LinuxSockets.cpp src/network/WindowsSockets.cpp include/network/LinuxServerSockets.h include/network/WindowsServerSockets.h src/network/WindowsServerSockets.cpp include/world/Entity.h src/world/Entity.cpp include/network/Network_Functions.h src/network/Network_Functions.cpp include/network/Packets.h src/network/Packets.cpp include/world/Player.h src/world/Player.cpp include/common/Player_List.h src/common/Player_List.cpp src/network/PacketHandlers.cpp include/network/PacketHandlers.h include/Client.h src/Client.cpp src/network/LinuxServerSockets.cpp include/compression.h src/common/compression.cpp include/world/Map.h src/world/Map.cpp include/common/PreferenceLoader.h src/common/PreferenceLoader.cpp include/Command.h src/Command.cpp include/BuildMode.h src/BuildMode.cpp include/world/Teleporter.h src/world/Teleporter.cpp include/CPE.h src/CPE.cpp include/network/httplib.h include/plugins/Heartbeat.h src/plugins/Heartbeat.cpp
 include/plugins/LuaPlugin.h src/plugins/LuaPlugin.cpp include/Undo.h include/world/Physics.h src/Undo.cpp src/world/Physics.cpp include/Build.h src/Build.cpp include/EventSystem.h src/EventSystem.cpp include/events/EventTimer.h include/events/EventClientAdd.h include/events/EventClientDelete.h include/events/EventClientLogin.h include/events/EventClientLogout.h include/events/EventEntityAdd.h include/events/EventEntityDelete.h include/events/EventEntityPositionSet.h include/events/EventEntityDie.h include/events/EventMapAdd.h include/events/EventMapActionDelete.h include/events/EventMapActionResize.h include/events/EventMapActionFill.h include/events/EventMapActionSave.h include/events/EventMapActionLoad.h include/events/EventMapBlockChange.h include/events/EventMapBlockChangeClient.h include/events/EventMapBlockChangePlayer.h include/events/EventChatMap.h include/events/EventChatAll.h include/events/EventChatPrivate.h include/events/EventEntityMapChange.h src/events/EventChatAll.cpp src/events/EventChatMap.cpp src/events/EventClientAdd.cpp src/events/EventClientDelete.cpp src/events/EventClientLogin.cpp src/events/EventClientLogout.cpp src/events/EventEntityAdd.cpp src/events/EventEntityDelete.cpp src/events/EventEntityDie.cpp include/CustomBlocks.h
-src/events/EventEntityMapChange.cpp src/events/EventEntityPositionSet.cpp src/events/EventMapActionDelete.cpp src/events/EventMapActionFill.cpp src/events/EventMapActionLoad.cpp src/events/EventMapActionResize.cpp src/events/EventMapActionSave.cpp src/events/EventMapAdd.cpp src/events/EventMapBlockChange.cpp src/events/EventMapBlockChangeClient.cpp src/events/EventMapBlockChangePlayer.cpp src/events/EventTimer.cpp include/common/ByteBuffer.h src/common/ByteBuffer.cpp include/network/NetworkClient.h src/network/NetworkClient.cpp include/common/MinecraftLocation.h src/common/MinecraftLocation.cpp include/events/EntityEventArgs.h src/events/EntityEventArgs.cpp include/common/Configuration.h src/common/Configuration.cpp src/ConsoleClient.cpp include/ConsoleClient.h src/CustomBlocks.cpp src/events/PlayerEventArgs.cpp include/events/PlayerEventArgs.h "include/lua/client.h" "src/lua/client.cpp" "include/lua/buildmode.h" "src/lua/buildmode.cpp" "src/lua/build.cpp" "include/lua/build.h" "include/lua/entity.h" "src/lua/entity.cpp" "src/lua/player.cpp" "include/lua/player.h" "src/lua/map.cpp" "include/lua/map.h" "src/lua/cpe.cpp" "include/lua/cpe.h" "src/lua/block.cpp" "include/lua/block.h" "include/lua/rank.h" "include/lua/teleporter.h" "include/lua/system.h" "include/lua/network.h" "src/lua/system.cpp" "src/lua/rank.cpp" "src/lua/network.cpp" "src/lua/teleporter.cpp")
+src/events/EventEntityMapChange.cpp src/events/EventEntityPositionSet.cpp src/events/EventMapActionDelete.cpp src/events/EventMapActionFill.cpp src/events/EventMapActionLoad.cpp src/events/EventMapActionResize.cpp src/events/EventMapActionSave.cpp src/events/EventMapAdd.cpp src/events/EventMapBlockChange.cpp src/events/EventMapBlockChangeClient.cpp src/events/EventMapBlockChangePlayer.cpp src/events/EventTimer.cpp include/common/ByteBuffer.h src/common/ByteBuffer.cpp include/network/NetworkClient.h src/network/NetworkClient.cpp include/common/MinecraftLocation.h src/common/MinecraftLocation.cpp include/events/EntityEventArgs.h src/events/EntityEventArgs.cpp include/common/Configuration.h src/common/Configuration.cpp src/ConsoleClient.cpp include/ConsoleClient.h src/CustomBlocks.cpp src/events/PlayerEventArgs.cpp include/events/PlayerEventArgs.h "include/lua/client.h" "src/lua/client.cpp" "include/lua/buildmode.h" "src/lua/buildmode.cpp" "src/lua/build.cpp" "include/lua/build.h" "include/lua/entity.h" "src/lua/entity.cpp" "src/lua/player.cpp" "include/lua/player.h" "src/lua/map.cpp" "include/lua/map.h" "src/lua/cpe.cpp" "include/lua/cpe.h" "src/lua/block.cpp" "include/lua/block.h" "include/lua/rank.h" "include/lua/teleporter.h" "include/lua/system.h" "include/lua/network.h" "src/lua/system.cpp" "src/lua/rank.cpp" "src/lua/network.cpp" "src/lua/teleporter.cpp" src/world/IMapProvider.cpp include/world/IMapProvider.h src/world/D3MapProvider.cpp include/world/D3MapProvider.h src/world/MapActions.cpp src/world/BlockQueue.cpp include/world/BlockQueue.h include/world/IUniqueQueue.h src/world/IUniqueQueue.cpp)
 
 # add the executable
-add_executable(D3PP main.cpp ${D3PP_SOURCE_FILES})
+add_executable(D3PP main.cpp ${D3PP_SOURCE_FILES} "src/files/D3Map.cpp" "include/files/D3Map.h" "include/common/Vectors.h" include/world/MapActions.h include/world/MapPermissions.h include/world/MapEnvironment.h)
 
 
 #______________________________________________________________
@@ -89,15 +89,25 @@ add_executable(
   Testing/utils_test.cc
   Testing/common/MinecraftLocationTest.cc
   Testing/world/entity_test.cc
-)
+  Testing/world/mapactions_test.cc
+ "src/files/D3Map.cpp" "include/files/D3Map.h" "include/common/Vectors.h" Testing/world/IUniqueQueueTest.cc)
 
 target_link_libraries(
   hello_test
   gtest_main
 )
+if (MSVC) 
+    target_link_libraries(hello_test unofficial::sqlite3::sqlite3)
+    target_link_libraries(hello_test ZLIB::ZLIB)
+    target_link_libraries(hello_test ws2_32 wsock32)
+else ()
+    target_link_libraries(hello_test z)
+    target_link_libraries(hello_test sqlite3)
+endif ()
+
+include_directories(${Lua_INCLUDE_DIRS})
 target_link_libraries(hello_test ${LUA_LIBRARIES})
-target_link_libraries(hello_test z)
-target_link_libraries(hello_test sqlite3)
+
 
 include(GoogleTest)
 gtest_discover_tests(hello_test)

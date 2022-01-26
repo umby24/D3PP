@@ -63,9 +63,9 @@ public:
 
     static void post( const Event& event );
 
-    static bool hasdescriptor(std::string descriptor);
+    static bool hasDescriptor(const std::string& descriptor);
 
-    static Event::DescriptorType getDescriptor(std::string descriptor);
+    static Event::DescriptorType getDescriptor(const std::string& descriptor);
 private:
 
     /** Internal ID to assign to the next function handle */

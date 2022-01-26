@@ -11,11 +11,13 @@
 
 #include "json.hpp"
 #include "common/TaskScheduler.h"
-#include "common/MinecraftLocation.h"
+#include "common/Vectors.h"
 
 struct EntityShort;
 class Entity;
-class Map;
+namespace D3PP::world {
+    class Map;
+}
 
 using json = nlohmann::json;
 
@@ -78,9 +80,9 @@ public:
 
     // -- Methods
     Player();
-    void ChangeMap(std::shared_ptr<Map> map);
+    void ChangeMap(std::shared_ptr<D3PP::world::Map> map);
     void SendMap();
-    void PlayerClicked(ClickButton button, ClickAction action, short yaw, short pitch, char targetEntity, Vector3S targetBlock, ClickTargetBlockFace blockFace);
+    void PlayerClicked(ClickButton button, ClickAction action, short yaw, short pitch, char targetEntity, D3PP::Common::Vector3S targetBlock, ClickTargetBlockFace blockFace);
 private:
     void DespawnEntities();
 };

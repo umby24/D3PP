@@ -11,20 +11,22 @@
 #include <vector>
 #include <memory>
 
+namespace D3PP::world {
+    class Map;
+}
+
 struct BlockFillPhysics {
     short X;
     short Y;
     short Z;
 };
 
-class Map;
-
 class Physics {
 public:
-    static void BlockPhysics10(std::shared_ptr<Map> physMap, int x, int y, int z);
-    static void BlockPhysics11(std::shared_ptr<Map> physMap, int x, int y, int z);
-    static void BlockPhysics20(std::shared_ptr<Map> physMap, int x, int y, int z);
-    static void BlockPhysics21(std::shared_ptr<Map> physMap, int x, int y, int z);
+    static void BlockPhysics10(std::shared_ptr<D3PP::world::Map> physMap, int x, int y, int z);
+    static void BlockPhysics11(std::shared_ptr<D3PP::world::Map> physMap, int x, int y, int z);
+    static void BlockPhysics20(std::shared_ptr<D3PP::world::Map> physMap, int x, int y, int z);
+    static void BlockPhysics21(std::shared_ptr<D3PP::world::Map> physMap, int x, int y, int z);
 private:
     static std::vector<BlockFillPhysics> _blockFill;
     static char BlockFillArray[Physics_Fill_X][Physics_Fill_Y];

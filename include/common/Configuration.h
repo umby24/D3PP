@@ -4,9 +4,11 @@
 #include <string>
 #include "TaskScheduler.h"
 #include "json.hpp"
+#include "Vectors.h"
 #include "MinecraftLocation.h"
 
 using json = nlohmann::json;
+using namespace D3PP::Common;
 
 struct GeneralSettings {
     std::string name;
@@ -81,7 +83,7 @@ struct KillSettings {
         if (j.is_object() && !j["Kill"].is_null()) {
             killMapId = j["Kill"]["mapId"];
             MinecraftLocation ks { j["Kill"]["rotation"].get<float>(), j["Kill"]["look"].get<float>() };
-            Vector3S ksVec { j["Kill"]["x"], j["Kill"]["y"], j["Kill"]["z"]};
+            Vector3S ksVec { j["Kill"]["x"].get<short>(), j["Kill"]["y"].get<short>(), j["Kill"]["z"].get<short>()};
             ks.SetAsBlockCoords(ksVec);
             killSpawn = ks;
         }

@@ -52,7 +52,7 @@ int main()
         }
     }
     );
- //   _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF);
+    //_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF);
     srand(time(nullptr));
     Logger::LogAdd("Main", "====== Welcome to D3PP =====", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     Files *fm = Files::GetInstance();
@@ -71,7 +71,7 @@ int main()
     LuaPlugin* llll = LuaPlugin::GetInstance();
     watchdog* wd = watchdog::GetInstance();
     CustomBlocks* cb = CustomBlocks::GetInstance();
-    MapMain* mm = MapMain::GetInstance();
+    D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();
 
     TaskScheduler::RunSetupTasks();
     System::IsRunning = true;

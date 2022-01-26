@@ -58,7 +58,7 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) : Selections(MAX_S
     GlobalChat = false;
     IP = clientSocket->GetSocketIp();
     SubEvents();
-    Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", LogType::NORMAL, GLF);
 }
 
 NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
@@ -85,8 +85,8 @@ NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
 
 void NetworkClient::SubEvents() {
     eventSubId = Dispatcher::subscribe(EntityEventArgs::moveDescriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventEntityAdd::descriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventEntityDelete::descriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    addSubId = Dispatcher::subscribe(EventEntityAdd::descriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    removeSubId = Dispatcher::subscribe(EventEntityDelete::descriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
 }
 
 void NetworkClient::HandleEvent(const Event& e) {
@@ -118,11 +118,13 @@ void NetworkClient::HandleEvent(const Event& e) {
     } else if (stringulate(e.type()) == ENTITY_EVENT_DESPAWN) {
         const EventEntityDelete& ea = static_cast<const EventEntityDelete&>(e);
         std::shared_ptr<Entity> eventEntity = Entity::GetPointer(ea.entityId);
-        
-        if (eventEntity->MapID != player->tEntity->MapID)
-            return;
 
-        NetworkFunctions::NetworkOutEntityDelete(Id, eventEntity->ClientId);
+        if (LoggedIn && this->player != nullptr && this->player->tEntity != nullptr) {
+            if (eventEntity->MapID != player->tEntity->MapID)
+                return;
+
+            NetworkFunctions::NetworkOutEntityDelete(Id, eventEntity->ClientId);
+        }
     }
 }
 
@@ -290,13 +292,15 @@ NetworkClient::~NetworkClient() {
     }
 
     Dispatcher::unsubscribe(eventSubId);
+    Dispatcher::unsubscribe(addSubId);
+    Dispatcher::unsubscribe(removeSubId);
 }
 
 void NetworkClient::SendChat(std::string message) {
     NetworkFunctions::SystemMessageNetworkSend(Id, message);
 }
 
-std::shared_ptr<NetworkClient> NetworkClient::GetSelfPointer() {
+std::shared_ptr<NetworkClient> NetworkClient::GetSelfPointer() const {
     Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> selfPointer = std::static_pointer_cast<NetworkClient>(nm->GetClient(this->Id));
     return selfPointer;

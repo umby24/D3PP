@@ -16,7 +16,6 @@
 const std::string MODULE_NAME = "Player";
 PlayerMain* PlayerMain::Instance = nullptr;
 
-
 PlayerMain::PlayerMain() {
     this->Interval = std::chrono::seconds(1);
     this->Main= [this] { MainFunc(); };
@@ -78,8 +77,8 @@ Player::Player() {
 }
 
 void Player::SendMap() {
-    MapMain* mm = MapMain::GetInstance();
-    std::shared_ptr<Map> myMap = mm->GetPointer(MapId);
+    D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();
+    std::shared_ptr<D3PP::world::Map> myMap = mm->GetPointer(MapId);
     myMap->Send(myClientId);
     tEntity->SendPosOwn = true;
     tEntity->resend = true;
@@ -95,7 +94,7 @@ void Player::SendMap() {
 }
 
 void Player::PlayerClicked(ClickButton button, ClickAction action, short yaw, short pitch, char targetEntity,
-                           Vector3S targetBlock, ClickTargetBlockFace blockFace) {
+                           D3PP::Common::Vector3S targetBlock, ClickTargetBlockFace blockFace) {
     PlayerClickEventArgs event;
     event.playerId = this->tEntity->playerList->Number;
     event.button = button;
@@ -108,23 +107,23 @@ void Player::PlayerClicked(ClickButton button, ClickAction action, short yaw, sh
     Dispatcher::post(event);
 }
 
-void Player::ChangeMap(std::shared_ptr<Map> map) {
+void Player::ChangeMap(std::shared_ptr<D3PP::world::Map> map) {
     Network* nm = Network::GetInstance();
     auto myClient =  nm->GetClient(myClientId);
 
     if (myClientId != -1 && myClient != nullptr) {
-        MapMain* mm = MapMain::GetInstance();
-        std::shared_ptr<Map> currentMap = mm->GetPointer(MapId);
+        D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();
+        std::shared_ptr<D3PP::world::Map> currentMap = mm->GetPointer(MapId);
         std::string entityName = Entity::GetDisplayname(tEntity->Id);
-        std::string mapChangeMessage = "&ePlayer '" + entityName + "&e' changed to map '" + map->data.Name + "'";
+        std::string mapChangeMessage = "&ePlayer '" + entityName + "&e' changed to map '" + map->Name() + "'";
 
-        NetworkFunctions::SystemMessageNetworkSend2All(map->data.ID, mapChangeMessage);
+        NetworkFunctions::SystemMessageNetworkSend2All(map->ID, mapChangeMessage);
         NetworkFunctions::SystemMessageNetworkSend2All(MapId, mapChangeMessage);
 
         DespawnEntities(); // -- Despawn others on us
         tEntity->Despawn(); // -- Despawn us for others
 
-        MapId = map->data.ID; // -- Set our new map ID
+        MapId = map->ID; // -- Set our new map ID
         currentMap->RemoveEntity(tEntity);
         map->AddEntity(tEntity);
         tEntity->MapID = MapId;
@@ -132,7 +131,7 @@ void Player::ChangeMap(std::shared_ptr<Map> map) {
 
         EventEntityMapChange emc;
         emc.entityId = tEntity->Id;
-        emc.oldMapId = currentMap->data.ID;
+        emc.oldMapId = currentMap->ID;
         emc.newMapId = MapId;
         Dispatcher::post(emc);
 
@@ -143,12 +142,7 @@ void Player::ChangeMap(std::shared_ptr<Map> map) {
             myClient->SpawnEntity(Entity::GetPointer(eId)); // -- Spawn the new entities on us
         }
 
-        MinecraftLocation mapSpawn;
-        mapSpawn.SetAsPlayerCoords(Vector3F{map->data.SpawnX, map->data.SpawnY, map->data.SpawnZ});
-        mapSpawn.Rotation = map->data.SpawnRot;
-        mapSpawn.Look = map->data.SpawnLook;
-
-        tEntity->Location = mapSpawn;
+        tEntity->Location = map->GetSpawn();
         tEntity->SendPosOwn = true;
         tEntity->SpawnSelf = true;
 
@@ -158,7 +152,7 @@ void Player::ChangeMap(std::shared_ptr<Map> map) {
 }
 
 void Player::DespawnEntities() {
-    MapMain* mm = MapMain::GetInstance();
+    auto* mm = D3PP::world::MapMain::GetInstance();
     Network* nm = Network::GetInstance();
     auto myClient = nm->GetClient(myClientId);
 

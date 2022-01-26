@@ -8,7 +8,7 @@ class LuaCPELib
 {
 public:
     const static struct luaL_Reg lib[];
-    int openLib(lua_State* L);
+    static int openLib(lua_State* L);
 protected:
     static int LuaServerGetExtensions(lua_State* L);
     static int LuaServerGetExtension(lua_State* L);

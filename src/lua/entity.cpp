@@ -11,6 +11,8 @@
 #include "common/Player_List.h"
 #include "plugins/LuaPlugin.h"
 
+using namespace D3PP::Common;
+
 const struct luaL_Reg LuaEntityLib::lib[] = {
        {"getall",  &LuaEntityGetTable},
        {"create", &LuaEntityAdd},
@@ -289,7 +291,7 @@ int LuaEntityLib::LuaEntityPositionSet(lua_State* L) {
 
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
     if (foundEntity != nullptr) {
-        MinecraftLocation newLoc{ static_cast<unsigned char>(rotation), static_cast<unsigned char>(look) };
+        MinecraftLocation newLoc{ rotation, look };
         Vector3S blockCoords{ static_cast<short>(X), static_cast<short>(Y), static_cast<short>(Z) };
         newLoc.SetAsBlockCoords(blockCoords);
         foundEntity->PositionSet(mapId, newLoc, 10, true);

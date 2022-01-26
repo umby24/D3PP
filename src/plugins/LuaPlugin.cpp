@@ -1,4 +1,5 @@
 #include "plugins/LuaPlugin.h"
+#include <lua.hpp>
 
 #include <filesystem>
 #include <events/PlayerEventArgs.h>
@@ -70,6 +71,19 @@ int dispatch(lua_State * L) {
 
 void bail(lua_State *L, const std::string& msg) {
     Logger::LogAdd("Lua", "Fatal Error: " + msg + " " + lua_tostring(L, -1), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+    lua_getglobal(L, "debug");
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        return;
+    }
+    lua_getfield(L, -1, "traceback");
+    if (!lua_isfunction(L, -1)) {
+        lua_pop(L, 2);
+        return;
+    }
+    lua_pushvalue(L, 1);  /* pass error message */
+    lua_pushinteger(L, 2);  /* skip this function and traceback */
+    lua_call(L, 2, 1);  /* call debug.traceback */
 }
 
 static int l_add_block(lua_State *L)
@@ -283,10 +297,29 @@ void LuaPlugin::TimerMain() {
                 executionMutex.unlock();
                 continue;
             }
-            if (lua_pcall(state, 0, 0, 0) != 0) { // -- Call the function.
-                bail(state, "[Timer Event Handler]"); // -- catch errors
+            if (!lua_checkstack(state, 1)) {
+                bail(state, "WTFFF");
+            }
+            lua_pushinteger(state, e.mapId);
+            int result = lua_pcall(state, 1, 0, 0);
+            if (result == LUA_ERRRUN) {
+                bail(state, "[Timer Event Handler]" + e.functionName); // -- catch errors
                 executionMutex.unlock();
                 return;
+            }
+            else if (result == LUA_ERRMEM) {
+                bail(state, "[Timer Event Handler]" + e.functionName); // -- catch errors
+                executionMutex.unlock();
+                return;
+            }
+            else if (result == LUA_ERRERR) {
+                bail(state, "[Timer Event Handler]" + e.functionName); // -- catch errors
+                executionMutex.unlock();
+                return;
+            }
+            else {
+                // -- success? maybe? who knows.
+
             }
             executionMutex.unlock();
         }

@@ -77,7 +77,7 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
     int timed = luaL_checkinteger(L, 5);
     int mapId = luaL_checkinteger(L, 6);
 
-    if (!Dispatcher::hasdescriptor(type)) {
+    if (!Dispatcher::hasDescriptor(type)) {
         Logger::LogAdd("Lua", "LuaError: Invalid event type: " + type + ".", LogType::WARNING,GLF);
         return 0;
     }
@@ -88,7 +88,8 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
             function,
             typeAsEvent,
             clock(),
-            timed
+            timed,
+            mapId
     };
     LuaPlugin* lp = LuaPlugin::GetInstance();
 

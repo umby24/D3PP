@@ -4,22 +4,7 @@
 
 #ifndef D3PP_MINECRAFTLOCATION_H
 #define D3PP_MINECRAFTLOCATION_H
-
-struct Vector3F {
-    float X;
-    float Y;
-    float Z;
-};
-
-struct Vector3S {
-    short X;
-    short Y;
-    short Z;
-
-    bool isEqual(const Vector3S &other) {
-        return (X == other.X && Y == other.Y && Z == other.Z);
-    }
-};
+#include "common/Vectors.h"
 
 class MinecraftLocation {
 public:
@@ -28,14 +13,14 @@ public:
     const short Z() { return Location.Z; };
     float Rotation;
     float Look;
-    Vector3S Location;
+    D3PP::Common::Vector3S Location;
 
-    void SetAsBlockCoords(Vector3S blockCoords);
-    void SetAsPlayerCoords(Vector3S playerCoords);
-    void SetAsPlayerCoords(Vector3F playerCoords);
-    Vector3S GetAsBlockCoords();
+    void SetAsBlockCoords(D3PP::Common::Vector3S blockCoords);
+    void SetAsPlayerCoords(D3PP::Common::Vector3S playerCoords);
+    void SetAsPlayerCoords(D3PP::Common::Vector3F playerCoords);
+    D3PP::Common::Vector3S GetAsBlockCoords() const;
 
-    bool operator==(const MinecraftLocation &other) {
+    bool operator==(const MinecraftLocation &other) const {
         return Location.isEqual(other.Location) && other.Rotation == Rotation && other.Look == Look;
     }
 };

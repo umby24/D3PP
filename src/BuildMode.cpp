@@ -16,6 +16,8 @@ BuildModeMain* BuildModeMain::Instance = nullptr;
 
 const std::string MODULE_NAME = "BuildMode";
 
+using namespace D3PP::world;
+
 BuildModeMain::BuildModeMain()  {
     SaveFile = false;
     LastFileDate = 0;

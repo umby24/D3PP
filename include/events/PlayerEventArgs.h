@@ -8,7 +8,7 @@
 
 #include <world/Player.h>
 #include "EventSystem.h"
-
+#include "common/Vectors.h"
 
 class PlayerEventArgs : public Event {
 public:
@@ -31,7 +31,7 @@ public:
     short yaw;
     short pitch;
     char targetEntity;
-    Vector3S targetBlock;
+    D3PP::Common::Vector3S targetBlock;
     ClickTargetBlockFace blockFace;
 
     PlayerClickEventArgs() : PlayerEventArgs(&clickDescriptor) { this->PushLua = std::bind(&PlayerClickEventArgs::Push, this, std::placeholders::_1); }

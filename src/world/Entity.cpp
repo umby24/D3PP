@@ -15,6 +15,7 @@
 #include "world/Map.h"
 #include "network/Network_Functions.h"
 #include "common/Logger.h"
+#include "common/Vectors.h"
 #include "Utils.h"
 #include "CPE.h"
 #include "network/Packets.h"
@@ -29,6 +30,9 @@
 const std::string MODULE_NAME = "Entity";
 std::map<int, std::shared_ptr<Entity>> Entity::AllEntities;
 std::mutex Entity::entityMutex{};
+
+using namespace D3PP::Common;
+using namespace D3PP::world;
 
 EntityMain::EntityMain() {
 }
@@ -110,7 +114,7 @@ Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rot
     associatedClient = nullptr;
 }
 
-Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look, std::shared_ptr<NetworkClient> c) : variables{}, Location{rotation, look} {
+Entity::Entity(std::string name, int mapId, MinecraftLocation loc, std::shared_ptr<NetworkClient> c) : variables{}, Location(loc) {
     Prefix = "";
     Name = name;
     Suffix = "";
@@ -129,8 +133,6 @@ Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rot
     BuildState = 0;
     BuildMode = "Normal";
     playerList = nullptr;
-    Vector3F locAsBlocks {X, Y, Z};
-    Location.SetAsPlayerCoords(locAsBlocks);
     associatedClient = c;
 }
 
@@ -252,10 +254,7 @@ void Entity::Kill() {
 
         NetworkFunctions::SystemMessageNetworkSend2All(MapID, "&c" + Name + " died.");
 
-        MinecraftLocation spawnLoc {static_cast<unsigned char>(cm->data.SpawnRot), static_cast<unsigned char>(cm->data.SpawnLook) };
-        Vector3F spawnCoords = {cm->data.SpawnX, cm->data.SpawnY, cm->data.SpawnZ};
-        spawnLoc.SetAsPlayerCoords(spawnCoords);
-
+        MinecraftLocation spawnLoc = cm->GetSpawn();
         PositionSet(MapID, spawnLoc, 5, true);
     }
 }
@@ -323,26 +322,26 @@ void Entity::PositionCheck() {
         return;
     }
     // -- do a teleporter check..
-    for(auto const &tp : theMap->data.Teleporter) {
-        if (blockLocation.X >= tp.second.X0 && blockLocation.X <= tp.second.X1 && blockLocation.Y >= tp.second.Y0 && blockLocation.Y<= tp.second.Y1 && blockLocation.Z>= tp.second.Z0 && blockLocation.Z <= tp.second.Z1) {
-            int destMapId = MapID;
-            
-            if (!tp.second.DestMapUniqueId.empty()) {
-                std::shared_ptr<Map> mapInstance = mm->GetPointerUniqueId(tp.second.DestMapUniqueId);
-                if (mapInstance != nullptr) {
-                    destMapId = mapInstance->data.ID;
-                }
-            } else if (tp.second.DestMapId != -1) {
-                destMapId = tp.second.DestMapId;
-            }
-            MinecraftLocation tpDest {static_cast<unsigned char>(tp.second.DestRot), static_cast<unsigned char>(tp.second.DestLook) };
-            Vector3F destLoc {tp.second.DestX, tp.second.DestY, tp.second.DestZ};
-            tpDest.SetAsPlayerCoords(destLoc);
-
-            PositionSet(destMapId, tpDest, 10, true);
-            break;
-        }
-    }
+//    for(auto const &tp : theMap->data.Teleporter) {
+//        if (blockLocation.X >= tp.second.X0 && blockLocation.X <= tp.second.X1 && blockLocation.Y >= tp.second.Y0 && blockLocation.Y<= tp.second.Y1 && blockLocation.Z>= tp.second.Z0 && blockLocation.Z <= tp.second.Z1) {
+//            int destMapId = MapID;
+//
+//            if (!tp.second.DestMapUniqueId.empty()) {
+//                std::shared_ptr<Map> mapInstance = mm->GetPointerUniqueId(tp.second.DestMapUniqueId);
+//                if (mapInstance != nullptr) {
+//                    destMapId = mapInstance->data.ID;
+//                }
+//            } else if (tp.second.DestMapId != -1) {
+//                destMapId = tp.second.DestMapId;
+//            }
+//            MinecraftLocation tpDest {tp.second.DestRot, tp.second.DestLook };
+//            Vector3F destLoc {tp.second.DestX, tp.second.DestY, tp.second.DestZ};
+//            tpDest.SetAsPlayerCoords(destLoc);
+//
+//            PositionSet(destMapId, tpDest, 10, true);
+//            break;
+//        }
+//    }
 
     // -- check if the block we're touching is a killing block, if so call kill.
     for (int i = 0; i < 2; i++) {

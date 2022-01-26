@@ -2,10 +2,13 @@
 
 #include <lua.hpp>
 #include "common/Logger.h"
-#include "Utils.h"
+#include "common/MinecraftLocation.h"
 #include "world/Map.h"
 #include "world/Teleporter.h"
 #include "network/NetworkClient.h"
+
+using namespace D3PP::world;
+using namespace D3PP::Common;
 
 const struct luaL_Reg LuaTeleporterLib::lib[] = {
         {"getall", &LuaTeleporterGetTable},
@@ -44,20 +47,20 @@ int LuaTeleporterLib::LuaTeleporterGetTable(lua_State* L) {
     if (chosenMap == nullptr)
         return 0;
 
-    int numRanks = static_cast<int>(chosenMap->data.Teleporter.size());
+    int numPortals = static_cast<int>(chosenMap->Portals.size());
     int index = 1;
 
     lua_newtable(L);
 
-    if (numRanks > 0) {
-        for (auto const& nc : chosenMap->data.Teleporter) {
+    if (numPortals > 0) {
+        for (auto const& nc : chosenMap->Portals) {
             lua_pushinteger(L, index++);
-            lua_pushstring(L, nc.second.Id.c_str());
+            lua_pushstring(L, nc.Name.c_str());
             lua_settable(L, -3);
         }
     }
 
-    lua_pushinteger(L, numRanks);
+    lua_pushinteger(L, numPortals);
 
     return 2;
 }
@@ -78,15 +81,20 @@ int LuaTeleporterLib::LuaTeleporterGetBox(lua_State* L) {
     if (chosenMap == nullptr)
         return 0;
 
-    if (chosenMap->data.Teleporter.find(tpId) == chosenMap->data.Teleporter.end())
+    Teleporter item = chosenMap->GetTeleporter(tpId);
+
+    if (item.Name.empty())
         return 0;
-    
-    lua_pushinteger(L, chosenMap->data.Teleporter[tpId].X0);
-    lua_pushinteger(L, chosenMap->data.Teleporter[tpId].Y0);
-    lua_pushinteger(L, chosenMap->data.Teleporter[tpId].Z0);
-    lua_pushinteger(L, chosenMap->data.Teleporter[tpId].X1);
-    lua_pushinteger(L, chosenMap->data.Teleporter[tpId].Y1);
-    lua_pushinteger(L, chosenMap->data.Teleporter[tpId].Z1);
+
+    Vector3S startPos = item.OriginStart.GetAsBlockCoords();
+    Vector3S endPos = item.OriginEnd.GetAsBlockCoords();
+
+    lua_pushinteger(L, startPos.X);
+    lua_pushinteger(L, startPos.Y);
+    lua_pushinteger(L, startPos.Z);
+    lua_pushinteger(L, endPos.X);
+    lua_pushinteger(L, endPos.Y);
+    lua_pushinteger(L, endPos.Z);
     return 6;
 }
 
@@ -106,16 +114,20 @@ int LuaTeleporterLib::LuaTeleporterGetDestination(lua_State* L) {
     if (chosenMap == nullptr)
         return 0;
 
-    if (chosenMap->data.Teleporter.find(tpId) == chosenMap->data.Teleporter.end())
+    Teleporter item = chosenMap->GetTeleporter(tpId);
+
+    if (item.Name.empty())
         return 0;
 
-    lua_pushstring(L, chosenMap->data.Teleporter[tpId].DestMapUniqueId.c_str());
-    lua_pushinteger(L, chosenMap->data.Teleporter[tpId].DestMapId);
-    lua_pushnumber(L, chosenMap->data.Teleporter[tpId].DestX);
-    lua_pushnumber(L, chosenMap->data.Teleporter[tpId].DestY);
-    lua_pushnumber(L, chosenMap->data.Teleporter[tpId].DestZ);
-    lua_pushnumber(L, chosenMap->data.Teleporter[tpId].DestRot);
-    lua_pushnumber(L, chosenMap->data.Teleporter[tpId].DestLook);
+    Vector3S DestPos = item.Destination.GetAsBlockCoords();
+
+    lua_pushstring(L, item.DestinationMap.c_str());
+    lua_pushinteger(L, -1);
+    lua_pushnumber(L, DestPos.X);
+    lua_pushnumber(L, DestPos.Y);
+    lua_pushnumber(L, DestPos.Z);
+    lua_pushnumber(L, item.Destination.Rotation);
+    lua_pushnumber(L, item.Destination.Look);
     return 7;
 }
 
@@ -152,28 +164,16 @@ int LuaTeleporterLib::LuaTeleporterAdd(lua_State* L) {
     if (chosenMap == nullptr)
         return 0;
 
-    if (chosenMap->data.Teleporter.find(tpId) != chosenMap->data.Teleporter.end())
-        return 0;
-    Teleporter::AddTeleporter(chosenMap, tpId, start.X, end.X, start.Y, end.Y, start.Z, end.Z, destMapUniqueId, destMapId, DestX, DestY, DestZ, DestRot, DestLook);
-    //MapTeleporterElement newTp{
-    //    tpId,
-    //    start.X,
-    //    start.Y,
-    //    start.Z,
-    //    end.X,
-    //    end.Y,
-    //    end.Z,
-    //    destMapUniqueId,
-    //    destMapId,
-    //    DestX,
-    //    DestY,
-    //    DestZ,
-    //    DestRot,
-    //    DestLook
-    //};
+    MinecraftLocation oStart{};
+    MinecraftLocation oEnd{};
+    oStart.SetAsBlockCoords(start);
+    oEnd.SetAsBlockCoords(end);
 
-    //chosenMap->data.Teleporter.insert(std::make_pair(tpId, newTp));
+    MinecraftLocation destLocation {DestRot, DestLook};
+    Vector3F destFloats {DestX, DestY, DestZ};
+    destLocation.SetAsPlayerCoords(destFloats);
 
+    chosenMap->AddTeleporter(tpId, oStart, oEnd, destLocation, destMapUniqueId, destMapId);
     return 0;
 }
 
@@ -184,6 +184,7 @@ int LuaTeleporterLib::LuaTeleporterDelete(lua_State* L) {
         Logger::LogAdd("Lua", "LuaError: Teleporter_Delete called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
+
     int mapId = luaL_checkinteger(L, 1);
     std::string tpId(luaL_checkstring(L, 2));
 
@@ -193,9 +194,7 @@ int LuaTeleporterLib::LuaTeleporterDelete(lua_State* L) {
     if (chosenMap == nullptr)
         return 0;
 
-    if (chosenMap->data.Teleporter.find(tpId) == chosenMap->data.Teleporter.end())
-        return 0;
 
-    chosenMap->data.Teleporter.erase(tpId);
+    chosenMap->DeleteTeleporter(tpId);
     return 0;
 }

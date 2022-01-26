@@ -8,6 +8,7 @@
 #include <common/Logger.h>
 #include "world/Map.h"
 
+using namespace D3PP::world;
 
 void Build::BuildLinePlayer(short playerNumber, int mapId, unsigned short X0, unsigned short Y0, unsigned short Z0,
                             unsigned short X1, unsigned short Y1, unsigned short Z1, unsigned char material,
@@ -124,8 +125,8 @@ void Build::BuildRankBox(int mapId, unsigned short X0, unsigned short Y0, unsign
     if (pMap == nullptr)
         return;
 
-    if (pMap->data.RankBuild <= maxRank && rank<= maxRank) {
+ //   if (pMap->data.RankBuild <= maxRank && rank<= maxRank) {
         // -- Map add rank box.
         pMap->SetRankBox(startX, startY, startZ, endX, endY, endZ, rank);
-    }
+  //  }
 }

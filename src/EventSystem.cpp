@@ -3,12 +3,12 @@
 //
 #include "EventSystem.h"
 
+
 std::map< Event::DescriptorType, std::vector<Dispatcher::SlotHandle> > Dispatcher::_observers;
 unsigned int Dispatcher::_nextID = 0;
 
 Event::~Event()
-{
-}
+= default;
 
 unsigned int Dispatcher::subscribe( const Event::DescriptorType& descriptor,
                                     SlotType&& slot )
@@ -37,7 +37,7 @@ void Dispatcher::unsubscribe(unsigned int connection )
     }
 }
 
-bool Dispatcher::hasdescriptor(std::string item) {
+bool Dispatcher::hasDescriptor(const std::string& item) {
     bool found = false;
     for (auto&& pair : _observers) {
         if (pair.first == item) {
@@ -56,18 +56,15 @@ void Dispatcher::post( const Event& event )
         return;
 
     auto&& observers = _observers.at( type );
-
+    
     for( auto&& observer : observers )
         observer.slot( event );
 }
 
-Event::DescriptorType Dispatcher::getDescriptor(std::string descriptor) {
-    bool found = false;
-    for (auto&& pair : _observers) {
-        if (pair.first == descriptor) {
-            found = true;
+Event::DescriptorType Dispatcher::getDescriptor(const std::string& descriptor) {
+    for (auto&& pair : _observers)
+        if (pair.first == descriptor)
             return pair.first;
-        }
-    }
+
     return nullptr;
 }

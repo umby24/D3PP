@@ -8,6 +8,9 @@
 #include "network/NetworkClient.h"
 #include "network/Network.h"
 
+using namespace D3PP::world;
+using namespace D3PP::Common;
+
 const struct luaL_Reg LuaMapLib::lib[] = {
         {"getall", &LuaMapGetTable},
         {"setblock", &LuaMapBlockChange},
@@ -98,7 +101,7 @@ int LuaMapLib::LuaMapGetName(lua_State* L) {
     std::shared_ptr<Map> map = mm->GetPointer(mapId);
 
     if (map != nullptr) {
-        lua_pushstring(L, map->data.Name.c_str());
+        lua_pushstring(L, map->Name().c_str());
         return 1;
     }
 
@@ -117,9 +120,10 @@ int LuaMapLib::LuaMapGetDimensions(lua_State* L) {
     std::shared_ptr<Map> map = mm->GetPointer(mapId);
 
     if (map != nullptr) {
-        lua_pushinteger(L, map->data.SizeX);
-        lua_pushinteger(L, map->data.SizeY);
-        lua_pushinteger(L, map->data.SizeZ);
+        Vector3S mapSize = map->GetSize();
+        lua_pushinteger(L, mapSize.X);
+        lua_pushinteger(L, mapSize.Y);
+        lua_pushinteger(L, mapSize.Z);
         return 3;
     }
 
@@ -143,7 +147,7 @@ int LuaMapLib::LuaMapGetTable(lua_State* L) {
     if (numEntities > 0) {
         for (auto const& e : mm->_maps) {
             lua_pushinteger(L, index++);
-            lua_pushinteger(L, e.second->data.ID);
+            lua_pushinteger(L, e.second->ID);
             lua_settable(L, -3);
         }
     }
@@ -228,7 +232,7 @@ int LuaMapLib::LuaMapGetUniqueId(lua_State* L) {
         return 0;
     }
 
-    lua_pushstring(L, map->data.UniqueID.c_str());
+    lua_pushstring(L, "Deprecated");
     return 1;
 }
 
@@ -248,7 +252,7 @@ int LuaMapLib::LuaMapGetDirectory(lua_State* L) {
         return 0;
     }
 
-    lua_pushstring(L, map->data.Directory.c_str());
+    lua_pushstring(L, map->filePath.c_str());
     return 1;
 }
 
@@ -267,8 +271,8 @@ int LuaMapLib::LuaMapGetRankBuild(lua_State* L) {
     if (map == nullptr) {
         return 0;
     }
-
-    lua_pushinteger(L, map->data.RankBuild);
+    MapPermissions perms = map->GetMapPermissions();
+    lua_pushinteger(L, perms.RankBuild);
     return 1;
 }
 
@@ -287,8 +291,8 @@ int LuaMapLib::LuaMapGetRankShow(lua_State* L) {
     if (map == nullptr) {
         return 0;
     }
-
-    lua_pushinteger(L, map->data.RankShow);
+    MapPermissions perms = map->GetMapPermissions();
+    lua_pushinteger(L, perms.RankShow);
     return 1;
 }
 
@@ -307,8 +311,8 @@ int LuaMapLib::LuaMapGetRankJoin(lua_State* L) {
     if (map == nullptr) {
         return 0;
     }
-
-    lua_pushinteger(L, map->data.RankJoin);
+    MapPermissions perms = map->GetMapPermissions();
+    lua_pushinteger(L, perms.RankJoin);
     return 1;
 }
 
@@ -327,12 +331,12 @@ int LuaMapLib::LuaMapGetSpawn(lua_State* L) {
     if (map == nullptr) {
         return 0;
     }
-
-    lua_pushnumber(L, map->data.SpawnX);
-    lua_pushnumber(L, map->data.SpawnY);
-    lua_pushnumber(L, map->data.SpawnZ);
-    lua_pushnumber(L, map->data.SpawnRot);
-    lua_pushnumber(L, map->data.SpawnLook);
+    MinecraftLocation mapSpawn = map->GetSpawn();
+    lua_pushnumber(L, mapSpawn.X());
+    lua_pushnumber(L, mapSpawn.Y());
+    lua_pushnumber(L, mapSpawn.Z());
+    lua_pushnumber(L, mapSpawn.Rotation);
+    lua_pushnumber(L, mapSpawn.Look);
     return 5;
 }
 
@@ -352,7 +356,7 @@ int LuaMapLib::LuaMapGetSaveInterval(lua_State* L) {
         return 0;
     }
 
-    lua_pushinteger(L, map->data.SaveInterval);
+    lua_pushinteger(L, 10);
     return 1;
 }
 
@@ -374,7 +378,7 @@ int LuaMapLib::LuaMapSetName(lua_State* L) {
         return 0;
     }
 
-    map->data.Name = newName;
+    //map->data.Name = newName;
     return 0;
 }
 
@@ -396,7 +400,7 @@ int LuaMapLib::LuaMapSetDirectory(lua_State* L) {
         return 0;
     }
 
-    map->data.Directory = newName;
+    map->filePath = newName;
     return 0;
 }
 
@@ -417,8 +421,9 @@ int LuaMapLib::LuaMapSetRankBuild(lua_State* L) {
     if (map == nullptr) {
         return 0;
     }
-
-    map->data.RankBuild = newRank;
+    MapPermissions perms = map->GetMapPermissions();
+    perms.RankBuild = newRank;
+    map->SetMapPermissions(perms);
     return 0;
 }
 
@@ -439,8 +444,9 @@ int LuaMapLib::LuaMapSetRankJoin(lua_State* L) {
     if (map == nullptr) {
         return 0;
     }
-
-    map->data.RankJoin = newRank;
+    MapPermissions perms = map->GetMapPermissions();
+    perms.RankJoin = newRank;
+    map->SetMapPermissions(perms);
     return 0;
 }
 
@@ -461,8 +467,10 @@ int LuaMapLib::LuaMapSetRankShow(lua_State* L) {
     if (map == nullptr) {
         return 0;
     }
+    MapPermissions perms = map->GetMapPermissions();
+    perms.RankShow = newRank;
+    map->SetMapPermissions(perms);
 
-    map->data.RankShow = newRank;
     return 0;
 }
 
@@ -488,11 +496,10 @@ int LuaMapLib::LuaMapSetSpawn(lua_State* L) {
         return 0;
     }
 
-    map->data.SpawnX = newX;
-    map->data.SpawnY = newY;
-    map->data.SpawnZ = newZ;
-    map->data.SpawnRot = newRot;
-    map->data.SpawnLook = newLook;
+    MinecraftLocation newSpawn{newRot, newLook};
+    Vector3F spawnPos{newX, newY, newZ};
+    newSpawn.SetAsPlayerCoords(spawnPos);
+    map->SetSpawn(newSpawn);
 
     return 0;
 }
@@ -514,7 +521,6 @@ int LuaMapLib::LuaMapSetSaveInterval(lua_State* L) {
         return 0;
     }
 
-    map->data.SaveInterval = saveInterval;
     return 0;
 }
 
@@ -668,8 +674,6 @@ int LuaMapLib::LuaMapExportGetSize(lua_State* L) {
     lua_pushinteger(L, result.Z);
     return 3;
 }
-
-
 
 int LuaMapLib::LuaMapImportPlayer(lua_State* L) {
     int nArgs = lua_gettop(L);

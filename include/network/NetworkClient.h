@@ -104,8 +104,8 @@ public:
     void SendDeleteBlock(unsigned char blockId) override;
 private:
     int Id;
-    int eventSubId;
-    std::shared_ptr<NetworkClient> GetSelfPointer();
+    int eventSubId, addSubId, removeSubId;
+    std::shared_ptr<NetworkClient> GetSelfPointer() const;
     void SubEvents();
     void HandleEvent(const Event &event);
 };

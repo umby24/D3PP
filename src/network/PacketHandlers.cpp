@@ -16,7 +16,10 @@
 #include "Utils.h"
 #include "common/ByteBuffer.h"
 #include "network/Packets.h"
+#include "common/Vectors.h"
 #include "common/MinecraftLocation.h"
+
+using namespace D3PP::Common;
 
 void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& client) {
 	const char clientVersion = static_cast<char>(client->ReceiveBuffer->ReadByte());
@@ -28,7 +31,7 @@ void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& clien
     if (!client->LoggedIn && client->DisconnectTime == 0 && isCpe != 66) {
         Client::Login(client->GetId(), clientName, mppass, clientVersion);
     } else if (isCpe == 66 && !client->LoggedIn && client->DisconnectTime == 0) { // -- CPE capable Client
-        Logger::LogAdd("Network", "CPE Client Detected", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("Network", "CPE Client Detected", LogType::NORMAL, GLF);
         Client::LoginCpe(client->GetId(), clientName, mppass, clientVersion);
     }
 }
@@ -70,7 +73,7 @@ void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &
     const auto rot = static_cast<float>((R / 255.0) * 360);
     const auto look = static_cast<float>((L / 255.0) * 360);
 
-    const MinecraftLocation inputLocation { rot, look, X, Y, Z};
+    const MinecraftLocation inputLocation { rot, look, Vector3S(X, Y, Z)};
 
     if (!client->LoggedIn || !client->player->tEntity)
         return;
@@ -98,7 +101,7 @@ void PacketHandlers::HandleExtInfo(const std::shared_ptr<NetworkClient> &client)
     }
     
     client->CustomExtensions = extensions;
-    Logger::LogAdd("CPE", "Client supports " + stringulate(extensions) + " extensions", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd("CPE", "Client supports " + stringulate(extensions) + " extensions", LogType::NORMAL, GLF);
 }
 
 void PacketHandlers::HandleExtEntry(const std::shared_ptr<NetworkClient> &client) {
@@ -116,7 +119,7 @@ void PacketHandlers::HandleCustomBlockSupportLevel(const std::shared_ptr<Network
 	const unsigned char supportLevel = client->ReceiveBuffer->ReadByte();
     client->CustomBlocksLevel = supportLevel;
 
-    Logger::LogAdd("CPE", "CPE Process complete.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd("CPE", "CPE Process complete.", LogType::NORMAL, GLF);
     Client::Login(client->GetId(), client->player->LoginName, client->player->MPPass, client->player->ClientVersion);
 }
 

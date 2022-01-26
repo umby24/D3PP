@@ -3,40 +3,43 @@
 #include "common/MinecraftLocation.h"
 
 TEST(MinecraftLocationTest, EqualityTest) {
-    MinecraftLocation givenFirst {0, 0, { 0, 0, 0} };
-    MinecraftLocation givenSecond {0, 0, { 0, 0, 0} };
+    D3PP::Common::Vector3S blankLoc((short)0, (short)0, (short)0);
+    MinecraftLocation givenFirst {0, 0, blankLoc };
+    MinecraftLocation givenSecond {0, 0, blankLoc };
     bool actualResult = givenFirst == givenSecond;
     assert(actualResult);
 }
 
 TEST(MinecraftLocationTest, EqualityNegativeTest) {
-    MinecraftLocation givenFirst{0, 0, { 0, 0, 0} };
-    MinecraftLocation givenSecond{0, 0, { 3, 0, 0} };
+    D3PP::Common::Vector3S blankLoc((short)0, (short)0, (short)0);
+    D3PP::Common::Vector3S otherLoc((short)3, (short)0, (short)0);
+    MinecraftLocation givenFirst{0, 0, blankLoc };
+    MinecraftLocation givenSecond{0, 0, otherLoc };
     bool actualResult = givenFirst == givenSecond;
     assert(!actualResult);
 }
 
 TEST(MinecraftLocationTest, SetAsBlockCoordsTest) {
-    Vector3S givenBlockCoords {20, 22, 24};
-    Vector3S expectedPlayerCoords {640, 704, 819};
-    MinecraftLocation givenLocation;
+    D3PP::Common::Vector3S givenBlockCoords {(short)20, (short)22, (short)24};
+    D3PP::Common::Vector3S expectedPlayerCoords {(short)640, 704, 819};
+    MinecraftLocation givenLocation{};
 
     givenLocation.SetAsBlockCoords(givenBlockCoords);
     assert(givenLocation.Location.isEqual(expectedPlayerCoords));
 }
 
 TEST(MinecraftLocationTest, SetAsPlayerCoordsTest) {
-    Vector3S givenPlayerCoords {640, 704, 819};
-    MinecraftLocation givenLocation;
+    D3PP::Common::Vector3S givenPlayerCoords {(short)640, 704, 819};
+    MinecraftLocation givenLocation{};
 
     givenLocation.SetAsPlayerCoords(givenPlayerCoords);
     assert(givenLocation.Location.isEqual(givenPlayerCoords));
 }
 
 TEST(MinecraftLocationTest, SetAsPlayerCoordsFloatTest) {
-    Vector3F givenPlayerCoords {20.25, 22.25, 24.25};
-    Vector3S expectedPlayerCoords {648, 712, 827};
-    MinecraftLocation givenLocation;
+    D3PP::Common::Vector3F givenPlayerCoords {20.25, 22.25, 24.25};
+    D3PP::Common::Vector3S expectedPlayerCoords {(short)648, 712, 827};
+    MinecraftLocation givenLocation{};
 
     givenLocation.SetAsPlayerCoords(givenPlayerCoords);
     assert(givenLocation.Location.isEqual(expectedPlayerCoords));

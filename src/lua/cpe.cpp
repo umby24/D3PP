@@ -3,7 +3,6 @@
 #include <lua.hpp>
 #include "CPE.h"
 #include "common/Logger.h"
-#include "Utils.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
 #include "common/MinecraftLocation.h"
@@ -12,6 +11,9 @@
 #include "world/Map.h"
 #include "Block.h"
 #include "CustomBlocks.h"
+
+using namespace D3PP::world;
+using namespace D3PP::Common;
 
 const struct luaL_Reg LuaCPELib::lib[] = {
         {"getsrvexts", &LuaServerGetExtensions},
@@ -65,7 +67,7 @@ int LuaCPELib::LuaClientGetExtension(lua_State* L) {
         return 0;
     }
 
-    int clientId = luaL_checkinteger(L, 1);
+    int clientId = static_cast<int>(luaL_checkinteger(L, 1));
     std::string extension(luaL_checkstring(L, 2));
     int result = 0;
     Network* nm = Network::GetInstance();
@@ -118,21 +120,21 @@ int LuaCPELib::LuaSelectionCuboidAdd(lua_State* L) {
         return 0;
     }
 
-    int clientId = luaL_checkinteger(L, 1);
-    int selectionId = luaL_checkinteger(L, 2);
+    int clientId = static_cast<int>(luaL_checkinteger(L, 1));
+    int selectionId = static_cast<int>(luaL_checkinteger(L, 2));
     std::string label(luaL_checkstring(L, 3));
     Vector3S start{};
     Vector3S end{};
-    start.X = luaL_checkinteger(L, 4);
-    start.Y = luaL_checkinteger(L, 5);
-    start.Z = luaL_checkinteger(L, 6);
-    end.X = luaL_checkinteger(L, 7);
-    end.Y = luaL_checkinteger(L, 8);
-    end.Z = luaL_checkinteger(L, 9);
-    short red = luaL_checkinteger(L, 10);
-    short green = luaL_checkinteger(L, 11);
-    short blue = luaL_checkinteger(L, 12);
-    float opacity = luaL_checknumber(L, 13);
+    start.X = static_cast<short>(luaL_checkinteger(L, 4));
+    start.Y = static_cast<short>(luaL_checkinteger(L, 5));
+    start.Z = static_cast<short>(luaL_checkinteger(L, 6));
+    end.X = static_cast<short>(luaL_checkinteger(L, 7));
+    end.Y = static_cast<short>(luaL_checkinteger(L, 8));
+    end.Z = static_cast<short>(luaL_checkinteger(L, 9));
+    auto red = static_cast<short>(luaL_checkinteger(L, 10));
+    auto green = static_cast<short>(luaL_checkinteger(L, 11));
+    auto blue = static_cast<short>(luaL_checkinteger(L, 12));
+    auto opacity = static_cast<float>(luaL_checknumber(L, 13));
 
     Network* nm = Network::GetInstance();
     auto nc = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
@@ -151,8 +153,8 @@ int LuaCPELib::LuaSelectionCuboidDelete(lua_State* L) {
         return 0;
     }
 
-    int clientId = luaL_checkinteger(L, 1);
-    int selectionId = luaL_checkinteger(L, 2);
+    int clientId = static_cast<int>(luaL_checkinteger(L, 1));
+    int selectionId = static_cast<int>(luaL_checkinteger(L, 2));
     Network* nm = Network::GetInstance();
     auto nc = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
 
@@ -171,7 +173,7 @@ int LuaCPELib::LuaGetHeldBlock(lua_State* L) {
         return 0;
     }
 
-    int clientId = luaL_checkinteger(L, 1);
+    int clientId = static_cast<int>(luaL_checkinteger(L, 1));
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> nc = nm->GetClient(clientId);
     if (nc == nullptr)
@@ -194,9 +196,9 @@ int LuaCPELib::LuaSetHeldBlock(lua_State* L) {
         return 0;
     }
 
-    int clientId = luaL_checkinteger(L, 1);
-    int blockId = luaL_checkinteger(L, 2);
-    int canChange = luaL_checkinteger(L, 3);
+    int clientId = static_cast<int>(luaL_checkinteger(L, 1));
+    int blockId = static_cast<int>(luaL_checkinteger(L, 2));
+    int canChange = static_cast<int>(luaL_checkinteger(L, 3));
 
     Network* nm = Network::GetInstance();
     auto nc = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
@@ -423,22 +425,22 @@ int LuaCPELib::LuaCreateBlock(lua_State* L) {
         return 0;
     }
 
-    int blockId = luaL_checkinteger(L, 1);
+    int blockId = static_cast<int>(luaL_checkinteger(L, 1));
     std::string blockName(luaL_checkstring(L, 2));
-    int solidity = luaL_checkinteger(L, 3);
-    int movementSpeed = luaL_checkinteger(L, 4);
-    int topTexture = luaL_checkinteger(L, 5);
-    int sideTexture = luaL_checkinteger(L, 6);
-    int bottomTexture = luaL_checkinteger(L, 7);
+    int solidity = static_cast<int>(luaL_checkinteger(L, 3));
+    int movementSpeed = static_cast<int>(luaL_checkinteger(L, 4));
+    short topTexture = static_cast<short>(luaL_checkinteger(L, 5));
+    short sideTexture = static_cast<short>(luaL_checkinteger(L, 6));
+    short bottomTexture = static_cast<short>(luaL_checkinteger(L, 7));
     bool transmitsLight = lua_toboolean(L, 8);
-    int walkSound = luaL_checkinteger(L, 9);
+    short walkSound = static_cast<short>(luaL_checkinteger(L, 9));
     bool fullBright = lua_toboolean(L, 10);
-    int shape = luaL_checkinteger(L, 11);
-    int drawType = luaL_checkinteger(L, 12);
-    int fogDensity = luaL_checkinteger(L, 13);
-    int fogR = luaL_checkinteger(L, 14);
-    int fogG = luaL_checkinteger(L, 15);
-    int fogB = luaL_checkinteger(L, 16);
+    int shape = static_cast<int>(luaL_checkinteger(L, 11));
+    int drawType = static_cast<int>(luaL_checkinteger(L, 12));
+    int fogDensity = static_cast<int>(luaL_checkinteger(L, 13));
+    int fogR = static_cast<int>(luaL_checkinteger(L, 14));
+    int fogG = static_cast<int>(luaL_checkinteger(L, 15));
+    int fogB = static_cast<int>(luaL_checkinteger(L, 16));
 
     if (blockId == 0) {
         Logger::LogAdd("Lua", "LuaError: You cannot redefine the air block!", LogType::WARNING, GLF);
@@ -511,29 +513,28 @@ int LuaCPELib::LuaSetBlockExt(lua_State* L)
         Logger::LogAdd("Lua", "LuaError: SetBlockExt called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
-    
-    Block* b = Block::GetInstance();
+
     CustomBlocks* cb = CustomBlocks::GetInstance();
 
-    int blockId = luaL_checkinteger(L, 1);
+    int blockId = static_cast<int>(luaL_checkinteger(L, 1));
 
     if (!cb->HasDef(blockId)) {
         Logger::LogAdd("Lua", "LuaError: Attempt to set block ext on non-existing block. Create it using CPE.CreateBlockDef first", LogType::WARNING, GLF);
         return 0;
     }
 
-    int topTexture = luaL_checkinteger(L, 2);
-    int leftTexture = luaL_checkinteger(L, 3);
-    int rightTexture = luaL_checkinteger(L, 4);
-    int frontTexture = luaL_checkinteger(L, 5);
-    int backTexture = luaL_checkinteger(L, 6);
-    int bottomTexture = luaL_checkinteger(L, 7);
-    int minX = luaL_checkinteger(L, 8);
-    int minY = luaL_checkinteger(L, 9);
-    int minZ = luaL_checkinteger(L, 10);
-    int maxX = luaL_checkinteger(L, 11);
-    int maxY = luaL_checkinteger(L, 12);
-    int maxZ = luaL_checkinteger(L, 13);
+    auto topTexture = static_cast<short>(luaL_checkinteger(L, 2));
+    auto leftTexture = static_cast<short>(luaL_checkinteger(L, 3));
+    auto rightTexture = static_cast<short>(luaL_checkinteger(L, 4));
+    auto frontTexture = static_cast<short>(luaL_checkinteger(L, 5));
+    auto backTexture = static_cast<short>(luaL_checkinteger(L, 6));
+    auto bottomTexture = static_cast<short>(luaL_checkinteger(L, 7));
+    auto minX = static_cast<short>(luaL_checkinteger(L, 8));
+    auto minY = static_cast<short>(luaL_checkinteger(L, 9));
+    auto minZ = static_cast<short>(luaL_checkinteger(L, 10));
+    auto maxX = static_cast<short>(luaL_checkinteger(L, 11));
+    auto maxY = static_cast<short>(luaL_checkinteger(L, 12));
+    auto maxZ = static_cast<short>(luaL_checkinteger(L, 13));
 
     auto def = cb->GetDef(blockId);
     def.topTexture = topTexture;
@@ -573,19 +574,19 @@ int LuaCPELib::LuaSetBlockExtClient(lua_State* L)
         return 0;
     }
 
-    int topTexture = luaL_checkinteger(L, 2);
-    int leftTexture = luaL_checkinteger(L, 3);
-    int rightTexture = luaL_checkinteger(L, 4);
-    int frontTexture = luaL_checkinteger(L, 5);
-    int backTexture = luaL_checkinteger(L, 6);
-    int bottomTexture = luaL_checkinteger(L, 7);
-    int minX = luaL_checkinteger(L, 8);
-    int minY = luaL_checkinteger(L, 9);
-    int minZ = luaL_checkinteger(L, 10);
-    int maxX = luaL_checkinteger(L, 11);
-    int maxY = luaL_checkinteger(L, 12);
-    int maxZ = luaL_checkinteger(L, 13);
-    int clientId = luaL_checkinteger(L, 14);
+    auto topTexture = static_cast<short>(luaL_checkinteger(L, 2));
+    auto leftTexture = static_cast<short>(luaL_checkinteger(L, 3));
+    auto rightTexture = static_cast<short>(luaL_checkinteger(L, 4));
+    auto frontTexture = static_cast<short>(luaL_checkinteger(L, 5));
+    auto backTexture = static_cast<short>(luaL_checkinteger(L, 6));
+    auto bottomTexture = static_cast<short>(luaL_checkinteger(L, 7));
+    auto minX = static_cast<short>(luaL_checkinteger(L, 8));
+    auto minY = static_cast<short>(luaL_checkinteger(L, 9));
+    auto minZ = static_cast<short>(luaL_checkinteger(L, 10));
+    auto maxX = static_cast<short>(luaL_checkinteger(L, 11));
+    auto maxY = static_cast<short>(luaL_checkinteger(L, 12));
+    auto maxZ = static_cast<short>(luaL_checkinteger(L, 13));
+    auto clientId = static_cast<short>(luaL_checkinteger(L, 14));
 
     auto def = cb->GetDef(blockId);
     def.topTexture = topTexture;
@@ -617,23 +618,23 @@ int LuaCPELib::LuaCreateBlockClient(lua_State* L) {
         Logger::LogAdd("Lua", "LuaError: BlockCreateClient called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
-    int blockId = luaL_checkinteger(L, 1);
+    auto blockId = static_cast<int>(luaL_checkinteger(L, 1));
     std::string blockName(luaL_checkstring(L, 2));
-    int solidity = luaL_checkinteger(L, 3);
-    int movementSpeed = luaL_checkinteger(L, 4);
-    int topTexture = luaL_checkinteger(L, 5);
-    int sideTexture = luaL_checkinteger(L, 6);
-    int bottomTexture = luaL_checkinteger(L, 7);
+    auto solidity = static_cast<int>(luaL_checkinteger(L, 3));
+    auto movementSpeed = static_cast<int>(luaL_checkinteger(L, 4));
+    auto topTexture = static_cast<int>(luaL_checkinteger(L, 5));
+    auto sideTexture = static_cast<int>(luaL_checkinteger(L, 6));
+    auto bottomTexture = static_cast<int>(luaL_checkinteger(L, 7));
     bool transmitsLight = lua_toboolean(L, 8);
-    int walkSound = luaL_checkinteger(L, 9);
+    auto walkSound = static_cast<int>(luaL_checkinteger(L, 9));
     bool fullBright = lua_toboolean(L, 10);
-    int shape = luaL_checkinteger(L, 11);
-    int drawType = luaL_checkinteger(L, 12);
-    int fogDensity = luaL_checkinteger(L, 13);
-    int fogR = luaL_checkinteger(L, 14);
-    int fogG = luaL_checkinteger(L, 15);
-    int fogB = luaL_checkinteger(L, 16);
-    int clientId = luaL_checkinteger(L, 17);
+    auto shape = static_cast<int>(luaL_checkinteger(L, 11));
+    auto drawType = static_cast<int>(luaL_checkinteger(L, 12));
+    auto fogDensity = static_cast<int>(luaL_checkinteger(L, 13));
+    auto fogR = static_cast<int>(luaL_checkinteger(L, 14));
+    auto fogG = static_cast<int>(luaL_checkinteger(L, 15));
+    auto fogB = static_cast<int>(luaL_checkinteger(L, 16));
+    auto clientId = static_cast<int>(luaL_checkinteger(L, 17));
 
     if (blockId == 0) {
         Logger::LogAdd("Lua", "LuaError: You cannot redefine the air block!", LogType::WARNING, GLF);
