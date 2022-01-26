@@ -55,3 +55,22 @@ TEST(IUniqueQueue, Queue) {
         }
     }
 }
+
+TEST(IUniqueQueue, Dequeue) {
+    D3PP::Common::Vector3S givenSize {64, 64, (short)64};
+    D3PP::world::IUniqueQueue underTest(givenSize);
+
+    for(short x = 0; x < 64; x++) {
+        for (short y = 0; y < 64; y++) {
+            D3PP::Common::Vector3S givenLoc {x, y, (short)1};
+            underTest.Queue(givenLoc);
+            ASSERT_TRUE(underTest.IsQueued(givenLoc));
+            for(short z = 2; z < 64; z++) {
+                D3PP::Common::Vector3S givenLoc2 {x, y, z};
+                ASSERT_FALSE(underTest.IsQueued(givenLoc2));
+            }
+            underTest.Dequeue(givenLoc);
+            ASSERT_FALSE(underTest.IsQueued(givenLoc));
+        }
+    }
+}

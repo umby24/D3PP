@@ -1614,17 +1614,11 @@ void CommandMain::CommandMapInfo() {
     MapPermissions perms = cMap->GetMapPermissions();
 
     textToSend += "&eRanks: Build: " + stringulate(perms.RankBuild) + " Join: " + stringulate(perms.RankJoin) + " Show: " + stringulate(perms.RankShow) + " <br>";
-    textToSend += "&ePhysics Queue: " + stringulate(cMap->PhysicsQueue.size());
 
     if (cMap->PhysicsStopped) {
         textToSend += "&cPhysics Stopped&f<br>";
     } else {
         textToSend += "<br>";
-    }
-
-    {
-        const std::scoped_lock<std::mutex> sLock(cMap->bcMutex);
-        textToSend += "&eBlocksend Queue: " + stringulate(cMap->ChangeQueue.size());
     }
 
     if (cMap->BlockchangeStopped) {

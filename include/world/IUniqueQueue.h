@@ -22,7 +22,7 @@ namespace D3PP::world {
         bool IsQueued(const Common::Vector3S& loc);
 
         void Queue(const Common::Vector3S& loc);
-
+        void Dequeue(const Common::Vector3S& loc);
     private:
         Common::Vector3S m_size{};
         std::vector<unsigned char> m_queueData;

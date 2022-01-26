@@ -11,6 +11,7 @@
 #include "world/Map.h"
 #include "Block.h"
 #include "CustomBlocks.h"
+#include "Utils.h"
 
 using namespace D3PP::world;
 using namespace D3PP::Common;
@@ -268,15 +269,15 @@ int LuaCPELib::LuaMapSetEnvColors(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 5) {
-        Logger::LogAdd("Lua", "LuaError: CPE_Map_Set_Env_Colors called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: SetEnvColors called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
-    int mapId = luaL_checkinteger(L, 1);
-    int red = luaL_checkinteger(L, 2);
-    int green = luaL_checkinteger(L, 3);
-    int blue = luaL_checkinteger(L, 4);
-    int type = luaL_checkinteger(L, 5);
+    int mapId = static_cast<int>(luaL_checkinteger(L, 1));
+    int red = static_cast<int>(luaL_checkinteger(L, 2));
+    int green = static_cast<int>(luaL_checkinteger(L, 3));
+    int blue = static_cast<int>(luaL_checkinteger(L, 4));
+    int type = static_cast<int>(luaL_checkinteger(L, 5));
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> thisMap = mm->GetPointer(mapId);
@@ -284,8 +285,31 @@ int LuaCPELib::LuaMapSetEnvColors(lua_State* L) {
     if (thisMap == nullptr)
         return 0;
 
-    thisMap->SetEnvColors(red, green, blue, type);
+    MapEnvironment env = thisMap->GetMapEnvironment();
+    int compressedColor = Utils::Rgb(red, green, blue);
 
+    switch (type) {
+        case 0:
+            env.SkyColor = compressedColor;
+            break;
+        case 1:
+            env.CloudColor = compressedColor;
+            break;
+        case 2:
+            env.FogColor = compressedColor;
+            break;
+        case 3:
+            env.Alight = compressedColor;
+            break;
+        case 4:
+            env.DLight = compressedColor;
+            break;
+        default:
+            Logger::LogAdd("Lua", "LuaError: Invalid Env color used.", LogType::WARNING, GLF);
+            return 0;
+    }
+
+    thisMap->SetMapEnvironment(env);
     return 0;
 }
 
@@ -317,15 +341,15 @@ int LuaCPELib::LuaMapEnvSet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 4) {
-        Logger::LogAdd("Lua", "LuaError: CPE_Map_Env_Apperance_Set called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: CPE_Map_Env_Appearance_Set called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
-    int mapId = luaL_checkinteger(L, 1);
+    auto mapId = static_cast<int>(luaL_checkinteger(L, 1));
     std::string customUrl(luaL_checkstring(L, 2));
-    int sideBlock = luaL_checkinteger(L, 3);
-    int edgeBlock = luaL_checkinteger(L, 4);
-    int sideLevel = luaL_checkinteger(L, 5);
+    auto sideBlock = static_cast<int>(luaL_checkinteger(L, 3));
+    auto edgeBlock = static_cast<int>(luaL_checkinteger(L, 4));
+    auto sideLevel = static_cast<short>(luaL_checkinteger(L, 5));
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> thisMap = mm->GetPointer(mapId);
@@ -333,7 +357,13 @@ int LuaCPELib::LuaMapEnvSet(lua_State* L) {
     if (thisMap == nullptr)
         return 0;
 
-    thisMap->SetMapAppearance(customUrl, sideBlock, edgeBlock, sideLevel);
+    MapEnvironment env = thisMap->GetMapEnvironment();
+    env.TextureUrl = customUrl;
+    env.SideBlock = sideBlock;
+    env.EdgeBlock = edgeBlock;
+    env.SideLevel = sideLevel;
+    thisMap->SetMapEnvironment(env);
+
     return 0;
 }
 
@@ -399,13 +429,13 @@ int LuaCPELib::LuaMapHackcontrolSet(lua_State* L) {
         return 0;
     }
 
-    int mapId = luaL_checkinteger(L, 1);
+    int mapId = static_cast<int>(luaL_checkinteger(L, 1));
     bool canFly = lua_toboolean(L, 2);
-    bool noclip = lua_toboolean(L, 3);
+    bool noClip = lua_toboolean(L, 3);
     bool speeding = lua_toboolean(L, 4);
     bool spawnControl = lua_toboolean(L, 5);
-    bool thirdperson = lua_toboolean(L, 6);
-    int jumpHeight = luaL_checkinteger(L, 7);
+    bool thirdPerson = lua_toboolean(L, 6);
+    auto jumpHeight = static_cast<short>(luaL_checkinteger(L, 7));
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> map = mm->GetPointer(mapId);
@@ -413,7 +443,15 @@ int LuaCPELib::LuaMapHackcontrolSet(lua_State* L) {
     if (map == nullptr)
         return 0;
 
-    map->SetHackControl(canFly, noclip, speeding, spawnControl, thirdperson, jumpHeight);
+    MapEnvironment env = map->GetMapEnvironment();
+    env.CanFly = canFly;
+    env.CanClip = noClip;
+    env.CanSpeed = speeding;
+    env.CanRespawn = spawnControl;
+    env.CanThirdPerson = thirdPerson;
+    env.JumpHeight = jumpHeight;
+    map->SetMapEnvironment(env);
+
     return 0;
 }
 

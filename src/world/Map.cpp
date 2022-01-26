@@ -10,6 +10,7 @@
 #include "common/Files.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "world/ChangeQueueItem.h"
 #include "System.h"
 #include "common/TaskScheduler.h"
 #include "common/ByteBuffer.h"
@@ -218,45 +219,35 @@ void MapMain::MapBlockChange() {
             watchdog::Watch("Map_Blockchanging", "Begin thread-slope", 0);
 
             for(auto const &m : _maps) {
-                if (m.second->BlockchangeStopped) {
+                if (m.second->BlockchangeStopped || !m.second->loaded)
                     continue;
-                }
+
                 int maxChangedSec = 1100 / 10;
-                while (maxChangedSec > 0 && !m.second->ChangeQueue.empty()) {
-                    MapBlockChanged chg{};
-                    {
-                        const std::scoped_lock<std::mutex> sLock(m.second->bcMutex);
-                        if (m.second->ChangeQueue.empty())
-                            continue;
+                ChangeQueueItem i{};
 
-                        chg = m.second->ChangeQueue.top();
-
-                        unsigned short x = chg.X;
-                        unsigned short y = chg.Y;
-                        unsigned short z = chg.Z;
-                        short oldMat = chg.OldMaterial;
-                        unsigned char priority = chg.Priority;
-                        unsigned char currentMat = m.second->GetBlockType(x, y, z);
-
-                        if (currentMat != oldMat) {
-                            NetworkFunctions::NetworkOutBlockSet2Map(m.first, x, y, z, currentMat);
-                        }
-//                        int offset = MapMain::GetMapOffset(x, y, z, m.second->SizeX, m.second->SizeY, m.second->SizeZ, 1);
-//                        m.second->ChangeQueue.pop();
-//                        if ((std::ceil(offset / 8)) >= m.second->Blockchangesize()) {
-//                            continue;
-//                        }
-//                        m.second->Blockchangeat(std::ceil(offset / 8)) = m.second->Blockchangeat(std::ceil(offset / 8)) & ~(1 << (offset % 8)); // -- Set bitmask
+                while (maxChangedSec > 0) {
+                    if (m.second->bcQueue == nullptr) {
+                        continue;
                     }
+                    if (m.second->bcQueue->TryDequeue(i)) {
+                        unsigned char currentMat = m.second->GetBlockType(i.Location.X, i.Location.Y, i.Location.Z);
+
+                        if (currentMat != i.OldMaterial) {
+                            NetworkFunctions::NetworkOutBlockSet2Map(m.first, i.Location.X, i.Location.Y, i.Location.Z,
+                                                                     currentMat);
+                        }
+                    }
+                    maxChangedSec--;
                 }
             }
+
             watchdog::Watch("Map_Blockchanging", "End thread-slope", 2);
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
 }
 
-bool comparePhysicsTime(MapBlockDo first, MapBlockDo second) {
-    return (first.time < second.time);
+bool comparePhysicsTime(const TimeQueueItem& first, const TimeQueueItem& second) {
+    return (first.Time < second.Time);
 }
 
 void MapMain::MapBlockPhysics() {
@@ -264,38 +255,29 @@ void MapMain::MapBlockPhysics() {
         watchdog::Watch("Map_Physic", "Begin Thread-Slope", 0);
 
         for(auto const &map : _maps) {
-//            if (map.second->PhysicsStopped)
-//                continue;
-            {
-                std::scoped_lock<std::mutex> myLock(map.second->physicsQueueMutex);
-                std::sort(map.second->PhysicsQueue.begin(), map.second->PhysicsQueue.end(), comparePhysicsTime);
-            }
+            if (map.second->PhysicsStopped)
+                continue;
+//            {
+//                std::scoped_lock<std::mutex> myLock(map.second->physicsQueueMutex);
+//                std::sort(map.second->PhysicsQueue.begin(), map.second->PhysicsQueue.end(), comparePhysicsTime);
+//            }
 
             int counter = 0;
-            while (!map.second->PhysicsQueue.empty()) {
-                MapBlockDo item = map.second->PhysicsQueue.at(0);
-                if (item.time < std::chrono::steady_clock::now()) {
-                    {
-                        std::scoped_lock<std::mutex> myLock(map.second->physicsQueueMutex);
-                        map.second->PhysicsQueue.erase(map.second->PhysicsQueue.begin());
+            TimeQueueItem physItem;
+
+            while (counter < 1000) { // -- TODO: May need adjustment.
+                if (map.second->pQueue->TryDequeue(physItem)) {
+                    if (physItem.Time < std::chrono::steady_clock::now()) {
+                        map.second->ProcessPhysics(physItem.Location.X, physItem.Location.Y, physItem.Location.Z);
+                        counter++;
+                    } else {
+                        // -- Not ready yet, push it back to the end.
+                        map.second->pQueue->TryQueue(physItem);
                     }
-                    // -- range can go out of bounds here.
-//                    int offset = MapMain::GetMapOffset(item.X, item.Y, item.Z, map.second->SizeX, map.second->SizeY, map.second->SizeZ, 1);
-//                    if ((std::ceil(offset / 8)) >= map.second->Physicsize()) {
-//                        counter++;
-//                        continue;
-//                    }
-//                    map.second->Physicat(std::ceil(offset / 8)) = map.second->Physicat(std::ceil(offset / 8)) & ~(1 << (offset % 8)); // -- Set bitmask
-                    map.second->ProcessPhysics(item.X, item.Y, item.Z);
-                    counter++;
-
-                } else {
-                    break;
                 }
-
-                if (counter > 1000)
-                    break;
+                counter++;
             }
+
         }
         watchdog::Watch("Map_Physic", "End Thread-Slope", 2);
         std::this_thread::sleep_for(std::chrono::milliseconds(3));
@@ -433,14 +415,22 @@ int MapMain::Add(int id, short x, short y, short z, const std::string& name) {
     int mapSize = GetMapSize(x, y, z, MAP_BLOCK_ELEMENT_SIZE);
     newMap->ID = id;
     newMap->SaveTime = time(nullptr);
-    newMap->loaded = true;
+
     newMap->loading = false;
     newMap->BlockchangeStopped = false;
     newMap->Clients = 0;
     newMap->LastClient = time(nullptr);
+    Vector3S sizeVector {x, y, z};
+    newMap->m_mapProvider = std::make_unique<D3MapProvider>();
+    newMap->filePath = f->GetFolder("Maps") + name + "/";
+    newMap->m_mapProvider->CreateNew(sizeVector, newMap->filePath, name);
+    newMap->bcQueue = std::make_unique<BlockChangeQueue>(sizeVector);
+    newMap->pQueue = std::make_unique<PhysicsQueue>(sizeVector);
+
 
     _maps.insert(std::make_pair(id, newMap));
     SaveFile = true;
+    newMap->loaded = true;
 
     EventMapAdd ema;
     ema.mapId = id;
@@ -515,12 +505,13 @@ bool Map::Resize(short x, short y, short z) {
     if (!loaded) {
         Reload();
     }
-    {
-        const std::scoped_lock<std::mutex> sLock(bcMutex);
-        while (!ChangeQueue.empty())
-            ChangeQueue.pop();
-    }
+    loading = true;
     m_mapProvider->SetSize(Vector3S{x, y, z});
+    bcQueue.reset();
+    pQueue.reset();
+    pQueue = std::make_unique<PhysicsQueue>(GetSize());
+    bcQueue = std::make_unique<BlockChangeQueue>(GetSize());
+    loading = false;
     Resend();
     return true;
 }
@@ -533,6 +524,8 @@ void Map::Fill(const std::string& functionName, const std::string& paramString) 
     //UniqueID = MapMain::GetUniqueId();
     //RankBoxes.clear();
     Portals.clear();
+    bcQueue->Clear();
+    pQueue->Clear();
 
     LuaPlugin* lp = LuaPlugin::GetInstance();
     Vector3S mapSize = m_mapProvider->GetSize();
@@ -551,12 +544,24 @@ bool Map::Save(const std::string& directory) {
 
 void Map::Load(const std::string& directory) {
     loading = true;
+
     if (m_mapProvider == nullptr && !directory.empty()) {
         m_mapProvider = std::make_unique<D3MapProvider>();
     } else if (m_mapProvider == nullptr) {
         Logger::LogAdd(MODULE_NAME, "Map Reloaded [" + m_mapProvider->MapName + "]", LogType::NORMAL, GLF);
     }
+
     m_mapProvider->Load(directory);
+    if (pQueue != nullptr) {
+        pQueue.reset();
+    }
+    if (bcQueue != nullptr) {
+        bcQueue.reset();
+    }
+
+    pQueue = std::make_unique<PhysicsQueue>(GetSize());
+    bcQueue = std::make_unique<BlockChangeQueue>(GetSize());
+
     loading = false;
 }
 
@@ -654,6 +659,7 @@ void Map::Send(int clientId) {
 
 void Map::Resend() {
     Network* nMain = Network::GetInstance();
+
     for(auto const &nc : nMain->roClients) {
         if (nc->player == nullptr)
             continue;
@@ -662,7 +668,9 @@ void Map::Resend() {
             nc->player->SendMap();
         }
     }
+
     Vector3S mapSize= m_mapProvider->GetSize();
+
     for (auto const &me : Entity::AllEntities) {
         if (me.second->MapID == ID) {
             Vector3S newLocation{static_cast<short>(mapSize.X+16), static_cast<short>(mapSize.Y+16), static_cast<short>(mapSize.Z+16)};
@@ -670,9 +678,8 @@ void Map::Resend() {
         }
     }
 
-    const std::scoped_lock<std::mutex> sLock(bcMutex);
-    while (!ChangeQueue.empty())
-        ChangeQueue.pop();
+    bcQueue->Clear();
+    pQueue->Clear();
 }
 
 void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type) {
@@ -727,7 +734,6 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
     BlockChange(clientEntity->playerList->Number, X, Y, Z, rawNewType, true, true, true, 250);
     QueueBlockChange(X, Y, Z, 250, -1);
     // -- PluginEventBlockCreate (one for delete, one for create.)
-
 
 }
 
@@ -792,15 +798,16 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
 }
 
 void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z, unsigned char priority, unsigned char oldType) {
-//    bool bcItemFound = (Blockchangeat(std::ceil(offset / 8)) & (1 << (offset % 8))) != 0;
-//
-//    if (bcItemFound)
-//        return;
-//
-//    MapBlockChanged changeItem { X, Y, Z, priority, oldType};
-//    const std::scoped_lock<std::mutex> sLock(bcMutex);
-//    ChangeQueue.push(changeItem);
-//    Blockchangeat(std::ceil(offset / 8)) |= (1 << (offset % 8));
+    while (loading) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    ChangeQueueItem newQueueItem { Vector3S(X, Y, Z),
+                                    oldType,
+                                     priority
+    };
+
+    bcQueue->TryQueue(newQueueItem);
 }
 
 Map::Map() {
@@ -868,63 +875,49 @@ unsigned short Map::GetBlockPlayer(unsigned short X, unsigned short Y, unsigned 
 }
 
 void Map::QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
-   // int offset = MapMain::GetMapOffset(X, Y, Z, SizeX, SizeY, SizeZ, 1);
-
-   // bool physItemFound = (Physicat(std::ceil(offset / 8)) & (1 << (offset % 8))) != 0;
-
-  //  if (!physItemFound) {
         Block* bm = Block::GetInstance();
-        MapBlock blockEntry = bm->GetBlock(m_mapProvider->GetBlock(Vector3S(X, Y, Z))); //bm->GetBlock(at(mbdIndex));
+        MapBlock blockEntry = bm->GetBlock(m_mapProvider->GetBlock(Vector3S(X, Y, Z)));
         unsigned char blockPhysics = blockEntry.Physics;
         std::string physPlugin = blockEntry.PhysicsPlugin;
 
         if (blockPhysics > 0 || !physPlugin.empty()) {
-            std::scoped_lock<std::mutex> lock(physicsQueueMutex);
-      //      Physicat(std::ceil(offset / 8)) |= (1 << (offset % 8)); // -- Set bitmask
             auto physTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(blockEntry.PhysicsTime + Utils::RandomNumber(blockEntry.PhysicsRandom));
 
-            MapBlockDo physicItem { physTime, X, Y, Z};
-            PhysicsQueue.push_back(physicItem);
+            TimeQueueItem physicItem { Vector3S(X, Y, Z), physTime };
+            pQueue->TryQueue(physicItem);
         }
-  //  }
 }
 
 void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
     Block* bm = Block::GetInstance();
     MapMain* mapMain= MapMain::GetInstance();
 
-//    int offset = MapMain::GetMapOffset(X, Y, Z, SizeX, SizeY, SizeZ, MAP_BLOCK_ELEMENT_SIZE);
-//
-//    if (offset < MapMain::GetMapSize(SizeX, SizeY, SizeZ, MAP_BLOCK_ELEMENT_SIZE)) {
-//
-//        MapBlock blockEntry = bm->GetBlock(m_mapProvider->GetBlock(Vector3S(X, Y, Z)));
-//
-//        switch (blockEntry.Physics) {
-//            case 10:
-//                Physics::BlockPhysics10(mapMain->GetPointer(ID), X, Y, Z);
-//                break;
-//            case 11:
-//                Physics::BlockPhysics11(mapMain->GetPointer(ID), X, Y, Z);
-//                break;
-//            case 20:
-//                Physics::BlockPhysics20(mapMain->GetPointer(ID), X, Y, Z);
-//                break;
-//            case 21:
-//                Physics::BlockPhysics21(mapMain->GetPointer(ID), X, Y, Z);
-//                break;
-//        }
-//
-//        if (!blockEntry.PhysicsPlugin.empty()) {
-//            LuaPlugin* luaPlugin = LuaPlugin::GetInstance();
-//            std::string pluginName = blockEntry.PhysicsPlugin;
-//            Utils::replaceAll(pluginName, "Lua:", "");
-//            luaPlugin->TriggerPhysics(ID, X, Y, Z, pluginName);
-//        }
-//
-//        if (blockEntry.PhysicsRepeat) {
-//            QueueBlockPhysics(X, Y, Z);
-//        }
-//    }
+        MapBlock blockEntry = bm->GetBlock(m_mapProvider->GetBlock(Vector3S(X, Y, Z)));
+        switch (blockEntry.Physics) {
+            case 10:
+                Physics::BlockPhysics10(mapMain->GetPointer(ID), X, Y, Z);
+                break;
+            case 11:
+                Physics::BlockPhysics11(mapMain->GetPointer(ID), X, Y, Z);
+                break;
+            case 20:
+                Physics::BlockPhysics20(mapMain->GetPointer(ID), X, Y, Z);
+                break;
+            case 21:
+                Physics::BlockPhysics21(mapMain->GetPointer(ID), X, Y, Z);
+                break;
+        }
+
+        if (!blockEntry.PhysicsPlugin.empty()) {
+            LuaPlugin* luaPlugin = LuaPlugin::GetInstance();
+            std::string pluginName = blockEntry.PhysicsPlugin;
+            Utils::replaceAll(pluginName, "Lua:", "");
+            luaPlugin->TriggerPhysics(ID, X, Y, Z, pluginName);
+        }
+
+        if (blockEntry.PhysicsRepeat) {
+            QueueBlockPhysics(X, Y, Z);
+        }
 }
 
 Vector3S MapMain::GetMapExportSize(const std::string& filename) {
@@ -1112,12 +1105,14 @@ void Map::MapImport(std::string filename, MinecraftLocation location, short scal
     sizeY |= tempData[7] << 8;
     sizeZ = tempData[8];
     sizeZ |= tempData[9] << 8;
+
     int mapSize = sizeX * sizeY * sizeZ;
     int X1 = startLoc.X + sizeX * scaleX;
     int Y1 = startLoc.Y + sizeY * scaleY;
     int Z1 = startLoc.Z + sizeZ * scaleZ;
     tempData.resize(mapSize + 10);
     GZIP::GZip_DecompressFromFile(tempData.data(), mapSize + 10, filename);
+
     for (int jz = startLoc.Z; jz < Z1; jz++) {
         int iz = (jz-startLoc.Z) / scaleZ;
         for (int jy = startLoc.Y; jy < Y1; jy++) {
@@ -1133,65 +1128,6 @@ void Map::MapImport(std::string filename, MinecraftLocation location, short scal
     // -- If correct version, iterate through, apply scale, and map_block_change.
 }
 
-void Map::SetEnvColors(int red, int green, int blue, int type) {
-//    ColorsSet = true;
-//
-//    switch(type) {
-//        case 0:
-//            SkyColor = Utils::Rgb(red, green, blue);
-//            break;
-//        case 1:
-//            CloudColor = Utils::Rgb(red, green, blue);
-//            break;
-//        case 2:
-//            FogColor = Utils::Rgb(red, green, blue);
-//            break;
-//        case 3:
-//            alight = Utils::Rgb(red, green, blue);
-//            break;
-//        case 4:
-//            dlight = Utils::Rgb(red, green, blue);
-//            break;
-//    }
-
-    Network* nm = Network::GetInstance();
-
-    for(auto const &nc : nm->roClients) {
-        CPE::AfterMapActions(nc);
-    }
-}
-
-void Map::SetMapAppearance(std::string url, int sideblock, int edgeblock, int sidelevel) {
-    if (url.find("https://") == std::string::npos && url.find("http://") == std::string::npos)
-        url = "";
-
-//    CustomAppearance = true;
-//    CustomURL = url;
-//    SideBlock = sideblock;
-//    EdgeBlock = edgeblock;
-//    SideLevel = sidelevel;
-
-    Network* nm = Network::GetInstance();
-
-    for(auto const &nc : nm->roClients) {
-        CPE::AfterMapActions(nc);
-    }
-}
-
-void Map::SetHackControl(bool canFly, bool noclip, bool speeding, bool spawnControl, bool thirdperson, int jumpHeight) {
-//    Flying = canFly;
-//    NoClip = noclip;
-//    Speeding = speeding;
-//    SpawnControl = spawnControl;
-//    ThirdPerson = thirdperson;
-//    JumpHeight = jumpHeight;
-
-    Network* nm = Network::GetInstance();
-
-    for(auto const &nc : nm->roClients) {
-        CPE::AfterMapActions(nc);
-    }
-}
 
 std::vector<int> Map::GetEntities() {
     std::vector<int> result;
@@ -1224,7 +1160,7 @@ void Map::SetMapPermissions(const MapPermissions& perms) {
     m_mapProvider->SetPermissions(perms);
 }
 
-const Teleporter Map::GetTeleporter(std::string id) {
+Teleporter Map::GetTeleporter(std::string id) {
     int index = -1;
 
     for(auto & Portal : Portals) {
@@ -1234,4 +1170,12 @@ const Teleporter Map::GetTeleporter(std::string id) {
     }
 
     return Teleporter();
+}
+
+void Map::SetMapEnvironment(const MapEnvironment &env) {
+    Network* nm = Network::GetInstance();
+
+    for(auto const &nc : nm->roClients) {
+        CPE::AfterMapActions(nc);
+    }
 }
