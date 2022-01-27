@@ -289,9 +289,9 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
     EventEntityPositionSet eps;
     eps.entityId = Id;
     eps.mapId = mapId;
-    eps.x = Location.X() / 32.0;
-    eps.y = Location.Y() / 32.0;
-    eps.z = (Location.Z() -51) / 32.0;
+    eps.x = Location.X() / 32.0f;
+    eps.y = Location.Y() / 32.0f;
+    eps.z = (Location.Z() -51.0f) / 32.0f;
     eps.rotation = Location.Rotation;
     eps.look = Location.Look;
     eps.priority = priority;
@@ -302,7 +302,7 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
 
     if (currentMap != nullptr) {
         if (sendOwn || !SendPosOwn) {
-            SendPos = priority;
+            SendPos = static_cast<char>(priority);
             if (sendOwn)
                 SendPosOwn = true;
         }

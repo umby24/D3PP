@@ -47,8 +47,8 @@ public:
     bool SendPosOwn;
     char SendPos;
     // --
-    int timeMessageDeath;
-    int timeMessageOther;
+    time_t timeMessageDeath;
+    time_t timeMessageOther;
     std::string lastPrivateMessage;
     // --
     unsigned heldBlock;

@@ -20,6 +20,7 @@ namespace D3PP::world {
     private:
         std::mutex m_accessLock;
         std::queue<TimeQueueItem> m_PhysicsQueue;
+        void TryDequeue_();
     };
 }
 

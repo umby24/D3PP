@@ -30,9 +30,17 @@ D3PP::world::PhysicsQueue::PhysicsQueue(const D3PP::Common::Vector3S &size) : IU
 
 void D3PP::world::PhysicsQueue::Clear() {
     std::scoped_lock<std::mutex> pLock(m_accessLock);
-    TimeQueueItem garbage{};
 
     while (!m_PhysicsQueue.empty()) {
-        TryDequeue(garbage);
+        TryDequeue_();
     }
+}
+
+void D3PP::world::PhysicsQueue::TryDequeue_() {
+    if (m_PhysicsQueue.empty())
+        return;
+
+    auto out = m_PhysicsQueue.front();
+    m_PhysicsQueue.pop();
+    Dequeue(out.Location);
 }

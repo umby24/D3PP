@@ -28,10 +28,18 @@ void D3PP::world::BlockChangeQueue::TryQueue(const D3PP::world::ChangeQueueItem 
 
 void D3PP::world::BlockChangeQueue::Clear() {
     std::scoped_lock<std::mutex> pLock(m_accessLock);
-    ChangeQueueItem garbage{};
     while (!m_ChangeQueue.empty()) {
-        TryDequeue(garbage);
+        TryDequeue_();
     }
+}
+
+void D3PP::world::BlockChangeQueue::TryDequeue_() {
+    if (m_ChangeQueue.empty())
+        return;
+
+    auto meh = ChangeQueueItem(m_ChangeQueue.top()); // -- Const Ref, need to use copy constructor.
+    m_ChangeQueue.pop();
+    Dequeue(meh.Location);
 }
 
 

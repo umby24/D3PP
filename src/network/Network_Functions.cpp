@@ -37,8 +37,8 @@ void NetworkFunctions::SystemMessageNetworkSend(const int& clientId, const std::
     std::string sanitized(message);
     Utils::replaceAll(sanitized, "\n", "");
     Utils::replaceAll(sanitized, "<br>", "\n");
-    sanitized = Chat::StringMultiline(message);
-    sanitized = Chat::StringGV(message);
+    sanitized = Chat::StringMultiline(sanitized);
+    sanitized = Chat::StringGV(sanitized);
     int lines = Utils::strCount(sanitized, '\n') + 1;
     std::vector<std::string> linev = Utils::splitString(sanitized, '\n');
     // -- emote replace
@@ -56,8 +56,8 @@ void NetworkFunctions::SystemMessageNetworkSend2All(const int& mapId, const std:
     std::string sanitized(message);
     Utils::replaceAll(sanitized, "\n", "");
     Utils::replaceAll(sanitized, "<br>", "\n");
-    sanitized = Chat::StringMultiline(message);
-    sanitized = Chat::StringGV(message);
+    sanitized = Chat::StringMultiline(sanitized);
+    sanitized = Chat::StringGV(sanitized);
 
     int lines = Utils::strCount(sanitized, '\n') + 1;
     std::vector<std::string> linev = Utils::splitString(sanitized, '\n');
@@ -83,14 +83,15 @@ void NetworkFunctions::NetworkOutBlockSet(const int& clientId, const short& x, c
     Block* b = Block::GetInstance();
     MapBlock mb = b->GetBlock(type);
     std::shared_ptr<NetworkClient> nc = std::static_pointer_cast<NetworkClient>(n->GetClient(clientId));
+    unsigned char newType(type);
 
     if (nc->LoggedIn) {
         if (mb.CpeLevel > nc->CustomBlocksLevel) {
-            type = mb.CpeReplace;
+            newType = mb.CpeReplace;
         } else {
-            type = mb.OnClient;
+            newType = mb.OnClient;
         }
-        Packets::SendBlockChange(clientId, x, y, z, type);
+        Packets::SendBlockChange(clientId, x, y, z, newType);
     }
 }
 

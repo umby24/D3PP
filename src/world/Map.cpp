@@ -85,17 +85,18 @@ void MapMain::MainFunc() {
         MapListSave();
     }
     for(auto const &m : _maps) {
-//        if (m.second->SaveInterval > 0 && m.second->SaveTime + m.second->SaveInterval*60 < time(nullptr) && m.second->loaded) {
-//            m.second->SaveTime = time(nullptr);
-//            AddSaveAction(0, m.first, "");
-//        }
+        // -- Auto save maps every 5 minutes
+        if (m.second->SaveTime + 5*60 < time(nullptr) && m.second->loaded) {
+            m.second->SaveTime = time(nullptr);
+            AddSaveAction(0, m.first, "");
+        }
         if (m.second->Clients > 0) {
             m.second->LastClient = time(nullptr);
             if (!m.second->loaded) {
                 m.second->Reload();
             }
         }
-        if (m.second->loaded && (time(nullptr) - m.second->LastClient) > 200) { // -- 3 minutes
+        if (m.second->loaded && (time(nullptr) - m.second->LastClient) > 200) { // -- Unload unused maps after 3 minutes
             m.second->Unload();
         }
     }
@@ -118,7 +119,7 @@ void MapMain::AddSaveAction(int clientId, int mapId, const std::string& director
     if (thisMap == nullptr)
         return;
 
-    std::function<void()> saveAction = [&thisMap, &clientId](){
+    std::function<void()> saveAction = [thisMap, clientId](){
         thisMap->Save("");
         if (clientId > 0) {
             NetworkFunctions::SystemMessageNetworkSend(clientId, "&eMap Saved.");
@@ -181,7 +182,7 @@ void MapMain::AddFillAction(int clientId, int mapId, std::string functionName, s
     if (thisMap == nullptr)
         return;
 
-    std::function<void()> fillAction = [&thisMap, &clientId, &functionName, &argString](){
+    std::function<void()> fillAction = [thisMap, clientId, functionName, argString](){
         thisMap->Fill(functionName, argString);
         if (clientId > 0) {
             NetworkFunctions::SystemMessageNetworkSend(clientId, "&eMap Filled.");
@@ -259,6 +260,9 @@ void MapMain::MapBlockPhysics() {
             TimeQueueItem physItem;
 
             while (counter < 1000) { // -- TODO: May need adjustment.
+                if (map.second->pQueue == nullptr) { // -- Avoid edge cases while the map is still loading
+                    continue;
+                }
                 if (map.second->pQueue->TryDequeue(physItem)) {
                     if (physItem.Time < std::chrono::steady_clock::now()) {
                         map.second->ProcessPhysics(physItem.Location.X, physItem.Location.Y, physItem.Location.Z);
@@ -408,7 +412,6 @@ int MapMain::Add(int id, short x, short y, short z, const std::string& name) {
     int mapSize = GetMapSize(x, y, z, MAP_BLOCK_ELEMENT_SIZE);
     newMap->ID = id;
     newMap->SaveTime = time(nullptr);
-
     newMap->loading = false;
     newMap->BlockchangeStopped = false;
     newMap->Clients = 0;
@@ -416,7 +419,7 @@ int MapMain::Add(int id, short x, short y, short z, const std::string& name) {
     Vector3S sizeVector {x, y, z};
     newMap->m_mapProvider = std::make_unique<D3MapProvider>();
     newMap->filePath = f->GetFolder("Maps") + name + "/";
-    newMap->m_mapProvider->CreateNew(sizeVector, newMap->filePath, name);
+   // newMap->m_mapProvider->CreateNew(sizeVector, newMap->filePath, name);
     newMap->bcQueue = std::make_unique<BlockChangeQueue>(sizeVector);
     newMap->pQueue = std::make_unique<PhysicsQueue>(sizeVector);
 
@@ -519,9 +522,15 @@ void Map::Fill(const std::string& functionName, const std::string& paramString) 
     Portals.clear();
     bcQueue->Clear();
     pQueue->Clear();
+    Vector3S mapSize = m_mapProvider->GetSize();
+    int mapSizeInt = (mapSize.X * mapSize.Y * mapSize.Z)*4;
+
+    std::vector<unsigned char> blankMap;
+    blankMap.resize(mapSizeInt);
+    m_mapProvider->SetBlocks(blankMap);
 
     LuaPlugin* lp = LuaPlugin::GetInstance();
-    Vector3S mapSize = m_mapProvider->GetSize();
+
     lp->TriggerMapFill(ID, mapSize.X, mapSize.Y, mapSize.Z, "Mapfill_" + functionName, std::move(paramString));
 
     Resend();
@@ -562,7 +571,10 @@ void Map::Reload() {
     if (loaded)
         return;
 
+    loading = true;
     m_mapProvider->Reload();
+    loading = false;
+    loaded = true;
     Logger::LogAdd(MODULE_NAME, "Map Reloaded [" + m_mapProvider->MapName + "]", LogType::NORMAL, GLF);
 }
 
@@ -573,6 +585,7 @@ void Map::Unload() {
 
     m_mapProvider->Unload();
     BlockchangeStopped = true;
+    PhysicsStopped = true;
     loaded = false;
     Logger::LogAdd(MODULE_NAME, "Map unloaded (" + m_mapProvider->MapName + ")", LogType::NORMAL, GLF);
 }
@@ -748,19 +761,19 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
     Dispatcher::post(event); // -- Post this event out!
 
     MapBlock oldType = bm->GetBlock(roData);
-  //  MapBlock newType = bm->GetBlock(type);
+    short roLastPlayer = m_mapProvider->GetLastPlayer(locationVector);
+    MapBlock newType = bm->GetBlock(type);
 
 
     if (type != roData && undo) {
-        //Undo::Add(playerNumber, ID, X, Y, Z, oldType.Id, rolastPlayer);
+        Undo::Add(playerNumber, ID, X, Y, Z, oldType.Id, roLastPlayer);
     }
     if (type != roData && send) {
         QueueBlockChange(X, Y, Z, priority, oldType.Id);
     }
-    //rotype = type;
-    //rolastPlayer = playerNumber;
-    m_mapProvider->SetBlock(locationVector, type);
 
+    m_mapProvider->SetBlock(locationVector, type);
+    m_mapProvider->SetLastPlayer(locationVector, playerNumber);
 
     if (physic) {
         for (int ix = -1; ix < 2; ix++) {
@@ -790,7 +803,7 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
      return m_mapProvider->GetBlock(Vector3S(X, Y, Z));
 }
 
-void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z, unsigned char priority, unsigned char oldType) {
+void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z, unsigned char priority, unsigned char oldType) const {
     while (loading) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
@@ -804,9 +817,14 @@ void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z,
 }
 
 Map::Map() {
+    //ID = -1;
     loaded = false;
     loading = false;
     BlockchangeStopped = false;
+    PhysicsStopped = false;
+  //  SaveTime = 0;
+   // LastClient = 0;
+  //  Clients = 0;
 }
 
 void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1,
@@ -816,16 +834,17 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
     Vector3S location1(X1, Y1, Z1);
 
     auto oldBlockType0 = m_mapProvider->GetBlock(location0);
-    //auto oldBlockHistory0 = m_mapProvider->GetBlockHistory(location0);
+    auto oldBlockHistory0 = m_mapProvider->GetLastPlayer(location0);
 
     auto oldBlockType1 = m_mapProvider->GetBlock(location1);
+    auto oldBlockHistory1 = m_mapProvider->GetLastPlayer(location1);
 
     if (undo) {
-       // if (oldBlockType0 != 0)
-           // Undo::Add(oldRo0.lastPlayer, ID, X0, Y0, Z0, oldBlockType0, oldRo0.lastPlayer);
+        if (oldBlockType0 != 0)
+            Undo::Add(oldBlockHistory0, ID, X0, Y0, Z0, oldBlockType0, oldBlockHistory0);
 
-      //  if (oldBlockType0 != oldBlockType1)
-       //     Undo::Add(oldRo0.lastPlayer, ID, X1, Y1, Z1, oldBlockType1, oldRo1.lastPlayer);
+        if (oldBlockType0 != oldBlockType1)
+            Undo::Add(oldBlockHistory0, ID, X1, Y1, Z1, oldBlockType1, oldBlockHistory1);
     }
 
     if (oldBlockType0 != 0) {
@@ -837,13 +856,12 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
     }
 
     oldBlockType1 = oldBlockType0;
-   // oldRo1.lastPlayer = oldRo0.lastPlayer;
     oldBlockType0 = 0;
-    //oldRo0.lastPlayer = -1;
 
     m_mapProvider->SetBlock(location0, oldBlockType0);
     m_mapProvider->SetBlock(location1, oldBlockType1);
-
+    m_mapProvider->SetLastPlayer(location0, -1);
+    m_mapProvider->SetLastPlayer(location1, oldBlockHistory0);
 
     if (physic) {
         for (int ix = -1; ix < 2; ix++) {
@@ -859,12 +877,7 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
 }
 
 unsigned short Map::GetBlockPlayer(unsigned short X, unsigned short Y, unsigned short Z) {
-  //  int index = MapMain::GetMapOffset(X, Y, Z, SizeX, SizeY, SizeZ, MAP_BLOCK_ELEMENT_SIZE);
-    short player = 0;
-//    player |= at(index+2);
-//    player |= at(index+3) << 8;
-// -- TODO; Map Provider.GetHistory??
-    return player;
+    return m_mapProvider->GetLastPlayer(Vector3S(X, Y, Z));
 }
 
 void Map::QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
@@ -1166,6 +1179,7 @@ Teleporter Map::GetTeleporter(std::string id) {
 }
 
 void Map::SetMapEnvironment(const MapEnvironment &env) {
+    m_mapProvider->SetEnvironment(env);
     Network* nm = Network::GetInstance();
 
     for(auto const &nc : nm->roClients) {

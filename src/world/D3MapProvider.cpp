@@ -62,11 +62,11 @@ void D3PP::world::D3MapProvider::SetBlocks(const std::vector<unsigned char> &blo
 }
 
 std::vector<unsigned char> D3PP::world::D3MapProvider::GetBlocks() {
-    return m_d3map->MapData;
+    return std::vector<unsigned char>(m_d3map->MapData);
 }
 
 MinecraftLocation D3PP::world::D3MapProvider::GetSpawn() {
-    return m_d3map->MapSpawn;
+    return MinecraftLocation(m_d3map->MapSpawn);
 }
 
 void D3PP::world::D3MapProvider::SetSpawn(const MinecraftLocation &location) {
@@ -92,7 +92,7 @@ void D3PP::world::D3MapProvider::SetLastPlayer(const D3PP::Common::Vector3S &loc
 }
 
 D3PP::world::MapEnvironment D3PP::world::D3MapProvider::GetEnvironment() {
-    MapEnvironment currentEnv;
+    MapEnvironment currentEnv{};
     currentEnv.SkyColor = m_d3map->SkyColor;
     currentEnv.CloudColor = m_d3map->CloudColor;
     currentEnv.FogColor = m_d3map->FogColor;

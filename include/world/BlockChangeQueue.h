@@ -21,6 +21,7 @@ namespace D3PP::world {
     private:
         std::mutex m_accessLock;
         std::priority_queue<ChangeQueueItem, std::vector<ChangeQueueItem>, ChangeQueueItem> m_ChangeQueue;
+        void TryDequeue_();
     };
 }
 #endif //D3PP_BLOCKCHANGEQUEUE_H
