@@ -8,9 +8,9 @@
 
 class MinecraftLocation {
 public:
-    const short X() { return Location.X; };
-    const short Y() { return Location.Y; };
-    const short Z() { return Location.Z; };
+    [[nodiscard]] short X() const { return Location.X; };
+    [[nodiscard]] short Y() const { return Location.Y; };
+    [[nodiscard]] short Z() const { return Location.Z; };
     float Rotation;
     float Look;
     D3PP::Common::Vector3S Location;
@@ -18,7 +18,7 @@ public:
     void SetAsBlockCoords(D3PP::Common::Vector3S blockCoords);
     void SetAsPlayerCoords(D3PP::Common::Vector3S playerCoords);
     void SetAsPlayerCoords(D3PP::Common::Vector3F playerCoords);
-    D3PP::Common::Vector3S GetAsBlockCoords() const;
+    [[nodiscard]] D3PP::Common::Vector3S GetAsBlockCoords() const;
 
     bool operator==(const MinecraftLocation &other) const {
         return Location.isEqual(other.Location) && other.Rotation == Rotation && other.Look == Look;

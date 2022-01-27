@@ -13,15 +13,15 @@ class NetworkClient;
 
 class Chat {
 public:
-    static void HandleChatEscapes(std::string &input, int currentEntityId);
+    static void HandleChatEscapes(std::string &input, const int& currentEntityId);
     static std::string StringMultiline(std::string input);
     static bool StringIV(const std::string& input);
     static std::string StringGV(const std::string& input);
     
-    static void NetworkSend2Player(int entityId, std::string message, std::string playerName);
-    static void NetworkSend2Map(int entityId, std::string message);
-    static void NetworkSend2All(int entityId, std::string message);
-    static void HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, std::string input, char playerId);
+    static void NetworkSend2Player(const int& entityId, const std::string& message, std::string playerName);
+    static void NetworkSend2Map(const int& entityId, const std::string& message);
+    static void NetworkSend2All(const int& entityId, const std::string& message);
+    static void HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, const std::string& input, const char& playerId);
 };
 
 

@@ -154,9 +154,9 @@ namespace D3PP::world {
 
         std::shared_ptr<Map> GetPointer(int id);
 
-        std::shared_ptr<Map> GetPointer(std::string name);
+        std::shared_ptr<Map> GetPointer(const std::string& name);
 
-        std::shared_ptr<Map> GetPointerUniqueId(std::string uniqueId);
+        std::shared_ptr<Map> GetPointerUniqueId(const std::string& uniqueId);
 
         int GetMapId();
 

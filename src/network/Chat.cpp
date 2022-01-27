@@ -18,7 +18,7 @@
 #include "CPE.h"
 const int MaxStringLength = 65;
 
-void Chat::HandleChatEscapes(std::string &input, int currentEntityId) {
+void Chat::HandleChatEscapes(std::string &input, const int& currentEntityId) {
     Utils::replaceAll(input, "%%", "§");
     std::string percentString = "%";
     std::string andString = "&";
@@ -100,29 +100,31 @@ std::string Chat::StringGV(const std::string& input) {
     return std::regex_replace(input, AllowedRegexp, "#");
 }
 
-void Chat::NetworkSend2Player(int entityId, std::string message, std::string playerName) {
+void Chat::NetworkSend2Player(const int& entityId, const std::string& message, std::string playerName) {
     std::shared_ptr<Entity> em = Entity::GetPointer(entityId);
     if (em == nullptr)
         return;
     
     if (playerName.empty())
         playerName = em->lastPrivateMessage;
+
+    std::string output(message);
     Network* nm = Network::GetInstance();
 
     if (em->playerList != nullptr) {
         if (em->playerList->MuteTime < time(nullptr)) {
-            HandleChatEscapes(message, entityId);
-            std::string message1 = "&cP " + Entity::GetDisplayname(entityId) + "&f: " + message;
+            HandleChatEscapes(output, entityId);
+            std::string message1 = "&cP " + Entity::GetDisplayname(entityId) + "&f: " + output;
             bool found = false;
 
             for (const auto &nc : nm->roClients) {
                 if (nc->player != nullptr && nc->player->tEntity != nullptr) {
                     if (Utils::InsensitiveCompare(nc->player->tEntity->Name, playerName)) {
                         em->lastPrivateMessage = playerName;
-                        Logger::LogAdd("Chat", em->Name + " > " + nc->player->tEntity->Name + ": " + message, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
+                        Logger::LogAdd("Chat", em->Name + " > " + nc->player->tEntity->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
                         NetworkFunctions::SystemMessageNetworkSend(nc->GetId(), message1);
 
-                        std::string message0 = "&c@ " + Entity::GetDisplayname(nc->player->tEntity->Id) + "&f: " +message;
+                        std::string message0 = "&c@ " + Entity::GetDisplayname(nc->player->tEntity->Id) + "&f: " +output;
                         Entity::MessageToClients(entityId, message0);
                         found = true;
                         break;
@@ -139,84 +141,87 @@ void Chat::NetworkSend2Player(int entityId, std::string message, std::string pla
     }
 }
 
-void Chat::NetworkSend2Map(int entityId, std::string message) {
+void Chat::NetworkSend2Map(const int& entityId, const std::string& message) {
     std::shared_ptr<Entity> em = Entity::GetPointer(entityId);
     if (em == nullptr)
         return;
-    
+    std::string output(message);
     if (em->playerList != nullptr) {
         if (em->playerList->MuteTime < time(nullptr)) {
             int mapId = em->MapID;
-            HandleChatEscapes(message, entityId);
-            Logger::LogAdd("Chat", em->Name + ": " + message, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
+            HandleChatEscapes(output, entityId);
+            Logger::LogAdd("Chat", em->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
 
             EventChatMap ecm;
             ecm.entityId = entityId;
-            ecm.message = message;
+            ecm.message = output;
             Dispatcher::post(ecm);
 
-            message = Entity::GetDisplayname(entityId) + "&f: " + message;
-            NetworkFunctions::SystemMessageNetworkSend2All(mapId, message);
+            output = Entity::GetDisplayname(entityId) + "&f: " + output;
+            NetworkFunctions::SystemMessageNetworkSend2All(mapId, output);
         } else {
             Entity::MessageToClients(entityId, "&eYou are muted.");
         }
     }
 }
 
-void Chat::NetworkSend2All(int entityId, std::string message) {
+void Chat::NetworkSend2All(const int& entityId, const std::string& message) {
     std::shared_ptr<Entity> em = Entity::GetPointer(entityId);
     if (em == nullptr)
         return;
 
+    std::string output(message);
+
     if (em->playerList != nullptr) {
         if (em->playerList->MuteTime < time(nullptr)) {
-            HandleChatEscapes(message, entityId);
-            Logger::LogAdd("Chat", "# " + em->Name + ": " + message, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
+            HandleChatEscapes(output, entityId);
+            Logger::LogAdd("Chat", "# " + em->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
 
             EventChatAll eca;
-            eca.message = message;
+            eca.message = output;
             eca.entityId = entityId;
             Dispatcher::post(eca);
 
-            message = "&c# " + Entity::GetDisplayname(entityId) + "&f: " + message;
-            NetworkFunctions::SystemMessageNetworkSend2All(-1, message);
+            output = "&c# " + Entity::GetDisplayname(entityId) + "&f: " + output;
+            NetworkFunctions::SystemMessageNetworkSend2All(-1, output);
         } else {
             Entity::MessageToClients(entityId, "&eYou are muted.");
         }
     }
 }
 
-void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, std::string input, char playerId) {
+void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, const std::string& input, const char& playerId) {
+    std::string output(input);
     if (CPE::GetClientExtVersion(client, LONG_MESSAGES_EXT_NAME) == 1){
         if (playerId == 1) {
             client->player->tEntity->ChatBuffer += input;
             return;
         } else {
-            input = client->player->tEntity->ChatBuffer + input;
+            output = client->player->tEntity->ChatBuffer + input;
             client->player->tEntity->ChatBuffer = "";
         }
     }
     CommandMain* cm = CommandMain::GetInstance();
 
-    if (input[0] == '/') {
-        cm->CommandDo(client, input.substr(1));
-    } else if (input[0] == '#') {
+    if (output[0] == '/') {
+        cm->CommandDo(client, output.substr(1));
+    } else if (output[0] == '#') {
         if (client->GlobalChat)
-            NetworkSend2Map(client->player->tEntity->Id, input.substr(1));
+            NetworkSend2Map(client->player->tEntity->Id, output.substr(1));
         else
-            NetworkSend2All(client->player->tEntity->Id, input.substr(1));
+            NetworkSend2All(client->player->tEntity->Id, output.substr(1));
         // -- do global chat
-    } else if (input[0] == '@') {
-        std::vector<std::string> splitString = Utils::splitString(input);
+    } else if (output[0] == '@') {
+        std::vector<std::string> splitString = Utils::splitString(output);
         std::string pmName = splitString[0].substr(1); // -- Trim off the '@'.
-        NetworkSend2Player(client->player->tEntity->Id, input.substr(2+pmName.size()), pmName);
+        NetworkSend2Player(client->player->tEntity->Id, output.substr(2+pmName.size()), pmName);
     } 
     else
     {
         if (client->GlobalChat)
-            NetworkSend2All(client->player->tEntity->Id, input);
+            NetworkSend2All(client->player->tEntity->Id, output);
         else
-            NetworkSend2Map(client->player->tEntity->Id, input);
+            NetworkSend2Map(client->player->tEntity->Id, output);
     }
     
 }

@@ -10,13 +10,10 @@
 #include "common/Files.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
-#include "world/ChangeQueueItem.h"
 #include "System.h"
-#include "common/TaskScheduler.h"
 #include "common/ByteBuffer.h"
 #include "common/Logger.h"
 #include "compression.h"
-#include "common/PreferenceLoader.h"
 #include "Utils.h"
 #include "Block.h"
 #include "watchdog.h"
@@ -29,17 +26,13 @@
 #include "world/Physics.h"
 #include "Undo.h"
 #include "CPE.h"
-#include "files/D3Map.h"
-#include "common/Vectors.h"
 #include "EventSystem.h"
 #include "events/EventMapActionDelete.h"
 #include "events/EventMapActionFill.h"
 #include "events/EventMapActionSave.h"
-#include "events/EventMapActionResize.h"
 #include "events/EventMapActionLoad.h"
 #include "events/EventMapBlockChange.h"
 #include "events/EventMapBlockChangeClient.h"
-#include "events/EventMapBlockChangePlayer.h"
 #include "events/EventMapAdd.h"
 #include "world/Teleporter.h"
 
@@ -246,9 +239,9 @@ void MapMain::MapBlockChange() {
         }
 }
 
-bool comparePhysicsTime(const TimeQueueItem& first, const TimeQueueItem& second) {
-    return (first.Time < second.Time);
-}
+//bool comparePhysicsTime(const TimeQueueItem& first, const TimeQueueItem& second) {
+//    return (first.Time < second.Time);
+//}
 
 void MapMain::MapBlockPhysics() {
     while (System::IsRunning) {
@@ -291,7 +284,7 @@ std::shared_ptr<Map> MapMain::GetPointer(int id) {
     return nullptr;
 }
 
-std::shared_ptr<Map> MapMain::GetPointer(std::string name) {
+std::shared_ptr<Map> MapMain::GetPointer(const std::string& name) {
     std::shared_ptr<Map> result = nullptr;
     for (auto const &mi : _maps) {
         if (Utils::InsensitiveCompare(mi.second->m_mapProvider->MapName, name)) {
@@ -303,8 +296,8 @@ std::shared_ptr<Map> MapMain::GetPointer(std::string name) {
     return result;
 }
 
-std::shared_ptr<Map> MapMain::GetPointerUniqueId(std::string uniqueId) {
-    return nullptr;
+//std::shared_ptr<Map> MapMain::GetPointerUniqueId(const std::string& uniqueId) {
+//    return nullptr;
 //    std::shared_ptr<Map> result = nullptr;
 //    for (auto const &mi : _maps) {
 //        if (Utils::InsensitiveCompare(mi.second->UniqueID, uniqueId)) {
@@ -314,7 +307,7 @@ std::shared_ptr<Map> MapMain::GetPointerUniqueId(std::string uniqueId) {
 //    }
 //
 //    return result;
-}
+//}
 
 int MapMain::GetMapId() {
     int result = 0;
@@ -695,7 +688,7 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
 
     Block* bm = Block::GetInstance();
     auto rawBlock = m_mapProvider->GetBlock(blockLocation);
-    unsigned char rawNewType = 0;
+    unsigned char rawNewType;
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(client->GetId(), true);
     MapBlock oldType = bm->GetBlock(rawBlock);
     clientEntity->lastMaterial = type;

@@ -10,16 +10,16 @@
 
 class NetworkFunctions {
 public:
-    static void SystemLoginScreen(int clientId, std::string message0, std::string message1, char opMode);
-    static void SystemRedScreen(int clientId, std::string message);
-    static void SystemMessageNetworkSend(int clientId, std::string message, int type = 0);
-    static void SystemMessageNetworkSend2All(int mapId, std::string message, int type = 0);
+    static void SystemLoginScreen(const int& clientId, const std::string& message0, const std::string& message1, const char& opMode);
+    static void SystemRedScreen(const int& clientId, const std::string& message);
+    static void SystemMessageNetworkSend(const int& clientId,const  std::string& message, const int& type = 0);
+    static void SystemMessageNetworkSend2All(const int& mapId, const std::string& message, const int& type = 0);
     // -- Map
-    static void NetworkOutBlockSet(int clientId, short x, short y, short z, unsigned char type);
-    static void NetworkOutBlockSet2Map(int mapId, unsigned short x, unsigned short y, unsigned short z, unsigned char type);
+    static void NetworkOutBlockSet(const int& clientId, const short& x, const short& y, const short& z, const unsigned char& type);
+    static void NetworkOutBlockSet2Map(const int& mapId, const unsigned short& x, const unsigned short& y, const unsigned short& z, const unsigned char& type);
     // -- Player
-    static void NetworkOutEntityAdd(int clientId, char playerId, std::string name, MinecraftLocation& location);
-    static void NetworkOutEntityDelete(int clientId, char playerId);
-    static void NetworkOutEntityPosition(int clientId, char playerId, MinecraftLocation& location);
+    static void NetworkOutEntityAdd(const int& clientId, const char& playerId, const std::string& name, const MinecraftLocation& location);
+    static void NetworkOutEntityDelete(const int& clientId, const char& playerId);
+    static void NetworkOutEntityPosition(const int& clientId, const char& playerId, const MinecraftLocation& location);
 };
 #endif //D3PP_NETWORK_FUNCTIONS_H
