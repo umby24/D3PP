@@ -20,7 +20,7 @@ namespace D3PP::world {
         void Clear();
     private:
         std::mutex m_accessLock;
-        std::priority_queue<ChangeQueueItem, std::vector<ChangeQueueItem>, ChangeQueueItem> m_ChangeQueue;
+        std::priority_queue<ChangeQueueItem, std::vector<ChangeQueueItem>, std::less<std::vector<ChangeQueueItem>::value_type> > m_ChangeQueue;
         void TryDequeue_();
     };
 }

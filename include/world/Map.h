@@ -142,9 +142,9 @@ namespace D3PP::world {
         std::unique_ptr<IMapProvider> m_mapProvider;
     private:
         MapActions m_actions;
-        void QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z);
+        void QueueBlockPhysics(Common::Vector3S location);
 
-        void QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z, unsigned char priority,
+        void QueueBlockChange(Common::Vector3S location, unsigned char priority,
                               unsigned char oldType) const;
     };
 

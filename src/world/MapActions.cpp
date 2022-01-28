@@ -15,8 +15,8 @@ D3PP::world::MapActions::MapActions() {
 void D3PP::world::MapActions::MainFunc() {
     if (!itemQueue.empty()) {
         std::function <void()> taskToComplete = itemQueue.front();
-        itemQueue.pop();
         taskToComplete();
+        itemQueue.pop();
     }
 }
 

@@ -15,6 +15,14 @@ namespace D3PP::world {
         bool operator()(const ChangeQueueItem &a, const ChangeQueueItem &b) {
             return a.Priority < b.Priority;
         }
+
+        bool operator< (const ChangeQueueItem &b) const {
+            return Priority < b.Priority;
+        }
+
+        bool operator> (const ChangeQueueItem &b) const {
+            return Priority > b.Priority;
+        }
     };
 }
 #endif //D3PP_CHANGEQUEUEITEM_H

@@ -575,6 +575,8 @@ void Map::Reload() {
     m_mapProvider->Reload();
     loading = false;
     loaded = true;
+    BlockchangeStopped = false;
+    PhysicsStopped = false;
     Logger::LogAdd(MODULE_NAME, "Map Reloaded [" + m_mapProvider->MapName + "]", LogType::NORMAL, GLF);
 }
 
@@ -738,7 +740,7 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
     Dispatcher::post(mbc);
 
     BlockChange(clientEntity->playerList->Number, X, Y, Z, rawNewType, true, true, true, 250);
-    QueueBlockChange(X, Y, Z, 250, -1);
+    QueueBlockChange(Vector3S(X, Y, Z), 250, -1);
     // -- PluginEventBlockCreate (one for delete, one for create.)
 
 }
@@ -769,7 +771,7 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
         Undo::Add(playerNumber, ID, X, Y, Z, oldType.Id, roLastPlayer);
     }
     if (type != roData && send) {
-        QueueBlockChange(X, Y, Z, priority, oldType.Id);
+        QueueBlockChange(Vector3S(X, Y, Z), priority, roData);
     }
 
     m_mapProvider->SetBlock(locationVector, type);
@@ -779,7 +781,7 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
         for (int ix = -1; ix < 2; ix++) {
             for (int iy = -1; iy < 2; iy++) {
                 for (int iz = -1; iz < 2; iz++) {
-                    QueueBlockPhysics(X + ix, Y + iy, Z + iz);
+                    QueueBlockPhysics(Vector3S((short)(X + ix), Y + iy, Z + iz));
                 }
             }
         }
@@ -803,12 +805,12 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
      return m_mapProvider->GetBlock(Vector3S(X, Y, Z));
 }
 
-void Map::QueueBlockChange(unsigned short X, unsigned short Y, unsigned short Z, unsigned char priority, unsigned char oldType) const {
+void Map::QueueBlockChange(Common::Vector3S location, unsigned char priority, unsigned char oldType) const {
     while (loading) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
-    ChangeQueueItem newQueueItem { Vector3S(X, Y, Z),
+    ChangeQueueItem newQueueItem { location,
                                     oldType,
                                      priority
     };
@@ -848,11 +850,11 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
     }
 
     if (oldBlockType0 != 0) {
-        QueueBlockChange(X0, Y0, Z0, priority, oldBlockType0);
+        QueueBlockChange(Vector3S(X0, Y0, Z0), priority, oldBlockType0);
     }
 
     if (oldBlockType1 != oldBlockType0) {
-        QueueBlockChange(X1, Y1, Z1, priority, oldBlockType1);
+        QueueBlockChange(Vector3S(X1, Y1, Z1), priority, oldBlockType1);
     }
 
     oldBlockType1 = oldBlockType0;
@@ -867,8 +869,8 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
         for (int ix = -1; ix < 2; ix++) {
             for (int iy = -1; iy < 2; iy++) {
                 for (int iz = -1; iz < 2; iz++) {
-                    QueueBlockPhysics(X0 + ix, Y0 + iy, Z0 + iz);
-                    QueueBlockPhysics(X1 + ix, Y1 + iy, Z1 + iz);
+                    QueueBlockPhysics(Vector3S((short)(X0 + ix), Y0 + iy, Z0 + iz));
+                    QueueBlockPhysics(Vector3S((short)(X1 + ix), Y1 + iy, Z1 + iz));
                 }
             }
         }
@@ -880,18 +882,18 @@ unsigned short Map::GetBlockPlayer(unsigned short X, unsigned short Y, unsigned 
     return m_mapProvider->GetLastPlayer(Vector3S(X, Y, Z));
 }
 
-void Map::QueueBlockPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
-        Block* bm = Block::GetInstance();
-        MapBlock blockEntry = bm->GetBlock(m_mapProvider->GetBlock(Vector3S(X, Y, Z)));
-        unsigned char blockPhysics = blockEntry.Physics;
-        std::string physPlugin = blockEntry.PhysicsPlugin;
+void Map::QueueBlockPhysics(Common::Vector3S location) {
+    Block* bm = Block::GetInstance();
+    MapBlock blockEntry = bm->GetBlock(m_mapProvider->GetBlock(location));
+    unsigned char blockPhysics = blockEntry.Physics;
+    std::string physPlugin = blockEntry.PhysicsPlugin;
 
-        if (blockPhysics > 0 || !physPlugin.empty()) {
-            auto physTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(blockEntry.PhysicsTime + Utils::RandomNumber(blockEntry.PhysicsRandom));
+    if (blockPhysics > 0 || !physPlugin.empty()) {
+        auto physTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(blockEntry.PhysicsTime + Utils::RandomNumber(blockEntry.PhysicsRandom));
 
-            TimeQueueItem physicItem { Vector3S(X, Y, Z), physTime };
-            pQueue->TryQueue(physicItem);
-        }
+        TimeQueueItem physicItem { location, physTime };
+        pQueue->TryQueue(physicItem);
+    }
 }
 
 void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
@@ -922,7 +924,7 @@ void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
         }
 
         if (blockEntry.PhysicsRepeat) {
-            QueueBlockPhysics(X, Y, Z);
+            QueueBlockPhysics(Vector3S(X, Y, Z));
         }
 }
 
