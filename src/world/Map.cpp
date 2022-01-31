@@ -161,7 +161,7 @@ void MapMain::AddResizeAction(int clientId, int mapId, unsigned short X, unsigne
 
     Vector3S newSize(X, Y, Z);
 
-    std::function<void()> resizeAction = [&thisMap, &clientId, &newSize](){
+    std::function<void()> resizeAction = [thisMap, clientId, newSize](){
         thisMap->Resize(newSize.X, newSize.Y, newSize.Z);
         if (clientId > 0) {
             NetworkFunctions::SystemMessageNetworkSend(clientId, "&eMap Resized.");
@@ -300,19 +300,6 @@ std::shared_ptr<Map> MapMain::GetPointer(const std::string& name) {
     return result;
 }
 
-//std::shared_ptr<Map> MapMain::GetPointerUniqueId(const std::string& uniqueId) {
-//    return nullptr;
-//    std::shared_ptr<Map> result = nullptr;
-//    for (auto const &mi : _maps) {
-//        if (Utils::InsensitiveCompare(mi.second->UniqueID, uniqueId)) {
-//            result = mi.second;
-//            break;
-//        }
-//    }
-//
-//    return result;
-//}
-
 int MapMain::GetMapId() {
     int result = 0;
 
@@ -396,8 +383,11 @@ void MapMain::MapListLoad() {
 }
 
 int MapMain::Add(int id, short x, short y, short z, const std::string& name) {
-    if (id == -1)
+    bool createNew = false;
+    if (id == -1) {
         id = GetMapId();
+        createNew = true;
+    }
 
     if (name.empty())
         return -1;
@@ -419,7 +409,10 @@ int MapMain::Add(int id, short x, short y, short z, const std::string& name) {
     Vector3S sizeVector {x, y, z};
     newMap->m_mapProvider = std::make_unique<D3MapProvider>();
     newMap->filePath = f->GetFolder("Maps") + name + "/";
-   // newMap->m_mapProvider->CreateNew(sizeVector, newMap->filePath, name);
+    
+    if (createNew)
+        newMap->m_mapProvider->CreateNew(sizeVector, newMap->filePath, name);
+
     newMap->bcQueue = std::make_unique<BlockChangeQueue>(sizeVector);
     newMap->pQueue = std::make_unique<PhysicsQueue>(sizeVector);
 
@@ -524,15 +517,19 @@ void Map::Fill(const std::string& functionName, const std::string& paramString) 
     pQueue->Clear();
     Vector3S mapSize = m_mapProvider->GetSize();
     int mapSizeInt = (mapSize.X * mapSize.Y * mapSize.Z)*4;
-
+    clock_t start = clock();
     std::vector<unsigned char> blankMap;
     blankMap.resize(mapSizeInt);
+
     m_mapProvider->SetBlocks(blankMap);
 
     LuaPlugin* lp = LuaPlugin::GetInstance();
-
+    clock_t stop = clock();
+    Logger::LogAdd("Debug", "Time to resize.." + stringulate(stop - start), DEBUG, GLF);
+    start = clock();
     lp->TriggerMapFill(ID, mapSize.X, mapSize.Y, mapSize.Z, "Mapfill_" + functionName, std::move(paramString));
-
+    stop = clock();
+    Logger::LogAdd("Debug", "Time to fill.." + stringulate(stop - start), DEBUG, GLF);
     Resend();
     Logger::LogAdd(MODULE_NAME, "Map '" + m_mapProvider->MapName + "' filled.", LogType::NORMAL, GLF);
 }

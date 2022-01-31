@@ -154,7 +154,7 @@ namespace D3PP::world {
 
         std::shared_ptr<Map> GetPointer(int id);
         std::shared_ptr<Map> GetPointer(const std::string& name);
-        int GetMapId();
+        
         int Add(int id, short x, short y, short z, const std::string &name);
         void Delete(int id);
         static MapMain *GetInstance();
@@ -191,7 +191,8 @@ namespace D3PP::world {
         long mapSettingsLastWriteTime;
         int mapSettingsTimerFileCheck;
         int mapSettingsMaxChangesSec;
-
+        
+        int GetMapId();
         void MapListSave();
         void MapListLoad();
         void MapSettingsSave();

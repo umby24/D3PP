@@ -20,7 +20,7 @@
 #include "common/MinecraftLocation.h"
 #include "CPE.h"
 #include "common/Files.h"
-
+#include "world/Map.h"
 // -- Events..
 #include "events/EventChatAll.h"
 #include "events/EventChatMap.h"
@@ -225,6 +225,7 @@ void LuaPlugin::HandleEvent(const Event& event) {
     }
 }
 
+
 void LuaPlugin::BindFunctions() {
     // -- Network functions:
 }
@@ -327,8 +328,8 @@ void LuaPlugin::TimerMain() {
 }
 
 void LuaPlugin::LoadFile(const std::string& path) {
-    std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
-
+    std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);\
+    
     if(luaL_loadfile(this->state, path.c_str())) {
         bail(this->state, "Failed to load " + path);
         return;
@@ -407,5 +408,4 @@ void LuaPlugin::TriggerBuildMode(const std::string& function, int clientId, int 
         }
     }
 }
-
 

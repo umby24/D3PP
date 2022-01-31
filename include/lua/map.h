@@ -12,6 +12,7 @@ public:
 protected:
     static int LuaMapGetTable(lua_State* L);
     static int LuaMapBlockChange(lua_State* L);
+    static int LuaMapBlockChange2(lua_State* L);
     static int LuaMapBlockChangeClient(lua_State* L);
     static int LuaMapBlockChangePlayer(lua_State* L);
     static int LuaMapBlockMove(lua_State* L);

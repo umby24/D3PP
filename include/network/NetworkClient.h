@@ -20,6 +20,10 @@ class Entity;
 class Event;
 struct BlockDefinition;
 
+namespace D3PP::network {
+    class IPacket;
+}
+
 class IMinecraftClient {
 public:
     IMinecraftClient()= default;;
@@ -30,6 +34,7 @@ public:
     virtual int GetPing() = 0;
     virtual std::string GetLoginName() = 0;
     virtual bool GetGlobalChat() = 0;
+    virtual int GetMapId() = 0;
     virtual void SetGlobalChat(bool active) = 0;
     virtual bool IsStopped() = 0;
     virtual void SendChat(std::string message) = 0;
@@ -38,6 +43,10 @@ public:
     virtual void SendDeleteBlock(unsigned char blockId) = 0;
     virtual void SpawnEntity(std::shared_ptr<Entity> e) = 0;
     virtual void DespawnEntity(std::shared_ptr<Entity> e) = 0;
+    virtual bool IsDataAvailable() = 0;
+    virtual void SendQueued() = 0;
+    virtual void HandleData() = 0;
+    virtual void SendPacket(const D3PP::network::IPacket& p) = 0;
 };
 
 class NetworkClient : public IMinecraftClient {
@@ -53,8 +62,8 @@ public:
     void Kick(const std::string& message, bool hide) override;
     bool canSend;
     bool canReceive;
-    std::unique_ptr<ByteBuffer> SendBuffer;
-    std::unique_ptr<ByteBuffer> ReceiveBuffer;
+    std::shared_ptr<ByteBuffer> SendBuffer;
+    std::shared_ptr<ByteBuffer> ReceiveBuffer;
     std::mutex sendLock;
 
     std::string IP;
@@ -88,6 +97,7 @@ public:
     int GetPing() override;
     std::string GetLoginName() override;
     bool GetGlobalChat() override;
+    int GetMapId() override;
     void SetGlobalChat(bool active) override;
 
     void SpawnEntity(std::shared_ptr<Entity> e) override;
@@ -102,6 +112,11 @@ public:
 
     void SendDefineBlock(BlockDefinition newBlock) override;
     void SendDeleteBlock(unsigned char blockId) override;
+
+    bool IsDataAvailable() override;
+    void SendQueued() override;
+    void HandleData() override;
+    void SendPacket(const D3PP::network::IPacket& p) override;
 private:
     int Id;
     int eventSubId, addSubId, removeSubId;

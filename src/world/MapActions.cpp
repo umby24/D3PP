@@ -9,7 +9,7 @@ D3PP::world::MapActions::MapActions() {
     Interval = std::chrono::milliseconds(30);
     Main = [this] { this->MainFunc(); };
 
-    TaskScheduler::RegisterTask("HCMapActions" + stringulate(Utils::RandomNumber(193876957)), *this);
+    taskId = TaskScheduler::RegisterTask("HCMapActions" + stringulate(Utils::RandomNumber(193876957)), *this);
 }
 
 void D3PP::world::MapActions::MainFunc() {
@@ -22,4 +22,8 @@ void D3PP::world::MapActions::MainFunc() {
 
 void D3PP::world::MapActions::AddTask(const std::function<void()>& task) {
     itemQueue.push(task);
+}
+
+D3PP::world::MapActions::~MapActions() {
+    TaskScheduler::UnregisterTask(taskId);
 }

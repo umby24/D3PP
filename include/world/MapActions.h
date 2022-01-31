@@ -11,10 +11,12 @@ namespace D3PP::world {
     class MapActions : public TaskItem {
     public:
         MapActions();
+        ~MapActions();
         void MainFunc();
         void AddTask(const std::function<void()>& task);
     private:
         std::queue<std::function<void()>> itemQueue;
+        std::string taskId;
     };
 }
 #endif //D3PP_MAPACTIONS_H

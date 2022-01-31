@@ -14,6 +14,7 @@ using namespace D3PP::Common;
 const struct luaL_Reg LuaMapLib::lib[] = {
         {"getall", &LuaMapGetTable},
         {"setblock", &LuaMapBlockChange},
+        {"setblock2", &LuaMapBlockChange2},
         {"setblockclient", &LuaMapBlockChangeClient},
         {"setblockplayer", &LuaMapBlockChangePlayer},
         {"moveblock", &LuaMapBlockMove},
@@ -751,6 +752,32 @@ int LuaMapLib::LuaMapBlockChange(lua_State* L) {
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> map = mm->GetPointer(mapId);
 
+    if (map != nullptr) {
+        map->BlockChange(static_cast<short>(playerNumber), X, Y, Z, type, Undo, physics, send, priority);
+    }
+
+    return 0;
+}
+
+int LuaMapLib::LuaMapBlockChange2(lua_State* L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 10) {
+        Logger::LogAdd("Lua", "LuaError: Map_Block_Change called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+    int playerNumber = lua_tointeger(L, 1);
+    int mapId = lua_tointeger(L, 2);
+    int X = static_cast<int>(lua_tointeger(L, 3));
+    int Y = static_cast<int>(lua_tointeger(L, 4));
+    int Z = static_cast<int>(lua_tointeger(L, 5));
+    unsigned char type = lua_tointeger(L, 6);
+    bool Undo = (lua_tointeger(L, 7) > 0);
+    bool physics = (lua_tointeger(L, 8) > 0);
+    bool send = (lua_tointeger(L, 9) > 0);
+    unsigned char priority = lua_tointeger(L, 10);
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
     if (map != nullptr) {
         map->BlockChange(static_cast<short>(playerNumber), X, Y, Z, type, Undo, physics, send, priority);
     }

@@ -21,19 +21,24 @@ public:
     int GetRank() override { return 32767; };
     int GetCustomBlocksLevel() override { return 0; }
     int GetPing() override { return 1337; }
-    std::string GetLoginName() { return "[CONSOLE]"; }
-    bool GetGlobalChat() { return true; }
-    void SetGlobalChat(bool active) { /* noop */ }
-    bool IsStopped() { return false; }
-    void SendChat(std::string message) {
+    int GetMapId() override { return -1; }
+    std::string GetLoginName() override { return "[CONSOLE]"; }
+    bool GetGlobalChat() override { return true; }
+    void SetGlobalChat(bool active) override { /* noop */ }
+    bool IsStopped() override { return false; }
+    void SendChat(std::string message) override {
         Utils::replaceAll(message, "<br>", "\n");
         Logger::LogAdd("CONSOLE", message, LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     }
-    void Kick(const std::string& message, bool hide) { /* noop */ }
+    void Kick(const std::string& message, bool hide) override { /* noop */ }
     void SendDefineBlock(BlockDefinition newBlock) override;
     void SendDeleteBlock(unsigned char blockId) override { }
     void SpawnEntity(std::shared_ptr<Entity> e) override { }
     void DespawnEntity(std::shared_ptr<Entity> e) override { }
+    bool IsDataAvailable() override { return false; }
+    void SendQueued() override { }
+    void HandleData() override { }
+    void SendPacket(const D3PP::network::IPacket& p) override { }
 private:
     static std::shared_ptr<ConsoleClient> instance;
 };

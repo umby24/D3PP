@@ -14,6 +14,12 @@ void D3PP::world::D3MapProvider::CreateNew(const D3PP::Common::Vector3S &size, c
                                            const std::string &name) {
     m_d3map = std::make_unique<files::D3Map>(path, name, size);
     MapName = name;
+    auto defaultEnv = MapEnvironment();
+    defaultEnv.SideLevel = size.Z/2;
+
+    SetEnvironment(defaultEnv);
+    SetPermissions(MapPermissions {0, 0, 0});
+
     m_d3map->Save();
 }
 

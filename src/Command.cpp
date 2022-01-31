@@ -1420,8 +1420,7 @@ void CommandMain::CommandAddMap() {
         return;
     }
     MapMain* mapMain = MapMain::GetInstance();
-    int newMapId = mapMain->GetMapId();
-    mapMain->Add(newMapId, 64, 64, 64, ParsedText0);
+    mapMain->Add(-1, 64, 64, 64, ParsedText0);
     c->SendChat("&eMap created.");
 }
 

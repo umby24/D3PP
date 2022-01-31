@@ -45,7 +45,7 @@ int LuaEntityLib::openLib(lua_State* L)
 }
 
 int LuaEntityLib::LuaEntityGetTable(lua_State* L) {
-    int numEntities = Entity::AllEntities.size();
+    int numEntities = static_cast<int>(Entity::AllEntities.size());
     int index = 1;
 
     lua_newtable(L);
@@ -72,12 +72,12 @@ int LuaEntityLib::LuaEntityAdd(lua_State* L) {
     }
 
     std::string eName(lua_tostring(L, 1));
-    int mapId = luaL_checkinteger(L, 2);
-    float x = luaL_checknumber(L, 3);
-    float y = luaL_checknumber(L, 4);
-    float z = luaL_checknumber(L, 5);
-    float rotation = luaL_checknumber(L, 6);
-    float look = luaL_checknumber(L, 7);
+    int mapId = static_cast<int>(luaL_checkinteger(L, 2));
+    auto x = static_cast<float>(luaL_checknumber(L, 3));
+    auto y = static_cast<float>(luaL_checknumber(L, 4));
+    auto z = static_cast<float>(luaL_checknumber(L, 5));
+    auto rotation = static_cast<float>(luaL_checknumber(L, 6));
+    auto look = static_cast<float>(luaL_checknumber(L, 7));
     std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(eName, mapId, x, y, z, rotation, look);
     Entity::Add(newEntity);
     int result = newEntity->Id;
@@ -95,8 +95,7 @@ int LuaEntityLib::LuaEntityDelete(lua_State* L) {
         return 0;
     }
 
-    Entity::Delete(luaL_checkinteger(L, 1));
-
+    Entity::Delete(static_cast<int>(luaL_checkinteger(L, 1)));
     return 0;
 }
 
@@ -107,7 +106,7 @@ int LuaEntityLib::LuaEntityGetPlayer(lua_State* L) {
         Logger::LogAdd("Lua", "LuaError: ENTITY_GET_PLAYER called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
-    int entityId = luaL_checkinteger(L, 1);
+    int entityId = static_cast<int>(luaL_checkinteger(L, 1));
     int result = -1;
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
     if (foundEntity != nullptr && foundEntity->playerList != nullptr) {
