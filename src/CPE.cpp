@@ -75,6 +75,7 @@ void CPE::AfterMapActions(const std::shared_ptr<IMinecraftClient>& client) {
     if (GetClientExtVersion(client, ENV_COLORS_EXT_NAME) == 1) {
         // -- Set map colors
 //        if (clientMap->data.ColorsSet) {
+            
             int red = Utils::RedVal(perms.SkyColor);
             int green = Utils::GreenVal(perms.SkyColor);
             int blue = Utils::BlueVal(perms.SkyColor);

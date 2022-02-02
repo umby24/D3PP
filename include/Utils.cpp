@@ -136,14 +136,22 @@ int Utils::Rgb(int red, int green, int blue) {
 }
 
 short Utils::RedVal(int colorVal) {
+    if (colorVal < 0)
+        return -1;
+
     return (colorVal & 0x0000FF);
 }
 
 short Utils::GreenVal(int colorVal) {
+    if (colorVal < 0)
+        return -1;
     return (colorVal & 0x00FF00) >> 8;
 }
 
 short Utils::BlueVal(int colorVal) {
+    if (colorVal < 0)
+        return -1;
+
     return (colorVal & 0xFF0000) >> 16;
 }
 

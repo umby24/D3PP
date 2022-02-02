@@ -286,7 +286,10 @@ int LuaCPELib::LuaMapSetEnvColors(lua_State* L) {
         return 0;
 
     MapEnvironment env = thisMap->GetMapEnvironment();
-    int compressedColor = Utils::Rgb(red, green, blue);
+    int compressedColor = -1; 
+    
+    if (red != -1 && green != -1 && blue != -1) 
+        compressedColor = Utils::Rgb(red, green, blue);
 
     switch (type) {
         case 0:
