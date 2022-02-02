@@ -110,9 +110,9 @@ class CommandMain : TaskItem {
         void CommandSetMaterial();
         void CommandMaterials();
         void CommandPlace();
-        void CommandUndoTime();
         void CommandUndoPlayer();
         void CommandUndo();
+        void CommandRedo();
         void CommandUserMaps();
         // -- Commands not ported: Player Attribute Get, map directory rename, map blocks count, set/delete/bring/tp to location, time.
 

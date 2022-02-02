@@ -39,6 +39,9 @@ public:
     void SendQueued() override { }
     void HandleData() override { }
     void SendPacket(const D3PP::network::IPacket& p) override { }
+        void Undo(int steps) override {}
+    void Redo(int steps) override {}
+    void AddUndoItem(const D3PP::Common::UndoItem& item) override {}
 private:
     static std::shared_ptr<ConsoleClient> instance;
 };

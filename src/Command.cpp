@@ -13,7 +13,6 @@
 #include "common/Files.h"
 #include "System.h"
 #include "Utils.h"
-#include "Undo.h"
 #include "plugins/LuaPlugin.h"
 
 const std::string MODULE_NAME = "Command";
@@ -247,17 +246,6 @@ void CommandMain::Init() {
     materialList.Function = [this] { CommandMain::CommandMaterials(); };
     Commands.push_back(materialList);
 
-    Command undoTime;
-    undoTime.Id = "Undo-Time";
-    undoTime.Name = "undotime";
-    undoTime.Internal = true;
-    undoTime.Hidden = false;
-    undoTime.Rank = 0;
-    undoTime.RankShow = 0;
-    undoTime.CanConsole = false;
-    undoTime.Function = [this] { CommandMain::CommandUndoTime(); };
-    Commands.push_back(undoTime);
-
     Command undoPLayer;
     undoPLayer.Id = "Undo-Player";
     undoPLayer.Name = "undoplayer";
@@ -280,6 +268,16 @@ void CommandMain::Init() {
     undoCmd.Function = [this] { CommandMain::CommandUndo(); };
     Commands.push_back(undoCmd);
 
+    Command redoCmd;
+    undoCmd.Id = "Redo";
+    undoCmd.Name = "redo";
+    undoCmd.Internal = true;
+    undoCmd.Hidden = false;
+    undoCmd.Rank = 0;
+    undoCmd.RankShow = 0;
+    undoCmd.CanConsole = false;
+    undoCmd.Function = [this] { CommandMain::CommandRedo(); };
+    Commands.push_back(undoCmd);
 
     Command mapList;
     mapList.Id = "List-Maps";
@@ -1241,22 +1239,6 @@ void CommandMain::CommandLogLast() {
     }
 }
 
-void CommandMain::CommandUndoTime() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
-    std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
-
-    int timeAmount = 60;
-
-    if (!ParsedOperator.at(0).empty()) {
-        timeAmount = stoi(ParsedOperator.at(0));
-    }
-    if (timeAmount > 3600)
-        timeAmount = 3600;
-    time_t doTime = time(nullptr) - timeAmount;
-    Undo::UndoTime(e->MapID, doTime);
-    c->SendChat("&eBlock changes undone.");
-}
 
 void CommandMain::CommandUndoPlayer() {
     Network* nm = Network::GetInstance();
@@ -1264,21 +1246,17 @@ void CommandMain::CommandUndoPlayer() {
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
     PlayerListEntry* entry= playerList->GetPointer(ParsedOperator.at(0));
+    
     if (entry == nullptr) {
         c->SendChat("&eUnable to find a player named '" + ParsedOperator.at(0) + "'.");
         return;
     }
 
-    int timeAmount = 60;
+    int timeAmount = 30000;
 
     if (!ParsedOperator.at(1).empty()) {
         timeAmount = stoi(ParsedOperator.at(1));
     }
-    if (timeAmount > 3600)
-        timeAmount = 3600;
-
-    time_t doTime = time(nullptr) - timeAmount;
-    Undo::UndoPlayer(e->MapID, entry->Number, doTime);
 
     c->SendChat("&eBlock changes undone.");
 }
@@ -1286,19 +1264,27 @@ void CommandMain::CommandUndoPlayer() {
 void CommandMain::CommandUndo() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
-    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
-    int timeAmount = 60;
+    int timeAmount = 30000;
 
     if (!ParsedOperator.at(0).empty()) {
         timeAmount = stoi(ParsedOperator.at(0));
     }
-    if (timeAmount > 3600)
-        timeAmount = 3600;
 
-    time_t doTime = time(nullptr) - timeAmount;
-    Undo::UndoPlayer(clientEntity->MapID, clientEntity->playerList->Number, doTime);
-
+    c->Undo(timeAmount);
     c->SendChat("&eBlock changes undone.");
+}
+
+void CommandMain::CommandRedo() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    int timeAmount = 30000;
+
+    if (!ParsedOperator.at(0).empty()) {
+        timeAmount = stoi(ParsedOperator.at(0));
+    }
+
+    c->Redo(timeAmount);
+    c->SendChat("&eBlock changes Re-done.");
 }
 
 void CommandMain::CommandTeleport() {

@@ -9,7 +9,10 @@
 #include <events/EventEntityAdd.h>
 #include "common/ByteBuffer.h"
 #include "common/Logger.h"
+#include "common/UndoItem.h"
+
 #include "network/Network_Functions.h"
+#include "world/Map.h"
 #include "world/Player.h"
 #include "network/Network.h"
 #include "CPE.h"
@@ -29,6 +32,7 @@
 #endif
 
 const std::string MODULE_NAME = "NetworkClient";
+using namespace D3PP::world;
 
 NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) : Selections(MAX_SELECTION_BOXES) {
     if (socket->GetSocketFd() == -1) {
@@ -64,6 +68,7 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) : Selections(MAX_S
 NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
     Id = -1;
     CustomExtensions = 0;
+    m_currentUndoIndex = 0;
     DataAvailable = false;
     canReceive = true;
     canSend = true;
@@ -484,4 +489,64 @@ void NetworkClient::HandleData() {
 
 void NetworkClient::SendPacket(const D3PP::network::IPacket &p) {
 
+}
+
+void NetworkClient::Undo(int steps) { 
+    if (m_undoItems.empty())
+        return;
+
+    if (steps-1 > m_currentUndoIndex)
+        steps = m_currentUndoIndex+1;
+
+    if (m_currentUndoIndex == -1)
+        return;
+
+    MapMain* mm = MapMain::GetInstance();
+    int currentMapId = GetMapId();
+    std::shared_ptr<Map> currentMap = mm->GetPointer(currentMapId);
+    
+    for(int i = m_currentUndoIndex; i > (m_currentUndoIndex - steps); i--)
+        currentMap->BlockChange(player->tEntity->playerList->Number, m_undoItems[i].Location.X, m_undoItems[i].Location.Y,m_undoItems[i].Location.Z, m_undoItems[i].OldBlock, false, false, true, 100);
+
+    m_currentUndoIndex -= (steps - 1);
+}
+
+void NetworkClient::Redo(int steps) {
+    if (m_undoItems.empty())
+        return;
+
+    if (steps > (m_undoItems.size() - m_currentUndoIndex))
+        steps = (m_undoItems.size() - m_currentUndoIndex);
+
+    if (m_currentUndoIndex == m_undoItems.size()-1)
+        return;
+
+    if (m_currentUndoIndex == -1)
+        m_currentUndoIndex = 0;
+
+    MapMain* mm = MapMain::GetInstance();
+    int currentMapId = GetMapId();
+    std::shared_ptr<Map> currentMap = mm->GetPointer(currentMapId);
+    
+    for(int i = m_currentUndoIndex; i < (m_currentUndoIndex + steps); i++)
+        currentMap->BlockChange(player->tEntity->playerList->Number, m_undoItems[i].Location.X, m_undoItems[i].Location.Y,m_undoItems[i].Location.Z, m_undoItems[i].NewBlock, false, false, true, 100);
+
+    m_currentUndoIndex += (steps - 1);
+}
+
+void NetworkClient::AddUndoItem(const D3PP::Common::UndoItem &item) {
+    if (m_currentUndoIndex == -1)
+        m_currentUndoIndex = 0;
+
+    if (m_currentUndoIndex != (m_undoItems.size()-1)) {
+        // -- Remove everything forward of this.
+        m_undoItems.erase(m_undoItems.end()-m_currentUndoIndex, m_undoItems.end());
+    }
+
+    if (m_undoItems.size() >= 50000) {
+        // -- Remove one item off the top.
+        m_undoItems.erase(m_undoItems.begin(), m_undoItems.begin()+1);
+    }
+    m_undoItems.push_back(item);
+    m_currentUndoIndex = m_undoItems.size() - 1;
 }

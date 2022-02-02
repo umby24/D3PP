@@ -24,6 +24,10 @@ namespace D3PP::network {
     class IPacket;
 }
 
+namespace D3PP::Common {
+    struct UndoItem;
+}
+
 class IMinecraftClient {
 public:
     IMinecraftClient()= default;;
@@ -47,6 +51,9 @@ public:
     virtual void SendQueued() = 0;
     virtual void HandleData() = 0;
     virtual void SendPacket(const D3PP::network::IPacket& p) = 0;
+    virtual void Undo(int steps) = 0;
+    virtual void Redo(int steps) = 0;
+    virtual void AddUndoItem(const D3PP::Common::UndoItem& item) = 0;
 };
 
 class NetworkClient : public IMinecraftClient {
@@ -117,10 +124,15 @@ public:
     void SendQueued() override;
     void HandleData() override;
     void SendPacket(const D3PP::network::IPacket& p) override;
+    void Undo(int steps) override;
+    void Redo(int steps) override;
+    void AddUndoItem(const D3PP::Common::UndoItem& item) override;
 private:
     int Id;
-    int eventSubId, addSubId, removeSubId;
+    int eventSubId, addSubId, removeSubId, m_currentUndoIndex;
     std::shared_ptr<NetworkClient> GetSelfPointer() const;
+    std::vector<D3PP::Common::UndoItem> m_undoItems;
+
     void SubEvents();
     void HandleEvent(const Event &event);
 };

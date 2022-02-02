@@ -13,6 +13,7 @@
 #include "System.h"
 #include "common/ByteBuffer.h"
 #include "common/Logger.h"
+#include "common/UndoItem.h"
 #include "compression.h"
 #include "Utils.h"
 #include "Block.h"
@@ -24,7 +25,6 @@
 #include "common/Player_List.h"
 #include "plugins/LuaPlugin.h"
 #include "world/Physics.h"
-#include "Undo.h"
 #include "CPE.h"
 #include "EventSystem.h"
 #include "events/EventMapActionDelete.h"
@@ -742,6 +742,32 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
 
 }
 
+void AddUndoByPlayerId(short playerId, const UndoItem& item) {
+    if (playerId == -1) return;
+
+    Network* nMain = Network::GetInstance();
+
+    for(auto const& nc : nMain->roClients) {
+        if (nc->LoggedIn && nc->player && nc->player->tEntity && nc->player->tEntity->playerList) {
+            if (nc->player->tEntity->playerList->Number == playerId) {
+                nc->AddUndoItem(item);
+                break;
+            }
+        }
+    }
+
+}
+
+void Map::QueuePhysicsAround(const Vector3S& loc) {
+    for (int ix = -1; ix < 2; ix++) {
+        for (int iy = -1; iy < 2; iy++) {
+            for (int iz = -1; iz < 2; iz++) {
+                QueueBlockPhysics(Vector3S((short)(loc.X + ix), loc.Y + iy, loc.Z + iz));
+            }
+        }
+    }
+}
+
 void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, unsigned short Z, unsigned char type, bool undo, bool physic, bool send, unsigned char priority) {
     Vector3S locationVector(X,Y,Z);
 
@@ -765,8 +791,10 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
 
 
     if (type != roData && undo) {
-        Undo::Add(playerNumber, ID, X, Y, Z, oldType.Id, roLastPlayer);
+        Common::UndoItem newUndoItem {locationVector, roData, type};
+        AddUndoByPlayerId(playerNumber, newUndoItem);
     }
+
     if (type != roData && send) {
         QueueBlockChange(Vector3S(X, Y, Z), priority, roData);
     }
@@ -775,16 +803,8 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
     m_mapProvider->SetLastPlayer(locationVector, playerNumber);
 
     if (physic) {
-        for (int ix = -1; ix < 2; ix++) {
-            for (int iy = -1; iy < 2; iy++) {
-                for (int iz = -1; iz < 2; iz++) {
-                    QueueBlockPhysics(Vector3S((short)(X + ix), Y + iy, Z + iz));
-                }
-            }
-        }
+        QueuePhysicsAround(locationVector);
     }
-
-
 }
 
 unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned short Z) {
@@ -839,11 +859,15 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
     auto oldBlockHistory1 = m_mapProvider->GetLastPlayer(location1);
 
     if (undo) {
-        if (oldBlockType0 != 0)
-            Undo::Add(oldBlockHistory0, ID, X0, Y0, Z0, oldBlockType0, oldBlockHistory0);
+        if (oldBlockType0 != 0) {
+            Common::UndoItem newUndoItem {location0, oldBlockType0, 0};
+            AddUndoByPlayerId(oldBlockHistory0, newUndoItem);
+        }
 
-        if (oldBlockType0 != oldBlockType1)
-            Undo::Add(oldBlockHistory0, ID, X1, Y1, Z1, oldBlockType1, oldBlockHistory1);
+        if (oldBlockType0 != oldBlockType1) {
+            Common::UndoItem newUndoItem {location1, oldBlockType1, oldBlockType0};
+            AddUndoByPlayerId(oldBlockHistory0, newUndoItem);
+        }
     }
 
     if (oldBlockType0 != 0) {
@@ -863,14 +887,8 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
     m_mapProvider->SetLastPlayer(location1, oldBlockHistory0);
 
     if (physic) {
-        for (int ix = -1; ix < 2; ix++) {
-            for (int iy = -1; iy < 2; iy++) {
-                for (int iz = -1; iz < 2; iz++) {
-                    QueueBlockPhysics(Vector3S((short)(X0 + ix), Y0 + iy, Z0 + iz));
-                    QueueBlockPhysics(Vector3S((short)(X1 + ix), Y1 + iy, Z1 + iz));
-                }
-            }
-        }
+        QueuePhysicsAround(location0);
+        QueuePhysicsAround(location1);
     }
 
 }
@@ -1185,3 +1203,4 @@ void Map::SetMapEnvironment(const MapEnvironment &env) {
         CPE::AfterMapActions(nc);
     }
 }
+

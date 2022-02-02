@@ -136,7 +136,7 @@ namespace D3PP::world {
         std::vector<int> GetEntities();
         void RemoveEntity(std::shared_ptr<Entity> e);
         void AddEntity(std::shared_ptr<Entity> e);
-
+        void SetBlocks(const std::vector<unsigned char> blocks) { m_mapProvider->SetBlocks(blocks); }
         std::mutex BlockChangeMutex;
     protected:
         std::unique_ptr<IMapProvider> m_mapProvider;
@@ -146,6 +146,8 @@ namespace D3PP::world {
 
         void QueueBlockChange(Common::Vector3S location, unsigned char priority,
                               unsigned char oldType) const;
+
+        void  QueuePhysicsAround(const Common::Vector3S& loc);
     };
 
     class MapMain : TaskItem {
