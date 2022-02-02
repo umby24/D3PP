@@ -10,6 +10,27 @@
 using json = nlohmann::json;
 using namespace D3PP::Common;
 
+struct TextSettings {
+    std::string error;
+    std::string system;
+    std::string divider;
+
+    void LoadFromJson(json &j) {
+        if (j.is_object() && !j["Text"].is_null()) {
+            error = j["Text"]["Error"];
+            system = j["Text"]["System"];
+            divider = j["Text"]["Divider"];
+        }
+    }
+
+    void SaveToJson(json &j) {
+        j["Text"] = nullptr;
+        j["Text"]["Error"] = error;
+        j["Text"]["System"] = system;
+        j["Text"]["Divider"] = divider;
+    }
+};
+
 struct GeneralSettings {
     std::string name;
     std::string motd;
@@ -105,6 +126,7 @@ public:
     static NetworkSettings NetSettings;
     static GeneralSettings GenSettings;
     static KillSettings killSettings;
+    static TextSettings textSettings;
     Configuration();
     static Configuration* GetInstance();
 private:

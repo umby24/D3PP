@@ -1258,7 +1258,7 @@ void CommandMain::CommandUndoPlayer() {
         timeAmount = stoi(ParsedOperator.at(1));
     }
 
-    c->SendChat("&eBlock changes undone.");
+    c->SendChat("§SBlock changes undone.");
 }
 
 void CommandMain::CommandUndo() {
@@ -1271,7 +1271,7 @@ void CommandMain::CommandUndo() {
     }
 
     c->Undo(timeAmount);
-    c->SendChat("&eBlock changes undone.");
+    c->SendChat("§SBlock changes undone.");
 }
 
 void CommandMain::CommandRedo() {
@@ -1284,7 +1284,7 @@ void CommandMain::CommandRedo() {
     }
 
     c->Redo(timeAmount);
-    c->SendChat("&eBlock changes Re-done.");
+    c->SendChat("§SBlock changes Re-done.");
 }
 
 void CommandMain::CommandTeleport() {
@@ -1294,7 +1294,7 @@ void CommandMain::CommandTeleport() {
     std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator.at(0));
 
     if (entry == nullptr) {
-        c->SendChat("&eUnable to find a player named '" + ParsedOperator.at(0) + "'.");
+        c->SendChat("§EUnable to find a player named '" + ParsedOperator.at(0) + "'.");
         return;
     }
 

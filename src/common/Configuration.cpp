@@ -10,6 +10,7 @@ using json = nlohmann::json;
 NetworkSettings Configuration::NetSettings { 32, 25565, true, false};
 GeneralSettings Configuration::GenSettings { "D3PP Server", "Welcome to D3PP!","&cWelcome to D3PP", "INFO", 1,160, 3, true };
 KillSettings Configuration::killSettings { 1, MinecraftLocation{ 0, 0, Vector3S((short)0, (short)0, (short)0)} };
+TextSettings Configuration::textSettings { "&4Error:&f ", "&e", "&3|" };
 Configuration* Configuration::_instance = nullptr;
 
 Configuration* Configuration::GetInstance() {
@@ -44,15 +45,12 @@ void Configuration::Load() {
          Configuration::NetSettings.LoadFromJson(j);
         Configuration::GenSettings.LoadFromJson(j);
         Configuration::killSettings.LoadFromJson(j);
+        Configuration::textSettings.LoadFromJson(j);
     } catch (int Exception) {
         Logger::LogAdd("Configuration", "Error loading config file! using defaults.", LogType::L_ERROR, GLF);
     }
 
     inFile.close();
-
-    Configuration::NetSettings.LoadFromJson(j);
-    Configuration::GenSettings.LoadFromJson(j);
-    Configuration::killSettings.LoadFromJson(j);
     Logger::LogAdd("Configuration", "Configuration Loaded.", LogType::NORMAL, GLF);
 
     lastLoaded = Utils::FileModTime(filePath);
@@ -66,6 +64,7 @@ void Configuration::Save() {
     Configuration::NetSettings.SaveToJson(j);
     Configuration::GenSettings.SaveToJson(j);
     Configuration::killSettings.SaveToJson(j);
+    Configuration::textSettings.SaveToJson(j);
 
     std::ofstream outFile(filePath);
     outFile << std::setw(4) << j;

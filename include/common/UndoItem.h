@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/Vectors.h";
+#include "common/Vectors.h"
 
 namespace D3PP::Common {
     struct UndoItem {

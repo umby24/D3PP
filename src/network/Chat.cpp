@@ -7,6 +7,7 @@
 #include "network/Chat.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "common/Configuration.h"
 #include "world/Player.h"
 #include "common/Player_List.h"
 #include "world/Entity.h"
@@ -97,7 +98,12 @@ bool Chat::StringIV(const std::string& input) {
 }
 
 std::string Chat::StringGV(const std::string& input) {
-    return std::regex_replace(input, AllowedRegexp, "#");
+    std::string working(input);
+    Utils::replaceAll(working, "§E", Configuration::textSettings.error);
+    Utils::replaceAll(working, "§S", Configuration::textSettings.system);
+    Utils::replaceAll(working, "§D", Configuration::textSettings.divider);
+
+    return std::regex_replace(working, AllowedRegexp, "#");
 }
 
 void Chat::NetworkSend2Player(const int& entityId, const std::string& message, std::string playerName) {
