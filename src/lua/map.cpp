@@ -7,6 +7,7 @@
 #include "common/Player_List.h"
 #include "network/NetworkClient.h"
 #include "network/Network.h"
+#include "generation/flatgrass.cpp"
 
 using namespace D3PP::world;
 using namespace D3PP::Common;
@@ -46,6 +47,7 @@ const struct luaL_Reg LuaMapLib::lib[] = {
         {"export", &LuaMapExport},
         {"import", &LuaMapImportPlayer},
         {"exportsize", &LuaMapExportGetSize},
+        {"fillflat", &LuaFillFlat},
         {NULL, NULL}
 };
 
@@ -85,6 +87,25 @@ int LuaMapLib::LuaMapBlockMove(lua_State* L) {
 
     if (map != nullptr) {
         map->BlockMove(x0, y0, z0, x1, y1, z1, undo, physic, priority);
+    }
+
+    return 0;
+}
+
+int LuaMapLib::LuaFillFlat(lua_State* L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "LuaError: FillFlat called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+    int mapId = luaL_checkinteger(L, 1);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map != nullptr) {
+        GenTools::FlatgrassGen(mapId);
     }
 
     return 0;

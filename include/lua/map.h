@@ -45,6 +45,7 @@ protected:
     static int LuaMapExport(lua_State* L);
     static int LuaMapExportGetSize(lua_State* L);
     static int LuaMapImportPlayer(lua_State* L);
+    static int LuaFillFlat(lua_State* L);
 private:
 };
 

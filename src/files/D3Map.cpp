@@ -3,7 +3,6 @@
 #include "common/Logger.h"
 #include "Utils.h"
 #include "compression.h"
-#include "Undo.h"
 #include <climits>
 
 namespace D3PP::files {
