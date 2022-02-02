@@ -688,7 +688,7 @@ void CommandMain::CommandDo(const std::shared_ptr<IMinecraftClient>& client, con
             Logger::LogAdd(MODULE_NAME, "&cThis command is not accessible via console!", LogType::L_ERROR, GLF);
             found = true;
         }else if (client->GetRank() < cmd.Rank) {
-            client->SendChat("&eYou are not allowed to use this command.");
+            client->SendChat("§EYou are not allowed to use this command.");
             found = true;
         } else {
             if (!cmd.Hidden) {
@@ -708,7 +708,7 @@ void CommandMain::CommandDo(const std::shared_ptr<IMinecraftClient>& client, con
         }
     }
     if (!found) {
-        client->SendChat("&eCan't find the command '" + ParsedCommand + "'.");
+        client->SendChat("§ECan't find the command '" + ParsedCommand + "'.");
     }
 }
 
@@ -724,12 +724,12 @@ void CommandMain::CommandCommands() {
     std::string allString = "all";
 
     if (groupName.empty()) {
-       c->SendChat("&eCommand Groups:"); 
-       c->SendChat("&e/commands all");
+       c->SendChat("§SCommand Groups:"); 
+       c->SendChat("§S/commands all");
        
        for(auto const &cg : CommandGroups) {
            if (cg.RankShow <= playerRank) {
-               c->SendChat("&e/commands " + cg.Name);
+               c->SendChat("§S/commands " + cg.Name);
            }
        }
 
@@ -739,7 +739,7 @@ void CommandMain::CommandCommands() {
     bool found = false;
     for(auto  &cg : CommandGroups) {
         if (Utils::InsensitiveCompare(groupName, cg.Name) || Utils::InsensitiveCompare(groupName, allString)) {
-            c->SendChat("&eCommands:"); 
+            c->SendChat("§SCommands:"); 
             std::string textToSend;
             for(auto &cm : Commands) {
                 if ((cm.RankShow > playerRank) || (cm.Rank > playerRank) || (cm.Hidden) || (!Utils::InsensitiveCompare(cm.Group, groupName) && !Utils::InsensitiveCompare(groupName, allString)))
@@ -761,7 +761,7 @@ void CommandMain::CommandCommands() {
     }
 
     if (!found) {
-        c->SendChat("&eCan't find command group '" + groupName + "'");
+        c->SendChat("§SCan't find command group '" + groupName + "'");
     }
 }
 
@@ -774,21 +774,21 @@ void CommandMain::CommandHelp() {
         if (!Utils::InsensitiveCompare(cmd.Name, ParsedOperator.at(0)))
             continue;
 
-        c->SendChat("&eCommand Help:");
+        c->SendChat("§SCommand Help:");
         c->SendChat(cmd.Description);
         found = true;
         break;
     }
 
     if (!found) {
-        c->SendChat("&eCan't find command '" + ParsedOperator.at(0) + "'");
+        c->SendChat("§ECan't find command '" + ParsedOperator.at(0) + "'");
     }
 }
 
 void CommandMain::CommandPlayers() {
      Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
-     c->SendChat("&ePlayers:");
+     c->SendChat("§SPlayers:");
     std::string textToSend;
 
      for(auto const &nc : nm->roClients) {
@@ -817,18 +817,18 @@ void CommandMain::CommandPlayerInfo() {
 
     PlayerListEntry* ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
     RankItem ri = rm->GetRank(ple->PRank, false);
-    std::string textTosend = "&ePlayer Info: <br>";
-    textTosend += "&eNumber: " + stringulate(ple->Number) + "<br>";
-    textTosend += "&eName: " + ple->GetDisplayName() + "<br>";
-    textTosend += "&eRank: " + ri.Name + " (" + stringulate(ple->PRank) + ")<br>";
-    textTosend += "&eIP: " + ple->IP + "<br>";
-    textTosend += "&eOntime: " + stringulate(ple->OntimeCounter/3600.0) + "h<br>";
-    textTosend += "&eLogins: " + stringulate(ple->LoginCounter) + "<br>";
-    textTosend += "&eKicks: " + stringulate(ple->KickCounter) + "<br>";
+    std::string textTosend = "§SPlayer Info: <br>";
+    textTosend += "§SNumber: " + stringulate(ple->Number) + "<br>";
+    textTosend += "§SName: " + ple->GetDisplayName() + "<br>";
+    textTosend += "§SRank: " + ri.Name + " (" + stringulate(ple->PRank) + ")<br>";
+    textTosend += "§SIP: " + ple->IP + "<br>";
+    textTosend += "§SOntime: " + stringulate(ple->OntimeCounter/3600.0) + "h<br>";
+    textTosend += "§SLogins: " + stringulate(ple->LoginCounter) + "<br>";
+    textTosend += "§SKicks: " + stringulate(ple->KickCounter) + "<br>";
     
     if (ple->Banned) {
         textTosend += "&4Player is banned<br>";
@@ -851,7 +851,7 @@ void CommandMain::CommandChangeRank() {
     std::string playerName = ParsedOperator.at(0);
 
     if (!Utils::IsNumeric(ParsedOperator.at(1))) {
-        c->SendChat("&eThe second parameter should be a number!");
+        c->SendChat("§EThe second parameter should be a number!");
         return;
     }
 
@@ -861,19 +861,19 @@ void CommandMain::CommandChangeRank() {
     if (rankVal >= -32768 && rankVal <= 32767) {
         PlayerListEntry* ple = pll->GetPointer(ParsedOperator.at(0));
         if (ple == nullptr) {
-            c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
+            c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
             return;
         }
         if (c->GetRank() <= ple->PRank) {
-            c->SendChat("&eCan't modify the rank of someone higher than you");
+            c->SendChat("§ECan't modify the rank of someone higher than you");
             return;
         }
         if (c->GetRank() <= rankVal) {
-            c->SendChat("&eCan't set a rank higher than your own");
+            c->SendChat("§ECan't set a rank higher than your own");
             return;
         }
         ple->SetRank(rankVal, reason);
-        c->SendChat("&ePlayers rank was updated.");
+        c->SendChat("§SPlayers rank was updated.");
     }
 }
 
@@ -891,14 +891,14 @@ void CommandMain::CommandGlobal() {
 
     if (Utils::InsensitiveCompare(ParsedOperator.at(0), onString) || Utils::InsensitiveCompare(ParsedOperator.at(0), trueString)) {
         c->SetGlobalChat(true);
-        c->SendChat("&eGlobal chat is now on by default.");
+        c->SendChat("§SGlobal chat is now on by default.");
     } else if (Utils::InsensitiveCompare(ParsedOperator.at(0), offString) || Utils::InsensitiveCompare(ParsedOperator.at(0), falseString)) {
         c->SetGlobalChat(false);
-        c->SendChat("&eGlobal chat is now off by default.");
+        c->SendChat("§SGlobal chat is now off by default.");
     } else {
         c->SetGlobalChat(!c->GetGlobalChat());
         std::string status = (c->GetGlobalChat() ? "on" : "off");
-        c->SendChat("&eGlobal chat is now " + status + " by default.");
+        c->SendChat("§SGlobal chat is now " + status + " by default.");
     }
 }
 
@@ -909,7 +909,7 @@ void CommandMain::CommandPing() {
     if (c == nullptr)
         return;
 
-    c->SendChat("&eYour ping is " + stringulate(c->GetPing()) + "s.");
+    c->SendChat("§SYour ping is " + stringulate(c->GetPing()) + "s.");
 }
 
 void CommandMain::CommandChangeMap() {
@@ -926,7 +926,7 @@ void CommandMain::CommandChangeMap() {
     if (mi != nullptr) {
         MapPermissions perms = mi->GetMapPermissions();
         if (perms.RankJoin > c->GetRank()) {
-            Entity::MessageToClients(clientEntity->Id, "&eYou are not allowed to join map '" + mi->Name() + "'");
+            Entity::MessageToClients(clientEntity->Id, "§EYou are not allowed to join map '" + mi->Name() + "'");
             return;
         }
         auto concrete = std::static_pointer_cast<NetworkClient>(c);
@@ -934,7 +934,7 @@ void CommandMain::CommandChangeMap() {
         clientEntity->PositionSet(mi->ID, mi->GetSpawn(), 255, true);
 
     } else {
-        c->SendChat("&eUnable to find map '" + ParsedText0 + "'.");
+        c->SendChat("§EUnable to find map '" + ParsedText0 + "'.");
     }
 }
 
@@ -958,7 +958,7 @@ void CommandMain::CommandSaveMap() {
     }
 
     mm->AddSaveAction(CommandClientId, e->MapID, mapDirectory);
-    c->SendChat("&eSave Queued.");
+    c->SendChat("§SSave Queued.");
 }
 
 void CommandMain::CommandGetRank() {
@@ -976,12 +976,12 @@ void CommandMain::CommandGetRank() {
     }
     
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
 
     RankItem ri = rm->GetRank(ple->PRank, false);
-    std::string textTosend = "&ePlayer '" + ple->Name + "' is ranked '" + ri.Prefix + ri.Name + ri.Suffix + "'.";
+    std::string textTosend = "§SPlayer '" + ple->Name + "' is ranked '" + ri.Prefix + ri.Name + ri.Suffix + "'.";
 
     c->SendChat(textTosend);
 }
@@ -994,17 +994,17 @@ void CommandMain::CommandSetMaterial() {
 
     if (ParsedText0.empty()) {
         clientEntity->buildMaterial = -1;
-        c->SendChat("&eMaterial reset.");
+        c->SendChat("§SMaterial reset.");
         return;
     }
 
     MapBlock b = bm->GetBlock(ParsedText0);
     if (b.Id == -1) {
-        c->SendChat("&eCan't find a block called '" + ParsedText0 + "'.");
+        c->SendChat("§ECan't find a block called '" + ParsedText0 + "'.");
         return;
     }
     clientEntity->buildMaterial = b.Id;
-    c->SendChat("&eYour build material is now " + b.Name);
+    c->SendChat("§SYour build material is now " + b.Name);
 }
 
 void CommandMain::CommandKick() {
@@ -1015,15 +1015,15 @@ void CommandMain::CommandKick() {
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
-    std::string kickReason = (ParsedText1.empty() ? "&eYou were kicked." : ParsedText1);
+    std::string kickReason = (ParsedText1.empty() ? "§SYou were kicked." : ParsedText1);
 
     if (c->GetRank() > ple->PRank) {
         ple->Kick(kickReason, ple->KickCounter+1, true, true);
     } else {
-        c->SendChat("&eCan't kick someone ranked higher than you.");
+        c->SendChat("§ECan't kick someone ranked higher than you.");
         return;
     }
 }
@@ -1036,14 +1036,14 @@ void CommandMain::CommandBan() {
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
-    std::string banReason = (ParsedText1.empty() ? "&eYou were banned." : ParsedText1);
+    std::string banReason = (ParsedText1.empty() ? "§SYou were banned." : ParsedText1);
     if (c->GetRank() > ple->PRank) {
         ple->Ban(banReason);
     } else {
-        c->SendChat("&eCan't ban someone ranked higher than you.");
+        c->SendChat("§ECan't ban someone ranked higher than you.");
         return;
     }
 }
@@ -1056,13 +1056,13 @@ void CommandMain::CommandUnban() {
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
     if (c->GetRank() > ple->PRank) {
         ple->Unban();
     } else {
-        c->SendChat("&eCan't ban someone ranked higher than you.");
+        c->SendChat("§ECan't ban someone ranked higher than you.");
         return;
     }
 }
@@ -1075,14 +1075,14 @@ void CommandMain::CommandStop() {
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
-    std::string stopReason = (ParsedText1.empty() ? "&eYou were stopped." : ParsedText1);
+    std::string stopReason = (ParsedText1.empty() ? "§SYou were stopped." : ParsedText1);
     if (c->GetRank() > ple->PRank) {
         ple->Stop(stopReason);
     } else {
-        c->SendChat("&eCan't stop someone ranked higher than you.");
+        c->SendChat("§ECan't stop someone ranked higher than you.");
         return;
     }
 }
@@ -1095,13 +1095,13 @@ void CommandMain::CommandUnStop() {
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
     if (c->GetRank() > ple->PRank) {
         ple->Unstop();
     } else {
-        c->SendChat("&eCan't stop someone ranked higher than you.");
+        c->SendChat("§ECan't stop someone ranked higher than you.");
         return;
     }
 }
@@ -1114,7 +1114,7 @@ void CommandMain::CommandMute() {
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
     if ((ParsedOperator.at(1).empty())) {
@@ -1124,7 +1124,7 @@ void CommandMain::CommandMute() {
     if (c->GetRank() > ple->PRank) {
         ple->Mute(stoi(ParsedOperator.at(1)), "Muted by " + c->GetLoginName());
     } else {
-        c->SendChat("&eCan't mute someone ranked higher than you.");
+        c->SendChat("§ECan't mute someone ranked higher than you.");
         return;
     }
 }
@@ -1138,13 +1138,13 @@ void CommandMain::CommandUnmute() {
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        c->SendChat("&eCan't find a player named '" + ParsedOperator.at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
     if (c->GetRank() > ple->PRank) {
         ple->Unmute();
     }else {
-        c->SendChat("&eCan't unmute someone ranked higher than you.");
+        c->SendChat("§ECan't unmute someone ranked higher than you.");
         return;
     }
 }
@@ -1152,14 +1152,14 @@ void CommandMain::CommandUnmute() {
 void CommandMain::CommandMaterials() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
-    c->SendChat("&eMaterials:");
+    c->SendChat("§SMaterials:");
     Block* bm = Block::GetInstance();
     std::string toSend;
     for (int i = 0; i < 255; ++i) {
         MapBlock block = bm->GetBlock(i);
         std::string toAdd;
         if (block.Special && block.RankPlace <= c->GetRank()) {
-            toAdd += "&e" + block.Name + " &f| ";
+            toAdd += "§S" + block.Name + " &f| ";
             if (64 - toSend.size() >= toAdd.size())
                 toSend += toAdd;
             else {
@@ -1179,13 +1179,13 @@ void CommandMain::CommandListMaps() const {
     MapMain* mapMain = MapMain::GetInstance();
 
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
-    c->SendChat("&eMaps:");
+    c->SendChat("§SMaps:");
     std::string toSend;
     for(auto const &map : mapMain->_maps) {
         std::string toAdd;
         MapPermissions perms = map.second->GetMapPermissions();
         if (perms.RankShow <= c->GetRank()) {
-            toAdd += "&e" + map.second->Name() + " &f| ";
+            toAdd += "§S" + map.second->Name() + " &f| ";
             if (64 - toSend.size() >= toAdd.size())
                 toSend += toAdd;
             else {
@@ -1205,17 +1205,17 @@ void CommandMain::CommandServerInfo() const {
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     std::string serverRunTime = stringulate(time(nullptr) - System::startTime / 120.0);
 
-    c->SendChat("&eServer Info:");
+    c->SendChat("§SServer Info:");
 #ifdef __linux__
-    c->SendChat("&eD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Linux (x64)");
+    c->SendChat("§SD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Linux (x64)");
 #else
 #ifdef MSVC
-    c->SendChat("&eD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Windows [MSVC] (x86)");
+    c->SendChat("§SD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Windows [MSVC] (x86)");
 #else
-    c->SendChat("&eD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Windows (x64)");
+    c->SendChat("§SD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Windows (x64)");
 #endif
 #endif
-    c->SendChat("&eRun time: " + serverRunTime + "h");
+    c->SendChat("§SRun time: " + serverRunTime + "h");
 }
 
 void CommandMain::CommandLogLast() {
@@ -1227,7 +1227,7 @@ void CommandMain::CommandLogLast() {
     if (!ParsedOperator.at(0).empty()) {
         numLines = stoi(ParsedOperator.at(0));
     }
-    c->SendChat("&eLog:");
+    c->SendChat("§SLog:");
     Logger* logMain = Logger::GetInstance();
     if (numLines > logMain->Messages.size()) {
         numLines = logMain->Messages.size();
@@ -1248,7 +1248,7 @@ void CommandMain::CommandUndoPlayer() {
     PlayerListEntry* entry= playerList->GetPointer(ParsedOperator.at(0));
     
     if (entry == nullptr) {
-        c->SendChat("&eUnable to find a player named '" + ParsedOperator.at(0) + "'.");
+        c->SendChat("§EUnable to find a player named '" + ParsedOperator.at(0) + "'.");
         return;
     }
 
@@ -1308,7 +1308,7 @@ void CommandMain::CommandBring() {
     std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator.at(0));
 
     if (entry == nullptr) {
-        c->SendChat("&eUnable to find a player named '" + ParsedOperator.at(0) + "'.");
+        c->SendChat("§EUnable to find a player named '" + ParsedOperator.at(0) + "'.");
         return;
     }
 
@@ -1323,7 +1323,7 @@ void CommandMain::CommandMapFill() {
         MapMain* mapMain = MapMain::GetInstance();
         mapMain->AddFillAction(c->GetId(), e->MapID, ParsedOperator.at(0), ParsedText1);
     } else {
-        c->SendChat("&ePlease define a function.");
+        c->SendChat("§EPlease define a function.");
     }
 }
 
@@ -1340,7 +1340,7 @@ void CommandMain::CommandLoadMap() {
 
     MapMain* mapMain = MapMain::GetInstance();
     mapMain->AddLoadAction(CommandClientId, e->MapID, mapDirectory);
-    c->SendChat("&eLoad added to queue.");
+    c->SendChat("§SLoad added to queue.");
 }
 
 void CommandMain::CommandResizeMap() {
@@ -1348,7 +1348,7 @@ void CommandMain::CommandResizeMap() {
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
     if (ParsedOperator.at(0).empty() || ParsedOperator.at(1).empty() || ParsedOperator[2].empty()) {
-        c->SendChat("&ePlease provide an X, Y, and Z value.");
+        c->SendChat("§EPlease provide an X, Y, and Z value.");
         return;
     }
     int X = 0;
@@ -1360,16 +1360,16 @@ void CommandMain::CommandResizeMap() {
         Y = stoi(ParsedOperator.at(1));
         Z= stoi(ParsedOperator.at(2));
     } catch (const std::exception &ex) {
-        c->SendChat("&ePlease provide an integer X, Y, and Z value.");
+        c->SendChat("§EPlease provide an integer X, Y, and Z value.");
         return;
     } catch (...) {
-        c->SendChat("&ePlease provide an integer X, Y, and Z value.");
+        c->SendChat("§EPlease provide an integer X, Y, and Z value.");
         return;
     }
 
     MapMain* mapMain = MapMain::GetInstance();
     mapMain->AddResizeAction(CommandClientId, e->MapID, X, Y, Z);
-    c->SendChat("&eResize added to queue.");
+    c->SendChat("§SResize added to queue.");
 }
 
 void CommandMain::CommandRenameMap() {
@@ -1377,7 +1377,7 @@ void CommandMain::CommandRenameMap() {
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
     if (ParsedText0.empty()) {
-        c->SendChat("&ePlease provide a new name.");
+        c->SendChat("§EPlease provide a new name.");
         return;
     }
     MapMain* mapMain = MapMain::GetInstance();
@@ -1385,7 +1385,7 @@ void CommandMain::CommandRenameMap() {
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
     //cMap->Name() = ParsedText0;
     mapMain->SaveFile = true;
-    c->SendChat("&eMap Renamed.");
+    c->SendChat("§SMap Renamed.");
 }
 
 void CommandMain::CommandDeleteMap() {
@@ -1394,7 +1394,7 @@ void CommandMain::CommandDeleteMap() {
     std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
     MapMain* mapMain = MapMain::GetInstance();
     mapMain->AddDeleteAction(CommandClientId, e->MapID);
-    c->SendChat("&eDelete Queued.");
+    c->SendChat("§SDelete Queued.");
 }
 
 void CommandMain::CommandAddMap() {
@@ -1402,12 +1402,12 @@ void CommandMain::CommandAddMap() {
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
     if (ParsedText0.empty()) {
-        c->SendChat("&ePlease provide a name for the map.");
+        c->SendChat("§EPlease provide a name for the map.");
         return;
     }
     MapMain* mapMain = MapMain::GetInstance();
     mapMain->Add(-1, 64, 64, 64, ParsedText0);
-    c->SendChat("&eMap created.");
+    c->SendChat("§SMap created.");
 }
 
 void CommandMain::CommandMapRankBuildSet() {
@@ -1415,7 +1415,7 @@ void CommandMain::CommandMapRankBuildSet() {
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
     if (ParsedOperator.at(0).empty()) {
-        c->SendChat("&ePlease provide a rank value.");
+        c->SendChat("§EPlease provide a rank value.");
         return;
     }
     int mapBuildRank = 0;
@@ -1423,10 +1423,10 @@ void CommandMain::CommandMapRankBuildSet() {
     try {
         mapBuildRank = stoi(ParsedOperator.at(0));
     } catch (const std::exception &ex) {
-        c->SendChat("&ePlease provide an integer value.");
+        c->SendChat("§EPlease provide an integer value.");
         return;
     } catch (...) {
-        c->SendChat("&ePlease provide an integer value.");
+        c->SendChat("§EPlease provide an integer value.");
         return;
     }
     MapMain* mapMain = MapMain::GetInstance();
@@ -1437,7 +1437,7 @@ void CommandMain::CommandMapRankBuildSet() {
     currentPerms.RankBuild = mapBuildRank;
     cMap->SetMapPermissions(currentPerms);
 
-    c->SendChat("&eRank updated.");
+    c->SendChat("§SRank updated.");
 }
 
 void CommandMain::CommandMapRankJoinSet() {
@@ -1445,7 +1445,7 @@ void CommandMain::CommandMapRankJoinSet() {
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
     if (ParsedOperator.at(0).empty()) {
-        c->SendChat("&ePlease provide a rank value.");
+        c->SendChat("§EPlease provide a rank value.");
         return;
     }
     int mapJoinRank = 0;
@@ -1453,10 +1453,10 @@ void CommandMain::CommandMapRankJoinSet() {
     try {
         mapJoinRank = stoi(ParsedOperator.at(0));
     } catch (const std::exception &ex) {
-        c->SendChat("&ePlease provide an integer value.");
+        c->SendChat("§EPlease provide an integer value.");
         return;
     } catch (...) {
-        c->SendChat("&ePlease provide an integer value.");
+        c->SendChat("§EPlease provide an integer value.");
         return;
     }
     MapMain* mapMain = MapMain::GetInstance();
@@ -1467,7 +1467,7 @@ void CommandMain::CommandMapRankJoinSet() {
     currentPerms.RankJoin = mapJoinRank;
     cMap->SetMapPermissions(currentPerms);
 
-    c->SendChat("&eRank updated.");
+    c->SendChat("§SRank updated.");
 }
 
 void CommandMain::CommandMapRankShowSet() {
@@ -1475,7 +1475,7 @@ void CommandMain::CommandMapRankShowSet() {
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
     if (ParsedOperator.at(0).empty()) {
-        c->SendChat("&ePlease provide a rank value.");
+        c->SendChat("§EPlease provide a rank value.");
         return;
     }
     int mapShowRank = 0;
@@ -1483,10 +1483,10 @@ void CommandMain::CommandMapRankShowSet() {
     try {
         mapShowRank = stoi(ParsedOperator.at(0));
     } catch (const std::exception &ex) {
-        c->SendChat("&ePlease provide an integer value.");
+        c->SendChat("§EPlease provide an integer value.");
         return;
     } catch (...) {
-        c->SendChat("&ePlease provide an integer value.");
+        c->SendChat("§EPlease provide an integer value.");
         return;
     }
     MapMain* mapMain = MapMain::GetInstance();
@@ -1497,7 +1497,7 @@ void CommandMain::CommandMapRankShowSet() {
     currentPerms.RankShow = mapShowRank;
     cMap->SetMapPermissions(currentPerms);
 
-    c->SendChat("&eRank updated.");
+    c->SendChat("§SRank updated.");
 }
 
 void CommandMain::CommandStopPhysics() {
@@ -1507,7 +1507,7 @@ void CommandMain::CommandStopPhysics() {
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
     cMap->PhysicsStopped = true;
-    c->SendChat("&ePhysics stopped.");
+    c->SendChat("§SPhysics stopped.");
 }
 
 void CommandMain::CommandStartPhysics() {
@@ -1517,7 +1517,7 @@ void CommandMain::CommandStartPhysics() {
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
     cMap->PhysicsStopped = false;
-    c->SendChat("&ePhysics started.");
+    c->SendChat("§SPhysics started.");
 }
 
 void CommandMain::CommandSetSpawn() {
@@ -1527,7 +1527,7 @@ void CommandMain::CommandSetSpawn() {
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
     cMap->SetSpawn(clientEntity->Location);
-    c->SendChat("&eSpawn updated.");
+    c->SendChat("§SSpawn updated.");
 }
 
 void CommandMain::CommandSetKilLSpawn() {
@@ -1538,7 +1538,7 @@ void CommandMain::CommandSetKilLSpawn() {
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
     cMap->SetSpawn(clientEntity->Location);
-    c->SendChat("&eKill Spawn updated.");
+    c->SendChat("§SKill Spawn updated.");
 }
 
 void CommandMain::CommandTeleporters() {
@@ -1548,10 +1548,10 @@ void CommandMain::CommandTeleporters() {
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
 
-    c->SendChat("&eTeleporters:");
+    c->SendChat("§STeleporters:");
     std::string text;
 //    for(auto const &tp : cMap->data.Teleporter) {
-//        std::string textAdd = "&e" + tp.first + " &f| ";
+//        std::string textAdd = "§S" + tp.first + " &f| ";
 //        if (64 - text.size() >= textAdd.size())
 //            text+= textAdd;
 //        else {
@@ -1569,7 +1569,7 @@ void CommandMain::CommandDeleteTeleporter() {
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
     if (ParsedText0.empty()) {
-        c->SendChat("&ePlease provide a name for the teleporter to delete.");
+        c->SendChat("§EPlease provide a name for the teleporter to delete.");
         return;
     }
     MapMain* mapMain = MapMain::GetInstance();
@@ -1578,9 +1578,9 @@ void CommandMain::CommandDeleteTeleporter() {
 //    bool tpFound = cMap->data.Teleporter.find(ParsedText0) != cMap->data.Teleporter.end();
 //    if (tpFound) {
 //        cMap->data.Teleporter.erase(ParsedText0);
-//        c->SendChat("&eTeleporter deleted.");
+//        c->SendChat("§STeleporter deleted.");
 //    } else {
-//        c->SendChat("&eTeleporter not found.");
+//        c->SendChat("§STeleporter not found.");
 //    }
 }
 
@@ -1590,15 +1590,15 @@ void CommandMain::CommandMapInfo() {
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
-    std::string textToSend = "&eMapInfo:<br>";
-    textToSend += "&eName: " + cMap->Name() + "<br>";
-    textToSend += "&eId: " + stringulate(cMap->ID) + "<br>";
-    textToSend += "&eDirectory: " + cMap->filePath + "<br>";
+    std::string textToSend = "§SMapInfo:<br>";
+    textToSend += "§SName: " + cMap->Name() + "<br>";
+    textToSend += "§SId: " + stringulate(cMap->ID) + "<br>";
+    textToSend += "§SDirectory: " + cMap->filePath + "<br>";
     Vector3S mapSize = cMap->GetSize();
-    textToSend += "&eSize: " + stringulate(mapSize.X)  + "x" + stringulate(mapSize.Y)  + "x" + stringulate(mapSize.Z) + "<br>";
+    textToSend += "§SSize: " + stringulate(mapSize.X)  + "x" + stringulate(mapSize.Y)  + "x" + stringulate(mapSize.Z) + "<br>";
     MapPermissions perms = cMap->GetMapPermissions();
 
-    textToSend += "&eRanks: Build: " + stringulate(perms.RankBuild) + " Join: " + stringulate(perms.RankJoin) + " Show: " + stringulate(perms.RankShow) + " <br>";
+    textToSend += "§SRanks: Build: " + stringulate(perms.RankBuild) + " Join: " + stringulate(perms.RankJoin) + " Show: " + stringulate(perms.RankShow) + " <br>";
 
     if (cMap->PhysicsStopped) {
         textToSend += "&cPhysics Stopped&f<br>";
@@ -1646,9 +1646,9 @@ void CommandMain::CommandPlace() {
 
     if (found) {
         cMap->BlockChange(c, blockCoords.X, blockCoords.Y, blockCoords.Z, 1, blockToPlace);
-        c->SendChat("&eBlock placed.");
+        c->SendChat("§SBlock placed.");
     } else {
-        c->SendChat("&eCan't find a block called '" + ParsedText0 + "'.");
+        c->SendChat("§ECan't find a block called '" + ParsedText0 + "'.");
     }
 }
 
@@ -1658,7 +1658,7 @@ void CommandMain::CommandUserMaps() {
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     std::string usermapDirectory = fm->GetFolder("Usermaps");
 
-    c->SendChat("&eUsermaps:");
+    c->SendChat("§SUsermaps:");
     std::string textToSend;
 
     if (std::filesystem::is_directory(usermapDirectory)) {
@@ -1669,7 +1669,7 @@ void CommandMain::CommandUserMaps() {
                 continue;
 
             if (fileName.substr(fileName.length() - 4) == ".map") {
-                textToSend += "&e" + fileName + " &f| ";
+                textToSend += "§S" + fileName + " &f| ";
             }
         }
     }

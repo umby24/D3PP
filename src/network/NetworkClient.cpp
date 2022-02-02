@@ -41,6 +41,7 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) : Selections(MAX_S
 
     Id= static_cast<int>(socket->GetSocketFd());
     CustomExtensions = 0;
+    m_currentUndoIndex = 0;
     SendBuffer = std::make_unique<ByteBuffer>([this]{this->DataReady();});
     ReceiveBuffer = std::make_unique<ByteBuffer>(nullptr);
     DataAvailable = false;
@@ -265,6 +266,7 @@ NetworkClient::NetworkClient(NetworkClient &client) : Selections(MAX_SELECTION_B
     ReceiveBuffer = std::move(client.ReceiveBuffer);
     DataAvailable = false;
     canReceive = true;
+    m_currentUndoIndex = 0;
     canSend = true;
     CustomExtensions = 0;
     LastTimeEvent = time(nullptr);
@@ -545,7 +547,7 @@ void NetworkClient::AddUndoItem(const D3PP::Common::UndoItem &item) {
 
     if (m_undoItems.size() >= 50000) {
         // -- Remove one item off the top.
-        m_undoItems.erase(m_undoItems.begin(), m_undoItems.begin()+1);
+        m_undoItems.erase(m_undoItems.begin());
     }
     m_undoItems.push_back(item);
     m_currentUndoIndex = m_undoItems.size() - 1;
