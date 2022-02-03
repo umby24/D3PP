@@ -3,28 +3,18 @@
 
 #include <filesystem>
 #include <events/PlayerEventArgs.h>
-#include <CustomBlocks.h>
 
 #include "world/Map.h"
 #include "network/Network_Functions.h"
 #include "common/Logger.h"
 #include "Utils.h"
-#include "network/Network.h"
 #include "network/NetworkClient.h"
-#include "world/Player.h"
-#include "world/Entity.h"
-#include "common/Player_List.h"
 #include "Rank.h"
 #include "EventSystem.h"
 #include "Block.h"
-#include "common/MinecraftLocation.h"
-#include "CPE.h"
-#include "common/Files.h"
-#include "world/Map.h"
 // -- Events..
 #include "events/EventChatAll.h"
 #include "events/EventChatMap.h"
-#include "events/EventChatPrivate.h"
 #include "events/EventClientAdd.h"
 #include "events/EventClientDelete.h"
 #include "events/EventClientLogin.h"

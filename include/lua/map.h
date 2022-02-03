@@ -12,7 +12,6 @@ public:
 protected:
     static int LuaMapGetTable(lua_State* L);
     static int LuaMapBlockChange(lua_State* L);
-    static int LuaMapBlockChange2(lua_State* L);
     static int LuaMapBlockChangeClient(lua_State* L);
     static int LuaMapBlockChangePlayer(lua_State* L);
     static int LuaMapBlockMove(lua_State* L);
@@ -46,6 +45,10 @@ protected:
     static int LuaMapExportGetSize(lua_State* L);
     static int LuaMapImportPlayer(lua_State* L);
     static int LuaFillFlat(lua_State* L);
+
+    static int LuaBeginFill(lua_State* L);
+    static int LuaSetFillBlock(lua_State* L);
+    static int LuaEndFill(lua_State *L);
 private:
 };
 

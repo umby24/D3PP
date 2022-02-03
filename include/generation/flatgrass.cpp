@@ -6,9 +6,9 @@
 
 class GenTools {
     public:
-static int GetIndex(int x, int y, int z, int mapX, int mapY) {
-    return (x + y * mapX + z * mapX * mapY) * 4;
-}
+    static int GetIndex(int x, int y, int z, int mapX, int mapY) {
+        return (x + y * mapX + z * mapX * mapY) * 4;
+    }
 
 static void FlatgrassGen(int mapId) {
     D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();

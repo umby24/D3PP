@@ -12,6 +12,7 @@
 #include "world/Player.h"
 #include "common/Player_List.h"
 
+#include "world/Teleporter.h"
 #include "world/Map.h"
 #include "network/Network_Functions.h"
 #include "common/Logger.h"
@@ -322,11 +323,14 @@ void Entity::PositionCheck() {
         return;
     }
     // -- do a teleporter check..
-//    for(auto const &tp : theMap->data.Teleporter) {
-//        if (blockLocation.X >= tp.second.X0 && blockLocation.X <= tp.second.X1 && blockLocation.Y >= tp.second.Y0 && blockLocation.Y<= tp.second.Y1 && blockLocation.Z>= tp.second.Z0 && blockLocation.Z <= tp.second.Z1) {
+//    for(auto const &tp : theMap->Portals) {
+//        D3PP::Common::Vector3S startLoc = tp.OriginStart.GetAsBlockCoords();
+//        D3PP::Common::Vector3S endLoc = tp.OriginEnd.GetAsBlockCoords();
+//
+//        if (blockLocation.X >= startLoc.X && blockLocation.X <= endLoc.X && blockLocation.Y >= startLoc.Y && blockLocation.Y<= endLoc.Y && blockLocation.Z>= startLoc.Z && blockLocation.Z <= endLoc.Z) {
 //            int destMapId = MapID;
 //
-//            if (!tp.second.DestMapUniqueId.empty()) {
+//            if (!tp.DestinationMap.empty()) {
 //                std::shared_ptr<Map> mapInstance = mm->GetPointerUniqueId(tp.second.DestMapUniqueId);
 //                if (mapInstance != nullptr) {
 //                    destMapId = mapInstance->data.ID;
@@ -334,11 +338,8 @@ void Entity::PositionCheck() {
 //            } else if (tp.second.DestMapId != -1) {
 //                destMapId = tp.second.DestMapId;
 //            }
-//            MinecraftLocation tpDest {tp.second.DestRot, tp.second.DestLook };
-//            Vector3F destLoc {tp.second.DestX, tp.second.DestY, tp.second.DestZ};
-//            tpDest.SetAsPlayerCoords(destLoc);
 //
-//            PositionSet(destMapId, tpDest, 10, true);
+//            PositionSet(destMapId, tp.Destination, 10, true);
 //            break;
 //        }
 //    }

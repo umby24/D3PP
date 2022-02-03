@@ -577,7 +577,6 @@ void Map::Reload() {
     Logger::LogAdd(MODULE_NAME, "Map Reloaded [" + m_mapProvider->MapName + "]", LogType::NORMAL, GLF);
 }
 
-
 void Map::Unload() {
     if (!loaded)
         return;

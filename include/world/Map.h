@@ -15,13 +15,16 @@
 #include <memory>
 #include <filesystem>
 
-#include "world/IMapProvider.h"
 #include "common/TaskScheduler.h"
-#include "world/MapActions.h"
 #include "common/MinecraftLocation.h"
 #include "common/Vectors.h"
-#include "PhysicsQueue.h"
+
+#include "world/IMapProvider.h"
+#include "world/MapActions.h"
+#include "world/FillState.h"
+
 #include "BlockChangeQueue.h"
+#include "PhysicsQueue.h"
 
 class IMinecraftClient;
 class Entity;
@@ -136,8 +139,9 @@ namespace D3PP::world {
         std::vector<int> GetEntities();
         void RemoveEntity(std::shared_ptr<Entity> e);
         void AddEntity(std::shared_ptr<Entity> e);
-        void SetBlocks(const std::vector<unsigned char> blocks) { m_mapProvider->SetBlocks(blocks); }
+        void SetBlocks(const std::vector<unsigned char>& blocks) { m_mapProvider->SetBlocks(blocks); }
         std::mutex BlockChangeMutex;
+        std::unique_ptr<FillState> CurrentFillState;
     protected:
         std::unique_ptr<IMapProvider> m_mapProvider;
     private:
