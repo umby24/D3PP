@@ -13,6 +13,7 @@
 #include "world/Entity.h"
 #include "BuildMode.h"
 #include "plugins/Heartbeat.h"
+#include "plugins/PluginManager.h"
 #include "watchdog.h"
 #include "common/Files.h"
 #include "common/Player_List.h"
@@ -68,12 +69,13 @@ int main()
     CommandMain *cm = CommandMain::GetInstance();
     BuildModeMain *bmm = BuildModeMain::GetInstance();
     Heartbeat* hb = Heartbeat::GetInstance();
-    LuaPlugin* llll = LuaPlugin::GetInstance();
+    D3PP::plugins::PluginManager *plugm = D3PP::plugins::PluginManager::GetInstance();
     watchdog* wd = watchdog::GetInstance();
     CustomBlocks* cb = CustomBlocks::GetInstance();
     D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();
 
     TaskScheduler::RunSetupTasks();
+    plugm->LoadPlugins();
     System::IsRunning = true;
     System::startTime = time(nullptr);
     

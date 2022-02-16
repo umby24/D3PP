@@ -79,6 +79,7 @@ Network::Network() : clientMutex() {
 void Network::Start() {
     if (isListening)
         Stop();
+    this->Port = Configuration::NetSettings.ListenPort;
 
     if (listenSocket == nullptr) {
         listenSocket = std::make_unique<ServerSocket>(this->Port);

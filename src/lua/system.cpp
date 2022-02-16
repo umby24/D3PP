@@ -1,12 +1,15 @@
 #include "lua/system.h"
 
 #include <lua.hpp>
+#include <utility>
 #include "common/Logger.h"
 #include "Utils.h"
 #include "common/Files.h"
 #include "network/Network_Functions.h"
 #include "EventSystem.h"
+#include "plugins/PluginManager.h"
 #include "plugins/LuaPlugin.h"
+#include "plugins/LuaState.h"
 
 const struct luaL_Reg LuaSystemLib::lib[] = {
         {"msgAll", &LuaMessageToAll},
@@ -18,8 +21,12 @@ const struct luaL_Reg LuaSystemLib::lib[] = {
         {NULL, NULL}
 };
 
-int LuaSystemLib::openLib(lua_State* L)
+std::shared_ptr<D3PP::plugins::LuaState> LuaSystemLib::m_thisPlugin = nullptr;
+
+int LuaSystemLib::openLib(lua_State* L, std::shared_ptr<D3PP::plugins::LuaState> thisPlugin)
 {
+    m_thisPlugin = std::move(thisPlugin);
+
     lua_getglobal(L, "System");
     if (lua_isnil(L, -1))
     {
@@ -91,22 +98,21 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
             timed,
             mapId
     };
-    LuaPlugin* lp = LuaPlugin::GetInstance();
 
     if (setOrCheck == 1) {
-        if (lp->events.find(typeAsEvent) != lp->events.end()) {
-            lp->events[typeAsEvent].push_back(newEvent);
+        if (m_thisPlugin->events.find(typeAsEvent) != m_thisPlugin->events.end()) {
+            m_thisPlugin->events[typeAsEvent].push_back(newEvent);
         }
         else {
-            lp->events.insert(std::make_pair(typeAsEvent, std::vector<LuaEvent>()));
-            lp->events[typeAsEvent].push_back(newEvent);
+            m_thisPlugin->events.insert(std::make_pair(typeAsEvent, std::vector<LuaEvent>()));
+            m_thisPlugin->events[typeAsEvent].push_back(newEvent);
         }
     }
     else {
         bool eventExists = false;
 
-        if (lp->events.find(typeAsEvent) != lp->events.end()) {
-            for (const auto& i : lp->events[typeAsEvent]) {
+        if (m_thisPlugin->events.find(typeAsEvent) != m_thisPlugin->events.end()) {
+            for (const auto& i : m_thisPlugin->events[typeAsEvent]) {
                 if (i.type == typeAsEvent && i.functionName == function) {
                     eventExists = true;
                     break;

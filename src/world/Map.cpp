@@ -23,7 +23,7 @@
 #include "world/Entity.h"
 #include "world/Player.h"
 #include "common/Player_List.h"
-#include "plugins/LuaPlugin.h"
+#include "plugins/PluginManager.h"
 #include "world/Physics.h"
 #include "CPE.h"
 #include "EventSystem.h"
@@ -523,11 +523,11 @@ void Map::Fill(const std::string& functionName, const std::string& paramString) 
 
     m_mapProvider->SetBlocks(blankMap);
 
-    LuaPlugin* lp = LuaPlugin::GetInstance();
+    D3PP::plugins::PluginManager *pm = D3PP::plugins::PluginManager::GetInstance();
     clock_t stop = clock();
     Logger::LogAdd("Debug", "Time to resize.." + stringulate(stop - start), DEBUG, GLF);
     start = clock();
-    lp->TriggerMapFill(ID, mapSize.X, mapSize.Y, mapSize.Z, "Mapfill_" + functionName, std::move(paramString));
+    pm->TriggerMapFill(ID, mapSize.X, mapSize.Y, mapSize.Z, "Mapfill_" + functionName, std::move(paramString));
     stop = clock();
     Logger::LogAdd("Debug", "Time to fill.." + stringulate(stop - start), DEBUG, GLF);
     Resend();
@@ -931,10 +931,10 @@ void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
         }
 
         if (!blockEntry.PhysicsPlugin.empty()) {
-            LuaPlugin* luaPlugin = LuaPlugin::GetInstance();
+            D3PP::plugins::PluginManager *pm = D3PP::plugins::PluginManager::GetInstance();
             std::string pluginName = blockEntry.PhysicsPlugin;
             Utils::replaceAll(pluginName, "Lua:", "");
-            luaPlugin->TriggerPhysics(ID, X, Y, Z, pluginName);
+            pm->TriggerPhysics(ID, X, Y, Z, pluginName);
         }
 
         if (blockEntry.PhysicsRepeat) {
