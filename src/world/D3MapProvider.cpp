@@ -37,7 +37,7 @@ void D3PP::world::D3MapProvider::Load(const std::string &filePath) {
 }
 
 D3PP::Common::Vector3S D3PP::world::D3MapProvider::GetSize() const {
-    return m_d3map->MapSize;
+    return Common::Vector3S(m_d3map->MapSize);
 }
 
 void D3PP::world::D3MapProvider::SetSize(const D3PP::Common::Vector3S &newSize) {

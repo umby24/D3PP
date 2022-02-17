@@ -11,21 +11,30 @@
 #include "plugins/LuaPlugin.h"
 #include "plugins/LuaState.h"
 
+int eAdd(lua_State* L) {
+    LuaSystemLib * ptr = *static_cast<LuaSystemLib**>(lua_getextraspace(L));
+    return ((*ptr).LuaEventAdd)(L);
+}
+
+int eDel(lua_State* L) {
+    LuaSystemLib * ptr = *static_cast<LuaSystemLib**>(lua_getextraspace(L));
+    return ((*ptr).LuaEventDelete)(L);
+}
+
 const struct luaL_Reg LuaSystemLib::lib[] = {
         {"msgAll", &LuaMessageToAll},
         {"msg", &LuaMessage},
         {"getfile", &LuaFileGet},
         {"getfolder", &LuaFolderGet},
-        {"addEvent", &LuaEventAdd},
-        {"deleteEvent", &LuaEventDelete},
+        {"addEvent", &eAdd},
+        {"deleteEvent", &eDel},
         {NULL, NULL}
 };
-
-std::shared_ptr<D3PP::plugins::LuaState> LuaSystemLib::m_thisPlugin = nullptr;
 
 int LuaSystemLib::openLib(lua_State* L, std::shared_ptr<D3PP::plugins::LuaState> thisPlugin)
 {
     m_thisPlugin = std::move(thisPlugin);
+    *static_cast<LuaSystemLib**>(lua_getextraspace(m_thisPlugin->GetState())) = this;
 
     lua_getglobal(L, "System");
     if (lua_isnil(L, -1))

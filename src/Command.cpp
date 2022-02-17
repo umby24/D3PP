@@ -37,6 +37,17 @@ CommandMain::CommandMain() : ParsedOperator{} {
 }
 
 void CommandMain::Init() {
+    Command PluginReloadCommand;
+    PluginReloadCommand.Function = [this] { D3PP::plugins::PluginManager::GetInstance()->LoadPlugins(); };
+    PluginReloadCommand.Id = "preload";
+    PluginReloadCommand.Name = "preload";
+    PluginReloadCommand.Internal = true;
+    PluginReloadCommand.Hidden = false;
+    PluginReloadCommand.Rank = 200;
+    PluginReloadCommand.RankShow = 200;
+    PluginReloadCommand.CanConsole = true;
+    Commands.push_back(PluginReloadCommand);
+
     Command kickCommand;
     kickCommand.Id = "Kick";
     kickCommand.Name = "kick";

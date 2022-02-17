@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <memory>
 #include <EventSystem.h>
 
 #include "common/TaskScheduler.h"

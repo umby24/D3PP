@@ -75,14 +75,15 @@ int main()
     D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();
 
     TaskScheduler::RunSetupTasks();
-    plugm->LoadPlugins();
+
     System::IsRunning = true;
     System::startTime = time(nullptr);
     
     n->Start();
     
     std::thread mainThread(mainLoop);
-
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    plugm->LoadPlugins();
     MainConsole();
 
     TaskScheduler::RunTeardownTasks();

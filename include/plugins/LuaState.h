@@ -11,6 +11,7 @@
 #include "LuaPlugin.h"
 
 struct lua_State;
+class LuaSystemLib;
 
 namespace D3PP::plugins {
     class LuaState {
@@ -31,6 +32,7 @@ namespace D3PP::plugins {
     private:
         std::string m_name;
         lua_State* m_state;
+        std::unique_ptr<LuaSystemLib> m_syslib;
     };
 }
 #endif //D3PP_LUASTATE_H

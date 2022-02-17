@@ -275,6 +275,11 @@ void LuaPlugin::TriggerBuildMode(const std::string& function, int clientId, int 
 LuaPlugin::LuaPlugin(std::string folder) {
     m_folder = folder;
     m_luaState = std::make_shared<D3PP::plugins::LuaState>("Plugin " + folder);
+    
+    this->Interval = std::chrono::seconds(2);
+    this->Main = [this] { MainFunc(); };
+
+    TaskScheduler::RegisterTask("Plugin " + m_folder, *this);
 }
 
 void LuaPlugin::Load() {
@@ -306,7 +311,6 @@ void LuaPlugin::Load() {
         _files.insert(std::make_pair(file, newFile));
         m_luaState->LoadFile(file, true);
     }
-    *static_cast<LuaPlugin**>(lua_getextraspace(this->m_luaState->GetState())) = this;
 
     RegisterEventListener();
 

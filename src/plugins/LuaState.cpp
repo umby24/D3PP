@@ -50,7 +50,7 @@ void D3PP::plugins::LuaState::RegisterApiLibs(std::shared_ptr<LuaState> plugin) 
     LuaPlayerLib pLib;
     LuaMapLib mLib;
     LuaRankLib rLib;
-    LuaSystemLib sLib;
+    m_syslib = std::make_unique<LuaSystemLib>();
     LuaNetworkLib nLib;
     LuaBlockLib blLib;
     LuaTeleporterLib tpLib;
@@ -63,8 +63,7 @@ void D3PP::plugins::LuaState::RegisterApiLibs(std::shared_ptr<LuaState> plugin) 
     LuaCPELib::openLib(m_state);
     rLib.openLib(m_state);
     // -- need
-    sLib.openLib(m_state, plugin);
-
+    m_syslib->openLib(m_state, plugin);
     nLib.openLib(m_state);
     blLib.openLib(m_state);
     tpLib.openLib(m_state);
