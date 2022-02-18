@@ -141,6 +141,8 @@ void MapMain::AddLoadAction(int clientId, int mapId, const std::string& director
 
     std::function<void()> loadAction = [thisMap, clientId, directory](){
         thisMap->Load(directory);
+        thisMap->filePath = directory;
+
         if (clientId > 0) {
             NetworkFunctions::SystemMessageNetworkSend(clientId, "&eMap Loaded.");
         }

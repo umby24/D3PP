@@ -31,6 +31,7 @@ namespace D3PP::world {
         MapEnvironment GetEnvironment() override;
         void SetEnvironment(const MapEnvironment& env) override;
     private:
+        std::string m_currentPath;
         std::unique_ptr<files::D3Map> m_d3map;
     };
 }

@@ -240,10 +240,6 @@ int LuaEntityLib::LuaEntityDisplaynameGet(lua_State* L) {
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
 
     if (foundEntity != nullptr) {
-        // std::string prefix(lua_tostring(L, 2));
-        // std::string displayName(lua_tostring(L, 3));
-        // std::string suffix(lua_tostring(L, 4));
-
         lua_pushstring(L, foundEntity->Prefix.c_str());
         lua_pushstring(L, foundEntity->Name.c_str());
         lua_pushstring(L, foundEntity->Suffix.c_str());

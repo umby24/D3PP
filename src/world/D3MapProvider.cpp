@@ -16,7 +16,7 @@ void D3PP::world::D3MapProvider::CreateNew(const D3PP::Common::Vector3S &size, c
     MapName = name;
     auto defaultEnv = MapEnvironment();
     defaultEnv.SideLevel = size.Z/2;
-
+    m_currentPath = path;
     SetEnvironment(defaultEnv);
     SetPermissions(MapPermissions {0, 0, 0});
 
@@ -29,11 +29,15 @@ bool D3PP::world::D3MapProvider::Save(const std::string &filePath) {
 }
 
 void D3PP::world::D3MapProvider::Load(const std::string &filePath) {
-    if (m_d3map == nullptr)
+    if (m_d3map == nullptr) {
         m_d3map = std::make_unique<files::D3Map>(filePath);
+        m_currentPath = filePath;
+    }
 
-    m_d3map->Load();
-    MapName = m_d3map->Name;
+    m_d3map->Load(filePath);
+
+    if (filePath == m_currentPath)
+        MapName = m_d3map->Name;
 }
 
 D3PP::Common::Vector3S D3PP::world::D3MapProvider::GetSize() const {

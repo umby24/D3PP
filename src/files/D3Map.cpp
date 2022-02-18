@@ -53,7 +53,24 @@ namespace D3PP::files {
             ReadMapData();
             return true;
 		}
+        bool D3Map::Load(std::string path)
+        {
+            if (!std::filesystem::exists(path)) {
+                return false;
+            }
 
+            if (path[path.size() - 1] != '/') {
+                path = path + "/";
+            }
+            std::string ogMapPath = mapPath;
+            mapPath = path;
+            ReadConfig();
+            ReadRankBoxes();
+            ReadPortals();
+            ReadMapData();
+            mapPath = ogMapPath;
+            return true;
+        }
 		bool D3Map::Save()
 		{
             std::filesystem::create_directory(mapPath);
@@ -349,6 +366,9 @@ namespace D3PP::files {
 
             if (dSize == (mapSize * 4)) {
                 Logger::LogAdd("D3Map", "Map Loaded [" + mapPath + D3_MAP_BLOCKS_NAME + "] (" + stringulate(MapSize.X) + "x" + stringulate(MapSize.Y) + "x" + stringulate(MapSize.Z) + ")", LogType::NORMAL, GLF);
+            }
+            if (dSize == 0 || dSize == -1) {
+                Logger::LogAdd("D3Map", "Error loading map [" + mapPath + D3_MAP_BLOCKS_NAME + "]!", L_ERROR, GLF);
             }
         }
 

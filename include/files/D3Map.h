@@ -70,6 +70,7 @@ namespace D3PP::files {
 			D3Map(const std::string& folder, const std::string& name, const Common::Vector3S& mapSize);
 
 			bool Load();
+			bool Load(std::string path);
 			bool Save();
 			void Resize(Common::Vector3S newSize);
 

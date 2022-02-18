@@ -38,6 +38,7 @@ const struct luaL_Reg LuaMapLib::lib[] = {
         {"setspawn", &LuaMapSetSpawn},
         {"setsaveinterval", &LuaMapSetSaveInterval},
         {"add", &LuaMapAdd},
+        {"load", &LuaMapLoad},
         {"resize", &LuaMapActionAddResize},
         {"save", &LuaMapActionAddSave},
         {"fill", &LuaMapActionAddFill},
@@ -583,6 +584,24 @@ int LuaMapLib::LuaMapActionAddResize(lua_State* L) {
     MapMain* mm = MapMain::GetInstance();
 
     mm->AddResizeAction(0, mapId, sizeX, sizeY, sizeZ);
+
+    return 0;
+}
+
+int LuaMapLib::LuaMapLoad(lua_State* L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Map_Action_Add_Resize called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    int mapId = luaL_checkinteger(L, 1);
+    std::string mapDir(luaL_checkstring(L, 2));
+
+    MapMain* mm = MapMain::GetInstance();
+
+    mm->AddLoadAction(0, mapId, mapDir);
 
     return 0;
 }

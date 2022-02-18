@@ -87,6 +87,10 @@ bool GZIP::GZip_CompressToFile(unsigned char *input, int inputLen, std::string f
 int GZIP::GZip_DecompressFromFile(unsigned char *output, int outputLen, std::string filename) {
     int fileSize = Utils::FileSize(filename);
 
+    if (fileSize == -1) {
+        return 0;
+    }
+
     std::ifstream of(filename, std::ios::in | std::ios::binary);
 
     char* data = new char[fileSize];

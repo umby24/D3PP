@@ -28,6 +28,8 @@ const struct luaL_Reg LuaSystemLib::lib[] = {
         {"getfolder", &LuaFolderGet},
         {"addEvent", &eAdd},
         {"deleteEvent", &eDel},
+        {"log", &LuaSystemLog},
+        {"getplatform", &LuaGetPlatform},
         {NULL, NULL}
 };
 
@@ -73,6 +75,54 @@ int LuaSystemLib::LuaFolderGet(lua_State* L) {
     std::string fileName(lua_tostring(L, 1));
     Files* f = Files::GetInstance();
     lua_pushstring(L, f->GetFolder(fileName).c_str());
+    return 1;
+}
+
+int LuaSystemLib::LuaSystemLog(lua_State* L)
+{
+    int nArgs = lua_gettop(L);
+
+    if (nArgs < 1 || nArgs > 3) {
+        Logger::LogAdd("Lua", "LuaError: Log called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    std::string logMessage(luaL_checkstring(L, 1));
+    std::string logType(luaL_optstring(L, 2, "info"));
+    LogType thisLogType;
+
+    if (Utils::InsensitiveCompare("info", logType))
+        thisLogType = LogType::NORMAL;
+    
+    if (Utils::InsensitiveCompare("warning", logType))
+        thisLogType = LogType::WARNING;
+    
+    if (Utils::InsensitiveCompare("error", logType))
+        thisLogType = LogType::L_ERROR;
+    
+    Logger::LogAdd("Lua", logMessage, thisLogType, GLF);
+    return 0;
+}
+
+int LuaSystemLib::LuaGetPlatform(lua_State* L)
+{
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 0) {
+        Logger::LogAdd("Lua", "LuaError: GetPlatform called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+#ifdef __linux__
+    lua_pushstring(L, "linux");
+#else
+#ifdef MSVC
+    lua_pushstring(L, "windows");
+#else
+    lua_pushstring(L, "windows");
+#endif
+#endif
+
     return 1;
 }
 

@@ -217,6 +217,9 @@ void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, const
             bail(m_luaState->GetState(), "Failed to run mapfill");
         }
     }
+    else {
+        lua_pop(m_luaState->GetState(), 1);
+    }
 }
 
 void LuaPlugin::TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, const std::string& function) {
@@ -230,6 +233,9 @@ void LuaPlugin::TriggerPhysics(int mapId, unsigned short X, unsigned short Y, un
         if (lua_pcall(m_luaState->GetState(), 4, 0, 0) != 0) {
             bail(m_luaState->GetState(), "Failed to trig physics;");
         }
+    }
+    else {
+        lua_pop(m_luaState->GetState(), 1);
     }
 }
 
@@ -252,6 +258,9 @@ void LuaPlugin::TriggerCommand(const std::string& function, int clientId, const 
             bail(m_luaState->GetState(), "Failed to run command.");
         }
     }
+    else {
+        lua_pop(m_luaState->GetState(), 1);
+    }
 }
 
 void LuaPlugin::TriggerBuildMode(const std::string& function, int clientId, int mapId, unsigned short X, unsigned short Y,
@@ -269,6 +278,9 @@ void LuaPlugin::TriggerBuildMode(const std::string& function, int clientId, int 
         if (lua_pcall(m_luaState->GetState(), 7, 0, 0)) {
             bail(m_luaState->GetState(), "Failed to run command.");
         }
+    }
+    else {
+        lua_pop(m_luaState->GetState(), 1);
     }
 }
 
