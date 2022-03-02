@@ -76,6 +76,9 @@ void LuaPlugin::RegisterEventListener() {
 void LuaPlugin::HandleEvent(const Event& event) {
     if (!event.PushLua)
         return;
+    
+    if (!m_loaded)
+        return;
 
     auto type = event.type(); // -- get the type..
 
@@ -137,6 +140,9 @@ std::vector<std::string> EnumerateDirectory(const std::string &dir) {
 }
 
 void LuaPlugin::MainFunc() {
+    if (!m_loaded)
+        return;
+
     std::vector<std::string> files = EnumerateDirectory(m_folder);
 
     for (auto const &f : files) {
@@ -287,7 +293,8 @@ void LuaPlugin::TriggerBuildMode(const std::string& function, int clientId, int 
 LuaPlugin::LuaPlugin(std::string folder) {
     m_folder = folder;
     m_luaState = std::make_shared<D3PP::plugins::LuaState>("Plugin " + folder);
-    
+    m_loaded = false;
+
     this->Interval = std::chrono::seconds(2);
     this->Main = [this] { MainFunc(); };
 
@@ -332,6 +339,7 @@ void LuaPlugin::Load() {
     TaskScheduler::RegisterTask("LuaTimer", newTi);
 
     m_status = "Loaded";
+    m_loaded = true;
 }
 
 std::string LuaPlugin::GetFolderName() {

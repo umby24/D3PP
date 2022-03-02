@@ -91,6 +91,7 @@ add_executable(
   Testing/hello_test.cc
   Testing/utils_test.cc
   Testing/common/MinecraftLocationTest.cc
+  Testing/files/d3map_test.cc
   Testing/world/entity_test.cc
   Testing/world/mapactions_test.cc
   Testing/world/PhysicsQueueTest.cc

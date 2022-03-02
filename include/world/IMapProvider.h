@@ -24,7 +24,7 @@ namespace D3PP::world {
             virtual void CreateNew(const Common::Vector3S& size, const std::string& path, const std::string& name)=0;
 
             virtual bool Save(const std::string& filePath) = 0;
-            virtual void Load(const std::string& filePath) = 0;
+            virtual bool Load(const std::string& filePath) = 0;
 
             [[nodiscard]] virtual Common::Vector3S GetSize() const = 0;
             virtual void SetSize(const Common::Vector3S& newSize) = 0;

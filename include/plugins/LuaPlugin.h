@@ -47,7 +47,7 @@ private:
     std::string m_status;
     std::string m_folder;
     std::shared_ptr<D3PP::plugins::LuaState> m_luaState;
-
+    bool m_loaded;
     std::recursive_mutex executionMutex;
 
     std::map<std::string, LuaFile> _files;

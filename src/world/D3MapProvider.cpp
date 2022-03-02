@@ -24,23 +24,28 @@ void D3PP::world::D3MapProvider::CreateNew(const D3PP::Common::Vector3S &size, c
 }
 
 bool D3PP::world::D3MapProvider::Save(const std::string &filePath) {
-    m_d3map->Save();
-    return true;
+    if (filePath == "")
+        return m_d3map->Save();
+
+    return m_d3map->Save(filePath);
 }
 
-void D3PP::world::D3MapProvider::Load(const std::string &filePath) {
+bool D3PP::world::D3MapProvider::Load(const std::string &filePath) {
     if (m_d3map == nullptr) {
         m_d3map = std::make_unique<files::D3Map>(filePath);
         m_currentPath = filePath;
     }
+    bool loadResult = true;
 
     if (!filePath.empty())
-        m_d3map->Load(filePath);
+        loadResult = m_d3map->Load(filePath);
     else
-        m_d3map->Load(m_currentPath);
+        loadResult = m_d3map->Load(m_currentPath);
 
     if (filePath == m_currentPath)
         MapName = m_d3map->Name;
+
+    return loadResult;
 }
 
 D3PP::Common::Vector3S D3PP::world::D3MapProvider::GetSize() const {
@@ -57,8 +62,7 @@ bool D3PP::world::D3MapProvider::Unload() {
 }
 
 bool D3PP::world::D3MapProvider::Reload() {
-    Load("");
-    return true;
+    return Load("");
 }
 
 void D3PP::world::D3MapProvider::SetBlock(const D3PP::Common::Vector3S &location, const unsigned char &type) {

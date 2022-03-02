@@ -495,7 +495,11 @@ void MapMain::MapSettingsSave() {
 bool Map::Resize(short x, short y, short z) {
     if (!loaded) {
         Reload();
+        if (!loaded) {
+            return false;
+        }
     }
+
     loading = true;
     m_mapProvider->SetSize(Vector3S{x, y, z});
     bcQueue.reset();
@@ -510,6 +514,9 @@ bool Map::Resize(short x, short y, short z) {
 void Map::Fill(const std::string& functionName, const std::string& paramString) {
     if (!loaded) {
         Reload();
+        if (!loaded) {
+            return;
+        }
     }
 
     //UniqueID = MapMain::GetUniqueId();
@@ -527,7 +534,6 @@ void Map::Fill(const std::string& functionName, const std::string& paramString) 
 
     D3PP::plugins::PluginManager *pm = D3PP::plugins::PluginManager::GetInstance();
     clock_t stop = clock();
-    Logger::LogAdd("Debug", "Time to resize.." + stringulate(stop - start), DEBUG, GLF);
     start = clock();
     pm->TriggerMapFill(ID, mapSize.X, mapSize.Y, mapSize.Z, "Mapfill_" + functionName, std::move(paramString));
     stop = clock();
@@ -552,7 +558,14 @@ void Map::Load(const std::string& directory) {
         Logger::LogAdd(MODULE_NAME, "Map Reloaded [" + m_mapProvider->MapName + "]", LogType::NORMAL, GLF);
     }
 
-    m_mapProvider->Load(directory);
+    bool result = m_mapProvider->Load(directory);
+
+    if (!result) {
+        Logger::LogAdd(MODULE_NAME, "Error loading map! [" + m_mapProvider->MapName + "]", L_ERROR, GLF);
+        loading = false;
+        return;
+    }
+
     if (pQueue != nullptr) {
         pQueue.reset();
     }
@@ -571,7 +584,14 @@ void Map::Reload() {
         return;
 
     loading = true;
-    m_mapProvider->Reload();
+    bool result = m_mapProvider->Reload();
+    
+    if (!result) {
+        Logger::LogAdd(MODULE_NAME, "Failed to reload map! [" + m_mapProvider->MapName + "]", LogType::L_ERROR, GLF);
+        loading = false;
+        return;
+    }
+
     loading = false;
     loaded = true;
     BlockchangeStopped = false;
@@ -598,8 +618,14 @@ void Map::Send(int clientId) {
     if (nc == nullptr)
         return;
 
-    if (!loaded)
+    if (!loaded) {
         Reload();
+        if (!loaded) {
+            Logger::LogAdd(MODULE_NAME, "Can't send the map: Reload error", LogType::L_ERROR, GLF);
+            nc->Kick("Mapsend error", false);
+            return;
+        }
+    }
 
     Vector3S mapSize = m_mapProvider->GetSize();
     int mapVolume = mapSize.X * mapSize.Y * mapSize.Z;
@@ -820,6 +846,9 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
      if (!loaded && !loading) {
          LastClient = time(nullptr);
          Reload();
+         if (!loaded) {
+             return 255; // -- error reloading :( 
+         }
      }
 
      if (loading) {

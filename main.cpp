@@ -82,7 +82,6 @@ int main()
     n->Start();
     
     std::thread mainThread(mainLoop);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     plugm->LoadPlugins();
     MainConsole();
 
