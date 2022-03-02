@@ -10,6 +10,7 @@
 #include "plugins/PluginManager.h"
 #include "plugins/LuaPlugin.h"
 #include "plugins/LuaState.h"
+#include "Command.h"
 
 int eAdd(lua_State* L) {
     LuaSystemLib * ptr = *static_cast<LuaSystemLib**>(lua_getextraspace(L));
@@ -30,6 +31,7 @@ const struct luaL_Reg LuaSystemLib::lib[] = {
         {"deleteEvent", &eDel},
         {"log", &LuaSystemLog},
         {"getplatform", &LuaGetPlatform},
+        {"addCmd", &LuaAddCommand},
         {NULL, NULL}
 };
 
@@ -225,7 +227,7 @@ int LuaSystemLib::LuaMessage(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs < 2) {
-        Logger::LogAdd("Lua", "LuaError: System_Message_Network_Send called with invalid number of arguments.", LogType::WARNING,GLF);
+        Logger::LogAdd("Lua", "LuaError: System.msg called with invalid number of arguments.", LogType::WARNING,GLF);
         return 0;
     }
 
@@ -239,5 +241,36 @@ int LuaSystemLib::LuaMessage(lua_State* L) {
     }
 
     NetworkFunctions::SystemMessageNetworkSend(clientId, message, messageType);
+    return 0;
+}
+
+int LuaSystemLib::LuaAddCommand(lua_State* L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs < 2) {
+        Logger::LogAdd("Lua", "LuaError: System.addCmd called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    std::string commandName(luaL_checkstring(L, 1));
+    std::string commandGroup(luaL_checkstring(L, 2));
+    int minRank = luaL_checkinteger(L, 3);
+    std::string handleFunction(luaL_checkstring(L, 4));
+    std::string description(luaL_checkstring(L, 5));
+
+    CommandMain* cm = CommandMain::GetInstance();
+
+    Command newCmd;
+    newCmd.Id = commandName;
+    newCmd.Name = commandName;
+    newCmd.Rank = minRank;
+    newCmd.RankShow = minRank;
+    newCmd.Plugin = "Lua:" + handleFunction;
+    newCmd.Group = commandGroup;
+    newCmd.Description = description;
+    newCmd.Hidden = false;
+    newCmd.Internal = false;
+    cm->Commands.push_back(newCmd);
+
     return 0;
 }

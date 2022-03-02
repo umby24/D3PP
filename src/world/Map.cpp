@@ -600,8 +600,10 @@ void Map::Send(int clientId) {
 
     if (!loaded)
         Reload();
+
     Vector3S mapSize = m_mapProvider->GetSize();
     int mapVolume = mapSize.X * mapSize.Y * mapSize.Z;
+    
     std::vector<unsigned char> tempBuf(mapVolume + 10);
     int tempBufferOffset = 0;
 
@@ -612,6 +614,12 @@ void Map::Send(int clientId) {
 
     int cbl = nc->GetCustomBlocksLevel();
     std::vector<unsigned char> mapBlocks = m_mapProvider->GetBlocks();
+    
+    if (mapBlocks.size() != (mapVolume * 4)) {
+        Logger::LogAdd("Map", "Error during mapsend: Size mismatch!!", LogType::L_ERROR, GLF);
+        nc->SendChat("Error during mapsend!!");
+        return;
+    }
 
     for (int i = 0; i < mapVolume-1; i++) {
         int index = i * MAP_BLOCK_ELEMENT_SIZE;

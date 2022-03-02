@@ -40,6 +40,11 @@ void Configuration::Load() {
 
     json j;
     std::ifstream inFile(filePath);
+    
+    if (!inFile.is_open()) {
+        return;
+    }
+
     try {
         inFile >> j;
          Configuration::NetSettings.LoadFromJson(j);

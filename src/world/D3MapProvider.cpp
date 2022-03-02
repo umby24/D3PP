@@ -34,7 +34,10 @@ void D3PP::world::D3MapProvider::Load(const std::string &filePath) {
         m_currentPath = filePath;
     }
 
-    m_d3map->Load(filePath);
+    if (!filePath.empty())
+        m_d3map->Load(filePath);
+    else
+        m_d3map->Load(m_currentPath);
 
     if (filePath == m_currentPath)
         MapName = m_d3map->Name;
