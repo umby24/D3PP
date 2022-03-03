@@ -11,7 +11,7 @@ public:
     static constexpr DescriptorType descriptor = "Map_Block_Change_Client";
     virtual DescriptorType type() const;
 
-    int playerId;
+    int clientId;
     int mapId;
     unsigned short X;
     unsigned short Y;

@@ -40,3 +40,21 @@ If you would like those reach out to let me know, and of course Pull Requests ar
 10.  Clone the repo and open it
 11. Configure your C++ kits to GCC/Mingw32 (may require a manual scan)
 12. Press the build button!
+
+## Compiling on Windows (MSVC)
+
+1. Make sure you have Visual Studio with C++ Make tools installed
+2. Install vcpkg (instructions here)
+3. install the requisite libraries (`vcpkg install Lua` , `vcpkg install SQLite3`, `vcpkg install zlib`)
+3a. If you are using 64 bit builds, add :x64-windows to the end (`vcpkg install SQLite3:x64-windows`)
+4. Clone the repo and open visual studio. Use the open folder option to open the folder.
+5. CMake should auto-detect and autoconfigure, and you should be good to go!
+
+## Compling on Linux
+These instructions used on Fedora
+
+1. install your distros build-essential files
+2. clone the repo and open it up in terminal
+3. mkdir build && cd build
+4. cmake ../
+5. make

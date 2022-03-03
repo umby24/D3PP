@@ -60,6 +60,7 @@ class Utils
         static short RedVal(int colorVal);
         static short GreenVal(int colorVal);
         static short BlueVal(int colorVal);
+        static bool IsNumeric(std::string input);
 protected:
 
     private:

@@ -5,15 +5,15 @@
 #include "Build.h"
 #include <cmath>
 #include <Utils.h>
-#include <Logger.h>
-#include "Map.h"
+#include <common/Logger.h>
+#include "world/Map.h"
 
+using namespace D3PP::world;
 
 void Build::BuildLinePlayer(short playerNumber, int mapId, unsigned short X0, unsigned short Y0, unsigned short Z0,
                             unsigned short X1, unsigned short Y1, unsigned short Z1, unsigned char material,
                             unsigned char priority, bool undo, bool physics) {
-    Logger::LogAdd("Build", "Build from " + stringulate(X0) + "x" + stringulate(Y0) + "x" + stringulate(Z0), LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-    Logger::LogAdd("Build", "Build to " + stringulate(X1) + "x" + stringulate(Y1) + "x" + stringulate(Z1), LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+
     auto dx = (float)(X1 - X0);
     auto absDx = (float)std::abs(dx);
     auto dy = (float)(Y1 - Y0);
@@ -125,8 +125,8 @@ void Build::BuildRankBox(int mapId, unsigned short X0, unsigned short Y0, unsign
     if (pMap == nullptr)
         return;
 
-    if (pMap->data.RankBuild <= maxRank && rank<= maxRank) {
+ //   if (pMap->data.RankBuild <= maxRank && rank<= maxRank) {
         // -- Map add rank box.
         pMap->SetRankBox(startX, startY, startZ, endX, endY, endZ, rank);
-    }
+  //  }
 }

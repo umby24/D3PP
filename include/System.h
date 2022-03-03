@@ -5,16 +5,11 @@
 #ifndef D3PP_SYSTEM_H
 #define D3PP_SYSTEM_H
 #include <string>
+#include <mutex>
 
-#include "TaskScheduler.h"
-#include "json.hpp"
+const float SYSTEM_VERSION_NUMBER = 0.10f;
 
-using json = nlohmann::json;
-
-const std::string SYSTEM_FILE_NAME = "System";
-const float SYSTEM_VERSION_NUMBER = 0.02;
-
-class System : TaskItem {
+class System  {
 public:
     static bool IsRunning;
     static time_t startTime;
@@ -22,15 +17,5 @@ public:
     static System* Instance_;
     static std::mutex mainMutex;
     static std::string ServerName;
-    std::string Motd;
-    int ClickDistance;
-    System();
-private:
-    bool SaveFile;
-    time_t lastModified;
-
-    void Load();
-    void Save();
-    void MainFunc();
 };
 #endif //D3PP_SYSTEM_H

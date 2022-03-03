@@ -18,20 +18,24 @@
 #define PLAYER_CLICK_EXT_NAME "PlayerClick"
 #define TWOWAY_PING_EXT_NAME "TwoWayPing"
 #define BLOCK_DEFS_EXT_NAME "BlockDefinitions"
+#define BLOCK_DEFS_EXTENDED_EXT_NAME "BlockDefinitionsExt"
+#define EXTENDED_TEXTURES_EXT_NAME "ExtendedTextures"
 
 #include <memory>
+#include <string>
 
-class NetworkClient;
+class IMinecraftClient;
 class Entity;
 
 class CPE {
     public:
-    static int GetClientExtVersion(std::shared_ptr<NetworkClient> client, std::string extension);
-    static void PreLoginExtensions(std::shared_ptr<NetworkClient> client);
-    static void AfterMapActions(std::shared_ptr<NetworkClient> client);
-    static void AfterLoginActions(std::shared_ptr<NetworkClient> client);
+    static int GetClientExtVersion(const std::shared_ptr<IMinecraftClient>& client, const std::string& extension);
+    static void PreLoginExtensions(const std::shared_ptr<IMinecraftClient>& client);
+    static void AfterMapActions(const std::shared_ptr<IMinecraftClient>& client);
+    static void AfterLoginActions(const std::shared_ptr<IMinecraftClient>& client);
     static void PreEntityActions();
-    static void PostEntityActions(std::shared_ptr<NetworkClient> client, std::shared_ptr<Entity> postEntity);
+    static void PostEntityActions(const std::shared_ptr<IMinecraftClient>& client, const std::shared_ptr<Entity>& postEntity);
     //static std::map<std::string, int> SupportedExtensions { std::pair<std::string, int>("CustomBlocks", 1)};
+    static void DuringMapActions(const std::shared_ptr<IMinecraftClient>& client);
 };
 #endif

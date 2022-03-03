@@ -111,6 +111,9 @@ bool Utils::InsensitiveCompare(std::string first, std::string second) {
 }
 
 int Utils::RandomNumber(int max) {
+    if (1.0 >= max) {
+        return 1;
+    }
     std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_real_distribution<double> dist(1.0, max);
@@ -133,13 +136,27 @@ int Utils::Rgb(int red, int green, int blue) {
 }
 
 short Utils::RedVal(int colorVal) {
+    if (colorVal < 0)
+        return -1;
+
     return (colorVal & 0x0000FF);
 }
 
 short Utils::GreenVal(int colorVal) {
+    if (colorVal < 0)
+        return -1;
     return (colorVal & 0x00FF00) >> 8;
 }
 
 short Utils::BlueVal(int colorVal) {
+    if (colorVal < 0)
+        return -1;
+
     return (colorVal & 0xFF0000) >> 16;
+}
+
+bool Utils::IsNumeric(std::string input) {
+    std::string::const_iterator it = input.begin();
+    while (it != input.end() && std::isdigit(*it)) ++it;
+    return !input.empty() && it == input.end();
 }

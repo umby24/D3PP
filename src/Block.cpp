@@ -5,10 +5,9 @@
 #include "Block.h"
 
 #include "common/PreferenceLoader.h"
-#include "TaskScheduler.h"
 #include "Utils.h"
-#include "Files.h"
-#include "Logger.h"
+#include "common/Files.h"
+#include "common/Logger.h"
 
 
 Block* Block::Instance = nullptr;
@@ -19,7 +18,8 @@ Block::Block() {
     hasLoaded = false;
     LastFileDate = 0;
     for(auto i = 0; i < 255; i++) { // -- Pre-pop..
-        struct MapBlock shell{i};
+        struct MapBlock shell{};
+        shell.Id = i;
         Blocks.push_back(shell);
     }
 
@@ -65,6 +65,10 @@ void Block::LoadOld() {
     
     Logger::LogAdd(MODULE_NAME, "Importing old block file, Blocks.json will be overwritten.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     Blocks.clear();
+    for (auto i = 0; i < 255; i++) { // -- Pre-pop..
+        struct MapBlock shell { i };
+        Blocks.push_back(shell);
+    }
     PreferenceLoader pl("Block.txt", "Data/");
     pl.LoadFile();
     
@@ -75,6 +79,7 @@ void Block::LoadOld() {
         pl.SelectGroup(item.first);
         struct MapBlock newItem;
         newItem.Id = stoi(item.first);
+        Logger::LogAdd(MODULE_NAME, "Loading " + stringulate(item.first), LogType::DEBUG, GLF);
         newItem.Name = pl.Read("Name", "Unknown");
         newItem.OnClient = pl.Read("On_Client", 4);
         newItem.Physics = pl.Read("Physic", 0);
@@ -141,10 +146,20 @@ void Block::Load() {
             loadedItem.Name = item["Name"];
             loadedItem.OnClient = item["OnClient"];
             loadedItem.Physics = item["Physics"];
+            if (loadedItem.Physics < 0 || loadedItem.Physics > 21)
+                loadedItem.Physics = 0;
+
             loadedItem.PhysicsPlugin = item["PhysicsPlugin"];
             loadedItem.PhysicsTime = item["PhysicsTime"];
+            if (loadedItem.PhysicsTime < 0 || loadedItem.PhysicsTime > 10000)
+                loadedItem.PhysicsTime = 0;
+
             loadedItem.PhysicsRandom = item["PhysicsRandom"];
+            if (loadedItem.PhysicsRandom < 0 || loadedItem.PhysicsRandom > 10000)
+                loadedItem.PhysicsRandom = 0;
             loadedItem.PhysicsRepeat = item["PhysicsRepeat"];
+            if (loadedItem.PhysicsRepeat < 0 || loadedItem.PhysicsRepeat > 1)
+                loadedItem.PhysicsRepeat = 0;
 
             if (item["PhysicsOnLoad"].is_boolean())
                 loadedItem.PhysicsOnLoad = item["PhysicsOnLoad"];
@@ -155,40 +170,61 @@ void Block::Load() {
             if (!item["DeletePlugin"].is_null())
                 loadedItem.DeletePlugin = item["DeletePlugin"];
 
-            if (!item["ReplaceOnLoad"].is_null())
+            if (!item["ReplaceOnLoad"].is_null()) {
                 loadedItem.ReplaceOnLoad = item["ReplaceOnLoad"];
+                if (loadedItem.ReplaceOnLoad < -1 || loadedItem.ReplaceOnLoad > 65535)
+                    loadedItem.ReplaceOnLoad = -1;
+            }
             else
                 loadedItem.ReplaceOnLoad = -1;
 
-            if (!item["RankPlace"].is_null())
+            if (!item["RankPlace"].is_null()) {
                 loadedItem.RankPlace = item["RankPlace"];
+                if (loadedItem.RankPlace < 0 || loadedItem.RankPlace > 65535)
+                    loadedItem.RankPlace = 0;
+            }
 
-            if (!item["RankDelete"].is_null())
+            if (!item["RankDelete"].is_null()) {
                 loadedItem.RankDelete = item["RankDelete"];
+                if (loadedItem.RankDelete < 0 || loadedItem.RankDelete > 65535)
+                    loadedItem.RankDelete = 0;
+            }
 
             if (!item["AfterDelete"].is_null())
                 loadedItem.AfterDelete = item["AfterDelete"];
 
-            if (!item["Kills"].is_null())
+            if (!item["Kills"].is_null()) {
                 loadedItem.Kills = item["Kills"];
+                if (loadedItem.Kills < 0 || loadedItem.Kills > 1)
+                    loadedItem.Kills = 0;
+            }
 
-            if (!item["Special"].is_null())
+            if (!item["Special"].is_null()) {
                 loadedItem.Special = item["Special"];
+                if (loadedItem.Special < 0 || loadedItem.Special > 1)
+                    loadedItem.Special = 0;
+            }
 
             if (!item["OverviewColor"].is_null())
                 loadedItem.OverviewColor = item["OverviewColor"];
 
-            if (item["CpeLevel"].is_number())
+            if (item["CpeLevel"].is_number()) {
                 loadedItem.CpeLevel = item["CpeLevel"];
+                if (loadedItem.CpeLevel < 0 || loadedItem.CpeLevel > 2)
+                    loadedItem.CpeLevel = 0;
+            }
 
-            if (!item["CpeReplace"].is_null())
+            if (!item["CpeReplace"].is_null()) {
                 loadedItem.CpeReplace = item["CpeReplace"];
+                if (loadedItem.CpeReplace < 0 || loadedItem.CpeReplace > 2000)
+                    loadedItem.CpeReplace = 0;
+            }
 
             Blocks[loadedItem.Id] = loadedItem;
         }
     }
 
-    Logger::LogAdd(MODULE_NAME, "File loaded.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
+    Logger::LogAdd(MODULE_NAME, "File loaded [" + filePath + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
     hasLoaded = true;
     time_t modTime = Utils::FileModTime(filePath);
     LastFileDate = modTime;

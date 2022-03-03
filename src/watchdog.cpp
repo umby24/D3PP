@@ -3,17 +3,18 @@
 //
 
 #include "watchdog.h"
-#include "Files.h"
+#include "common/Files.h"
 #include "Utils.h"
-#include "Logger.h"
+#include "common/Logger.h"
+#include <time.h>
 
 watchdog* watchdog::singleton_ = nullptr;
 
 void watchdog::Watch(const std::string &moadule, const std::string &message, int state) {
-    watchdog* i = watchdog::GetInstance();
-    const std::scoped_lock<std::mutex> pLock(i->_lock);
+    watchdog* i = GetInstance();
+    const std::scoped_lock pLock(i->_lock);
     int myI = 0;
-    for(auto item : i->_modules) {
+    for(auto &item : i->_modules) {
         if (item.Name != moadule) {
             myI++;
             continue;
@@ -25,7 +26,7 @@ void watchdog::Watch(const std::string &moadule, const std::string &message, int
             item.BiggestMessage = item.LastMessage;
         }
         item.LastMessage = message;
-        clock_t current = clock();
+        const clock_t current = clock();
 
         if (state == 0) {
             item.CpuTime0 = current;
@@ -51,13 +52,14 @@ void watchdog::MainFunc() {
     clock_t timer = 0;
 
     while (isRunning) {
-        clock_t currentTime = clock(); // -- generationTIme and timer
-        clock_t time_ = currentTime - timer;
+	    const clock_t currentTime = clock(); // -- generationTIme and timer
+	    const clock_t time_ = currentTime - timer;
         timer = currentTime;
-        int i = 0;
-        { // -- Artificial block for scoped lock
+	    {
+		    int i = 0;
+		    // -- Artificial block for scoped lock
             const std::scoped_lock<std::mutex> pLock(_lock);
-            for (auto item : _modules) {
+            for (auto &item : _modules) {
                 item.Timeout = currentTime - item.WatchTime;
                 if (item.BiggestTimeout < item.Timeout) {
                     item.BiggestTimeout = item.Timeout;
@@ -72,14 +74,14 @@ void watchdog::MainFunc() {
 }
 
 void watchdog::HtmlStats(time_t time_) {
-    time_t startTime = time(nullptr);
-    clock_t divTime = clock();
+    time_t start_time = time(nullptr);
+    clock_t div_time = clock();
     std::string result = HTML_TEMPLATE;
 
     // -- Module Table Generation
     std::string modTable;
     int i = 0;
-    for(auto item : _modules) {
+    for(auto &item : _modules) {
        modTable += "<tr>\n";
        modTable += "<td>" + item.Name + "</td>\n";
         if (item.BiggestTimeout >= item.MaxTimeout)
@@ -90,7 +92,7 @@ void watchdog::HtmlStats(time_t time_) {
         modTable += "<td>" + stringulate(item.BiggestTimeout) + "ms (Max. " + stringulate(item.MaxTimeout) + "ms)</td>\n";
         modTable += "<td>" + item.BiggestMessage + "</td>\n";
         modTable += "<td>" + item.LastMessage + "</td>\n";
-        modTable += "<td>" + stringulate((item.CallsPerSecond*1000/divTime)) + "/s</td>\n";
+        modTable += "<td>" + stringulate((item.CallsPerSecond*1000/div_time)) + "/s</td>\n";
         modTable += "<td>" + stringulate(item.CpuTime) + "%</td>\n";
         modTable += "</tr>\n";
 
@@ -103,9 +105,20 @@ void watchdog::HtmlStats(time_t time_) {
     Utils::replaceAll(result, modTableStr, modTable);
 
     time_t finishTime = time(nullptr);
-    long duration = finishTime - startTime;
+    time_t duration = finishTime - start_time;
     char buffer[255];
-    strftime(buffer, sizeof(buffer), "%H:%M:%S  %m-%d-%Y", localtime(reinterpret_cast<const time_t *>(&finishTime)));
+    struct tm *tme_info = new tm{};
+    #if defined(__unix__)
+        localtime_r(&finishTime, tme_info);
+    #elif defined(_MSC_VER)
+        localtime_s(tme_info, &finishTime);
+    #else
+        static std::mutex mtx;
+        std::lock_guard<std::mutex> lock(mtx);
+        tme_info = std::localtime((const time_t*)(&finishTime));
+    #endif
+    
+    strftime(buffer, sizeof(buffer), "%H:%M:%S  %m-%d-%Y", tme_info);
     std::string meh(buffer);
     std::string genTimeStr = "[GEN_TIME]";
     std::string genTSStr = "[GEN_TIMESTAMP]";
@@ -116,8 +129,7 @@ void watchdog::HtmlStats(time_t time_) {
     Files* files = Files::GetInstance();
     std::string memFile = files->GetFile(WATCHDOG_HTML_NAME);
 
-    std::ofstream oStream(memFile, std::ios::out | std::ios::trunc);
-    if (oStream.is_open()) {
+    if (std::ofstream oStream(memFile, std::ios::out | std::ios::trunc); oStream.is_open()) {
         oStream << result;
         oStream.close();
     } else {
@@ -144,6 +156,6 @@ watchdog::watchdog() {
     this->Teardown = [this] { isRunning = false; };
     this->Interval = std::chrono::seconds(100);
     std::thread myThread(&watchdog::MainFunc, this);
-    swap(myThread, mainThread);
+    std::swap(myThread, mainThread);
     TaskScheduler::RegisterTask("Watchdog", *this);
 }

@@ -6,8 +6,8 @@
 #include <iomanip>
 
 #include "Utils.h"
-#include "Files.h"
-#include "Logger.h"
+#include "common/Files.h"
+#include "common/Logger.h"
 
 const std::string MODULE_NAME = "Rank";
 Rank* Rank::Instance = nullptr;
@@ -58,8 +58,8 @@ void Rank::MainFunc() {
     }
 
     Files* f = Files::GetInstance();
-    std::string blockFile = f->GetFile(RANK_FILE_NAME);
-    time_t modTime = Utils::FileModTime(blockFile);
+    const std::string blockFile = f->GetFile(RANK_FILE_NAME);
+    const time_t modTime = Utils::FileModTime(blockFile);
 
     if (modTime != LastFileDate) {
         Load();

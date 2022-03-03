@@ -10,10 +10,10 @@
 #include <chrono>
 #include <memory>
 
-#include "TaskScheduler.h"
+#include "common/TaskScheduler.h"
 
 class Network;
-class NetworkClient;
+class IMinecraftClient;
 
 const int COMMAND_OPERATORS_MAX = 5;
 const std::string COMMAND_FILENAME = "Command";
@@ -35,6 +35,7 @@ class Command {
         std::function<void()> Function;
         bool Internal;
         bool Hidden;
+        bool CanConsole;
 };
 
 class CommandMain : TaskItem {
@@ -44,7 +45,7 @@ class CommandMain : TaskItem {
         time_t FileDateLast;
         int CommandClientId;
         std::string ParsedCommand;
-        std::vector<std::string> ParsedOperator[COMMAND_OPERATORS_MAX];
+        std::vector<std::string> ParsedOperator;
         std::string ParsedText0;
         std::string ParsedText1;
         std::string ParsedText2;
@@ -57,9 +58,8 @@ class CommandMain : TaskItem {
         CommandMain();
         void Init();
         void Load();
-        void Save();
         void MainFunc();
-        void CommandDo(const std::shared_ptr<NetworkClient>& client, const std::string& input);
+        void CommandDo(const std::shared_ptr<IMinecraftClient>& client, const std::string& input);
         // -- Administrative
         void CommandKick();
         void CommandBan();
@@ -68,7 +68,7 @@ class CommandMain : TaskItem {
         void CommandUnStop();
         void CommandMute();
         void CommandUnmute();
-        void CommandServerInfo();
+        void CommandServerInfo() const;
         void CommandLogLast();
         void CommandGetRank();
 
@@ -81,7 +81,7 @@ class CommandMain : TaskItem {
         void CommandPing();
         void CommandChangeMap();
 
-        void CommandListMaps();
+        void CommandListMaps() const;
         void CommandChangeRank();
         void CommandTeleport();
         void CommandBring();
@@ -110,9 +110,9 @@ class CommandMain : TaskItem {
         void CommandSetMaterial();
         void CommandMaterials();
         void CommandPlace();
-        void CommandUndoTime();
         void CommandUndoPlayer();
         void CommandUndo();
+        void CommandRedo();
         void CommandUserMaps();
         // -- Commands not ported: Player Attribute Get, map directory rename, map blocks count, set/delete/bring/tp to location, time.
 

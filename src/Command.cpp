@@ -1,24 +1,25 @@
 #include "Command.h"
 
 #include "common/PreferenceLoader.h"
-#include "Network.h"
-#include "NetworkClient.h"
-#include "Player.h"
-#include "Player_List.h"
-#include "Entity.h"
+#include "network/NetworkClient.h"
+#include "network/Network.h"
+#include "world/Player.h"
+#include "common/Player_List.h"
+#include "world/Entity.h"
 #include "Block.h"
-#include "Map.h"
+#include "world/Map.h"
 #include "Rank.h"
-#include "Network_Functions.h"
-#include "Logger.h"
-#include "Files.h"
+#include "common/Logger.h"
+#include "common/Files.h"
 #include "System.h"
 #include "Utils.h"
-#include "Undo.h"
-#include "plugins/LuaPlugin.h"
+#include "plugins/PluginManager.h"
 
 const std::string MODULE_NAME = "Command";
 CommandMain* CommandMain::Instance = nullptr;
+
+using namespace D3PP::world;
+using namespace D3PP::Common;
 
 CommandMain::CommandMain() : ParsedOperator{} {
     this->Setup = [this] { Init(); };
@@ -27,15 +28,26 @@ CommandMain::CommandMain() : ParsedOperator{} {
     SaveFile = false;
     FileDateLast = 0;
     CommandClientId = -1;
-    ParsedOperator->push_back("");
-    ParsedOperator->push_back("");
-    ParsedOperator->push_back("");
-    ParsedOperator->push_back("");
-    ParsedOperator->push_back("");
+    ParsedOperator.emplace_back("");
+    ParsedOperator.emplace_back("");
+    ParsedOperator.emplace_back("");
+    ParsedOperator.emplace_back("");
+    ParsedOperator.emplace_back("");
     TaskScheduler::RegisterTask("Commands", *this);
 }
 
 void CommandMain::Init() {
+    Command PluginReloadCommand;
+    PluginReloadCommand.Function = [this] { D3PP::plugins::PluginManager::GetInstance()->LoadPlugins(); };
+    PluginReloadCommand.Id = "preload";
+    PluginReloadCommand.Name = "preload";
+    PluginReloadCommand.Internal = true;
+    PluginReloadCommand.Hidden = false;
+    PluginReloadCommand.Rank = 200;
+    PluginReloadCommand.RankShow = 200;
+    PluginReloadCommand.CanConsole = true;
+    Commands.push_back(PluginReloadCommand);
+
     Command kickCommand;
     kickCommand.Id = "Kick";
     kickCommand.Name = "kick";
@@ -43,6 +55,7 @@ void CommandMain::Init() {
     kickCommand.Hidden = false;
     kickCommand.Rank = 0;
     kickCommand.RankShow = 0;
+    kickCommand.CanConsole = true;
     kickCommand.Function = [this] { CommandMain::CommandKick(); };
     Commands.push_back(kickCommand);
 
@@ -53,6 +66,7 @@ void CommandMain::Init() {
     banCommand.Hidden = false;
     banCommand.Rank = 0;
     banCommand.RankShow = 0;
+    banCommand.CanConsole = true;
     banCommand.Function = [this] { CommandMain::CommandBan(); };
     Commands.push_back(banCommand);
 
@@ -62,6 +76,7 @@ void CommandMain::Init() {
     unbanCommand.Internal = true;
     unbanCommand.Hidden = false;
     unbanCommand.Rank = 0;
+    unbanCommand.CanConsole = true;
     unbanCommand.RankShow = 0;
     unbanCommand.Function = [this] { CommandMain::CommandUnban(); };
     Commands.push_back(unbanCommand);
@@ -73,6 +88,7 @@ void CommandMain::Init() {
     stopcmd.Hidden = false;
     stopcmd.Rank = 0;
     stopcmd.RankShow = 0;
+    stopcmd.CanConsole = true;
     stopcmd.Function = [this] { CommandMain::CommandStop(); };
     Commands.push_back(stopcmd);
 
@@ -83,6 +99,7 @@ void CommandMain::Init() {
     unstopCmd.Hidden = false;
     unstopCmd.Rank = 0;
     unstopCmd.RankShow = 0;
+    unstopCmd.CanConsole = true;
     unstopCmd.Function = [this] { CommandMain::CommandUnStop(); };
     Commands.push_back(unstopCmd);
 
@@ -93,6 +110,7 @@ void CommandMain::Init() {
     muteCmd.Hidden = false;
     muteCmd.Rank = 0;
     muteCmd.RankShow = 0;
+    muteCmd.CanConsole = true;
     muteCmd.Function = [this] { CommandMain::CommandMute(); };
     Commands.push_back(muteCmd);
 
@@ -103,6 +121,7 @@ void CommandMain::Init() {
     unMuteCmd.Hidden = false;
     unMuteCmd.Rank = 0;
     unMuteCmd.RankShow = 0;
+    unMuteCmd.CanConsole = true;
     unMuteCmd.Function = [this] { CommandMain::CommandUnmute(); };
     Commands.push_back(unMuteCmd);
 
@@ -113,6 +132,7 @@ void CommandMain::Init() {
     listCommands.Hidden = false;
     listCommands.Rank = 0;
     listCommands.RankShow = 0;
+    listCommands.CanConsole = true;
     listCommands.Function = [this] { CommandMain::CommandCommands(); };
     Commands.push_back(listCommands);
 
@@ -123,6 +143,7 @@ void CommandMain::Init() {
     helpCommand.Hidden = false;
     helpCommand.Rank = 0;
     helpCommand.RankShow = 0;
+    helpCommand.CanConsole = true;
     helpCommand.Function = [this] { CommandMain::CommandHelp(); };
     Commands.push_back(helpCommand);
 
@@ -133,6 +154,7 @@ void CommandMain::Init() {
     listPlayers.Hidden = false;
     listPlayers.Rank = 0;
     listPlayers.RankShow = 0;
+    listPlayers.CanConsole = true;
     listPlayers.Function = [this] { CommandMain::CommandPlayers(); };
     Commands.push_back(listPlayers);
 
@@ -143,6 +165,7 @@ void CommandMain::Init() {
     pInfoCmd.Hidden = false;
     pInfoCmd.Rank = 0;
     pInfoCmd.RankShow = 0;
+    pInfoCmd.CanConsole = true;
     pInfoCmd.Function = [this] { CommandMain::CommandPlayerInfo(); };
     Commands.push_back(pInfoCmd);
 
@@ -153,6 +176,7 @@ void CommandMain::Init() {
     pingCommand.Hidden = false;
     pingCommand.Rank = 0;
     pingCommand.RankShow = 0;
+    pingCommand.CanConsole = true;
     pingCommand.Function = [this] { CommandMain::CommandPing(); };
     Commands.push_back(pingCommand);
 
@@ -163,6 +187,7 @@ void CommandMain::Init() {
     globalCommand.Hidden = false;
     globalCommand.Rank = 0;
     globalCommand.RankShow = 0;
+    globalCommand.CanConsole = true;
     globalCommand.Function = [this] { CommandMain::CommandGlobal(); };
     Commands.push_back(globalCommand);
 
@@ -173,6 +198,7 @@ void CommandMain::Init() {
     changeMapCommand.Hidden = false;
     changeMapCommand.Rank = 0;
     changeMapCommand.RankShow = 0;
+    changeMapCommand.CanConsole = false;
     changeMapCommand.Function = [this] { CommandMain::CommandChangeMap(); };
     Commands.push_back(changeMapCommand);
 
@@ -183,6 +209,7 @@ void CommandMain::Init() {
     changeRankCommand.Hidden = false;
     changeRankCommand.Rank = 0;
     changeRankCommand.RankShow = 0;
+    changeRankCommand.CanConsole = true;
     changeRankCommand.Function = [this] { CommandMain::CommandChangeRank(); };
     Commands.push_back(changeRankCommand);
 
@@ -193,6 +220,7 @@ void CommandMain::Init() {
     mapSaveCommand.Hidden = false;
     mapSaveCommand.Rank = 0;
     mapSaveCommand.RankShow = 0;
+    mapSaveCommand.CanConsole = false;
     mapSaveCommand.Function = [this] { CommandMain::CommandSaveMap(); };
     Commands.push_back(mapSaveCommand);
 
@@ -203,6 +231,7 @@ void CommandMain::Init() {
     getRankCommand.Hidden = false;
     getRankCommand.Rank = 0;
     getRankCommand.RankShow = 0;
+    getRankCommand.CanConsole = true;
     getRankCommand.Function = [this] { CommandMain::CommandGetRank(); };
     Commands.push_back(getRankCommand);
 
@@ -213,6 +242,7 @@ void CommandMain::Init() {
     setMaterialCommand.Hidden = false;
     setMaterialCommand.Rank = 0;
     setMaterialCommand.RankShow = 0;
+    setMaterialCommand.CanConsole = false;
     setMaterialCommand.Function = [this] { CommandMain::CommandSetMaterial(); };
     Commands.push_back(setMaterialCommand);
 
@@ -223,18 +253,9 @@ void CommandMain::Init() {
     materialList.Hidden = false;
     materialList.Rank = 0;
     materialList.RankShow = 0;
+    materialList.CanConsole = true;
     materialList.Function = [this] { CommandMain::CommandMaterials(); };
     Commands.push_back(materialList);
-
-    Command undoTime;
-    undoTime.Id = "Undo-Time";
-    undoTime.Name = "undotime";
-    undoTime.Internal = true;
-    undoTime.Hidden = false;
-    undoTime.Rank = 0;
-    undoTime.RankShow = 0;
-    undoTime.Function = [this] { CommandMain::CommandUndoTime(); };
-    Commands.push_back(undoTime);
 
     Command undoPLayer;
     undoPLayer.Id = "Undo-Player";
@@ -243,6 +264,7 @@ void CommandMain::Init() {
     undoPLayer.Hidden = false;
     undoPLayer.Rank = 0;
     undoPLayer.RankShow = 0;
+    undoPLayer.CanConsole = true;
     undoPLayer.Function = [this] { CommandMain::CommandUndoPlayer(); };
     Commands.push_back(undoPLayer);
 
@@ -253,9 +275,20 @@ void CommandMain::Init() {
     undoCmd.Hidden = false;
     undoCmd.Rank = 0;
     undoCmd.RankShow = 0;
+    undoCmd.CanConsole = false;
     undoCmd.Function = [this] { CommandMain::CommandUndo(); };
     Commands.push_back(undoCmd);
 
+    Command redoCmd;
+    undoCmd.Id = "Redo";
+    undoCmd.Name = "redo";
+    undoCmd.Internal = true;
+    undoCmd.Hidden = false;
+    undoCmd.Rank = 0;
+    undoCmd.RankShow = 0;
+    undoCmd.CanConsole = false;
+    undoCmd.Function = [this] { CommandMain::CommandRedo(); };
+    Commands.push_back(undoCmd);
 
     Command mapList;
     mapList.Id = "List-Maps";
@@ -264,6 +297,7 @@ void CommandMain::Init() {
     mapList.Hidden = false;
     mapList.Rank = 0;
     mapList.RankShow = 0;
+    mapList.CanConsole = true;
     mapList.Function = [this] { CommandMain::CommandListMaps(); };
     Commands.push_back(mapList);
 
@@ -274,6 +308,7 @@ void CommandMain::Init() {
     serverInfo.Hidden = false;
     serverInfo.Rank = 0;
     serverInfo.RankShow = 0;
+    serverInfo.CanConsole = true;
     serverInfo.Function = [this] { CommandMain::CommandServerInfo(); };
     Commands.push_back(serverInfo);
 
@@ -284,6 +319,7 @@ void CommandMain::Init() {
     logCommand.Hidden = false;
     logCommand.Rank = 0;
     logCommand.RankShow = 0;
+    logCommand.CanConsole = false;
     logCommand.Function = [this] { CommandMain::CommandLogLast(); };
     Commands.push_back(logCommand);
 
@@ -294,6 +330,7 @@ void CommandMain::Init() {
     tpCommand.Hidden = false;
     tpCommand.Rank = 0;
     tpCommand.RankShow = 0;
+    tpCommand.CanConsole = false;
     tpCommand.Function = [this] { CommandMain::CommandTeleport(); };
     Commands.push_back(tpCommand);
 
@@ -304,6 +341,7 @@ void CommandMain::Init() {
     bringCommand.Hidden = false;
     bringCommand.Rank = 0;
     bringCommand.RankShow = 0;
+    bringCommand.CanConsole = false;
     bringCommand.Function = [this] { CommandMain::CommandBring(); };
     Commands.push_back(bringCommand);
 
@@ -314,6 +352,7 @@ void CommandMain::Init() {
     mLoadCommand.Hidden = false;
     mLoadCommand.Rank = 0;
     mLoadCommand.RankShow = 0;
+    mLoadCommand.CanConsole = false;
     mLoadCommand.Function = [this] { CommandMain::CommandLoadMap(); };
     Commands.push_back(mLoadCommand);
 
@@ -324,6 +363,7 @@ void CommandMain::Init() {
     mResizeCmd.Hidden = false;
     mResizeCmd.Rank = 0;
     mResizeCmd.RankShow = 0;
+    mResizeCmd.CanConsole = false;
     mResizeCmd.Function = [this] { CommandMain::CommandResizeMap(); };
     Commands.push_back(mResizeCmd);
 
@@ -334,6 +374,7 @@ void CommandMain::Init() {
     mfillCommand.Hidden = false;
     mfillCommand.Rank = 0;
     mfillCommand.RankShow = 0;
+    mfillCommand.CanConsole = false;
     mfillCommand.Function = [this] { CommandMain::CommandMapFill(); };
     Commands.push_back(mfillCommand);
 
@@ -344,6 +385,7 @@ void CommandMain::Init() {
     mRename.Hidden = false;
     mRename.Rank = 0;
     mRename.RankShow = 0;
+    mRename.CanConsole = false;
     mRename.Function = [this] { CommandMain::CommandRenameMap(); };
     Commands.push_back(mRename);
 
@@ -354,6 +396,7 @@ void CommandMain::Init() {
     mDelete.Hidden = false;
     mDelete.Rank = 0;
     mDelete.RankShow = 0;
+    mDelete.CanConsole = false;
     mDelete.Function = [this] { CommandMain::CommandDeleteMap(); };
     Commands.push_back(mDelete);
 
@@ -364,6 +407,7 @@ void CommandMain::Init() {
     mAdd.Hidden = false;
     mAdd.Rank = 0;
     mAdd.RankShow = 0;
+    mAdd.CanConsole = true;
     mAdd.Function = [this] { CommandMain::CommandAddMap(); };
     Commands.push_back(mAdd);
 
@@ -374,6 +418,7 @@ void CommandMain::Init() {
     mrbs.Hidden = false;
     mrbs.Rank = 0;
     mrbs.RankShow = 0;
+    mrbs.CanConsole = false;
     mrbs.Function = [this] { CommandMain::CommandMapRankBuildSet(); };
     Commands.push_back(mrbs);
 
@@ -384,6 +429,7 @@ void CommandMain::Init() {
     mrss.Hidden = false;
     mrss.Rank = 0;
     mrss.RankShow = 0;
+    mrss.CanConsole = false;
     mrss.Function = [this] { CommandMain::CommandMapRankShowSet(); };
     Commands.push_back(mrss);
 
@@ -394,6 +440,7 @@ void CommandMain::Init() {
     mrjs.Hidden = false;
     mrjs.Rank = 0;
     mrjs.RankShow = 0;
+    mrjs.CanConsole = false;
     mrjs.Function = [this] { CommandMain::CommandMapRankJoinSet(); };
     Commands.push_back(mrjs);
 
@@ -404,6 +451,7 @@ void CommandMain::Init() {
     mStopPhys.Hidden = false;
     mStopPhys.Rank = 0;
     mStopPhys.RankShow = 0;
+    mStopPhys.CanConsole = false;
     mStopPhys.Function = [this] { CommandMain::CommandStopPhysics(); };
     Commands.push_back(mStopPhys);
 
@@ -414,6 +462,7 @@ void CommandMain::Init() {
     mStartPhys.Hidden = false;
     mStartPhys.Rank = 0;
     mStartPhys.RankShow = 0;
+    mStopPhys.CanConsole = false;
     mStartPhys.Function = [this] { CommandMain::CommandStartPhysics(); };
     Commands.push_back(mStartPhys);
 
@@ -424,6 +473,7 @@ void CommandMain::Init() {
     mSetSpawn.Hidden = false;
     mSetSpawn.Rank = 0;
     mSetSpawn.RankShow = 0;
+    mSetSpawn.CanConsole = false;
     mSetSpawn.Function = [this] { CommandMain::CommandSetSpawn(); };
     Commands.push_back(mSetSpawn);
 
@@ -434,6 +484,7 @@ void CommandMain::Init() {
     mSetKillSpawn.Hidden = false;
     mSetKillSpawn.Rank = 0;
     mSetKillSpawn.RankShow = 0;
+    mSetKillSpawn.CanConsole = false;
     mSetKillSpawn.Function = [this] { CommandMain::CommandSetKilLSpawn(); };
     Commands.push_back(mSetKillSpawn);
 
@@ -444,6 +495,7 @@ void CommandMain::Init() {
     mTeleporters.Hidden = false;
     mTeleporters.Rank = 0;
     mTeleporters.RankShow = 0;
+    mTeleporters.CanConsole = false;
     mTeleporters.Function = [this] { CommandMain::CommandTeleporters(); };
     Commands.push_back(mTeleporters);
 
@@ -454,6 +506,7 @@ void CommandMain::Init() {
     cDeleteTp.Hidden = false;
     cDeleteTp.Rank = 0;
     cDeleteTp.RankShow = 0;
+    cDeleteTp.CanConsole = false;
     cDeleteTp.Function = [this] { CommandMain::CommandDeleteTeleporter(); };
     Commands.push_back(cDeleteTp);
 
@@ -464,6 +517,7 @@ void CommandMain::Init() {
     mapInfo.Hidden = false;
     mapInfo.Rank = 0;
     mapInfo.RankShow = 0;
+    mapInfo.CanConsole = false;
     mapInfo.Function = [this] { CommandMain::CommandMapInfo(); };
     Commands.push_back(mapInfo);
 
@@ -474,6 +528,7 @@ void CommandMain::Init() {
     usermaps.Hidden = false;
     usermaps.Rank = 0;
     usermaps.RankShow = 0;
+    usermaps.CanConsole = true;
     usermaps.Function = [this] { CommandMain::CommandUserMaps(); };
     Commands.push_back(usermaps);
 
@@ -484,6 +539,7 @@ void CommandMain::Init() {
     placeCmd.Hidden = false;
     placeCmd.Rank = 0;
     placeCmd.RankShow = 0;
+    placeCmd.CanConsole = false;
     placeCmd.Function = [this] { CommandMain::CommandPlace(); };
     Commands.push_back(placeCmd);
     Load();
@@ -588,11 +644,6 @@ void CommandMain::Load() {
 }
 
 void CommandMain::MainFunc() {
-    if (SaveFile) {
-        Save();
-        SaveFile = false;
-    }
-
     Files* f = Files::GetInstance();
     std::string blockFile = f->GetFile(COMMAND_FILENAME);
     time_t modTime = Utils::FileModTime(blockFile);
@@ -610,8 +661,8 @@ CommandMain* CommandMain::GetInstance() {
     return Instance;
 }
 
-void CommandMain::CommandDo(const std::shared_ptr<NetworkClient>& client, const std::string& input) {
-    CommandClientId = client->Id;
+void CommandMain::CommandDo(const std::shared_ptr<IMinecraftClient>& client, const std::string& input) {
+    CommandClientId = client->GetId();
     std::vector<std::string> splitString = Utils::splitString(input);
     
     if (splitString.empty())
@@ -620,9 +671,9 @@ void CommandMain::CommandDo(const std::shared_ptr<NetworkClient>& client, const 
     ParsedCommand = splitString[0];
 
     for (int i = 0; i < COMMAND_OPERATORS_MAX; i++) {
-        ParsedOperator->at(i) = "";
+        ParsedOperator[i] = "";
         if (i+1 < splitString.size()) {
-            ParsedOperator->at(i) = splitString[i + 1];
+            ParsedOperator.at(i) = splitString[i + 1];
         }
     }
 
@@ -644,19 +695,22 @@ void CommandMain::CommandDo(const std::shared_ptr<NetworkClient>& client, const 
         if (!Utils::InsensitiveCompare(cmd.Name, ParsedCommand))
             continue;
 
-        if (client->player->tEntity->playerList->PRank < cmd.Rank) {
-            NetworkFunctions::SystemMessageNetworkSend(client->Id, "&eYou are not allowed to use this command.");
+        if (client->GetId() == -200 && !cmd.CanConsole) {
+            Logger::LogAdd(MODULE_NAME, "&cThis command is not accessible via console!", LogType::L_ERROR, GLF);
+            found = true;
+        }else if (client->GetRank() < cmd.Rank) {
+            client->SendChat("§EYou are not allowed to use this command.");
             found = true;
         } else {
             if (!cmd.Hidden) {
-                Logger::LogAdd(MODULE_NAME, "Player '" + client->player->LoginName + "' used command /" + ParsedCommand + " (" + join(ParsedOperator->begin(), ParsedOperator->end()) + ")", LogType::COMMAND, __FILE__, __LINE__, __FUNCTION__);
+                Logger::LogAdd(MODULE_NAME, "Player '" + client->GetLoginName() + "' used command /" + ParsedCommand + " (" + join(ParsedOperator.begin(), ParsedOperator.end()) + ")", LogType::COMMAND, __FILE__, __LINE__, __FUNCTION__);
             }
             if (!cmd.Plugin.empty()) {
                 // -- Run plugin based command
-                LuaPlugin* lm = LuaPlugin::GetInstance();
+                D3PP::plugins::PluginManager *pm = D3PP::plugins::PluginManager::GetInstance();
                 std::string functionName = cmd.Plugin;
                 Utils::replaceAll(functionName, "Lua:", "");
-                lm->TriggerCommand(functionName, client->Id, ParsedCommand, ParsedText0, ParsedText1, ParsedOperator->at(0), ParsedOperator->at(1), ParsedOperator->at(2), ParsedOperator->at(3), ParsedOperator->at(4));
+                pm->TriggerCommand(functionName, client->GetId(), ParsedCommand, ParsedText0, ParsedText1, ParsedOperator.at(0), ParsedOperator.at(1), ParsedOperator.at(2), ParsedOperator.at(3), ParsedOperator.at(4));
 
             } else if (cmd.Function != nullptr) {
                 cmd.Function();
@@ -665,28 +719,28 @@ void CommandMain::CommandDo(const std::shared_ptr<NetworkClient>& client, const 
         }
     }
     if (!found) {
-        NetworkFunctions::SystemMessageNetworkSend(client->Id, "&eCan't find the command '" + ParsedCommand + "'.");
+        client->SendChat("§ECan't find the command '" + ParsedCommand + "'.");
     }
 }
 
 void CommandMain::CommandCommands() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
     if (c == nullptr)
         return;
 
-    std::string groupName = ParsedOperator->at(0);
-    short playerRank = c->player->tEntity->playerList->PRank;
+    std::string groupName = ParsedOperator.at(0);
+    short playerRank = c->GetRank();
     std::string allString = "all";
 
     if (groupName.empty()) {
-       NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCommand Groups:"); 
-       NetworkFunctions::SystemMessageNetworkSend(c->Id, "&e/commands all");
+       c->SendChat("§SCommand Groups:"); 
+       c->SendChat("§S/commands all");
        
        for(auto const &cg : CommandGroups) {
            if (cg.RankShow <= playerRank) {
-               NetworkFunctions::SystemMessageNetworkSend(c->Id, "&e/commands " + cg.Name);
+               c->SendChat("§S/commands " + cg.Name);
            }
        }
 
@@ -696,7 +750,7 @@ void CommandMain::CommandCommands() {
     bool found = false;
     for(auto  &cg : CommandGroups) {
         if (Utils::InsensitiveCompare(groupName, cg.Name) || Utils::InsensitiveCompare(groupName, allString)) {
-            NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCommands:"); 
+            c->SendChat("§SCommands:"); 
             std::string textToSend;
             for(auto &cm : Commands) {
                 if ((cm.RankShow > playerRank) || (cm.Rank > playerRank) || (cm.Hidden) || (!Utils::InsensitiveCompare(cm.Group, groupName) && !Utils::InsensitiveCompare(groupName, allString)))
@@ -705,12 +759,12 @@ void CommandMain::CommandCommands() {
                 if (64 - textToSend.size() >= textAdd.size())
                     textToSend += textAdd;
                 else {
-                    NetworkFunctions::SystemMessageNetworkSend(c->Id, textToSend);
+                    c->SendChat(textToSend);
                     textToSend = textAdd;
                 }
             }
             if (!textToSend.empty()) {
-                NetworkFunctions::SystemMessageNetworkSend(c->Id, textToSend);
+                c->SendChat(textToSend);
             }
             found = true;
             break;
@@ -718,34 +772,34 @@ void CommandMain::CommandCommands() {
     }
 
     if (!found) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find command group '" + groupName + "'");
+        c->SendChat("§SCan't find command group '" + groupName + "'");
     }
 }
 
 void CommandMain::CommandHelp() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
     bool found = false;
     for(const auto& cmd : Commands) {
-        if (!Utils::InsensitiveCompare(cmd.Name, ParsedOperator->at(0)))
+        if (!Utils::InsensitiveCompare(cmd.Name, ParsedOperator.at(0)))
             continue;
 
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCommand Help:");
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, cmd.Description);
+        c->SendChat("§SCommand Help:");
+        c->SendChat(cmd.Description);
         found = true;
         break;
     }
 
     if (!found) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find command '" + ParsedOperator->at(0) + "'");
+        c->SendChat("§ECan't find command '" + ParsedOperator.at(0) + "'");
     }
 }
 
 void CommandMain::CommandPlayers() {
      Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
-     NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlayers:");
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+     c->SendChat("§SPlayers:");
     std::string textToSend;
 
      for(auto const &nc : nm->roClients) {
@@ -756,36 +810,36 @@ void CommandMain::CommandPlayers() {
             if (64 - textToSend.size() >= toAdd.size()) {
                 textToSend += toAdd;
             } else {
-                NetworkFunctions::SystemMessageNetworkSend(c->Id, textToSend);
+                c->SendChat(textToSend);
                 textToSend = toAdd;
             }
          }
      }
      if (!textToSend.empty()) {
-         NetworkFunctions::SystemMessageNetworkSend(c->Id, textToSend);
+         c->SendChat(textToSend);
      }
 }
 
 void CommandMain::CommandPlayerInfo() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
 
-    PlayerListEntry* ple = pll->GetPointer(ParsedOperator->at(0));
+    PlayerListEntry* ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
     RankItem ri = rm->GetRank(ple->PRank, false);
-    std::string textTosend = "&ePlayer Info: <br>";
-    textTosend += "&eNumber: " + stringulate(ple->Number) + "<br>";
-    textTosend += "&eName: " + ple->GetDisplayName() + "<br>";
-    textTosend += "&eRank: " + ri.Name + " (" + stringulate(ple->PRank) + ")<br>";
-    textTosend += "&eIP: " + ple->IP + "<br>";
-    textTosend += "&eOntime: " + stringulate(ple->OntimeCounter/3600.0) + "h<br>";
-    textTosend += "&eLogins: " + stringulate(ple->LoginCounter) + "<br>";
-    textTosend += "&eKicks: " + stringulate(ple->KickCounter) + "<br>";
+    std::string textTosend = "§SPlayer Info: <br>";
+    textTosend += "§SNumber: " + stringulate(ple->Number) + "<br>";
+    textTosend += "§SName: " + ple->GetDisplayName() + "<br>";
+    textTosend += "§SRank: " + ri.Name + " (" + stringulate(ple->PRank) + ")<br>";
+    textTosend += "§SIP: " + ple->IP + "<br>";
+    textTosend += "§SOntime: " + stringulate(ple->OntimeCounter/3600.0) + "h<br>";
+    textTosend += "§SLogins: " + stringulate(ple->LoginCounter) + "<br>";
+    textTosend += "§SKicks: " + stringulate(ple->KickCounter) + "<br>";
     
     if (ple->Banned) {
         textTosend += "&4Player is banned<br>";
@@ -796,41 +850,47 @@ void CommandMain::CommandPlayerInfo() {
     if (ple->MuteTime > time(nullptr)) {
         textTosend += "&4Player is muted<br>";
     }
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, textTosend);
+    c->SendChat(textTosend);
 }
 
 void CommandMain::CommandChangeRank() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
 
-    std::string playerName = ParsedOperator->at(0);
-    int rankVal = std::stoi(ParsedOperator->at(1));
+    std::string playerName = ParsedOperator.at(0);
+
+    if (!Utils::IsNumeric(ParsedOperator.at(1))) {
+        c->SendChat("§EThe second parameter should be a number!");
+        return;
+    }
+
+    int rankVal = std::stoi(ParsedOperator.at(1));
     std::string reason = ParsedText2;
 
     if (rankVal >= -32768 && rankVal <= 32767) {
-        PlayerListEntry* ple = pll->GetPointer(ParsedOperator->at(0));
+        PlayerListEntry* ple = pll->GetPointer(ParsedOperator.at(0));
         if (ple == nullptr) {
-            NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+            c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
             return;
         }
-        if (c->player->tEntity->playerList->PRank <= ple->PRank) {
-            NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't modify the rank of someone higher than you");
+        if (c->GetRank() <= ple->PRank) {
+            c->SendChat("§ECan't modify the rank of someone higher than you");
             return;
         }
-        if (c->player->tEntity->playerList->PRank <= rankVal) {
-            NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't set a rank higher than your own");
+        if (c->GetRank() <= rankVal) {
+            c->SendChat("§ECan't set a rank higher than your own");
             return;
         }
         ple->SetRank(rankVal, reason);
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlayers rank was updated.");
+        c->SendChat("§SPlayers rank was updated.");
     }
 }
 
 void CommandMain::CommandGlobal() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
     if (c == nullptr)
         return;
@@ -840,51 +900,61 @@ void CommandMain::CommandGlobal() {
     std::string offString = "off";
     std::string falseString = "false";
 
-    if (Utils::InsensitiveCompare(ParsedOperator->at(0), onString) || Utils::InsensitiveCompare(ParsedOperator->at(0), trueString)) {
-        c->GlobalChat = true;
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eGlobal chat is now on by default.");
-    } else if (Utils::InsensitiveCompare(ParsedOperator->at(0), offString) || Utils::InsensitiveCompare(ParsedOperator->at(0), falseString)) {
-        c->GlobalChat = false;
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eGlobal chat is now off by default.");
+    if (Utils::InsensitiveCompare(ParsedOperator.at(0), onString) || Utils::InsensitiveCompare(ParsedOperator.at(0), trueString)) {
+        c->SetGlobalChat(true);
+        c->SendChat("§SGlobal chat is now on by default.");
+    } else if (Utils::InsensitiveCompare(ParsedOperator.at(0), offString) || Utils::InsensitiveCompare(ParsedOperator.at(0), falseString)) {
+        c->SetGlobalChat(false);
+        c->SendChat("§SGlobal chat is now off by default.");
     } else {
-        c->GlobalChat = !c->GlobalChat;
-        std::string status = (c->GlobalChat ? "on" : "off");
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eGlobal chat is now " + status + " by default.");
+        c->SetGlobalChat(!c->GetGlobalChat());
+        std::string status = (c->GetGlobalChat() ? "on" : "off");
+        c->SendChat("§SGlobal chat is now " + status + " by default.");
     }
 }
 
 void CommandMain::CommandPing() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
     if (c == nullptr)
         return;
 
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eYour ping is " + stringulate(c->Ping) + "s.");
+    c->SendChat("§SYour ping is " + stringulate(c->GetPing()) + "s.");
 }
 
 void CommandMain::CommandChangeMap() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
     if (c == nullptr)
         return;
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> mi = mm->GetPointer(ParsedText0);
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+
     if (mi != nullptr) {
-        c->player->tEntity->PositionSet(mi->data.ID, mi->data.SpawnX, mi->data.SpawnY, mi->data.SpawnZ, mi->data.SpawnRot, mi->data.SpawnLook, 255, true);
+        MapPermissions perms = mi->GetMapPermissions();
+        if (perms.RankJoin > c->GetRank()) {
+            Entity::MessageToClients(clientEntity->Id, "§EYou are not allowed to join map '" + mi->Name() + "'");
+            return;
+        }
+        auto concrete = std::static_pointer_cast<NetworkClient>(c);
+        concrete->player->ChangeMap(mi);
+        clientEntity->PositionSet(mi->ID, mi->GetSpawn(), 255, true);
 
     } else {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find map '" + ParsedText0 + "'.");
+        c->SendChat("§EUnable to find map '" + ParsedText0 + "'.");
     }
 }
 
 void CommandMain::CommandSaveMap() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
 
-    if (c == nullptr)
+    if (e == nullptr)
         return;
 
     MapMain* mm = MapMain::GetInstance();
@@ -898,274 +968,277 @@ void CommandMain::CommandSaveMap() {
         }
     }
 
-    mm->AddSaveAction(CommandClientId, c->player->MapId, mapDirectory);
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eSave Queued.");
+    mm->AddSaveAction(CommandClientId, e->MapID, mapDirectory);
+    c->SendChat("§SSave Queued.");
 }
 
 void CommandMain::CommandGetRank() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
     PlayerListEntry* ple;
     
-    if (ParsedOperator->at(0).empty()) {
-        ple = c->player->tEntity->playerList;
+    if (ParsedOperator.at(0).empty()) {
+        ple = clientEntity->playerList;
     } else {
-        ple = pll->GetPointer(ParsedOperator->at(0));
+        ple = pll->GetPointer(ParsedOperator.at(0));
     }
     
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
 
     RankItem ri = rm->GetRank(ple->PRank, false);
-    std::string textTosend = "&ePlayer '" + ple->Name + "' is ranked '" + ri.Prefix + ri.Name + ri.Suffix + "'.";
+    std::string textTosend = "§SPlayer '" + ple->Name + "' is ranked '" + ri.Prefix + ri.Name + ri.Suffix + "'.";
 
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, textTosend);
+    c->SendChat(textTosend);
 }
 
 void CommandMain::CommandSetMaterial() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     Block* bm = Block::GetInstance();
 
     if (ParsedText0.empty()) {
-        c->player->tEntity->buildMaterial = -1;
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eMaterial reset.");
+        clientEntity->buildMaterial = -1;
+        c->SendChat("§SMaterial reset.");
         return;
     }
 
     MapBlock b = bm->GetBlock(ParsedText0);
     if (b.Id == -1) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a block called '" + ParsedText0 + "'.");
+        c->SendChat("§ECan't find a block called '" + ParsedText0 + "'.");
         return;
     }
-    c->player->tEntity->buildMaterial = b.Id;
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eYour build material is now " + b.Name);
+    clientEntity->buildMaterial = b.Id;
+    c->SendChat("§SYour build material is now " + b.Name);
 }
 
 void CommandMain::CommandKick() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator->at(0));
+    ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
-    std::string kickReason = (ParsedText1.empty() ? "&eYou were kicked." : ParsedText1);
+    std::string kickReason = (ParsedText1.empty() ? "§SYou were kicked." : ParsedText1);
 
-    if (c->player->tEntity->playerList->PRank > ple->PRank) {
+    if (c->GetRank() > ple->PRank) {
         ple->Kick(kickReason, ple->KickCounter+1, true, true);
     } else {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't kick someone ranked higher than you.");
+        c->SendChat("§ECan't kick someone ranked higher than you.");
         return;
     }
 }
 
 void CommandMain::CommandBan() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator->at(0));
+    ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
-    std::string banReason = (ParsedText1.empty() ? "&eYou were banned." : ParsedText1);
-    if (c->player->tEntity->playerList->PRank > ple->PRank) {
+    std::string banReason = (ParsedText1.empty() ? "§SYou were banned." : ParsedText1);
+    if (c->GetRank() > ple->PRank) {
         ple->Ban(banReason);
     } else {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't ban someone ranked higher than you.");
+        c->SendChat("§ECan't ban someone ranked higher than you.");
         return;
     }
 }
 
 void CommandMain::CommandUnban() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator->at(0));
+    ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
-    if (c->player->tEntity->playerList->PRank > ple->PRank) {
+    if (c->GetRank() > ple->PRank) {
         ple->Unban();
     } else {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't ban someone ranked higher than you.");
+        c->SendChat("§ECan't ban someone ranked higher than you.");
         return;
     }
 }
 
 void CommandMain::CommandStop() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator->at(0));
+    ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
-    std::string stopReason = (ParsedText1.empty() ? "&eYou were stopped." : ParsedText1);
-    if (c->player->tEntity->playerList->PRank > ple->PRank) {
+    std::string stopReason = (ParsedText1.empty() ? "§SYou were stopped." : ParsedText1);
+    if (c->GetRank() > ple->PRank) {
         ple->Stop(stopReason);
     } else {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't stop someone ranked higher than you.");
+        c->SendChat("§ECan't stop someone ranked higher than you.");
         return;
     }
 }
 
 void CommandMain::CommandUnStop() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator->at(0));
+    ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
-    if (c->player->tEntity->playerList->PRank > ple->PRank) {
+    if (c->GetRank() > ple->PRank) {
         ple->Unstop();
     } else {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't stop someone ranked higher than you.");
+        c->SendChat("§ECan't stop someone ranked higher than you.");
         return;
     }
 }
 
 void CommandMain::CommandMute() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator->at(0));
+    ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
-    if ((ParsedOperator->at(1).empty())) {
-        ParsedOperator->at(1) = "99999";
+    if ((ParsedOperator.at(1).empty())) {
+        ParsedOperator.at(1) = "99999";
     }
 
-    if (c->player->tEntity->playerList->PRank > ple->PRank) {
-        ple->Mute(stoi(ParsedOperator->at(1)), "Muted by " + c->player->LoginName);
+    if (c->GetRank() > ple->PRank) {
+        ple->Mute(stoi(ParsedOperator.at(1)), "Muted by " + c->GetLoginName());
     } else {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't mute someone ranked higher than you.");
+        c->SendChat("§ECan't mute someone ranked higher than you.");
         return;
     }
 }
 
 void CommandMain::CommandUnmute() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
     PlayerListEntry* ple;
 
-    ple = pll->GetPointer(ParsedOperator->at(0));
+    ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a player named '" + ParsedOperator->at(0) + "'");
+        c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
     }
-    if (c->player->tEntity->playerList->PRank > ple->PRank) {
+    if (c->GetRank() > ple->PRank) {
         ple->Unmute();
     }else {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't unmute someone ranked higher than you.");
+        c->SendChat("§ECan't unmute someone ranked higher than you.");
         return;
     }
 }
 
 void CommandMain::CommandMaterials() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eMaterials:");
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    c->SendChat("§SMaterials:");
     Block* bm = Block::GetInstance();
     std::string toSend;
     for (int i = 0; i < 255; ++i) {
         MapBlock block = bm->GetBlock(i);
         std::string toAdd;
-        if (block.Special && block.RankPlace <= c->player->tEntity->playerList->PRank) {
-            toAdd += "&e" + block.Name + " &f| ";
+        if (block.Special && block.RankPlace <= c->GetRank()) {
+            toAdd += "§S" + block.Name + " &f| ";
             if (64 - toSend.size() >= toAdd.size())
                 toSend += toAdd;
             else {
-                NetworkFunctions::SystemMessageNetworkSend(c->Id, toSend);
+                c->SendChat(toSend);
                 toSend = toAdd;
             }
 
         }
     }
     if (!toSend.empty()) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, toSend);
+        c->SendChat(toSend);
     }
 }
 
-void CommandMain::CommandListMaps() {
+void CommandMain::CommandListMaps() const {
     Network* nm = Network::GetInstance();
     MapMain* mapMain = MapMain::GetInstance();
 
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eMaps:");
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    c->SendChat("§SMaps:");
     std::string toSend;
     for(auto const &map : mapMain->_maps) {
         std::string toAdd;
-        if (map.second->data.RankShow <= c->player->tEntity->playerList->PRank) {
-            toAdd += "&e" + map.second->data.Name + " &f| ";
+        MapPermissions perms = map.second->GetMapPermissions();
+        if (perms.RankShow <= c->GetRank()) {
+            toAdd += "§S" + map.second->Name() + " &f| ";
             if (64 - toSend.size() >= toAdd.size())
                 toSend += toAdd;
             else {
-                NetworkFunctions::SystemMessageNetworkSend(c->Id, toSend);
+                c->SendChat(toSend);
                 toSend = toAdd;
             }
 
         }
     }
     if (!toSend.empty()) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, toSend);
+        c->SendChat(toSend);
     }
 }
 
-void CommandMain::CommandServerInfo() {
+void CommandMain::CommandServerInfo() const {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     std::string serverRunTime = stringulate(time(nullptr) - System::startTime / 120.0);
 
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eServer Info:");
+    c->SendChat("§SServer Info:");
 #ifdef __linux__
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Linux (x64)");
+    c->SendChat("§SD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Linux (x64)");
 #else
 #ifdef MSVC
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Windows [MSVC] (x86)");
+    c->SendChat("§SD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Windows [MSVC] (x86)");
 #else
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Windows (x64)");
+    c->SendChat("§SD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Windows (x64)");
 #endif
 #endif
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eRun time: " + serverRunTime + "h");
+    c->SendChat("§SRun time: " + serverRunTime + "h");
 }
 
 void CommandMain::CommandLogLast() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
     int numLines = 10;
 
-    if (!ParsedOperator->at(0).empty()) {
-        numLines = stoi(ParsedOperator->at(0));
+    if (!ParsedOperator.at(0).empty()) {
+        numLines = stoi(ParsedOperator.at(0));
     }
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eLog:");
+    c->SendChat("§SLog:");
     Logger* logMain = Logger::GetInstance();
     if (numLines > logMain->Messages.size()) {
         numLines = logMain->Messages.size();
@@ -1173,111 +1246,102 @@ void CommandMain::CommandLogLast() {
     int logSize = logMain->Messages.size();
     for(int i = 0; i< numLines; i++) {
         LogMessage message = logMain->Messages.at(logSize-i-1);
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, " " + message.Message);
+        c->SendChat(" " + message.Message);
     }
 }
 
-void CommandMain::CommandUndoTime() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
-
-    int timeAmount = 60;
-
-    if (!ParsedOperator->at(0).empty()) {
-        timeAmount = stoi(ParsedOperator->at(0));
-    }
-    if (timeAmount > 3600)
-        timeAmount = 3600;
-    time_t doTime = time(nullptr) - timeAmount;
-    Undo::UndoTime(c->player->MapId, doTime);
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eBlockchanges undone.");
-}
 
 void CommandMain::CommandUndoPlayer() {
     Network* nm = Network::GetInstance();
     Player_List* playerList= Player_List::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
-    PlayerListEntry* entry= playerList->GetPointer(ParsedOperator->at(0));
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
+    PlayerListEntry* entry= playerList->GetPointer(ParsedOperator.at(0));
+    
     if (entry == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find a player named '" + ParsedOperator->at(0) + "'.");
+        c->SendChat("§EUnable to find a player named '" + ParsedOperator.at(0) + "'.");
         return;
     }
 
-    int timeAmount = 60;
+    int timeAmount = 30000;
 
-    if (!ParsedOperator->at(1).empty()) {
-        timeAmount = stoi(ParsedOperator->at(1));
+    if (!ParsedOperator.at(1).empty()) {
+        timeAmount = stoi(ParsedOperator.at(1));
     }
-    if (timeAmount > 3600)
-        timeAmount = 3600;
 
-    time_t doTime = time(nullptr) - timeAmount;
-    Undo::UndoPlayer(c->player->MapId, entry->Number, doTime);
-
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eBlockchanges undone.");
+    c->SendChat("§SBlock changes undone.");
 }
 
 void CommandMain::CommandUndo() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    int timeAmount = 30000;
 
-    int timeAmount = 60;
-
-    if (!ParsedOperator->at(0).empty()) {
-        timeAmount = stoi(ParsedOperator->at(0));
+    if (!ParsedOperator.at(0).empty()) {
+        timeAmount = stoi(ParsedOperator.at(0));
     }
-    if (timeAmount > 3600)
-        timeAmount = 3600;
 
-    time_t doTime = time(nullptr) - timeAmount;
-    Undo::UndoPlayer(c->player->MapId, c->player->tEntity->playerList->Number, doTime);
+    c->Undo(timeAmount);
+    c->SendChat("§SBlock changes undone.");
+}
 
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eBlockchanges undone.");
+void CommandMain::CommandRedo() {
+    Network* nm = Network::GetInstance();
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    int timeAmount = 30000;
+
+    if (!ParsedOperator.at(0).empty()) {
+        timeAmount = stoi(ParsedOperator.at(0));
+    }
+
+    c->Redo(timeAmount);
+    c->SendChat("§SBlock changes Re-done.");
 }
 
 void CommandMain::CommandTeleport() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
-
-    std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator->at(0));
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator.at(0));
 
     if (entry == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find a player named '" + ParsedOperator->at(0) + "'.");
+        c->SendChat("§EUnable to find a player named '" + ParsedOperator.at(0) + "'.");
         return;
     }
 
-    c->player->tEntity->PositionSet(entry->MapID, entry->X, entry->Y, entry->Z, entry->Rotation, entry->Look, 10, true);
+    clientEntity->PositionSet(entry->MapID, entry->Location, 10, true);
 }
 
 void CommandMain::CommandBring() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator.at(0));
 
-    std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator->at(0));
     if (entry == nullptr) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUnable to find a player named '" + ParsedOperator->at(0) + "'.");
+        c->SendChat("§EUnable to find a player named '" + ParsedOperator.at(0) + "'.");
         return;
     }
 
-    entry->PositionSet(c->player->tEntity->MapID, c->player->tEntity->X, c->player->tEntity->Y, c->player->tEntity->Z, c->player->tEntity->Rotation, c->player->tEntity->Look, 10, true);
+    entry->PositionSet(clientEntity->MapID, clientEntity->Location, 10, true);
 }
 
 void CommandMain::CommandMapFill() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
-
-    if (!ParsedOperator->at(0).empty()) {
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
+    if (!ParsedOperator.at(0).empty()) {
         MapMain* mapMain = MapMain::GetInstance();
-        mapMain->AddFillAction(c->Id, c->player->MapId, ParsedOperator->at(0), ParsedText1);
+        mapMain->AddFillAction(c->GetId(), e->MapID, ParsedOperator.at(0), ParsedText1);
     } else {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease define a function.");
+        c->SendChat("§EPlease define a function.");
     }
 }
 
 void CommandMain::CommandLoadMap() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
-
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
     Files* fm = Files::GetInstance();
     std::string mapDirectory;
 
@@ -1286,16 +1350,16 @@ void CommandMain::CommandLoadMap() {
     }
 
     MapMain* mapMain = MapMain::GetInstance();
-    mapMain->AddLoadAction(CommandClientId, c->player->MapId, mapDirectory);
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eLoad added to queue.");
+    mapMain->AddLoadAction(CommandClientId, e->MapID, mapDirectory);
+    c->SendChat("§SLoad added to queue.");
 }
 
 void CommandMain::CommandResizeMap() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
-
-    if (ParsedOperator->at(0).empty() || ParsedOperator->at(1).empty() || ParsedOperator[2].empty()) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an X, Y, and Z value.");
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
+    if (ParsedOperator.at(0).empty() || ParsedOperator.at(1).empty() || ParsedOperator[2].empty()) {
+        c->SendChat("§EPlease provide an X, Y, and Z value.");
         return;
     }
     int X = 0;
@@ -1303,276 +1367,284 @@ void CommandMain::CommandResizeMap() {
     int Z = 0;
 
     try {
-        X = stoi(ParsedOperator->at(0));
-        Y = stoi(ParsedOperator->at(1));
-        Z= stoi(ParsedOperator->at(2));
+        X = stoi(ParsedOperator.at(0));
+        Y = stoi(ParsedOperator.at(1));
+        Z= stoi(ParsedOperator.at(2));
     } catch (const std::exception &ex) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer X, Y, and Z value.");
+        c->SendChat("§EPlease provide an integer X, Y, and Z value.");
         return;
     } catch (...) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer X, Y, and Z value.");
+        c->SendChat("§EPlease provide an integer X, Y, and Z value.");
         return;
     }
 
     MapMain* mapMain = MapMain::GetInstance();
-    mapMain->AddResizeAction(CommandClientId, c->player->MapId, X, Y, Z);
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eResize added to queue.");
+    mapMain->AddResizeAction(CommandClientId, e->MapID, X, Y, Z);
+    c->SendChat("§SResize added to queue.");
 }
 
 void CommandMain::CommandRenameMap() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
     if (ParsedText0.empty()) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide a new name.");
+        c->SendChat("§EPlease provide a new name.");
         return;
     }
     MapMain* mapMain = MapMain::GetInstance();
-    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
-    cMap->data.Name = ParsedText0;
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
+    //cMap->Name() = ParsedText0;
     mapMain->SaveFile = true;
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eMap Renamed.");
+    c->SendChat("§SMap Renamed.");
 }
 
 void CommandMain::CommandDeleteMap() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
-
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
     MapMain* mapMain = MapMain::GetInstance();
-    mapMain->AddDeleteAction(CommandClientId, c->player->MapId);
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eDelete Queued.");
+    mapMain->AddDeleteAction(CommandClientId, e->MapID);
+    c->SendChat("§SDelete Queued.");
 }
 
 void CommandMain::CommandAddMap() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
     if (ParsedText0.empty()) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide a name for the map.");
+        c->SendChat("§EPlease provide a name for the map.");
         return;
     }
     MapMain* mapMain = MapMain::GetInstance();
-    int newMapId = mapMain->GetMapId();
-    mapMain->Add(newMapId, 64, 64, 64, ParsedText0);
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eMap created.");
+    mapMain->Add(-1, 64, 64, 64, ParsedText0);
+    c->SendChat("§SMap created.");
 }
 
 void CommandMain::CommandMapRankBuildSet() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
-    if (ParsedOperator->at(0).empty()) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide a rank value.");
+    if (ParsedOperator.at(0).empty()) {
+        c->SendChat("§EPlease provide a rank value.");
         return;
     }
     int mapBuildRank = 0;
 
     try {
-        mapBuildRank = stoi(ParsedOperator->at(0));
+        mapBuildRank = stoi(ParsedOperator.at(0));
     } catch (const std::exception &ex) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer value.");
+        c->SendChat("§EPlease provide an integer value.");
         return;
     } catch (...) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer value.");
+        c->SendChat("§EPlease provide an integer value.");
         return;
     }
     MapMain* mapMain = MapMain::GetInstance();
-    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
-    cMap->data.RankBuild = mapBuildRank;
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eRank updated.");
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
+
+    MapPermissions currentPerms = cMap->GetMapPermissions();
+    currentPerms.RankBuild = mapBuildRank;
+    cMap->SetMapPermissions(currentPerms);
+
+    c->SendChat("§SRank updated.");
 }
 
 void CommandMain::CommandMapRankJoinSet() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
-    if (ParsedOperator->at(0).empty()) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide a rank value.");
+    if (ParsedOperator.at(0).empty()) {
+        c->SendChat("§EPlease provide a rank value.");
         return;
     }
     int mapJoinRank = 0;
 
     try {
-        mapJoinRank = stoi(ParsedOperator->at(0));
+        mapJoinRank = stoi(ParsedOperator.at(0));
     } catch (const std::exception &ex) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer value.");
+        c->SendChat("§EPlease provide an integer value.");
         return;
     } catch (...) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer value.");
+        c->SendChat("§EPlease provide an integer value.");
         return;
     }
     MapMain* mapMain = MapMain::GetInstance();
-    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
-    cMap->data.RankJoin = mapJoinRank;
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eRank updated.");
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
+
+    MapPermissions currentPerms = cMap->GetMapPermissions();
+    currentPerms.RankJoin = mapJoinRank;
+    cMap->SetMapPermissions(currentPerms);
+
+    c->SendChat("§SRank updated.");
 }
 
 void CommandMain::CommandMapRankShowSet() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
-    if (ParsedOperator->at(0).empty()) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide a rank value.");
+    if (ParsedOperator.at(0).empty()) {
+        c->SendChat("§EPlease provide a rank value.");
         return;
     }
     int mapShowRank = 0;
 
     try {
-        mapShowRank = stoi(ParsedOperator->at(0));
+        mapShowRank = stoi(ParsedOperator.at(0));
     } catch (const std::exception &ex) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer value.");
+        c->SendChat("§EPlease provide an integer value.");
         return;
     } catch (...) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide an integer value.");
+        c->SendChat("§EPlease provide an integer value.");
         return;
     }
     MapMain* mapMain = MapMain::GetInstance();
-    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
-    cMap->data.RankShow = mapShowRank;
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eRank updated.");
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
+
+    MapPermissions currentPerms = cMap->GetMapPermissions();
+    currentPerms.RankShow = mapShowRank;
+    cMap->SetMapPermissions(currentPerms);
+
+    c->SendChat("§SRank updated.");
 }
 
 void CommandMain::CommandStopPhysics() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
-    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
-    cMap->data.PhysicsStopped = true;
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePhysics stopped.");
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
+    cMap->PhysicsStopped = true;
+    c->SendChat("§SPhysics stopped.");
 }
 
 void CommandMain::CommandStartPhysics() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
-    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
-    cMap->data.PhysicsStopped = false;
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePhysics started.");
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
+    cMap->PhysicsStopped = false;
+    c->SendChat("§SPhysics started.");
 }
 
 void CommandMain::CommandSetSpawn() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
-    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
-    cMap->data.SpawnX = c->player->tEntity->X;
-    cMap->data.SpawnY = c->player->tEntity->Y;
-    cMap->data.SpawnZ = c->player->tEntity->Z;
-    cMap->data.SpawnRot = c->player->tEntity->Rotation;
-    cMap->data.SpawnLook = c->player->tEntity->Look;
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eSpawn updated.");
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
+    cMap->SetSpawn(clientEntity->Location);
+    c->SendChat("§SSpawn updated.");
 }
 
 void CommandMain::CommandSetKilLSpawn() {
     Network* nm = Network::GetInstance();
 
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
-    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
-    cMap->data.SpawnX = c->player->tEntity->X;
-    cMap->data.SpawnY = c->player->tEntity->Y;
-    cMap->data.SpawnZ = c->player->tEntity->Z;
-    cMap->data.SpawnRot = c->player->tEntity->Rotation;
-    cMap->data.SpawnLook = c->player->tEntity->Look;
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eKill Spawn updated.");
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
+    cMap->SetSpawn(clientEntity->Location);
+    c->SendChat("§SKill Spawn updated.");
 }
 
 void CommandMain::CommandTeleporters() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
-    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
 
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eTeleporters:");
+    c->SendChat("§STeleporters:");
     std::string text;
-    for(auto const &tp : cMap->data.Teleporter) {
-        std::string textAdd = "&e" + tp.first + " &f| ";
-        if (64 - text.size() >= textAdd.size())
-            text+= textAdd;
-        else {
-            NetworkFunctions::SystemMessageNetworkSend(c->Id, text);
-            text= textAdd;
-        }
-    }
+//    for(auto const &tp : cMap->data.Teleporter) {
+//        std::string textAdd = "§S" + tp.first + " &f| ";
+//        if (64 - text.size() >= textAdd.size())
+//            text+= textAdd;
+//        else {
+//            c->SendChat(text);
+//            text= textAdd;
+//        }
+//    }
     if (!text.empty()) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, text);
+        c->SendChat(text);
     }
 }
 
 void CommandMain::CommandDeleteTeleporter() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
 
     if (ParsedText0.empty()) {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&ePlease provide a name for the teleporter to delete.");
+        c->SendChat("§EPlease provide a name for the teleporter to delete.");
         return;
     }
     MapMain* mapMain = MapMain::GetInstance();
-    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
-    bool tpFound = cMap->data.Teleporter.find(ParsedText0) != cMap->data.Teleporter.end();
-    if (tpFound) {
-        cMap->data.Teleporter.erase(ParsedText0);
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eTeleporter deleted.");
-    } else {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eTeleporter not found.");
-    }
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
+//    bool tpFound = cMap->data.Teleporter.find(ParsedText0) != cMap->data.Teleporter.end();
+//    if (tpFound) {
+//        cMap->data.Teleporter.erase(ParsedText0);
+//        c->SendChat("§STeleporter deleted.");
+//    } else {
+//        c->SendChat("§STeleporter not found.");
+//    }
 }
 
 void CommandMain::CommandMapInfo() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
-    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
-    std::string textToSend = "&eMapInfo:<br>";
-    textToSend += "&eName: " + cMap->data.Name + "<br>";
-    textToSend += "&eId: " + stringulate(cMap->data.ID) + "<br>";
-    textToSend += "&eUnique ID: " + cMap->data.UniqueID + "<br>";
-    textToSend += "&eDirectory: " + cMap->data.Directory + "<br>";
-    textToSend += "&ePreview type: " + stringulate(cMap->data.overviewType) + "<br>";
-    textToSend += "&eSize: " + stringulate(cMap->data.SizeX)  + "x" + stringulate(cMap->data.SizeY)  + "x" + stringulate(cMap->data.SizeZ) + "<br>";
-    int dataSize = MapMain::GetMapSize(cMap->data.SizeX, cMap->data.SizeY, cMap->data.SizeZ, 4);
-    int bitmaskSize = MapMain::GetMapSize(cMap->data.SizeX, cMap->data.SizeY, cMap->data.SizeZ, 1) / 8;
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
+    std::string textToSend = "§SMapInfo:<br>";
+    textToSend += "§SName: " + cMap->Name() + "<br>";
+    textToSend += "§SId: " + stringulate(cMap->ID) + "<br>";
+    textToSend += "§SDirectory: " + cMap->filePath + "<br>";
+    Vector3S mapSize = cMap->GetSize();
+    textToSend += "§SSize: " + stringulate(mapSize.X)  + "x" + stringulate(mapSize.Y)  + "x" + stringulate(mapSize.Z) + "<br>";
+    MapPermissions perms = cMap->GetMapPermissions();
 
-    textToSend += "&eMem usage: " + stringulate((dataSize + bitmaskSize + bitmaskSize)/1000000.0) + "MB <br>";
-    textToSend += "&eRanks: Build: " + stringulate(cMap->data.RankBuild) + " Join: " + stringulate(cMap->data.RankJoin) + " Show: " + stringulate(cMap->data.RankShow) + " <br>";
-    textToSend += "&ePhysics Queue: " + stringulate(cMap->data.PhysicsQueue.size());
-    if (cMap->data.PhysicsStopped) {
+    textToSend += "§SRanks: Build: " + stringulate(perms.RankBuild) + " Join: " + stringulate(perms.RankJoin) + " Show: " + stringulate(perms.RankShow) + " <br>";
+
+    if (cMap->PhysicsStopped) {
         textToSend += "&cPhysics Stopped&f<br>";
     } else {
         textToSend += "<br>";
     }
-    {
-        const std::scoped_lock<std::mutex> sLock(cMap->data.bcMutex);
-        textToSend += "&eBlocksend Queue: " + stringulate(cMap->data.ChangeQueue.size());
-    }
-    if (cMap->data.BlockchangeStopped) {
+
+    if (cMap->BlockchangeStopped) {
         textToSend += "&Block Changes Stopped&f<br>";
     } else {
         textToSend += "<br>";
     }
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, textToSend);
+
+    c->SendChat(textToSend);
 }
 
 void CommandMain::CommandPlace() {
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
-    std::shared_ptr<Map> cMap = mapMain->GetPointer(c->player->tEntity->MapID);
-
-    float X = roundf(c->player->tEntity->X);
-    float Y = roundf(c->player->tEntity->Y);
-    float Z = roundf(c->player->tEntity->Z)-1;
-    if (X< 0) X = 0;
-    if (Y< 0) Y= 0;
-    if (Z< 0) Z= 0;
-    if (X>cMap->data.SizeX-1) X = cMap->data.SizeX-1;
-    if (Y>cMap->data.SizeY-1) Y = cMap->data.SizeY-1;
-    if (Z>cMap->data.SizeZ-1) Z = cMap->data.SizeZ-1;
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
+    Vector3S blockCoords = clientEntity->Location.GetAsBlockCoords();
+    if (blockCoords.X< 0) blockCoords.X = 0;
+    if (blockCoords.Y< 0) blockCoords.Y= 0;
+    if (blockCoords.Z< 0) blockCoords.Z= 0;
+    Vector3S mapSize = cMap->GetSize();
+    if (blockCoords.X>mapSize.X-1) blockCoords.X = mapSize.X-1;
+    if (blockCoords.Y>mapSize.Y-1) blockCoords.Y = mapSize.Y-1;
+    if (blockCoords.Z>mapSize.Z-1) blockCoords.Z = mapSize.Z-1;
 
     bool found = false;
     unsigned char blockToPlace = 0;
     if (ParsedText0.empty()) {
-        blockToPlace = c->player->tEntity->lastMaterial;
+        blockToPlace = clientEntity->lastMaterial;
         found = true;
     } else {
         Block* bm = Block::GetInstance();
@@ -1584,20 +1656,20 @@ void CommandMain::CommandPlace() {
     }
 
     if (found) {
-        cMap->BlockChange(c, X, Y, Z, 1, blockToPlace);
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eBlock placed.");
+        cMap->BlockChange(c, blockCoords.X, blockCoords.Y, blockCoords.Z, 1, blockToPlace);
+        c->SendChat("§SBlock placed.");
     } else {
-        NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eCan't find a block called '" + ParsedText0 + "'.");
+        c->SendChat("§ECan't find a block called '" + ParsedText0 + "'.");
     }
 }
 
 void CommandMain::CommandUserMaps() {
     Files* fm = Files::GetInstance();
     Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     std::string usermapDirectory = fm->GetFolder("Usermaps");
 
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, "&eUsermaps:");
+    c->SendChat("§SUsermaps:");
     std::string textToSend;
 
     if (std::filesystem::is_directory(usermapDirectory)) {
@@ -1608,9 +1680,9 @@ void CommandMain::CommandUserMaps() {
                 continue;
 
             if (fileName.substr(fileName.length() - 4) == ".map") {
-                textToSend += "&e" + fileName + " &f| ";
+                textToSend += "§S" + fileName + " &f| ";
             }
         }
     }
-    NetworkFunctions::SystemMessageNetworkSend(c->Id, textToSend);
+    c->SendChat(textToSend);
 }
