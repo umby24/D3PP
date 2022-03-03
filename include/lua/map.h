@@ -40,6 +40,7 @@ protected:
     static int LuaMapActionAddFill(lua_State* L);
     static int LuaMapActionAddSave(lua_State* L);
     static int LuaMapActionAddDelete(lua_State* L);
+    static int LuaMapLoad(lua_State* L);
     static int LuaMapResend(lua_State* L);
     static int LuaMapExport(lua_State* L);
     static int LuaMapExportGetSize(lua_State* L);

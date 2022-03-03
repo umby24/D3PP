@@ -47,13 +47,29 @@ namespace D3PP::files {
                 mapPath = mapPath + "/";
             }
 
-            ReadConfig();
+            bool loadResult = ReadConfig() && ReadMapData();
             ReadRankBoxes();
             ReadPortals();
-            ReadMapData();
-            return true;
+           
+            return loadResult;
 		}
+        bool D3Map::Load(std::string path)
+        {
+            if (!std::filesystem::exists(path)) {
+                return false;
+            }
 
+            if (path[path.size() - 1] != '/') {
+                path = path + "/";
+            }
+            std::string ogMapPath = mapPath;
+            mapPath = path;
+            bool loadResult = ReadConfig() && ReadMapData();
+            ReadRankBoxes();
+            ReadPortals();
+            mapPath = ogMapPath;
+            return loadResult;
+        }
 		bool D3Map::Save()
 		{
             std::filesystem::create_directory(mapPath);
@@ -71,7 +87,27 @@ namespace D3PP::files {
 
 			return result;
 		}
+        bool D3Map::Save(std::string filePath)
+        {
+            std::filesystem::create_directory(filePath);
+            std::string oldPath = mapPath;
+            mapPath = filePath;
+            
+            bool result = false;
+            result = SaveConfig();
 
+            if (result)
+                result = SaveRankBoxes();
+
+            if (result)
+                result = SavePortals();
+
+            if (result)
+                result = SaveMapData();
+
+            mapPath = oldPath;
+            return result;
+        }
         void D3Map::Resize(Common::Vector3S newSize) {
             int newMapSize = (newSize.X * newSize.Y * newSize.Z) * 4;
             // -- Spawn limiting..
@@ -265,17 +301,23 @@ namespace D3PP::files {
             return true;
         }
 
-        void D3Map::ReadConfig() {
+        bool D3Map::ReadConfig() {
             PreferenceLoader pLoader(D3_MAP_CONFIG_NAME, mapPath);
             pLoader.LoadFile();
+            
             int sizeX = pLoader.Read("Size_X", 0);
             int sizeY = pLoader.Read("Size_Y", 0);
             int sizeZ = pLoader.Read("Size_Z", 0);
             int mapSize = sizeX * sizeY * sizeZ;
-            Common::Vector3S newSize{
+            
+            if (mapSize == 0)
+                return false;
+
+            Common::Vector3S newSize {
                 static_cast<short>(sizeX),
                 static_cast<short>(sizeY),
-                static_cast<short>(sizeZ) };
+                static_cast<short>(sizeZ) 
+            };
             Resize(newSize);
 
             UUID = pLoader.Read("Unique_ID", GenerateUuid());
@@ -341,20 +383,28 @@ namespace D3PP::files {
 
             if (dlight < -1)
                 dlight = -1;
+
+            return true;
         }
 
-        void D3Map::ReadMapData() {
+        bool D3Map::ReadMapData() {
             int mapSize = MapSize.X* MapSize.Y*MapSize.Z;
             int dSize = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(MapData.data()), mapSize * 4, mapPath + D3_MAP_BLOCKS_NAME);
 
             if (dSize == (mapSize * 4)) {
                 Logger::LogAdd("D3Map", "Map Loaded [" + mapPath + D3_MAP_BLOCKS_NAME + "] (" + stringulate(MapSize.X) + "x" + stringulate(MapSize.Y) + "x" + stringulate(MapSize.Z) + ")", LogType::NORMAL, GLF);
+                return true;
             }
+
+            Logger::LogAdd("D3Map", "Error loading map [" + mapPath + D3_MAP_BLOCKS_NAME + "]!", L_ERROR, GLF);
+            return false;
+            
         }
 
         void D3Map::ReadPortals() {
             PreferenceLoader tpLoader(D3_MAP_PORTALS_NAME, mapPath);
             tpLoader.LoadFile();
+
             for (auto const &tp : tpLoader.SettingsDictionary) {
                 tpLoader.SelectGroup(tp.first);
                 MapTeleporterElement tpe{};

@@ -8,7 +8,7 @@ class LuaTeleporterLib
 {
 public:
     const static struct luaL_Reg lib[];
-    int openLib(lua_State* L);
+    static int openLib(lua_State* L);
 protected:
     static int LuaTeleporterGetTable(lua_State* L);
     static int LuaTeleporterGetBox(lua_State* L);

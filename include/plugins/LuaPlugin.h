@@ -3,11 +3,17 @@
 
 #include <string>
 #include <map>
+#include <memory>
 #include <EventSystem.h>
 
 #include "common/TaskScheduler.h"
 
 struct lua_State;
+
+namespace D3PP::plugins {
+    class PluginManager;
+    class LuaState;
+}
 
 struct LuaFile {
     std::string FilePath;
@@ -24,36 +30,40 @@ struct LuaEvent {
 
 class LuaPlugin : TaskItem {
 public:
-    LuaPlugin();
+    explicit LuaPlugin(std::string folder);
     ~LuaPlugin();
 
-    static LuaPlugin* Instance;
-    static LuaPlugin* GetInstance();
+    void Load();
+    void Unload();
+
     void TriggerCommand(const std::string& function, int clientId, const std::string& parsedCmd, const std::string &text0, const std::string &text1, const std::string& op1, const std::string &op2, const std::string &op3, const std::string &op4, const std::string &op5);
     void TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, const std::string& function, const std::string& args);
     void TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, const std::string& function);
     void TriggerBuildMode(const std::string &function, int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char block);
+    std::string GetFolderName();
+    bool IsLoaded();
 
-    std::map<Event::DescriptorType, std::vector<LuaEvent>> events;
 private:
+    std::string m_status;
+    std::string m_folder;
+    std::shared_ptr<D3PP::plugins::LuaState> m_luaState;
+    bool m_loaded;
     std::recursive_mutex executionMutex;
-    lua_State* state;
+
     std::map<std::string, LuaFile> _files;
 
 
     static void Init();
     void TimerMain();
     void MainFunc();
-    void BindFunctions();
-    void LoadFile(const std::string& path);
     // -- Lua interface functions :)
     
     // -- Event executors
     void LuaDoEventTimer();
 
     void RegisterEventListener();
-
     void HandleEvent(const Event &event);
+    friend class D3PP::plugins::PluginManager;
 };
 
 #endif

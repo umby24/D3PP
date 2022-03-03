@@ -1,5 +1,3 @@
-#include <plugins/LuaPlugin.h>
-
 #include "BuildMode.h"
 #include "common/Files.h"
 #include "common/PreferenceLoader.h"
@@ -11,6 +9,7 @@
 #include "common/Logger.h"
 #include "Utils.h"
 #include "network/Network_Functions.h"
+#include "plugins/PluginManager.h"
 
 BuildModeMain* BuildModeMain::Instance = nullptr;
 
@@ -139,8 +138,8 @@ void BuildModeMain::Distribute(int clientId, int mapId, unsigned short X, unsign
         _resendBlocks.insert(_resendBlocks.begin(), queuedItem);
         std::string pluginName = _buildmodes[buildMode].Plugin;
         Utils::replaceAll(pluginName, "Lua:", "");
-        LuaPlugin* luaMain = LuaPlugin::GetInstance();
-        luaMain->TriggerBuildMode(pluginName, clientId, mapId, X, Y, Z, mode, blockType);
+        D3PP::plugins::PluginManager *pm = D3PP::plugins::PluginManager::GetInstance();
+        pm->TriggerBuildMode(pluginName, clientId, mapId, X, Y, Z, mode, blockType);
         // -- Lua_Event_Build_Mode()
     }
 }

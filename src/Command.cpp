@@ -13,7 +13,7 @@
 #include "common/Files.h"
 #include "System.h"
 #include "Utils.h"
-#include "plugins/LuaPlugin.h"
+#include "plugins/PluginManager.h"
 
 const std::string MODULE_NAME = "Command";
 CommandMain* CommandMain::Instance = nullptr;
@@ -37,6 +37,17 @@ CommandMain::CommandMain() : ParsedOperator{} {
 }
 
 void CommandMain::Init() {
+    Command PluginReloadCommand;
+    PluginReloadCommand.Function = [this] { D3PP::plugins::PluginManager::GetInstance()->LoadPlugins(); };
+    PluginReloadCommand.Id = "preload";
+    PluginReloadCommand.Name = "preload";
+    PluginReloadCommand.Internal = true;
+    PluginReloadCommand.Hidden = false;
+    PluginReloadCommand.Rank = 200;
+    PluginReloadCommand.RankShow = 200;
+    PluginReloadCommand.CanConsole = true;
+    Commands.push_back(PluginReloadCommand);
+
     Command kickCommand;
     kickCommand.Id = "Kick";
     kickCommand.Name = "kick";
@@ -696,10 +707,10 @@ void CommandMain::CommandDo(const std::shared_ptr<IMinecraftClient>& client, con
             }
             if (!cmd.Plugin.empty()) {
                 // -- Run plugin based command
-                LuaPlugin* lm = LuaPlugin::GetInstance();
+                D3PP::plugins::PluginManager *pm = D3PP::plugins::PluginManager::GetInstance();
                 std::string functionName = cmd.Plugin;
                 Utils::replaceAll(functionName, "Lua:", "");
-                lm->TriggerCommand(functionName, client->GetId(), ParsedCommand, ParsedText0, ParsedText1, ParsedOperator.at(0), ParsedOperator.at(1), ParsedOperator.at(2), ParsedOperator.at(3), ParsedOperator.at(4));
+                pm->TriggerCommand(functionName, client->GetId(), ParsedCommand, ParsedText0, ParsedText1, ParsedOperator.at(0), ParsedOperator.at(1), ParsedOperator.at(2), ParsedOperator.at(3), ParsedOperator.at(4));
 
             } else if (cmd.Function != nullptr) {
                 cmd.Function();

@@ -13,7 +13,7 @@ namespace D3PP::world {
         D3MapProvider();
         void CreateNew(const Common::Vector3S& size, const std::string& path, const std::string& name) override;
         bool Save(const std::string& filePath) override;
-        void Load(const std::string& filePath) override;
+        bool Load(const std::string& filePath) override;
         Common::Vector3S GetSize() const override;
         void SetSize(const Common::Vector3S& newSize) override;
         bool Unload() override;
@@ -31,6 +31,7 @@ namespace D3PP::world {
         MapEnvironment GetEnvironment() override;
         void SetEnvironment(const MapEnvironment& env) override;
     private:
+        std::string m_currentPath;
         std::unique_ptr<files::D3Map> m_d3map;
     };
 }

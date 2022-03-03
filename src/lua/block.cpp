@@ -134,7 +134,7 @@ int LuaBlockLib::LuaBlockCreate(lua_State* L)
     }
 
     int blockId = luaL_checkinteger(L, 1);
-    if (blockId <= 66) {
+    if (blockId < 66) {
         Logger::LogAdd("Lua", "LuaError: Please don't redefine the blocks under #66!", LogType::L_ERROR, GLF);
         return 0;
     }

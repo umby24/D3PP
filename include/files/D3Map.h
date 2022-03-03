@@ -33,7 +33,25 @@ namespace D3PP::files {
             float DestZ;
             float DestRot;
             float DestLook;
+
+			MapTeleporterElement() {
+				Id = "";
+				X0 = 0;
+				Y0 = 0;
+				Z0 = 0;
+				X1 = 0;
+				Y1 = 0;
+				Z1 = 0;
+				DestX = 0;
+				DestY = 0;
+				DestZ = 0;
+				DestRot = 0;
+				DestLook = 0;
+				DestMapId = 0;
+				DestMapUniqueId = "";
+			}
         };
+
         struct MapRankElement {
             unsigned short X0;
             unsigned short Y0;
@@ -70,7 +88,9 @@ namespace D3PP::files {
 			D3Map(const std::string& folder, const std::string& name, const Common::Vector3S& mapSize);
 
 			bool Load();
+			bool Load(std::string path);
 			bool Save();
+			bool Save(std::string path);
 			void Resize(Common::Vector3S newSize);
 
 			unsigned char GetBlock(Common::Vector3S blockLocation);
@@ -86,8 +106,8 @@ namespace D3PP::files {
 			bool SavePortals();
 			bool SaveRankBoxes();
 			bool SaveMapData();
-			void ReadConfig();
-			void ReadMapData();
+			bool ReadConfig();
+			bool ReadMapData();
 			void ReadPortals();
 			void ReadRankBoxes();
 
