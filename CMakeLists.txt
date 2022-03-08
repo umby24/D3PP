@@ -41,8 +41,11 @@ add_executable(D3PP main.cpp ${D3PP_SOURCE_FILES})
 if (MSVC)
     find_package(ZLIB REQUIRED)
     find_package(unofficial-sqlite3 CONFIG REQUIRED)
+    find_package(lua REQUIRED)
     target_link_libraries(D3PP unofficial::sqlite3::sqlite3)
     target_link_libraries(D3PP ZLIB::ZLIB)
+    target_link_libraries(D3PP lua)
+    MESSAGE(STATUS "MSVC Build!")
 endif ()
 
 #______________________________________________________________

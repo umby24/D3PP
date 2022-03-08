@@ -36,7 +36,9 @@ std::mutex D3PP::network::Server::m_ClientMutex;
 D3PP::network::Server::Server() {
     Interval = std::chrono::seconds(5);
     Main = [this](){ this->MainFunc(); };
+
     TaskScheduler::RegisterTask("Bandwidth", *this);
+    
     m_serverSocket = std::make_unique<ServerSocket>(25566);
     m_serverSocket->Listen();
 }

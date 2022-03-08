@@ -153,6 +153,7 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
     auto typeAsEvent = Dispatcher::getDescriptor(type);
 
     LuaEvent newEvent{
+        eventId,
             function,
             typeAsEvent,
             clock(),
@@ -162,7 +163,18 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
 
     if (setOrCheck == 1) {
         if (m_thisPlugin->events.find(typeAsEvent) != m_thisPlugin->events.end()) {
+            int it = 0;
+            for (const auto& i : m_thisPlugin->events[typeAsEvent]) {
+                if (i.type == typeAsEvent && i.functionName == function) {
+                    auto thisVec = m_thisPlugin->events[typeAsEvent];
+                    thisVec.erase(thisVec.begin() + it, thisVec.begin() + it +1);
+                    m_thisPlugin->events[typeAsEvent] = thisVec;
+                    break;
+                }
+                it++;
+            }
             m_thisPlugin->events[typeAsEvent].push_back(newEvent);
+
         }
         else {
             m_thisPlugin->events.insert(std::make_pair(typeAsEvent, std::vector<LuaEvent>()));
@@ -197,7 +209,19 @@ int LuaSystemLib::LuaEventDelete(lua_State* L) {
     }
 
     std::string eventId(lua_tostring(L, 1));
-    // -- TODO:
+    for (const auto& kvp : m_thisPlugin->events) {
+        int it = 0;
+        for (const auto& i : m_thisPlugin->events[kvp.first]) {
+            if (i.eventId == eventId) {
+                auto thisVec = m_thisPlugin->events[kvp.first];
+                thisVec.erase(thisVec.begin() + it, thisVec.begin() + it + 1);
+                m_thisPlugin->events[kvp.first] = thisVec;
+                break;
+            }
+            it++;
+        }
+    }
+
     return 0;
 }
 
