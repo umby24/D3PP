@@ -7,6 +7,7 @@
 #include <memory>
 #include <utility>
 #include <events/EventEntityAdd.h>
+#include <Client.h>
 #include "common/ByteBuffer.h"
 #include "common/Logger.h"
 #include "common/UndoItem.h"
@@ -24,6 +25,7 @@
 #include "common/Player_List.h"
 #include "network/Server.h"
 #include "network/PacketHandlers.h"
+#include "network/IPacket.h"
 
 #ifndef __linux__
 #include "network/WindowsSockets.h"
@@ -52,10 +54,6 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) : Selections(MAX_S
     PingTime = std::chrono::steady_clock::now() + std::chrono::seconds(5);
     DisconnectTime = 0;
     LoggedIn = false;
-    UploadRate = 0;
-    DownloadRate = 0;
-    UploadRateCounter = 0;
-    DownloadRateCounter = 0;
     CPE = false;
     PingSentTime = PingTime;
     Ping = 0;
@@ -77,16 +75,72 @@ NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
     PingTime = std::chrono::steady_clock::now() + std::chrono::seconds(5);
     DisconnectTime = 0;
     LoggedIn = false;
-    UploadRate = 0;
-    DownloadRate = 0;
-    UploadRateCounter = 0;
-    DownloadRateCounter = 0;
     CPE = false;
     PingSentTime = PingTime;
     Ping = 0;
     CustomBlocksLevel = 0;
     GlobalChat = false;
     SubEvents();
+}
+NetworkClient::NetworkClient(NetworkClient &client) : Selections(MAX_SELECTION_BOXES) {
+    Id= client.Id;
+    SendBuffer = std::make_unique<ByteBuffer>([this]{ this->DataReady(); });//
+    ReceiveBuffer = std::move(client.ReceiveBuffer);
+    DataAvailable = false;
+    canReceive = true;
+    m_currentUndoIndex = 0;
+    canSend = true;
+    CustomExtensions = 0;
+    LastTimeEvent = time(nullptr);
+    clientSocket = std::move(client.clientSocket);
+    PingTime = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    DisconnectTime = 0;
+    LoggedIn = false;
+    CPE = false;
+    PingSentTime = PingTime;
+    Ping = 0;
+    CustomBlocksLevel = 0;
+    GlobalChat = false;
+    IP = clientSocket->GetSocketIp();
+    SubEvents();
+}
+
+void NetworkClient::MainFunc() {
+    if (DisconnectTime > 0 && DisconnectTime < time(nullptr)) {
+        Shutdown("Forced disconnect");
+        return;
+    }
+    if (LastTimeEvent + NETWORK_CLIENT_TIMEOUT < time(nullptr)) {
+        Kick("Timeout", false);
+        return;
+    }
+
+    if (PingTime >= std::chrono::steady_clock::now()) return;
+
+    PingTime = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    PingSentTime = std::chrono::steady_clock::now();
+    PingVal = static_cast<short>(clock());
+
+    if (CPE::GetClientExtVersion(GetSelfPointer(), TWOWAY_PING_EXT_NAME) == 0)
+        OutputPing();
+    else
+        Packets::SendTwoWayPing(GetSelfPointer(), 1, PingVal);
+}
+
+NetworkClient::~NetworkClient() {
+    SendBuffer = nullptr;
+    ReceiveBuffer = nullptr;
+
+    if (clientSocket != nullptr) {
+        if (clientSocket->GetConnected()) {
+            clientSocket->Disconnect();
+        }
+        clientSocket = nullptr;
+    }
+
+    Dispatcher::unsubscribe(eventSubId);
+    Dispatcher::unsubscribe(addSubId);
+    Dispatcher::unsubscribe(removeSubId);
 }
 
 void NetworkClient::SubEvents() {
@@ -260,49 +314,6 @@ void NetworkClient::DataReady() {
     DataAvailable = true;
 }
 
-NetworkClient::NetworkClient(NetworkClient &client) : Selections(MAX_SELECTION_BOXES) {
-    Id= client.Id;
-    SendBuffer = std::make_unique<ByteBuffer>([this]{ this->DataReady(); });//
-    ReceiveBuffer = std::move(client.ReceiveBuffer);
-    DataAvailable = false;
-    canReceive = true;
-    m_currentUndoIndex = 0;
-    canSend = true;
-    CustomExtensions = 0;
-    LastTimeEvent = time(nullptr);
-    clientSocket = std::move(client.clientSocket);
-    PingTime = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-    DisconnectTime = 0;
-    LoggedIn = false;
-    UploadRate = 0;
-    DownloadRate = 0;
-    UploadRateCounter = 0;
-    DownloadRateCounter = 0;
-    CPE = false;
-    PingSentTime = PingTime;
-    Ping = 0;
-    CustomBlocksLevel = 0;
-    GlobalChat = false;
-    IP = clientSocket->GetSocketIp();
-    SubEvents();
-}
-
-NetworkClient::~NetworkClient() {
-    SendBuffer = nullptr;
-    ReceiveBuffer = nullptr;
-
-    if (clientSocket != nullptr) {
-        if (clientSocket->GetConnected()) {
-            clientSocket->Disconnect();
-        }
-        clientSocket = nullptr;
-    }
-
-    Dispatcher::unsubscribe(eventSubId);
-    Dispatcher::unsubscribe(addSubId);
-    Dispatcher::unsubscribe(removeSubId);
-}
-
 void NetworkClient::SendChat(std::string message) {
     NetworkFunctions::SystemMessageNetworkSend(Id, message);
 }
@@ -380,11 +391,33 @@ void NetworkClient::SendQueued() {
     int bytesSent = clientSocket->Send(reinterpret_cast<char *>(allBytes.data()), sendSize);
 
     DataAvailable = false;
-    UploadRateCounter += bytesSent;
-    D3PP::network::Server::SentIncrement += sendSize;
+    D3PP::network::Server::SentIncrement += bytesSent;
+}
+
+void NetworkClient::ReadData() {
+    if (canReceive) {
+        auto* receiveBuf = new char[1026];
+        receiveBuf[1024] = 99;
+        int dataRead = clientSocket->Read(receiveBuf, 1024);
+        if (dataRead > 0) {
+            std::vector<unsigned char> receive(receiveBuf, receiveBuf+dataRead);
+            delete[] receiveBuf;
+            ReceiveBuffer->Write(receive, dataRead);
+            D3PP::network::Server::ReceivedIncrement += dataRead;
+        } else {
+            delete[] receiveBuf;
+            D3PP::network::Server::UnregisterClient(GetSelfPointer());
+        }
+    }
+
+    DataWaiting = false;
 }
 
 void NetworkClient::HandleData() {
+    if (DataWaiting) {
+        ReadData();
+    }
+
     int maxRepeat = 10;
     while (ReceiveBuffer->Size() > 0 && maxRepeat > 0 && canReceive) {
         unsigned char commandByte = ReceiveBuffer->PeekByte();
@@ -402,7 +435,6 @@ void NetworkClient::HandleData() {
         switch(commandByte) {
             case 0: // -- Login
                 if (ReceiveBuffer->Size() >= 1 + 1 + 64 + 64 + 1) {
-                    lastPacket = 0;
                     ReceiveBuffer->ReadByte();
                     PacketHandlers::HandleHandshake(GetSelfPointer());
                     ReceiveBuffer->Shift(1 + 1 + 64 + 64 + 1);
@@ -410,7 +442,6 @@ void NetworkClient::HandleData() {
                 break;
             case 1: // -- Ping
                 if (ReceiveBuffer->Size() >= 1) {
-                    lastPacket = 1;
                     ReceiveBuffer->ReadByte();
                     PacketHandlers::HandlePing(GetSelfPointer());
                     ReceiveBuffer->Shift(1);
@@ -418,7 +449,6 @@ void NetworkClient::HandleData() {
                 break;
             case 5: // -- Block Change
                 if (ReceiveBuffer->Size() >= 9) {
-                    lastPacket = 5;
                     ReceiveBuffer->ReadByte();
                     PacketHandlers::HandleBlockChange(GetSelfPointer());
                     ReceiveBuffer->Shift(9);
@@ -426,7 +456,6 @@ void NetworkClient::HandleData() {
                 break;
             case 8: // -- Player Movement
                 if (ReceiveBuffer->Size() >= 10) {
-                    lastPacket = 8;
                     ReceiveBuffer->ReadByte();
                     PacketHandlers::HandlePlayerTeleport(GetSelfPointer());
                     ReceiveBuffer->Shift(10);
@@ -434,7 +463,6 @@ void NetworkClient::HandleData() {
                 break;
             case 13: // -- Chat Message
                 if (ReceiveBuffer->Size() >= 66) {
-                    lastPacket = 13;
                     ReceiveBuffer->ReadByte();
                     PacketHandlers::HandleChatPacket(GetSelfPointer());
                     ReceiveBuffer->Shift(66);
@@ -442,7 +470,6 @@ void NetworkClient::HandleData() {
                 break;
             case 16: // -- CPe ExtInfo
                 if (ReceiveBuffer->Size() >= 67) {
-                    lastPacket = 16;
                     ReceiveBuffer->ReadByte();
                     PacketHandlers::HandleExtInfo(GetSelfPointer());
                     ReceiveBuffer->Shift(67);
@@ -450,7 +477,6 @@ void NetworkClient::HandleData() {
                 break;
             case 17: // -- CPE ExtEntry
                 if (ReceiveBuffer->Size() >= 1 + 64 + 4) {
-                    lastPacket = 17;
                     ReceiveBuffer->ReadByte();
                     PacketHandlers::HandleExtEntry(GetSelfPointer());
                     ReceiveBuffer->Shift(69);
@@ -458,7 +484,6 @@ void NetworkClient::HandleData() {
                 break;
             case 19: // -- CPE Custom Block Support
                 if (ReceiveBuffer->Size() >= 2) {
-                    lastPacket = 19;
                     ReceiveBuffer->ReadByte();
                     PacketHandlers::HandleCustomBlockSupportLevel(GetSelfPointer());
                     ReceiveBuffer->Shift(2);
@@ -466,7 +491,6 @@ void NetworkClient::HandleData() {
                 break;
             case 34: // -- CPE Player Clicked.
                 if (ReceiveBuffer->Size() >= 15) {
-                    lastPacket = 34;
                     ReceiveBuffer->ReadByte();
                     PacketHandlers::HandlePlayerClicked(GetSelfPointer());
                     ReceiveBuffer->Shift(15);
@@ -489,8 +513,8 @@ void NetworkClient::HandleData() {
     } // -- /While
 }
 
-void NetworkClient::SendPacket(const D3PP::network::IPacket &p) {
-
+void NetworkClient::SendPacket(D3PP::network::IPacket &p) {
+    p.Write(SendBuffer);
 }
 
 void NetworkClient::Undo(int steps) { 
@@ -551,4 +575,21 @@ void NetworkClient::AddUndoItem(const D3PP::Common::UndoItem &item) {
     }
     m_undoItems.push_back(item);
     m_currentUndoIndex = m_undoItems.size() - 1;
+}
+
+void NetworkClient::NotifyDataAvailable() {
+    DataWaiting = true;
+}
+
+void NetworkClient::Shutdown(std::string reason) {
+    Client::Logout(Id, reason, true);
+    canSend = false;
+    canReceive = false;
+    D3PP::network::Server::UnregisterClient(GetSelfPointer());
+    Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(Id) + "] [" + reason + "]", LogType::NORMAL, GLF);
+    clientSocket->Disconnect();
+}
+
+bool NetworkClient::GetLoggedIn() {
+    return this->LoggedIn;
 }

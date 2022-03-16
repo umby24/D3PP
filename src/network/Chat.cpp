@@ -4,6 +4,7 @@
 
 #include <events/EventChatAll.h>
 #include <events/EventChatMap.h>
+#include <network/Server.h>
 #include "network/Chat.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
@@ -115,7 +116,6 @@ void Chat::NetworkSend2Player(const int& entityId, const std::string& message, s
         playerName = em->lastPrivateMessage;
 
     std::string output(message);
-    Network* nm = Network::GetInstance();
 
     if (em->playerList != nullptr) {
         if (em->playerList->MuteTime < time(nullptr)) {
@@ -123,8 +123,8 @@ void Chat::NetworkSend2Player(const int& entityId, const std::string& message, s
             std::string message1 = "&cP " + Entity::GetDisplayname(entityId) + "&f: " + output;
             bool found = false;
 
-            for (const auto &nc : nm->roClients) {
-                if (nc->player != nullptr && nc->player->tEntity != nullptr) {
+            for (const auto &nc : D3PP::network::Server::roClients) {
+                if (nc-> != nullptr && nc->player->tEntity != nullptr) {
                     if (Utils::InsensitiveCompare(nc->player->tEntity->Name, playerName)) {
                         em->lastPrivateMessage = playerName;
                         Logger::LogAdd("Chat", em->Name + " > " + nc->player->tEntity->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);

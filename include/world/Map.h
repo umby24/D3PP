@@ -7,7 +7,6 @@
 #ifndef D3PP_MAP_H
 #define D3PP_MAP_H
 #define GLF __FILE__, __LINE__, __FUNCTION__
-
 #include <string>
 #include <vector>
 #include <map>

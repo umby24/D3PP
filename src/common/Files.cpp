@@ -1,26 +1,15 @@
 #include "common/Files.h"
 
 #include <iostream>
-#include <fstream>
 #include <iomanip>
+#include <json.hpp>
+using json = nlohmann::json;
+
 #include "Utils.h"
 #include "common/Logger.h"
 
-Files* Files::singleton_ = nullptr;;
 const std::string MODULE_NAME = "Files";
 
-Files *Files::GetInstance() {
-    if (singleton_ == nullptr) {
-        singleton_ = new Files();
-    }
-    return singleton_;
-}
-
-Files::Files()
-{
-    //ctor
-    Load();
-}
 
 Files::~Files()
 {

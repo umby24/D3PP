@@ -9,17 +9,20 @@
 #include "Rank.h"
 #include "common/Logger.h"
 #include "common/Configuration.h"
-#include "network/Chat.h"
 #include "Utils.h"
 
+#include "network/Chat.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "network/Server.h"
+#include "network/Network_Functions.h"
+#include "network/Packets.h"
+#include "network/packets/ExtRemovePlayerName.h"
 #include "world/Player.h"
 #include "common/Player_List.h"
 #include "world/Entity.h"
 
-#include "network/Network_Functions.h"
-#include "network/Packets.h"
+
 
 #include "world/Map.h"
 #include "System.h"
@@ -37,14 +40,12 @@ using namespace D3PP::world;
 using namespace D3PP::Common;
 
 void Client::Login(int clientId, std::string name, std::string mppass, char version) {
-    Network *n = Network::GetInstance();
-    PlayerMain *pm = PlayerMain::GetInstance();
     Player_List *pl = Player_List::GetInstance();
     MapMain *mm = MapMain::GetInstance();
     Rank *rm = Rank::GetInstance();
     Heartbeat* hbm = Heartbeat::GetInstance();
 
-    std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(n->GetClient(clientId));
+    std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
 
     c->player = std::make_unique<Player>();
     c->player->LoginName = name;
@@ -65,7 +66,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
         preLoginCorrect = false;
         Logger::LogAdd(MODULE_NAME, "Empty Name provided: " + stringulate(version), LogType::L_ERROR, GLF);
         c->Kick("Invalid name", true);
-    } else if (n->roClients.size() > Configuration::NetSettings.MaxPlayers) {
+    } else if (D3PP::network::Server::roClients.size() > Configuration::NetSettings.MaxPlayers) {
         preLoginCorrect = false;
         Logger::LogAdd(MODULE_NAME, "Login Failed: Server is full", LogType::L_ERROR, GLF);
         c->Kick("Server is full", true);
@@ -156,9 +157,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 }
 
 void Client::LoginCpe(int clientId, std::string name, std::string mppass, char version) {
-    Network *n = Network::GetInstance();
-
-    std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(n->GetClient(clientId));
+    std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
 
     c->player = std::make_unique<Player>();
     c->player->LoginName = name;
@@ -186,13 +185,12 @@ void Client::LoginCpe(int clientId, std::string name, std::string mppass, char v
     Packets::SendExtEntry(c, BLOCK_DEFS_EXTENDED_EXT_NAME, 2);
     Packets::SendExtEntry(c, EXTENDED_TEXTURES_EXT_NAME, 1);
 
-    Logger::LogAdd(MODULE_NAME, "LoginCPE complete", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "LoginCPE complete", LogType::DEBUG, GLF);
 }
 
 void Client::Logout(int clientId, std::string message, bool showtoall) {
-    Network *n = Network::GetInstance();
     MapMain *mm = MapMain::GetInstance();
-    std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(n->GetClient(clientId));
+    std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
     if (!c || c == nullptr || c == NULL) {
         return;
     }
@@ -211,11 +209,10 @@ void Client::Logout(int clientId, std::string message, bool showtoall) {
         if (showtoall && !c->player->LogoutHide) {
             NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(c->player->tEntity->Id) + "&e' logged out (" + message + ")");
         }
-        for(auto const &nc : n->roClients) {
-            if (CPE::GetClientExtVersion(nc, EXT_PLAYER_LIST_EXT_NAME) > 0) {
-                Packets::SendExtRemovePlayerName(nc, c->player->NameId);
-            }
-        }
+
+        D3PP::network::ExtRemovePlayerName rpnPacket(c->player->NameId);
+        D3PP::network::Server::SendToAll(rpnPacket, EXT_PLAYER_LIST_EXT_NAME, 1);
+
         c->player->tEntity->Despawn();
         Entity::Delete(c->player->tEntity->Id);
         c->player->tEntity = nullptr;

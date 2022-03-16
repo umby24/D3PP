@@ -39,6 +39,7 @@ public:
     virtual std::string GetLoginName() = 0;
     virtual bool GetGlobalChat() = 0;
     virtual int GetMapId() = 0;
+    virtual bool GetLoggedIn() = 0;
     virtual void SetGlobalChat(bool active) = 0;
     virtual bool IsStopped() = 0;
     virtual void SendChat(std::string message) = 0;
@@ -48,9 +49,10 @@ public:
     virtual void SpawnEntity(std::shared_ptr<Entity> e) = 0;
     virtual void DespawnEntity(std::shared_ptr<Entity> e) = 0;
     virtual bool IsDataAvailable() = 0;
+    virtual void NotifyDataAvailable() = 0;
     virtual void SendQueued() = 0;
     virtual void HandleData() = 0;
-    virtual void SendPacket(const D3PP::network::IPacket& p) = 0;
+    virtual void SendPacket(D3PP::network::IPacket& p) = 0;
     virtual void Undo(int steps) = 0;
     virtual void Redo(int steps) = 0;
     virtual void AddUndoItem(const D3PP::Common::UndoItem& item) = 0;
@@ -63,10 +65,11 @@ public:
     explicit NetworkClient(std::unique_ptr<Sockets> socket);
     NetworkClient(NetworkClient &client);
 
-    void DataReady();
+
     // -- Output Buffer Commands
-    void OutputPing();
     void Kick(const std::string& message, bool hide) override;
+    void Shutdown(std::string reason);
+
     bool canSend;
     bool canReceive;
     std::shared_ptr<ByteBuffer> SendBuffer;
@@ -74,13 +77,9 @@ public:
     std::mutex sendLock;
 
     std::string IP;
-    unsigned char lastPacket;
     time_t DisconnectTime;
     time_t LastTimeEvent;
-    int UploadRate;
-    int DownloadRate;
-    int UploadRateCounter;
-    int DownloadRateCounter;
+
     float Ping;
     short PingVal;
     std::chrono::time_point<std::chrono::steady_clock> PingSentTime;
@@ -90,13 +89,20 @@ public:
     int CustomExtensions;
     int CustomBlocksLevel;
     bool GlobalChat;
-    std::atomic<bool> DataAvailable;
-    std::unique_ptr<Sockets> clientSocket;
+
     std::unique_ptr<Player> player;
 
     std::map<std::string, int> Extensions;
     std::vector<unsigned char> Selections;
+    // -- Not overrides
+    void HoldThis(unsigned char blockType, bool canChange);
+    void CreateSelection(unsigned char selectionId, std::string label, short startX, short startY, short startZ, short endX, short endY, short endZ, short red, short green, short blue, short opacity);
+    void DeleteSelection(unsigned char selectionId);
+    void SetWeather(int weatherType);
+    void SendHackControl(bool canFly, bool noclip, bool speeding, bool spawnControl, bool thirdperson, int jumpHeight);
+    void SetBlockPermissions(int blockId, bool canPlace, bool canDelete);
 
+    // -- Overrides
     int GetId() override { return Id; };
     int GetRank() override;
     int GetCustomBlocksLevel() override { return CustomBlocksLevel; }
@@ -105,17 +111,13 @@ public:
     std::string GetLoginName() override;
     bool GetGlobalChat() override;
     int GetMapId() override;
+    bool GetLoggedIn() override;
     void SetGlobalChat(bool active) override;
 
     void SpawnEntity(std::shared_ptr<Entity> e) override;
     void DespawnEntity(std::shared_ptr<Entity> e) override;
     void SendChat(std::string message) override;
-    void HoldThis(unsigned char blockType, bool canChange);
-    void CreateSelection(unsigned char selectionId, std::string label, short startX, short startY, short startZ, short endX, short endY, short endZ, short red, short green, short blue, short opacity);
-    void DeleteSelection(unsigned char selectionId);
-    void SetWeather(int weatherType);
-    void SendHackControl(bool canFly, bool noclip, bool speeding, bool spawnControl, bool thirdperson, int jumpHeight);
-    void SetBlockPermissions(int blockId, bool canPlace, bool canDelete);
+
 
     void SendDefineBlock(BlockDefinition newBlock) override;
     void SendDeleteBlock(unsigned char blockId) override;
@@ -123,17 +125,27 @@ public:
     bool IsDataAvailable() override;
     void SendQueued() override;
     void HandleData() override;
-    void SendPacket(const D3PP::network::IPacket& p) override;
+    void SendPacket(D3PP::network::IPacket& p) override;
     void Undo(int steps) override;
     void Redo(int steps) override;
     void AddUndoItem(const D3PP::Common::UndoItem& item) override;
+    void NotifyDataAvailable() override;
+
+    std::shared_ptr<NetworkClient> GetSelfPointer() const;
+
 private:
     int Id;
     int eventSubId, addSubId, removeSubId, m_currentUndoIndex;
-    std::shared_ptr<NetworkClient> GetSelfPointer() const;
     std::vector<D3PP::Common::UndoItem> m_undoItems;
+    std::atomic<bool> DataAvailable;
+    std::atomic<bool> DataWaiting;
+    std::unique_ptr<Sockets> clientSocket;
 
     void SubEvents();
     void HandleEvent(const Event &event);
+    void ReadData();
+    void MainFunc();
+    void DataReady();
+    void OutputPing();
 };
 #endif //D3PP_NETWORKCLIENT_H

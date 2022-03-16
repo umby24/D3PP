@@ -41,7 +41,6 @@ class Logger
         void SubColorCodes(std::string &input);
         static Logger* singleton_;
     private:
-        int Timer;
         bool SaveFile;
         std::string Filename;
         bool GuiOutput;

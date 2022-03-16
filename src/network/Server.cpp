@@ -24,23 +24,51 @@
 #include "network/IPacket.h"
 #include "Utils.h"
 #include "CPE.h"
+#include <events/EventClientAdd.h>
+#include <events/EventClientDelete.h>
 
-int D3PP::network::Server::SentIncrement = 0;
+using namespace D3PP::network;
+
+std::atomic<int> D3PP::network::Server::SentIncrement = 0;
 float D3PP::network::Server::BytesSent = 0;
 float D3PP::network::Server::BytesReceived = 0;
-int D3PP::network::Server::ReceivedIncrement = 0;
+std::atomic<int> D3PP::network::Server::ReceivedIncrement = 0;
+
 std::vector<std::shared_ptr<IMinecraftClient>> D3PP::network::Server::roClients;
 std::map<int,std::shared_ptr<IMinecraftClient>> D3PP::network::Server::m_clients;
 std::mutex D3PP::network::Server::m_ClientMutex;
+Server* Server::m_Instance = nullptr;
 
 D3PP::network::Server::Server() {
+    this->m_Port = Configuration::NetSettings.ListenPort;
+
     Interval = std::chrono::seconds(5);
     Main = [this](){ this->MainFunc(); };
 
     TaskScheduler::RegisterTask("Bandwidth", *this);
     
-    m_serverSocket = std::make_unique<ServerSocket>(25566);
+    m_serverSocket = std::make_unique<ServerSocket>(m_Port);
     m_serverSocket->Listen();
+
+    std::thread handleThread([this]() { this->HandleClientData(); });
+    std::swap(m_handleThread, handleThread);
+
+    Logger::LogAdd("Server", "Network server started on port " + stringulate(this->m_Port), LogType::NORMAL, GLF);
+}
+
+void D3PP::network::Server::Start() {
+    if (m_Instance == nullptr) {
+        m_Instance = new Server();
+    }
+}
+
+
+void D3PP::network::Server::Stop() {
+    if (m_Instance == nullptr)
+        return;
+    
+    m_Instance->Shutdown();
+    free(m_Instance);
 }
 
 void D3PP::network::Server::MainFunc() {
@@ -53,13 +81,21 @@ void D3PP::network::Server::MainFunc() {
 
 void D3PP::network::Server::Shutdown() {
     m_serverSocket->Stop();
+
     for (auto const& c : roClients) {
         c->Kick("Server shutting down", false);
     }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    m_handleThread.join();
+
+    TaskScheduler::UnregisterTask("Bandwidth");
 }
 
 void D3PP::network::Server::HandleClientData() {
     while (System::IsRunning) {
+        HandleEvents();
+
         for(auto const& c : roClients) {
             if (c->IsDataAvailable())
                 c->SendQueued();
@@ -71,6 +107,34 @@ void D3PP::network::Server::HandleClientData() {
     }
 }
 
+void Server::HandleEvents() {
+    ServerSocketEvent e = m_serverSocket->CheckEvents();
+
+    if (e == ServerSocketEvent::SOCKET_EVENT_CONNECT) { 
+        HandleIncomingClient();
+    }
+
+    if (e == ServerSocketEvent::SOCKET_EVENT_DATA) {
+        int clientId = static_cast<int>(m_serverSocket->GetEventSocket());
+        m_clients[clientId]->NotifyDataAvailable();
+    }
+}
+
+void Server::HandleIncomingClient() {
+    std::unique_ptr<Sockets> newClient = m_serverSocket->Accept();
+
+    if (newClient != nullptr && newClient->GetSocketFd() != -1) {
+        NetworkClient newNcClient(std::move(newClient));
+        int clientId = newNcClient.GetId();
+
+        RegisterClient(newNcClient.GetSelfPointer());
+
+        EventClientAdd eca;
+        eca.clientId = clientId;
+        Dispatcher::post(eca);
+    }
+}
+
 void D3PP::network::Server::RegisterClient(const std::shared_ptr<IMinecraftClient>& client) {
     std::scoped_lock<std::mutex> clientLock(m_ClientMutex);
     m_clients.insert(std::make_pair(client->GetId(), client));
@@ -78,8 +142,13 @@ void D3PP::network::Server::RegisterClient(const std::shared_ptr<IMinecraftClien
 }
 
 void D3PP::network::Server::UnregisterClient(const std::shared_ptr<IMinecraftClient>& client) {
+    EventClientDelete ecd;
+    ecd.clientId = client->GetId();
+    Dispatcher::post(ecd);
+
     std::scoped_lock<std::mutex> clientLock(m_ClientMutex);
     m_clients.erase(client->GetId());
+    m_Instance->m_serverSocket->Unaccept(client->GetId());
     RebuildRoClients();
 }
 
@@ -92,20 +161,20 @@ void D3PP::network::Server::RebuildRoClients() {
     std::swap(newRo, roClients); // -- Should happen in an instant, but I suppose edge cases could happen \_(o_o)_/
 }
 
-void D3PP::network::Server::SendToAll(const IPacket& packet, std::string extension, int extVersion) {
+void D3PP::network::Server::SendToAll(IPacket& packet, std::string extension, int extVersion) {
     for ( auto const & c : roClients ) {
         if (!extension.empty()) {
             int currentVer = CPE::GetClientExtVersion(c, extension);
 
             if (extVersion == currentVer)
-                c->SendPacket(packet);
+                c->SendPacket(const_cast<IPacket &>(packet));
         }
 
         c->SendPacket(packet);
     }
 }
 
-void D3PP::network::Server::SendAllExcept(const IPacket& packet, std::shared_ptr<IMinecraftClient> toNot) {
+void D3PP::network::Server::SendAllExcept(IPacket& packet, std::shared_ptr<IMinecraftClient> toNot) {
     for ( auto const & c : roClients ) {
         if (c == toNot)
             continue;

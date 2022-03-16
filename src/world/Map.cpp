@@ -60,8 +60,7 @@ MapMain::MapMain() {
 }
 
 void MapMain::MainFunc() {
-    Files* f = Files::GetInstance();
-    std::string mapListFile = f->GetFile(MAP_LIST_FILE);
+    std::string mapListFile = Files::GetFile(MAP_LIST_FILE);
     long fileTime = Utils::FileModTime(mapListFile);
     
     if (System::IsRunning && !mbcStarted) {
@@ -100,7 +99,7 @@ void MapMain::MainFunc() {
             m.second->Unload();
         }
     }
-    fileTime = Utils::FileModTime(f->GetFile(MAP_SETTINGS_FILE));
+    fileTime = Utils::FileModTime(Files::GetFile(MAP_SETTINGS_FILE));
     if (fileTime != mapSettingsLastWriteTime) {
         MapSettingsLoad();
     }
@@ -328,8 +327,7 @@ std::string MapMain::GetMapMOTDOverride(int mapId) {
 }
 
 void MapMain::MapListSave() {
-    Files* f = Files::GetInstance();
-    std::string fName = f->GetFile(MAP_LIST_FILE);
+    std::string fName = Files::GetFile(MAP_LIST_FILE);
     PreferenceLoader pl(fName, "");
 
     for(auto const &m : _maps) {
@@ -348,8 +346,7 @@ void MapMain::MapListSave() {
 }
 
 void MapMain::MapListLoad() {
-    Files* f = Files::GetInstance();
-    std::string fName = f->GetFile(MAP_LIST_FILE);
+    std::string fName = Files::GetFile(MAP_LIST_FILE);
     PreferenceLoader pl(fName, "");
     pl.LoadFile();
 
@@ -397,9 +394,6 @@ int MapMain::Add(int id, short x, short y, short z, const std::string& name) {
     if (GetPointer(id) != nullptr)
         return -1;
 
-
-    Files *f = Files::GetInstance();
-
     std::shared_ptr<Map> newMap = std::make_shared<Map>();
     int mapSize = GetMapSize(x, y, z, MAP_BLOCK_ELEMENT_SIZE);
     newMap->ID = id;
@@ -410,7 +404,7 @@ int MapMain::Add(int id, short x, short y, short z, const std::string& name) {
     newMap->LastClient = time(nullptr);
     Vector3S sizeVector {x, y, z};
     newMap->m_mapProvider = std::make_unique<D3MapProvider>();
-    newMap->filePath = f->GetFolder("Maps") + name + "/";
+    newMap->filePath = Files::GetFolder("Maps") + name + "/";
     
     if (createNew)
         newMap->m_mapProvider->CreateNew(sizeVector, newMap->filePath, name);
@@ -436,8 +430,6 @@ void MapMain::Delete(int id) {
     if (mp == nullptr)
         return;
 
-    Network* nm = Network::GetInstance();
-
     if (mp->Clients > 0) {
         for(auto const &nc : nm->roClients) {
             if (nc->LoggedIn && nc->player->tEntity != nullptr&& nc->player->tEntity->MapID == id) {
@@ -453,8 +445,7 @@ void MapMain::Delete(int id) {
 }
 
 void MapMain::MapSettingsLoad() {
-    Files* fm = Files::GetInstance();
-    std::string mapSettingsFile = fm->GetFile("Map_Settings");
+    std::string mapSettingsFile = Files::GetFile(MAP_SETTINGS_FILE);
     json j;
     std::ifstream iStream(mapSettingsFile);
     if (!iStream.is_open()) {
@@ -477,8 +468,7 @@ void MapMain::MapSettingsLoad() {
 }
 
 void MapMain::MapSettingsSave() {
-    Files* fm = Files::GetInstance();
-    std::string hbSettingsFile = fm->GetFile("Map_Settings");
+    std::string hbSettingsFile = Files::GetFile(MAP_SETTINGS_FILE);
     json j;
     j["Max_Changes_s"] = mapSettingsMaxChangesSec;
 
@@ -779,8 +769,6 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
 
 void AddUndoByPlayerId(short playerId, const UndoItem& item) {
     if (playerId == -1) return;
-
-    Network* nMain = Network::GetInstance();
 
     for(auto const& nc : nMain->roClients) {
         if (nc->LoggedIn && nc->player && nc->player->tEntity && nc->player->tEntity->playerList) {

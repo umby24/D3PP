@@ -8,6 +8,9 @@
 #include "network/Packets.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "network/packets/ChatPacket.h"
+#include "network/Server.h"
+
 #include "Block.h"
 #include "world/Player.h"
 #include "CPE.h"
@@ -26,19 +29,23 @@ void NetworkFunctions::SystemRedScreen(const int& clientId, const std::string& m
     Packets::SendDisconnect(clientId, message);
 }
 
-void NetworkFunctions::SystemMessageNetworkSend(const int& clientId, const std::string& message, const int& type) {
-    if (clientId == CONSOLE_CLIENT_ID) {
-        Network* n = Network::GetInstance();
-        std::shared_ptr<IMinecraftClient> c = n->GetClient(CONSOLE_CLIENT_ID);
-        c->SendChat(message);
-        return;
-    }
-
+std::string SanitizeMessageString(const std::string &message) {
     std::string sanitized(message);
     Utils::replaceAll(sanitized, "\n", "");
     Utils::replaceAll(sanitized, "<br>", "\n");
     sanitized = Chat::StringMultiline(sanitized);
     sanitized = Chat::StringGV(sanitized);
+    return sanitized;
+}
+
+void NetworkFunctions::SystemMessageNetworkSend(const int& clientId, const std::string& message, const int& type) {
+    if (clientId == CONSOLE_CLIENT_ID) {
+        std::shared_ptr<IMinecraftClient> c = Network::GetClient(CONSOLE_CLIENT_ID);
+        c->SendChat(message);
+        return;
+    }
+
+    std::string sanitized = SanitizeMessageString(message);
     int lines = Utils::strCount(sanitized, '\n') + 1;
     std::vector<std::string> linev = Utils::splitString(sanitized, '\n');
     // -- emote replace
@@ -46,19 +53,13 @@ void NetworkFunctions::SystemMessageNetworkSend(const int& clientId, const std::
         std::string text = linev.at(i);
         
         if (!text.empty()) {
-            Packets::SendChatMessage(clientId, text, type);
+            Packets::SendChatMessage(clientId, text, static_cast<char>(type));
         }
     }
 }
 
 void NetworkFunctions::SystemMessageNetworkSend2All(const int& mapId, const std::string& message, const int& type) {
-    Network* n = Network::GetInstance();
-    std::string sanitized(message);
-    Utils::replaceAll(sanitized, "\n", "");
-    Utils::replaceAll(sanitized, "<br>", "\n");
-    sanitized = Chat::StringMultiline(sanitized);
-    sanitized = Chat::StringGV(sanitized);
-
+    std::string sanitized = SanitizeMessageString(message);
     int lines = Utils::strCount(sanitized, '\n') + 1;
     std::vector<std::string> linev = Utils::splitString(sanitized, '\n');
     // -- emote replace
@@ -66,14 +67,11 @@ void NetworkFunctions::SystemMessageNetworkSend2All(const int& mapId, const std:
         std::string text = linev.at(i);
 
         if (!text.empty()) {
-            for (auto const &nc : n->roClients) {
-                if (!nc->LoggedIn || nc->player == nullptr)
-                    continue;
+            D3PP::network::ChatPacket thisP(static_cast<char>(type), text);
 
-                if (mapId == -1 || nc->player->MapId == mapId) {
-                    Packets::SendChatMessage(nc->GetId(), text, type);
-                }
-            }
+            if (mapId == -1)
+                D3PP::network::Server::SendToAll(thisP, "", 0);
+
         }
     }
 }
@@ -96,16 +94,16 @@ void NetworkFunctions::NetworkOutBlockSet(const int& clientId, const short& x, c
 }
 
 void NetworkFunctions::NetworkOutBlockSet2Map(const int& mapId, const unsigned short& x, const unsigned short& y, const unsigned short& z, const unsigned char& type) {
-    Network* n = Network::GetInstance();
     Block* b = Block::GetInstance();
     MapBlock mb = b->GetBlock(type);
 
-    for(auto const &nc : n->roClients) {
-        if (nc->player != NULL && nc->player->MapId != mapId || !nc->LoggedIn)
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (nc->player != NULL && nc->GetMapId() != mapId || !nc->LoggedIn)
             continue;
 
         int onClient = mb.OnClient;
-        if (mb.CpeLevel > nc->CustomBlocksLevel) {
+
+        if (mb.CpeLevel > nc->GetCustomBlocksLevel()) {
             onClient = mb.CpeReplace;
         }
 
@@ -114,8 +112,7 @@ void NetworkFunctions::NetworkOutBlockSet2Map(const int& mapId, const unsigned s
 }
 
 void NetworkFunctions::NetworkOutEntityAdd(const int& clientId, const char& playerId, const std::string& name, const MinecraftLocation& location) {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(clientId);
 
     auto rotation = static_cast<unsigned char>((location.Rotation/360)*256.0);
     auto look = static_cast<unsigned char>((location.Look/360)*256.0);

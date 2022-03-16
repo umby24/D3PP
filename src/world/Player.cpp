@@ -3,15 +3,21 @@
 //
 
 #include "world/Player.h"
-#include <network/Network.h>
-#include <world/Map.h>
-#include <events/PlayerEventArgs.h>
-#include <events/EventEntityMapChange.h>
-#include "network/NetworkClient.h"
+
 #include "world/Entity.h"
-#include "common/Player_List.h"
+#include "world/Map.h"
+
+#include "events/PlayerEventArgs.h"
+#include "events/EventEntityMapChange.h"
+
+#include "network/Network.h"
+#include "network/NetworkClient.h"
 #include "network/Network_Functions.h"
 #include "network/Packets.h"
+#include "network/Server.h"
+
+#include "common/Player_List.h"
+
 
 const std::string MODULE_NAME = "Player";
 PlayerMain* PlayerMain::Instance = nullptr;
@@ -46,12 +52,11 @@ PlayerMain *PlayerMain::GetInstance() {
 }
 
 int PlayerMain::GetFreeNameId() {
-    Network* nm = Network::GetInstance();
     int id = 0;
     bool found = false;
     while (true) {
         found = false;
-        for(auto const &nc: nm->roClients) {
+        for(auto const &nc: D3PP::network::Server::roClients) {
             if (!nc->LoggedIn)
                 continue;
 
@@ -82,8 +87,7 @@ void Player::SendMap() {
     myMap->Send(myClientId);
     tEntity->SendPosOwn = true;
     tEntity->resend = true;
-    Network* nm = Network::GetInstance();
-    auto myClient = nm->GetClient(myClientId);
+    auto myClient = Network::GetClient(myClientId);
 
     if (myClientId != -1 && myClient != nullptr) {
         auto entities = myMap->GetEntities();
@@ -108,8 +112,7 @@ void Player::PlayerClicked(ClickButton button, ClickAction action, short yaw, sh
 }
 
 void Player::ChangeMap(std::shared_ptr<D3PP::world::Map> map) {
-    Network* nm = Network::GetInstance();
-    auto myClient =  nm->GetClient(myClientId);
+    auto myClient =  Network::GetClient(myClientId);
 
     if (myClientId != -1 && myClient != nullptr) {
         D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();
@@ -153,8 +156,7 @@ void Player::ChangeMap(std::shared_ptr<D3PP::world::Map> map) {
 
 void Player::DespawnEntities() {
     auto* mm = D3PP::world::MapMain::GetInstance();
-    Network* nm = Network::GetInstance();
-    auto myClient = nm->GetClient(myClientId);
+    auto myClient = Network::GetClient(myClientId);
 
     if (myClientId != -1 && myClient != nullptr) {
         auto entities = mm->GetPointer(MapId)->GetEntities();

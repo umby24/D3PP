@@ -1,12 +1,12 @@
 #ifndef D3PP_CONFIGURATION_H
 #define D3PP_CONFIGURATION_H
-
+#define CONFIGURATION_FILENAME "configuration"
 #include <string>
 #include "TaskScheduler.h"
-#include "json.hpp"
+
 #include "Vectors.h"
 #include "MinecraftLocation.h"
-
+#include "json.hpp"
 using json = nlohmann::json;
 using namespace D3PP::Common;
 
@@ -131,6 +131,7 @@ public:
     static Configuration* GetInstance();
 private:
     static Configuration* _instance;
+    std::string filepath;
     time_t lastLoaded;
     bool saveFile;
 

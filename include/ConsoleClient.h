@@ -38,10 +38,12 @@ public:
     bool IsDataAvailable() override { return false; }
     void SendQueued() override { }
     void HandleData() override { }
-    void SendPacket(const D3PP::network::IPacket& p) override { }
+    void SendPacket(D3PP::network::IPacket& p) override { }
+    bool GetLoggedIn() override { return true; }
         void Undo(int steps) override {}
     void Redo(int steps) override {}
     void AddUndoItem(const D3PP::Common::UndoItem& item) override {}
+    void NotifyDataAvailable() override {}
 private:
     static std::shared_ptr<ConsoleClient> instance;
 };
