@@ -79,7 +79,7 @@ void Packets::SendBlockChange(int clientId, short x, short y, short z, unsigned 
 void Packets::SendSpawnEntity(int clientId, char playerId, std::string name, short x, short y, short z, char rotation,
                               char look) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
-    if (c->canSend && c->SendBuffer != nullptr) {
+    if (c != nullptr && c->canSend && c->SendBuffer != nullptr) {
         const std::scoped_lock sLock(c->sendLock);
         c->SendBuffer->Write(static_cast<unsigned char>(7));
         c->SendBuffer->Write(static_cast<unsigned char>(playerId));

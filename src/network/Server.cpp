@@ -124,10 +124,10 @@ void Server::HandleIncomingClient() {
     std::unique_ptr<Sockets> newClient = m_serverSocket->Accept();
 
     if (newClient != nullptr && newClient->GetSocketFd() != -1) {
-        NetworkClient newNcClient(std::move(newClient));
-        int clientId = newNcClient.GetId();
+        std::shared_ptr<NetworkClient> newNcClient = std::make_shared<NetworkClient>(std::move(newClient));
+        int clientId = newNcClient->GetId();
 
-        RegisterClient(newNcClient.GetSelfPointer());
+        RegisterClient(newNcClient);
 
         EventClientAdd eca;
         eca.clientId = clientId;
