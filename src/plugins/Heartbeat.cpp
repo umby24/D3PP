@@ -10,6 +10,7 @@
 #include "network/Network.h"
 #include "world/Player.h"
 #include "network/httplib.h"
+#include "network/Server.h"
 #include "digestpp/digestpp.hpp"
 #include "Utils.h"
 #include "common/Logger.h"
@@ -30,7 +31,7 @@ void Heartbeat::Beat() {
     httplib::Params params;
     params.emplace("name", Configuration::GenSettings.name);
     params.emplace("port", stringulate(Configuration::NetSettings.ListenPort));
-    params.emplace("users", stringulate(nMain->roClients.size()));
+    params.emplace("users", stringulate(D3PP::network::Server::roClients.size()));
     params.emplace("max", stringulate(Configuration::NetSettings.MaxPlayers));
     params.emplace("public", Configuration::NetSettings.Public ? "true" : "false");
     params.emplace("version", "7");

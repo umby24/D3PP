@@ -98,7 +98,7 @@ void NetworkFunctions::NetworkOutBlockSet2Map(const int& mapId, const unsigned s
     MapBlock mb = b->GetBlock(type);
 
     for(auto const &nc : D3PP::network::Server::roClients) {
-        if (nc->player != NULL && nc->GetMapId() != mapId || !nc->LoggedIn)
+        if (nc->GetPlayerInstance() != nullptr && nc->GetMapId() != mapId || !nc->GetLoggedIn())
             continue;
 
         int onClient = mb.OnClient;

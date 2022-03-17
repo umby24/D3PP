@@ -5,6 +5,7 @@
 
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "network/Server.h"
 #include "common/Logger.h"
 #include "common/Files.h"
 #include "Rank.h"
@@ -334,10 +335,10 @@ void PlayerListEntry::SetRank(int rank, const std::string &reason) {
 
     Rank* r = Rank::GetInstance();
 
-    for(auto &nc : ni->roClients) {
-        if (nc->player && nc->player->tEntity && nc->player->tEntity->playerList && nc->player->tEntity->playerList->Number == Number) {
+    for(auto &nc : D3PP::network::Server::roClients) {
+        if (nc->GetPlayerInstance() && nc->GetPlayerInstance()->GetEntity() && nc->GetPlayerInstance()->GetEntity()->playerList && nc->GetPlayerInstance()->GetEntity()->playerList->Number == Number) {
             RankItem ri = r->GetRank(rank, false);
-            Entity::SetDisplayName(nc->player->tEntity->Id, ri.Prefix, this->Name, ri.Suffix);
+            Entity::SetDisplayName(nc->GetPlayerInstance()->GetEntity()->Id, ri.Prefix, this->Name, ri.Suffix);
             NetworkFunctions::SystemMessageNetworkSend(nc->GetId(), "&eYour rank has been changed to '" + ri.Name + "' (" + reason + ")");
         }
     }
@@ -346,8 +347,8 @@ void PlayerListEntry::SetRank(int rank, const std::string &reason) {
 void PlayerListEntry::Kick(const std::string &reason, int count, bool log, bool show) {
     bool found = false;
 
-    for(auto &nc : ni->roClients) {
-        if (nc->player && nc->player->tEntity && nc->player->tEntity->playerList && nc->player->tEntity->playerList->Number == Number) {
+    for(auto &nc : D3PP::network::Server::roClients) {
+        if (nc->GetPlayerInstance() && nc->GetPlayerInstance()->GetEntity() && nc->GetPlayerInstance()->GetEntity()->playerList && nc->GetPlayerInstance()->GetEntity()->playerList->Number == Number) {
             nc->Kick("You got kicked (" + reason + ")", !show);
             found = true;
         }

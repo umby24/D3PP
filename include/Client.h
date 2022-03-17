@@ -12,6 +12,5 @@ public:
     static void Login(int clientId, std::string name, std::string mppass, char version);
     static void LoginCpe(int clientId, std::string name, std::string mppass, char version);
     static void Logout(int clientId, std::string message, bool showtoall);
-    static void LoginThread();
 };
 #endif //D3PP_CLIENT_H

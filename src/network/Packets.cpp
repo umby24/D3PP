@@ -299,6 +299,16 @@ void Packets::SendChangeModel(std::shared_ptr<NetworkClient> client, unsigned ch
     client->SendBuffer->Purge();
 }
 
+void Packets::SendChangeModel(std::shared_ptr<IMinecraftClient> client, unsigned char entityId, std::string modelName) {
+    auto concrete = std::static_pointer_cast<NetworkClient>(client);
+    const std::scoped_lock sLock(concrete->sendLock);
+    concrete->SendBuffer->Write(static_cast<unsigned char>(29));
+    concrete->SendBuffer->Write(entityId);
+    if (modelName.size() != 64) Utils::padTo(modelName, 64);
+    concrete->SendBuffer->Write(modelName);
+    concrete->SendBuffer->Purge();
+}
+
 void Packets::SendEnvMapAppearance(std::shared_ptr<NetworkClient> client, std::string url, unsigned char sideBlock,
                                    unsigned char edgeBlock, short sideLevel) {
     const std::scoped_lock sLock(client->sendLock);

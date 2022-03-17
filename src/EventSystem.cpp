@@ -5,12 +5,12 @@
 
 
 std::map< Event::DescriptorType, std::vector<Dispatcher::SlotHandle> > Dispatcher::_observers;
-unsigned int Dispatcher::_nextID = 0;
+int Dispatcher::_nextID = 0;
 
 Event::~Event()
 = default;
 
-unsigned int Dispatcher::subscribe( const Event::DescriptorType& descriptor,
+int Dispatcher::subscribe( const Event::DescriptorType& descriptor,
                                     SlotType&& slot )
 {
     auto id           = _nextID;

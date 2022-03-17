@@ -47,11 +47,10 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 
     std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
 
-    c->player = std::make_unique<Player>();
-    c->player->LoginName = name;
-    c->player->MPPass = mppass;
-    c->player->ClientVersion = version;
-    c->player->myClientId = c->GetId();
+    auto player = std::make_shared<D3PP::world::Player>(name, mppass, version);
+    player->myClientId = c->GetId();
+
+    c->player = std::static_pointer_cast<D3PP::world::IMinecraftPlayer>(player);
 
     bool preLoginCorrect = true;
     if (version != 7) {
@@ -84,11 +83,11 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
         return;
     }
 
-    PlayerListEntry *entry = pl->GetPointer(c->player->LoginName);
+    PlayerListEntry *entry = pl->GetPointer(c->GetLoginName());
 
     if (entry == nullptr) {
-        pl->Add(c->player->LoginName);
-        entry = pl->GetPointer(c->player->LoginName);
+        pl->Add(c->GetLoginName());
+        entry = pl->GetPointer(c->GetLoginName());
     }  
     if (entry->Banned) {
         c->Kick("You are banned", true);
@@ -114,8 +113,8 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     newEntity->playerList = entry;
     newEntity->model = "default";
     
-    c->player->tEntity = newEntity;
-    c->player->MapId = spawnMap->ID;
+    player->tEntity = newEntity;
+    player->MapId = spawnMap->ID;
     c->LoggedIn = true;
     Entity::Add(newEntity);
     Entity::SetDisplayName(newEntity->Id, currentRank.Prefix, name, currentRank.Suffix);
@@ -128,7 +127,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 
     NetworkFunctions::SystemLoginScreen(c->GetId(), Configuration::GenSettings.name, motd, currentRank.OnClient);
 
-    c->player->SendMap();
+    player->SendMap();
 
     newEntity->SpawnSelf = true;
     newEntity->Spawn();
@@ -159,11 +158,11 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 void Client::LoginCpe(int clientId, std::string name, std::string mppass, char version) {
     std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
 
-    c->player = std::make_unique<Player>();
-    c->player->LoginName = name;
-    c->player->MPPass = mppass;
+    auto player = std::make_shared<D3PP::world::Player>(name, mppass, version);
+    player->myClientId = c->GetId();
+    c->player = std::static_pointer_cast<D3PP::world::IMinecraftPlayer>(player);
+
     c->CPE = true;
-    c->player->ClientVersion = version;
     Packets::SendExtInfo(c, "D3PP Server Alpha", 19);
     Packets::SendExtEntry(c, CUSTOM_BLOCKS_EXT_NAME, 1);
     Packets::SendExtEntry(c, HELDBLOCK_EXT_NAME, 1);
@@ -198,24 +197,24 @@ void Client::Logout(int clientId, std::string message, bool showtoall) {
         return;
     }
     c->LoggedIn = false;
-    Logger::LogAdd(MODULE_NAME, "Player logged out (IP: " + c->IP + " Name: " + c->player->LoginName + " Message: " + message + ")", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "Player logged out (IP: " + c->IP + " Name: " + c->GetLoginName() + " Message: " + message + ")", LogType::NORMAL, GLF);
 
-    if (c->player && c->player->tEntity) {
-        std::shared_ptr<Map> currentMap = mm->GetPointer(c->player->tEntity->MapID);
+    if (c->player && c->GetPlayerInstance()->GetEntity()) {
+        std::shared_ptr<Map> currentMap = mm->GetPointer(c->GetPlayerInstance()->GetEntity()->MapID);
         if (currentMap != nullptr) {
-            currentMap->RemoveEntity(c->player->tEntity);
+            currentMap->RemoveEntity(c->GetPlayerInstance()->GetEntity());
         }
 
-        if (showtoall && !c->player->LogoutHide) {
-            NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(c->player->tEntity->Id) + "&e' logged out (" + message + ")");
+        if (showtoall) {
+            NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(c->GetPlayerInstance()->GetEntity()->Id) + "&e' logged out (" + message + ")");
         }
 
-        D3PP::network::ExtRemovePlayerName rpnPacket(c->player->NameId);
+        D3PP::network::ExtRemovePlayerName rpnPacket(c->GetPlayerInstance()->GetNameId());
         D3PP::network::Server::SendToAll(rpnPacket, EXT_PLAYER_LIST_EXT_NAME, 1);
 
-        c->player->tEntity->Despawn();
-        Entity::Delete(c->player->tEntity->Id);
-        c->player->tEntity = nullptr;
+        c->GetPlayerInstance()->GetEntity()->Despawn();
+        Entity::Delete(c->GetPlayerInstance()->GetEntity()->Id);
+        // Set Entity as = nullptr;
     }
     
     EventClientLogout ecl;

@@ -15,8 +15,7 @@ using json = nlohmann::json;
 CustomBlocks* CustomBlocks::instance = nullptr;
 
 void CustomBlocks::Load() {
-    Files* f = Files::GetInstance();
-    std::string filePath = f->GetFile(CUSTOM_BLOCK_FILE_NAME);
+    std::string filePath = Files::GetFile(CUSTOM_BLOCK_FILE_NAME);
 
     if (Utils::FileSize(filePath) == -1) {
         Save();
@@ -114,8 +113,7 @@ void CustomBlocks::Add(BlockDefinition blockDef) {
 }
 
 void CustomBlocks::Save() {
-    Files* f = Files::GetInstance();
-    std::string filePath = f->GetFile(CUSTOM_BLOCK_FILE_NAME);
+    std::string filePath = Files::GetFile(CUSTOM_BLOCK_FILE_NAME);
     json j;
     int index = 0;
     for (auto const &pair : _blockDefintiions) {
@@ -172,8 +170,7 @@ void CustomBlocks::MainFunc() {
         isModified = false;
     }
 
-    Files* f = Files::GetInstance();
-    std::string filePath = f->GetFile(CUSTOM_BLOCK_FILE_NAME);
+    std::string filePath = Files::GetFile(CUSTOM_BLOCK_FILE_NAME);
     time_t currentModTime = Utils::FileModTime(filePath);
 
     if (currentModTime != lastModified) {

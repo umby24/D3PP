@@ -9,6 +9,7 @@
 #include <memory>
 #include "CustomBlocks.h"
 
+class IMinecraftClient;
 class NetworkClient;
 
 class Packets {
@@ -37,6 +38,7 @@ public:
     static void SendSelectionBoxDelete(std::shared_ptr<NetworkClient> client, unsigned char selectionId);
     static void SendBlockPermissions(std::shared_ptr<NetworkClient> client, unsigned char blockId, bool canPlace, bool canDelete);
     static void SendChangeModel(std::shared_ptr<NetworkClient> client, unsigned char entityId, std::string modelName);
+    static void SendChangeModel(std::shared_ptr<IMinecraftClient> client, unsigned char entityId, std::string modelName);
     static void SendEnvMapAppearance(std::shared_ptr<NetworkClient> client, std::string url, unsigned char sideBlock, unsigned char edgeBlock, short sideLevel);
     static void SendSetWeather(std::shared_ptr<NetworkClient> client, unsigned char weatherType);
     static void SendHackControl(std::shared_ptr<NetworkClient> client, bool flying, bool noClip, bool speeding, bool respawn, bool thirdPerson, short jumpHeight);

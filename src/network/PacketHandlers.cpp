@@ -28,9 +28,9 @@ void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& clien
 	const char isCpe = static_cast<char>(client->ReceiveBuffer->ReadByte());
     Utils::TrimString(clientName);
 
-    if (!client->LoggedIn && client->DisconnectTime == 0 && isCpe != 66) {
+    if (!client->LoggedIn && isCpe != 66) {
         Client::Login(client->GetId(), clientName, mppass, clientVersion);
-    } else if (isCpe == 66 && !client->LoggedIn && client->DisconnectTime == 0) { // -- CPE capable Client
+    } else if (isCpe == 66 && !client->LoggedIn) { // -- CPE capable Client
         Logger::LogAdd("Network", "CPE Client Detected", LogType::NORMAL, GLF);
         Client::LoginCpe(client->GetId(), clientName, mppass, clientVersion);
     }
@@ -47,18 +47,18 @@ void PacketHandlers::HandleBlockChange(const std::shared_ptr<NetworkClient> &cli
 	const char mode = static_cast<char>(client->ReceiveBuffer->ReadByte() & 255);
 	const char type = static_cast<char>(client->ReceiveBuffer->ReadByte() & 255);
 
-    if (!client->LoggedIn || !client->player->tEntity)
+    if (!client->LoggedIn || !client->GetPlayerInstance()->GetEntity())
         return;
 
     BuildModeMain* bmm = BuildModeMain::GetInstance();
-    bmm->Distribute(client->GetId(), client->player->tEntity->MapID, x, y, z, (mode > 0), type);
+    bmm->Distribute(client->GetId(), client->GetPlayerInstance()->GetEntity()->MapID, x, y, z, (mode > 0), type);
 }
 
 void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &client) {
     // -- CPE :)
     if (CPE::GetClientExtVersion(client, HELDBLOCK_EXT_NAME) == 1) {
-        if (client->player->tEntity != nullptr)
-            client->player->tEntity->heldBlock = client->ReceiveBuffer->ReadByte();
+        if (client->GetPlayerInstance()->GetEntity() != nullptr)
+            client->GetPlayerInstance()->GetEntity()->heldBlock = client->ReceiveBuffer->ReadByte();
         else
             client->ReceiveBuffer->ReadByte();
     } else {
@@ -75,18 +75,18 @@ void PacketHandlers::HandlePlayerTeleport(const std::shared_ptr<NetworkClient> &
 
     const MinecraftLocation inputLocation { rot, look, Vector3S(X, Y, Z)};
 
-    if (!client->LoggedIn || !client->player->tEntity)
+    if (!client->LoggedIn || !client->GetPlayerInstance()->GetEntity())
         return;
 
-    if (client->player->tEntity->MapID == client->player->MapId)
-        client->player->tEntity->PositionSet(client->player->tEntity->MapID, inputLocation, 1, false);
+    if (client->GetPlayerInstance()->GetEntity()->MapID == client->GetPlayerInstance()->GetEntity()->MapID)
+        client->GetPlayerInstance()->GetEntity()->PositionSet(client->GetPlayerInstance()->GetEntity()->MapID, inputLocation, 1, false);
 }
 
 void PacketHandlers::HandleChatPacket(const std::shared_ptr<NetworkClient> &client) {
 	const char playerId = client->ReceiveBuffer->ReadByte();
     std::string message = client->ReceiveBuffer->ReadString();
     Utils::TrimString(message);
-    if (client->LoggedIn && client->player->tEntity) {
+    if (client->LoggedIn && client->GetPlayerInstance()->GetEntity()) {
         Chat::HandleIncomingChat(client, message, playerId);
     }
 }
@@ -120,7 +120,8 @@ void PacketHandlers::HandleCustomBlockSupportLevel(const std::shared_ptr<Network
     client->CustomBlocksLevel = supportLevel;
 
     Logger::LogAdd("CPE", "CPE Process complete.", LogType::NORMAL, GLF);
-    Client::Login(client->GetId(), client->player->LoginName, client->player->MPPass, client->player->ClientVersion);
+    auto concrete = std::static_pointer_cast<D3PP::world::Player>(client->GetPlayerInstance());
+    Client::Login(client->GetId(), client->GetLoginName(), concrete->MPPass, concrete->ClientVersion);
 }
 
 void PacketHandlers::HandleTwoWayPing(const std::shared_ptr<NetworkClient> &client) {
@@ -152,6 +153,6 @@ void PacketHandlers::HandlePlayerClicked(const std::shared_ptr<NetworkClient> &c
     const auto ca = static_cast<ClickAction>(action);
     const Vector3S targetBlock {targetBlockX, targetBlockY, targetBlockZ};
     const auto bf = static_cast<ClickTargetBlockFace>(targetedBlockFace);
-
-    client->player->PlayerClicked(cb, ca, yaw, pitch, targetedEntity, targetBlock, bf);
+    auto concrete = std::static_pointer_cast<D3PP::world::Player>(client->GetPlayerInstance());
+    concrete->PlayerClicked(cb, ca, yaw, pitch, targetedEntity, targetBlock, bf);
 }

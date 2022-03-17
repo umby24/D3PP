@@ -5,10 +5,9 @@
 #include "Block.h"
 
 #include "common/PreferenceLoader.h"
-#include "Utils.h"
 #include "common/Files.h"
 #include "common/Logger.h"
-
+#include "Utils.h"
 
 Block* Block::Instance = nullptr;
 const std::string Block::MODULE_NAME = "Block";
@@ -43,7 +42,7 @@ MapBlock Block::GetBlock(int id) {
     return result;
 }
 
-MapBlock Block::GetBlock(std::string name) {
+MapBlock Block::GetBlock(const std::string& name) {
     if (!hasLoaded)
         Load();
 
@@ -63,7 +62,7 @@ void Block::LoadOld() {
     if (Utils::FileSize("Data/Block.txt") == -1)
         return;
     
-    Logger::LogAdd(MODULE_NAME, "Importing old block file, Blocks.json will be overwritten.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Importing old block file, Blocks.json will be overwritten.", LogType::NORMAL, GLF);
     Blocks.clear();
     for (auto i = 0; i < 255; i++) { // -- Pre-pop..
         struct MapBlock shell { i };
@@ -106,7 +105,7 @@ void Block::LoadOld() {
             Blocks[newItem.Id] = newItem;
     }
 
-    Logger::LogAdd(MODULE_NAME, stringulate(Blocks.size()) + " blocks imported.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, stringulate(Blocks.size()) + " blocks imported.", LogType::NORMAL, GLF);
     Save();
     std::filesystem::remove("Data/Block.txt");
 }
@@ -120,21 +119,20 @@ void Block::Load() {
         LoadOld();
         return;
     }
-    
-    Files* f = Files::GetInstance();
-    std::string filePath = f->GetFile(BLOCK_FILE_NAME);
+
+    std::string filePath = Files::GetFile(BLOCK_FILE_NAME);
     json j;
 
     std::ifstream iStream(filePath);
 
     if (!iStream.is_open()) {
-        Logger::LogAdd(MODULE_NAME, "Failed to load blocks!!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Failed to load blocks!!", LogType::L_ERROR, GLF);
         return;
     }
     try {
         iStream >> j;
     } catch (int exception) {
-        Logger::LogAdd(MODULE_NAME, "Failed to load blocks! [" + stringulate(exception) + "]", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Failed to load blocks! [" + stringulate(exception) + "]", LogType::L_ERROR, GLF);
         return;
     }
     iStream.close();
@@ -157,9 +155,8 @@ void Block::Load() {
             loadedItem.PhysicsRandom = item["PhysicsRandom"];
             if (loadedItem.PhysicsRandom < 0 || loadedItem.PhysicsRandom > 10000)
                 loadedItem.PhysicsRandom = 0;
+
             loadedItem.PhysicsRepeat = item["PhysicsRepeat"];
-            if (loadedItem.PhysicsRepeat < 0 || loadedItem.PhysicsRepeat > 1)
-                loadedItem.PhysicsRepeat = 0;
 
             if (item["PhysicsOnLoad"].is_boolean())
                 loadedItem.PhysicsOnLoad = item["PhysicsOnLoad"];
@@ -195,14 +192,10 @@ void Block::Load() {
 
             if (!item["Kills"].is_null()) {
                 loadedItem.Kills = item["Kills"];
-                if (loadedItem.Kills < 0 || loadedItem.Kills > 1)
-                    loadedItem.Kills = 0;
             }
 
             if (!item["Special"].is_null()) {
                 loadedItem.Special = item["Special"];
-                if (loadedItem.Special < 0 || loadedItem.Special > 1)
-                    loadedItem.Special = 0;
             }
 
             if (!item["OverviewColor"].is_null())
@@ -224,7 +217,7 @@ void Block::Load() {
         }
     }
 
-    Logger::LogAdd(MODULE_NAME, "File loaded [" + filePath + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
+    Logger::LogAdd(MODULE_NAME, "File loaded [" + filePath + "]", LogType::NORMAL, GLF );
     hasLoaded = true;
     time_t modTime = Utils::FileModTime(filePath);
     LastFileDate = modTime;
@@ -232,8 +225,7 @@ void Block::Load() {
 
 void Block::Save() {
     json j;
-    Files* f = Files::GetInstance();
-    std::string blockFile = f->GetFile(BLOCK_FILE_NAME);
+    std::string blockFile = Files::GetFile(BLOCK_FILE_NAME);
     
     std::sort(Blocks.begin(), Blocks.end(), compareBlockIds);
 
@@ -271,7 +263,7 @@ void Block::Save() {
     time_t modTime = Utils::FileModTime(blockFile);
     LastFileDate = modTime;
 
-    Logger::LogAdd(MODULE_NAME, "File saved [" + blockFile + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File saved [" + blockFile + "]", LogType::NORMAL, GLF);
 }
 
 void Block::MainFunc() {
@@ -280,8 +272,7 @@ void Block::MainFunc() {
         Save();
     }
 
-    Files* f = Files::GetInstance();
-    std::string blockFile = f->GetFile(BLOCK_FILE_NAME);
+    std::string blockFile = Files::GetFile(BLOCK_FILE_NAME);
     time_t modTime = Utils::FileModTime(blockFile);
 
     if (modTime != LastFileDate) {

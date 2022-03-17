@@ -3,29 +3,35 @@
 //
 
 #include "network/NetworkClient.h"
-#include "Utils.h"
-#include <memory>
-#include <utility>
-#include <events/EventEntityAdd.h>
-#include <Client.h>
-#include "common/ByteBuffer.h"
-#include "common/Logger.h"
-#include "common/UndoItem.h"
 
-#include "network/Network_Functions.h"
-#include "world/Map.h"
-#include "world/Player.h"
-#include "network/Network.h"
-#include "CPE.h"
-#include "network/Packets.h"
-#include "world/Entity.h"
-#include "EventSystem.h"
-#include "events/EntityEventArgs.h"
-#include "events/EventEntityDelete.h"
-#include "common/Player_List.h"
 #include "network/Server.h"
 #include "network/PacketHandlers.h"
 #include "network/IPacket.h"
+#include "network/Network_Functions.h"
+#include "network/Network.h"
+#include "network/Packets.h"
+
+#include <memory>
+#include <utility>
+
+#include "common/ByteBuffer.h"
+#include "common/Logger.h"
+#include "common/UndoItem.h"
+#include "common/Player_List.h"
+
+#include "Client.h"
+#include "Utils.h"
+#include "CPE.h"
+#include "EventSystem.h"
+
+#include "world/Map.h"
+#include "world/Player.h"
+#include "world/Entity.h"
+
+#include "events/EntityEventArgs.h"
+#include "events/EventEntityDelete.h"
+#include "events/EventEntityAdd.h"
+
 
 #ifndef __linux__
 #include "network/WindowsSockets.h"
@@ -60,6 +66,10 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) : Selections(MAX_S
     CustomBlocksLevel = 0;
     GlobalChat = false;
     IP = clientSocket->GetSocketIp();
+    PingVal = 0;
+    eventSubId = 0;
+    addSubId = 0;
+    removeSubId = 0;
     SubEvents();
     Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", LogType::NORMAL, GLF);
 }
@@ -80,6 +90,10 @@ NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
     Ping = 0;
     CustomBlocksLevel = 0;
     GlobalChat = false;
+    PingVal = 0;
+    eventSubId = 0;
+    addSubId = 0;
+    removeSubId = 0;
     SubEvents();
 }
 NetworkClient::NetworkClient(NetworkClient &client) : Selections(MAX_SELECTION_BOXES) {
@@ -102,6 +116,10 @@ NetworkClient::NetworkClient(NetworkClient &client) : Selections(MAX_SELECTION_B
     CustomBlocksLevel = 0;
     GlobalChat = false;
     IP = clientSocket->GetSocketIp();
+    PingVal = 0;
+    eventSubId = 0;
+    addSubId = 0;
+    removeSubId = 0;
     SubEvents();
 }
 
@@ -154,33 +172,33 @@ void NetworkClient::HandleEvent(const Event& e) {
         return;
 
     if (stringulate(e.type()) == ENTITY_EVENT_MOVED) {
-        const EntityEventArgs& ea = static_cast<const EntityEventArgs&>(e);
+        const auto& ea = dynamic_cast<const EntityEventArgs&>(e);
         std::shared_ptr<Entity> eventEntity = Entity::GetPointer(ea.entityId);
-        if (eventEntity->Id == player->tEntity->Id && !eventEntity->SendPosOwn)
+        if (eventEntity->Id == player->GetEntity()->Id && !eventEntity->SendPosOwn)
             return;
         
-        if (eventEntity->Id != player->tEntity->Id)
+        if (eventEntity->Id != player->GetEntity()->Id)
             NetworkFunctions::NetworkOutEntityPosition(Id, eventEntity->ClientId, eventEntity->Location);
         else
             NetworkFunctions::NetworkOutEntityPosition(Id, -1, eventEntity->Location);
     } else if (stringulate(e.type()) == ENTITY_EVENT_SPAWN) {
-        const EventEntityAdd& ea = static_cast<const EventEntityAdd&>(e);
+        const auto& ea = dynamic_cast<const EventEntityAdd&>(e);
         std::shared_ptr<Entity> eventEntity = Entity::GetPointer(ea.entityId);
         if (eventEntity == nullptr) {
             return;
         }
-        if (eventEntity->MapID != player->tEntity->MapID)
+        if (eventEntity->MapID != player->GetEntity()->MapID)
             return;
-        if (eventEntity->Id != player->tEntity->Id)
+        if (eventEntity->Id != player->GetEntity()->Id)
             NetworkFunctions::NetworkOutEntityAdd(Id, eventEntity->ClientId, Entity::GetDisplayname(ea.entityId), eventEntity->Location);
         else
             NetworkFunctions::NetworkOutEntityAdd(Id, -1, Entity::GetDisplayname(ea.entityId), eventEntity->Location);
     } else if (stringulate(e.type()) == ENTITY_EVENT_DESPAWN) {
-        const EventEntityDelete& ea = static_cast<const EventEntityDelete&>(e);
+        const auto& ea = dynamic_cast<const EventEntityDelete&>(e);
         std::shared_ptr<Entity> eventEntity = Entity::GetPointer(ea.entityId);
 
-        if (LoggedIn && this->player != nullptr && this->player->tEntity != nullptr) {
-            if (eventEntity->MapID != player->tEntity->MapID)
+        if (LoggedIn && this->player != nullptr && this->player->GetEntity() != nullptr) {
+            if (eventEntity->MapID != player->GetEntity()->MapID)
                 return;
 
             NetworkFunctions::NetworkOutEntityDelete(Id, eventEntity->ClientId);
@@ -199,20 +217,16 @@ void NetworkClient::Kick(const std::string& message, bool hide) {
     if (DisconnectTime == 0) {
         DisconnectTime = time(nullptr) + 1;
         LoggedIn = false;
-        if (player != nullptr) {
-            player->LogoutHide = hide;
-        }
         Logger::LogAdd(MODULE_NAME, "Client Kicked [" + message + "]", LogType::NORMAL, GLF);
     }
 }
 
 void NetworkClient::SpawnEntity(std::shared_ptr<Entity> e) {
     std::shared_ptr<NetworkClient> selfPointer = GetSelfPointer();
-    if (e->Id != player->tEntity->Id) {
+    if (e->Id != player->GetEntity()->Id) {
         EntityShort s{};
         s.Id = e->Id;
         s.ClientId = e->ClientId;
-        player->Entities.push_back(s); // -- track the new client
         // -- spawn them :)
         NetworkFunctions::NetworkOutEntityAdd(Id, s.ClientId, Entity::GetDisplayname(s.Id), e->Location);
         CPE::PostEntityActions(selfPointer, e);
@@ -224,18 +238,6 @@ void NetworkClient::SpawnEntity(std::shared_ptr<Entity> e) {
 }
 
 void NetworkClient::DespawnEntity(std::shared_ptr<Entity> e) {
-    std::shared_ptr<NetworkClient> selfPointer = GetSelfPointer();
-
-    int iterator = 0;
-    for(auto const &vEntity : player->Entities) {
-        if (vEntity.Id == e->Id) {
-            player->Entities.erase(player->Entities.begin() + iterator);
-            break;
-        }
-        iterator++;
-    }
-
-    // -- spawn them :)
     NetworkFunctions::NetworkOutEntityDelete(Id, e->ClientId);
 }
 
@@ -248,11 +250,11 @@ void NetworkClient::HoldThis(unsigned char blockType, bool canChange) {
         return;
     }
     Packets::SendHoldThis(selfPointer, blockType, canChange);
-    player->tEntity->heldBlock = blockType;
+    player->GetEntity()->heldBlock = blockType;
 }
 
-void NetworkClient::CreateSelection(unsigned char selectionId, std::string label, short startX, short startY, short startZ, short endX, short endY, short endZ, short red, short green, short blue, short opacity) {
-    if (startX > endX || startY > endY || startZ > endZ)
+void NetworkClient::CreateSelection(unsigned char selectionId, std::string label, D3PP::Common::Vector3S start, D3PP::Common::Vector3S end, D3PP::Common::Vector3S color, short opacity) {
+    if (start.X > end.X || start.Y > end.Y || start.Z > end.Z)
         return;
 
     std::shared_ptr<NetworkClient> selfPointer = GetSelfPointer();
@@ -264,7 +266,7 @@ void NetworkClient::CreateSelection(unsigned char selectionId, std::string label
         return;
 
     Selections[selectionId] = 1;
-    Packets::SendSelectionBoxAdd(selfPointer, selectionId, std::move(label), startX, startY, startZ, endX, endY, endZ, red, green, blue, opacity);
+    Packets::SendSelectionBoxAdd(selfPointer, selectionId, std::move(label), start.X, start.Y, start.Z, end.X, end.Y, end.Z, color.X, color.Y, color.Z, opacity);
 }
 
 void NetworkClient::DeleteSelection(unsigned char selectionId) {
@@ -298,7 +300,7 @@ void NetworkClient::SendHackControl(bool canFly, bool noclip, bool speeding, boo
     if (CPE::GetClientExtVersion(selfPointer, HACKCONTROL_EXT_NAME) <= 0)
         return;
     
-    Packets::SendHackControl(selfPointer, canFly, noclip, speeding, spawnControl, thirdperson, jumpHeight);
+    Packets::SendHackControl(selfPointer, canFly, noclip, speeding, spawnControl, thirdperson, static_cast<short>(jumpHeight));
 }
 
 void NetworkClient::SetBlockPermissions(int blockId, bool canPlace, bool canDelete) {
@@ -328,14 +330,20 @@ int NetworkClient::GetRank() {
     if (!LoggedIn || !player)
         return 0;
 
-    return player->tEntity->playerList->PRank;
+    auto *pll = Player_List::GetInstance();
+    auto *pli = pll->GetPointer(GetLoginName());
+
+    return pli->PRank;
 }
 
 bool NetworkClient::IsStopped() {
     if (!LoggedIn || !player)
         return false;
 
-    return player->tEntity->playerList->Stopped;
+    auto *pll = Player_List::GetInstance();
+    auto *pli = pll->GetPointer(GetLoginName());
+
+    return pli->Stopped;
 }
 
 int NetworkClient::GetPing() {
@@ -343,7 +351,7 @@ int NetworkClient::GetPing() {
 }
 
 std::string NetworkClient::GetLoginName() {
-    return player->LoginName;
+    return player->GetLoginName();
 }
 
 bool NetworkClient::GetGlobalChat() {
@@ -351,15 +359,19 @@ bool NetworkClient::GetGlobalChat() {
 }
 
 int NetworkClient::GetMapId() {
-    if (!LoggedIn || !player || !player->tEntity)
+    if (!LoggedIn || !player)
         return -1;
 
-    return player->tEntity->MapID;
+    return player->GetEntity()->MapID;
 }
 
 void NetworkClient::SetGlobalChat(bool active) {
     GlobalChat = active;
-    player->tEntity->playerList->SetGlobal(active);
+
+    auto *pll = Player_List::GetInstance();
+    auto *pli = pll->GetPointer(GetLoginName());
+
+    pli->SetGlobal(active);
 }
 
 void NetworkClient::SendDefineBlock(BlockDefinition newBlock) {
@@ -532,7 +544,7 @@ void NetworkClient::Undo(int steps) {
     std::shared_ptr<Map> currentMap = mm->GetPointer(currentMapId);
     
     for(int i = m_currentUndoIndex; i > (m_currentUndoIndex - steps); i--)
-        currentMap->BlockChange(player->tEntity->playerList->Number, m_undoItems[i].Location.X, m_undoItems[i].Location.Y,m_undoItems[i].Location.Z, m_undoItems[i].OldBlock, false, false, true, 100);
+        currentMap->BlockChange(player->GetEntity()->playerList->Number, m_undoItems[i].Location.X, m_undoItems[i].Location.Y,m_undoItems[i].Location.Z, m_undoItems[i].OldBlock, false, false, true, 100);
 
     m_currentUndoIndex -= (steps - 1);
 }
@@ -555,7 +567,7 @@ void NetworkClient::Redo(int steps) {
     std::shared_ptr<Map> currentMap = mm->GetPointer(currentMapId);
     
     for(int i = m_currentUndoIndex; i < (m_currentUndoIndex + steps); i++)
-        currentMap->BlockChange(player->tEntity->playerList->Number, m_undoItems[i].Location.X, m_undoItems[i].Location.Y,m_undoItems[i].Location.Z, m_undoItems[i].NewBlock, false, false, true, 100);
+        currentMap->BlockChange(player->GetEntity()->playerList->Number, m_undoItems[i].Location.X, m_undoItems[i].Location.Y,m_undoItems[i].Location.Z, m_undoItems[i].NewBlock, false, false, true, 100);
 
     m_currentUndoIndex += (steps - 1);
 }
@@ -581,7 +593,7 @@ void NetworkClient::NotifyDataAvailable() {
     DataWaiting = true;
 }
 
-void NetworkClient::Shutdown(std::string reason) {
+void NetworkClient::Shutdown(const std::string& reason) {
     Client::Logout(Id, reason, true);
     canSend = false;
     canReceive = false;
@@ -592,4 +604,8 @@ void NetworkClient::Shutdown(std::string reason) {
 
 bool NetworkClient::GetLoggedIn() {
     return this->LoggedIn;
+}
+
+std::shared_ptr<D3PP::world::IMinecraftPlayer> NetworkClient::GetPlayerInstance() {
+    return this->player;
 }

@@ -7,7 +7,6 @@
 #include <utility>
 #include "Block.h"
 
-#include "network/Network.h"
 #include "network/NetworkClient.h"
 #include "world/Player.h"
 #include "common/Player_List.h"
@@ -15,8 +14,8 @@
 #include "world/Teleporter.h"
 #include "world/Map.h"
 #include "network/Network_Functions.h"
+#include "network/Server.h"
 #include "common/Logger.h"
-#include "common/Vectors.h"
 #include "Utils.h"
 #include "CPE.h"
 #include "network/Packets.h"
@@ -25,7 +24,6 @@
 #include "events/EventEntityDelete.h"
 #include "events/EventEntityDie.h"
 #include "events/EventEntityPositionSet.h"
-#include "events/EventEntityMapChange.h"
 #include "events/EntityEventArgs.h"
 
 const std::string MODULE_NAME = "Entity";
@@ -161,10 +159,8 @@ std::shared_ptr<Entity> Entity::GetPointer(int id, bool isClientId) {
 }
 
 void Entity::MessageToClients(int id, const std::string& message) {
-    Network* n = Network::GetInstance();
-
-    for(auto const &nc : n->roClients) {
-        if (nc->player->tEntity->Id == id) {
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (nc->GetPlayerInstance()->GetEntity()->Id == id) {
             NetworkFunctions::SystemMessageNetworkSend(nc->GetId(), message);
         }
     }
@@ -191,16 +187,17 @@ std::shared_ptr<Entity> Entity::GetPointer(const std::string& name) {
 
 void Entity::Delete(int id) {
     std::shared_ptr<Entity> e = GetPointer(id);
+
     if (e == nullptr)
         return;
-    Network* n = Network::GetInstance();
 
-    for(auto const &nc : n->roClients) {
-        if (nc->player == nullptr || nc->player->tEntity == nullptr)
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (nc->GetPlayerInstance() == nullptr || nc->GetPlayerInstance()->GetEntity() == nullptr)
             continue;
             
-        if (nc->player->tEntity == e) {
-            nc->player->tEntity = nullptr;
+        if (nc->GetPlayerInstance()->GetEntity() == e) {
+            auto concrete = std::static_pointer_cast<D3PP::world::Player>(nc->GetPlayerInstance());
+            concrete->tEntity = nullptr;
         }
     }
 
@@ -213,14 +210,13 @@ void Entity::Delete(int id) {
 
 void Entity::Spawn() {
     // -- Entity::Add(); should be called..
-    Network* n = Network::GetInstance();
     std::shared_ptr<Entity> selfPointer = GetPointer(Id);
 
-    for(auto const &nc : n->roClients) {
-        if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (!nc->GetLoggedIn() || nc->GetPlayerInstance() == nullptr || nc->GetPlayerInstance()->GetEntity() == nullptr)
             continue;
 
-        if (nc->player->MapId != MapID)
+        if (nc->GetPlayerInstance()->GetEntity()->MapID != MapID)
             continue;
 
         nc->SpawnEntity(selfPointer);
@@ -228,14 +224,13 @@ void Entity::Spawn() {
 }
 
 void Entity::Despawn() {
-    Network* n = Network::GetInstance();
     std::shared_ptr<Entity> selfPointer = GetPointer(Id);
 
-    for(auto const &nc : n->roClients) {
-        if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (!nc->GetLoggedIn() || nc->GetPlayerInstance() == nullptr || nc->GetPlayerInstance()->GetEntity() == nullptr)
             continue;
 
-        if (nc->player->MapId != MapID)
+        if (nc->GetPlayerInstance()->GetEntity()->MapID != MapID)
             continue;
 
         nc->DespawnEntity(selfPointer);
@@ -278,7 +273,8 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
     MapMain* mm = MapMain::GetInstance();
     
     if (mapId != MapID && associatedClient != nullptr) {
-        associatedClient->player->ChangeMap(mm->GetPointer(mapId));
+        auto concrete = std::static_pointer_cast<D3PP::world::Player>(associatedClient->GetPlayerInstance());
+        concrete->ChangeMap(mm->GetPointer(mapId));
         return;
     }
 
@@ -368,18 +364,16 @@ void Entity::Add(const std::shared_ptr<Entity> &e) {
 }
 
 void Entity::SetModel(std::string modelName) {
-    Network* nm = Network::GetInstance();
-
     model = std::move(modelName);
-    std::shared_ptr<NetworkClient> myClient = nullptr;
-    for(auto const &nc : nm->roClients) {
-        if (!nc->LoggedIn)
+    std::shared_ptr<IMinecraftClient> myClient = nullptr;
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (!nc->GetLoggedIn())
             continue;
 
-        if (CPE::GetClientExtVersion(nc, CHANGE_MODEL_EXT_NAME) <= 0 || nc->player->MapId != MapID)
+        if (CPE::GetClientExtVersion(nc, CHANGE_MODEL_EXT_NAME) <= 0 || nc->GetPlayerInstance()->GetEntity()->MapID != MapID)
             continue;
 
-        if (nc->player->tEntity->Id == Id) {
+        if (nc->GetPlayerInstance()->GetEntity()->Id == Id) {
             myClient = nc;
             continue;
         }

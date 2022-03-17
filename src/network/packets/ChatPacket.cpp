@@ -25,4 +25,8 @@ namespace D3PP::network {
         std::shared_ptr<NetworkClient> concrete = std::static_pointer_cast<NetworkClient>(client);
         Chat::HandleIncomingChat(concrete, m_message, m_playerId);
     }
+
+    int ChatPacket::GetLength() {
+        return 66;
+    }
 }

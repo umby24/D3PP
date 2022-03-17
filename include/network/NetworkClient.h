@@ -15,7 +15,6 @@
 
 class Sockets;
 class ByteBuffer;
-class Player;
 class Entity;
 class Event;
 struct BlockDefinition;
@@ -26,6 +25,11 @@ namespace D3PP::network {
 
 namespace D3PP::Common {
     struct UndoItem;
+    struct Vector3S;
+}
+
+namespace D3PP::world {
+    class IMinecraftPlayer;
 }
 
 class IMinecraftClient {
@@ -56,19 +60,20 @@ public:
     virtual void Undo(int steps) = 0;
     virtual void Redo(int steps) = 0;
     virtual void AddUndoItem(const D3PP::Common::UndoItem& item) = 0;
+    virtual std::shared_ptr<D3PP::world::IMinecraftPlayer> GetPlayerInstance() = 0;
 };
 
 class NetworkClient : public IMinecraftClient {
+    friend class Client;
 public:
     NetworkClient();
     ~NetworkClient() override;
     explicit NetworkClient(std::unique_ptr<Sockets> socket);
     NetworkClient(NetworkClient &client);
 
-
     // -- Output Buffer Commands
     void Kick(const std::string& message, bool hide) override;
-    void Shutdown(std::string reason);
+    void Shutdown(const std::string& reason);
 
     bool canSend;
     bool canReceive;
@@ -77,8 +82,6 @@ public:
     std::mutex sendLock;
 
     std::string IP;
-    time_t DisconnectTime;
-    time_t LastTimeEvent;
 
     float Ping;
     short PingVal;
@@ -90,13 +93,11 @@ public:
     int CustomBlocksLevel;
     bool GlobalChat;
 
-    std::unique_ptr<Player> player;
-
     std::map<std::string, int> Extensions;
-    std::vector<unsigned char> Selections;
+
     // -- Not overrides
     void HoldThis(unsigned char blockType, bool canChange);
-    void CreateSelection(unsigned char selectionId, std::string label, short startX, short startY, short startZ, short endX, short endY, short endZ, short red, short green, short blue, short opacity);
+    void CreateSelection(unsigned char selectionId, std::string label, D3PP::Common::Vector3S start, D3PP::Common::Vector3S end, D3PP::Common::Vector3S color, short opacity);
     void DeleteSelection(unsigned char selectionId);
     void SetWeather(int weatherType);
     void SendHackControl(bool canFly, bool noclip, bool speeding, bool spawnControl, bool thirdperson, int jumpHeight);
@@ -130,7 +131,7 @@ public:
     void Redo(int steps) override;
     void AddUndoItem(const D3PP::Common::UndoItem& item) override;
     void NotifyDataAvailable() override;
-
+    std::shared_ptr<D3PP::world::IMinecraftPlayer> GetPlayerInstance() override;
     std::shared_ptr<NetworkClient> GetSelfPointer() const;
 
 private:
@@ -140,6 +141,10 @@ private:
     std::atomic<bool> DataAvailable;
     std::atomic<bool> DataWaiting;
     std::unique_ptr<Sockets> clientSocket;
+    std::shared_ptr<D3PP::world::IMinecraftPlayer> player;
+    std::vector<unsigned char> Selections;
+    time_t DisconnectTime;
+    time_t LastTimeEvent;
 
     void SubEvents();
     void HandleEvent(const Event &event);

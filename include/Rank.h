@@ -25,7 +25,7 @@ struct RankItem {
 class Rank : TaskItem {
 public:
     Rank();
-    void Add(RankItem item);
+    void Add(const RankItem& item);
     RankItem GetRank(int rank, bool exact);
     void Delete(int id, bool isExact);
     static Rank* GetInstance();

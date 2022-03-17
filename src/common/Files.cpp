@@ -9,7 +9,8 @@ using json = nlohmann::json;
 #include "common/Logger.h"
 
 const std::string MODULE_NAME = "Files";
-
+std::map<std::string, std::string> Files::files;
+std::map<std::string, std::string> Files::folders;
 
 Files::~Files()
 {

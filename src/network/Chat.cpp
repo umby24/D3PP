@@ -124,13 +124,13 @@ void Chat::NetworkSend2Player(const int& entityId, const std::string& message, s
             bool found = false;
 
             for (const auto &nc : D3PP::network::Server::roClients) {
-                if (nc-> != nullptr && nc->player->tEntity != nullptr) {
-                    if (Utils::InsensitiveCompare(nc->player->tEntity->Name, playerName)) {
+                if (nc->GetPlayerInstance() != nullptr && nc->GetPlayerInstance()->GetEntity() != nullptr) {
+                    if (Utils::InsensitiveCompare(nc->GetPlayerInstance()->GetEntity()->Name, playerName)) {
                         em->lastPrivateMessage = playerName;
-                        Logger::LogAdd("Chat", em->Name + " > " + nc->player->tEntity->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
+                        Logger::LogAdd("Chat", em->Name + " > " + nc->GetPlayerInstance()->GetEntity()->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
                         NetworkFunctions::SystemMessageNetworkSend(nc->GetId(), message1);
 
-                        std::string message0 = "&c@ " + Entity::GetDisplayname(nc->player->tEntity->Id) + "&f: " +output;
+                        std::string message0 = "&c@ " + Entity::GetDisplayname(nc->GetPlayerInstance()->GetEntity()->Id) + "&f: " +output;
                         Entity::MessageToClients(entityId, message0);
                         found = true;
                         break;
@@ -198,13 +198,15 @@ void Chat::NetworkSend2All(const int& entityId, const std::string& message) {
 
 void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, const std::string& input, const char& playerId) {
     std::string output(input);
+    auto clientPlayer = client->GetPlayerInstance();
+    auto clientEntity = clientPlayer->GetEntity();
     if (CPE::GetClientExtVersion(client, LONG_MESSAGES_EXT_NAME) == 1){
         if (playerId == 1) {
-            client->player->tEntity->ChatBuffer += input;
+            clientEntity->ChatBuffer += input;
             return;
         } else {
-            output = client->player->tEntity->ChatBuffer + input;
-            client->player->tEntity->ChatBuffer = "";
+            output = clientEntity->ChatBuffer + input;
+            clientEntity->ChatBuffer = "";
         }
     }
     CommandMain* cm = CommandMain::GetInstance();
@@ -213,21 +215,21 @@ void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, cons
         cm->CommandDo(client, output.substr(1));
     } else if (output[0] == '#') {
         if (client->GlobalChat)
-            NetworkSend2Map(client->player->tEntity->Id, output.substr(1));
+            NetworkSend2Map(clientEntity->Id, output.substr(1));
         else
-            NetworkSend2All(client->player->tEntity->Id, output.substr(1));
+            NetworkSend2All(clientEntity->Id, output.substr(1));
         // -- do global chat
     } else if (output[0] == '@') {
         std::vector<std::string> splitString = Utils::splitString(output);
         std::string pmName = splitString[0].substr(1); // -- Trim off the '@'.
-        NetworkSend2Player(client->player->tEntity->Id, output.substr(2+pmName.size()), pmName);
+        NetworkSend2Player(clientEntity->Id, output.substr(2+pmName.size()), pmName);
     } 
     else
     {
         if (client->GlobalChat)
-            NetworkSend2All(client->player->tEntity->Id, output);
+            NetworkSend2All(clientEntity->Id, output);
         else
-            NetworkSend2Map(client->player->tEntity->Id, output);
+            NetworkSend2Map(clientEntity->Id, output);
     }
     
 }

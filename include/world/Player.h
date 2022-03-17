@@ -12,9 +12,11 @@
 #include "json.hpp"
 #include "common/TaskScheduler.h"
 #include "common/Vectors.h"
+#include "world/IMinecraftPlayer.h"
 
 struct EntityShort;
 class Entity;
+
 namespace D3PP::world {
     class Map;
 }
@@ -52,7 +54,6 @@ enum ClickTargetBlockFace {
 class PlayerMain : TaskItem {
 public:
     PlayerMain();
-
     static PlayerMain* GetInstance();
     static int GetFreeNameId();
 private:
@@ -62,29 +63,45 @@ private:
     void MainFunc();
 };
 
-class Player : TaskItem {
-public:
-    // -- Properties
-    std::string LoginName;
-    std::string MPPass;
-    char ClientVersion{};
-    int MapId{};
-    std::vector<EntityShort> Entities;
-    std::shared_ptr<Entity> tEntity;
-    short NameId{};
-    std::string lastPrivateMessage;
-    int timeDeathMessage{};
-    int timeBuildMessage{};
-    bool LogoutHide{};
-    int myClientId;
+namespace D3PP::world {
+    class Player : TaskItem, public IMinecraftPlayer {
+    public:
+        // -- Properties
+        std::string LoginName;
+        std::string MPPass;
+        char ClientVersion{};
+        int MapId{};
+        std::vector<EntityShort> Entities;
+        std::shared_ptr<Entity> tEntity;
+        short NameId{};
+        std::string lastPrivateMessage;
+        int timeDeathMessage{};
+        int timeBuildMessage{};
+        bool LogoutHide{};
+        int myClientId;
 
-    // -- Methods
-    Player();
-    void ChangeMap(std::shared_ptr<D3PP::world::Map> map);
-    void SendMap();
-    void PlayerClicked(ClickButton button, ClickAction action, short yaw, short pitch, char targetEntity, D3PP::Common::Vector3S targetBlock, ClickTargetBlockFace blockFace);
-private:
-    void DespawnEntities();
-};
+        // -- Methods
+        Player(std::string name, std::string mppass, char clientVersion);
+        void ChangeMap(std::shared_ptr<D3PP::world::Map> map);
+        void SendMap();
+        void PlayerClicked(ClickButton button, ClickAction action, short yaw, short pitch, char targetEntity,
+                           D3PP::Common::Vector3S targetBlock, ClickTargetBlockFace blockFace);
 
+        int GetId() override;
+
+        int GetRank() override;
+
+        int GetCustomBlockLevel() override;
+        std::string GetLoginName() override;
+
+        std::shared_ptr<Entity> GetEntity() override;
+        int GetNameId() override { return NameId; }
+        void Login() override;
+
+        void Logout() override;
+
+    private:
+        void DespawnEntities();
+    };
+}
 #endif //D3PP_PLAYER_H

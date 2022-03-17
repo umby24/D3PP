@@ -10,6 +10,7 @@
 #include "plugins/LuaPlugin.h"
 #include "BuildMode.h"
 #include "Utils.h"
+#include "common/Vectors.h"
 
 const struct luaL_Reg LuaBuildModeLib::lib[] = {
        {"set",  &LuaBuildModeSet},
@@ -137,9 +138,9 @@ int LuaBuildModeLib::LuaBuildModeCoordinateSet(lua_State* L) {
     float X = luaL_checknumber(L, 3);
     float Y = luaL_checknumber(L, 4);
     float Z = luaL_checknumber(L, 5);
-
+    D3PP::Common::Vector3F position{X, Y, Z};
     BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
-    buildModeMain->SetCoordinate(clientId, index, X, Y, Z);
+    buildModeMain->SetCoordinate(clientId, index, position);
 
     return 0;
 }

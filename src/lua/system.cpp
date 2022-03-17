@@ -60,8 +60,7 @@ int LuaSystemLib::LuaFileGet(lua_State* L) {
     }
 
     std::string fileName(lua_tostring(L, 1));
-    Files* f = Files::GetInstance();
-    lua_pushstring(L, f->GetFile(fileName).c_str());
+    lua_pushstring(L, Files::GetFile(fileName).c_str());
     return 1;
 }
 
@@ -75,8 +74,7 @@ int LuaSystemLib::LuaFolderGet(lua_State* L) {
     }
 
     std::string fileName(lua_tostring(L, 1));
-    Files* f = Files::GetInstance();
-    lua_pushstring(L, f->GetFolder(fileName).c_str());
+    lua_pushstring(L, Files::GetFolder(fileName).c_str());
     return 1;
 }
 

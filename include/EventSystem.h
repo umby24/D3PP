@@ -43,7 +43,7 @@ public:
       @returns Connection handle to identify the observing slot
     */
 
-    static unsigned int subscribe( const Event::DescriptorType& descriptor,
+    static int subscribe( const Event::DescriptorType& descriptor,
                                    SlotType&& slot );
 
     /**
@@ -69,7 +69,7 @@ public:
 private:
 
     /** Internal ID to assign to the next function handle */
-    static unsigned int _nextID;
+    static int _nextID;
 
     /**
       @struct SlotHandle
@@ -78,7 +78,7 @@ private:
 
     struct SlotHandle
     {
-        unsigned int id;
+        int id;
         SlotType slot;
     };
 

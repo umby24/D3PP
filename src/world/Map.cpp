@@ -6,6 +6,7 @@
 
 #include <utility>
 #include <world/D3MapProvider.h>
+#include <network/Server.h>
 
 #include "common/Files.h"
 #include "network/Network.h"
@@ -357,7 +358,7 @@ void MapMain::MapListLoad() {
 
         pl.SelectGroup(m.first);
         std::string mapName = pl.Read("Name", m.first);
-        std::string directory = pl.Read("Directory", f->GetFolder("Maps") + m.first + "/");
+        std::string directory = pl.Read("Directory", Files::GetFolder("Maps") + m.first + "/");
         bool mapDelete = (pl.Read("Delete", 0) == 1);
         bool mapReload = (pl.Read("Reload", 0) == 1);
         if (mapDelete) {
@@ -431,10 +432,10 @@ void MapMain::Delete(int id) {
         return;
 
     if (mp->Clients > 0) {
-        for(auto const &nc : nm->roClients) {
-            if (nc->LoggedIn && nc->player->tEntity != nullptr&& nc->player->tEntity->MapID == id) {
+        for(auto const &nc : D3PP::network::Server::roClients) {
+            if (nc->GetLoggedIn() && nc->GetPlayerInstance()->GetEntity() != nullptr&& nc->GetPlayerInstance()->GetEntity()->MapID == id) {
                 MinecraftLocation somewhere {0, 0, Vector3S{(short)0, (short)0, (short)0}};
-                nc->player->tEntity->PositionSet(0, somewhere, 4, true);
+                nc->GetPlayerInstance()->GetEntity()->PositionSet(0, somewhere, 4, true);
             }
         }
     }
@@ -688,14 +689,14 @@ void Map::Send(int clientId) {
 }
 
 void Map::Resend() {
-    Network* nMain = Network::GetInstance();
 
-    for(auto const &nc : nMain->roClients) {
-        if (nc->player == nullptr)
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (nc->GetPlayerInstance() == nullptr)
             continue;
+        auto concret = std::static_pointer_cast<D3PP::world::Player>(nc->GetPlayerInstance());
 
-        if (nc->player->MapId == ID) {
-            nc->player->SendMap();
+        if (concret->MapId == ID) {
+            concret->SendMap();
         }
     }
 
@@ -770,15 +771,14 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
 void AddUndoByPlayerId(short playerId, const UndoItem& item) {
     if (playerId == -1) return;
 
-    for(auto const& nc : nMain->roClients) {
-        if (nc->LoggedIn && nc->player && nc->player->tEntity && nc->player->tEntity->playerList) {
-            if (nc->player->tEntity->playerList->Number == playerId) {
+    for(auto const& nc : D3PP::network::Server::roClients) {
+        if (nc->GetLoggedIn() && nc->GetPlayerInstance() && nc->GetPlayerInstance()->GetEntity() && nc->GetPlayerInstance()->GetEntity()->playerList) {
+            if (nc->GetPlayerInstance()->GetEntity()->playerList->Number == playerId) {
                 nc->AddUndoItem(item);
                 break;
             }
         }
     }
-
 }
 
 void Map::QueuePhysicsAround(const Vector3S& loc) {
@@ -1225,7 +1225,7 @@ void Map::SetMapEnvironment(const MapEnvironment &env) {
     m_mapProvider->SetEnvironment(env);
     Network* nm = Network::GetInstance();
 
-    for(auto const &nc : nm->roClients) {
+    for(auto const &nc : D3PP::network::Server::roClients) {
         CPE::AfterMapActions(nc);
     }
 }

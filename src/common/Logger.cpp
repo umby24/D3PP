@@ -169,10 +169,9 @@ void Logger::SizeCheck() {
     time_t MaxDate = 2147483647;
     if ((Filename.empty()) || Utils::FileSize(Filename) > LOG_FILE_SIZE_MAX) {
         int number = 0;
-        Files* f = Files::GetInstance();
 
         std::string tempName;
-        std::string logFile = f->GetFile("Log");
+        std::string logFile = Files::GetFile("Log");
         time_t fileTime;
 
         for (auto i = 0; i < 5; i++) {

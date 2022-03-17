@@ -44,6 +44,7 @@ public:
     void Redo(int steps) override {}
     void AddUndoItem(const D3PP::Common::UndoItem& item) override {}
     void NotifyDataAvailable() override {}
+    std::shared_ptr<D3PP::world::IMinecraftPlayer> GetPlayerInstance() override { return nullptr; }
 private:
     static std::shared_ptr<ConsoleClient> instance;
 };
