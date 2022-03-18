@@ -46,10 +46,38 @@ std::string Files::GetFolder(std::string name) {
 void Files::LoadDefault() {
     std::cout << "Files.json not found, generating default.\n";
 
-    folders = { {"Main", ""}, {"Data", "Data/"}, {"Heartbeat", "Heartbeat/"}, {"Logs", "Logs/"}, {"HTML", "HTML/"} };
-    files = {{"Answer", "[Main][Data]Answer.txt"}, {"Block", "[Main][Data]Block.txt"}, {"Log", "[Main][Logs]Log_[i].txt"},
-    {"Map_List", "[Main][Data]MapList.txt"}, {"Map_HTML", "[Main][HTML]Maps.html"}, {"Playerlist", "[Main][Data]playerlist.sqlite3"}, {"Watchdog_HTML", "[Main][HTML]Watchdog.html"},
-    {"Build_Mode", "[Main][Data]Buildmode.txt"}, {"Command", "[Main][Data]Commands.json"}, {"configuration", "[Main][Data]Config.json"}};
+    folders = {
+            {"Main", ""},
+            {"Data", "Data/"},
+            {"Heartbeat", "Heartbeat/"},
+            {"Logs", "Logs/"},
+            {"HTML", "HTML/"},
+            {"Temp", "HTML/"},
+            {"Lua", "HTML/"},
+            {"Maps", "HTML/"},
+            {"Usermaps", "HTML/"},
+            {"Plugins", "HTML/"},
+    };
+    files = {
+            {"Block", "[Main][Data]Block.txt"},
+            {"Build_Mode", "[Main][Data]Buildmode.txt"},
+            {"Command", "[Main][Data]Commands.json"},
+            {"Log", "[Main][Logs]Log_[i].txt"},
+            {"Heartbeat", "[Main][Data]heartbeat.json"},
+            {"Rank", "[Main][Data]Ranks.json"},
+            {"Map_List", "[Main][Data]MapList.txt"},
+            {"Map_Settings", "[Main][Data]Map_Settings.txt"},
+            {"System", "[Main][Data]System.json"},
+            {"Network", "[Main][Data]Network.json"},
+            {"Player", "[Main][Data]Player.json"},
+            {"Map_HTML", "[Main][HTML]Maps.html"},
+            {"Mem_HTML", "[Main][HTML]Mem.html"},
+            {"Network_HTML", "[Main][HTML]Network.html"},
+            {"Playerlist", "[Main][Data]playerlist.sqlite3"},
+            {"Watchdog_HTML", "[Main][HTML]Watchdog.html"},
+            {"configuration", "[Main][Data]Config.json"},
+            {"BlockDefs", "[Main][Data]BlockDefs.json"},
+    };
 }
 
 void Files::Load() {
