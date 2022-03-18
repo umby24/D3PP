@@ -96,7 +96,7 @@ void Packets::SendSpawnEntity(int clientId, char playerId, std::string name, sho
 
 void Packets::SendPlayerTeleport(int clientId, char playerId, short x, short y, short z, char rotation, char look) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
-    if (c->canSend && c->SendBuffer != nullptr) {
+    if (c != nullptr && c->canSend && c->SendBuffer != nullptr) {
         const std::scoped_lock sLock(c->sendLock);
         c->SendBuffer->Write(static_cast<unsigned char>(8));
         c->SendBuffer->Write(static_cast<unsigned char>(playerId));

@@ -84,7 +84,7 @@ void Logger::Add(struct LogMessage message) {
         Messages.erase(Messages.begin());
     }
 
-    if (message.Type > StringToLogLevel(Configuration::GenSettings.logLevel)) {
+    if (message.Type < StringToLogLevel(Configuration::GenSettings.logLevel)) {
         return;
     }
 
@@ -172,6 +172,10 @@ void Logger::SizeCheck() {
 
         std::string tempName;
         std::string logFile = Files::GetFile("Log");
+
+        if (logFile.empty())
+            logFile = "Log[i].txt";
+
         time_t fileTime;
 
         for (auto i = 0; i < 5; i++) {

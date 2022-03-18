@@ -148,7 +148,7 @@ private:
 
     void SubEvents();
     void HandleEvent(const Event &event);
-    void ReadData();
+    bool ReadData();
     void MainFunc();
     void DataReady();
     void OutputPing();

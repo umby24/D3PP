@@ -1211,7 +1211,6 @@ void CommandMain::CommandListMaps() const {
 void CommandMain::CommandServerInfo() const {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
-    std::string serverRunTime = stringulate(time(nullptr) - System::startTime / 120.0);
 
     c->SendChat("§SServer Info:");
 #ifdef __linux__
@@ -1223,7 +1222,6 @@ void CommandMain::CommandServerInfo() const {
     c->SendChat("§SD3PP v" + stringulate(SYSTEM_VERSION_NUMBER) + ", Windows (x64)");
 #endif
 #endif
-    c->SendChat("§SRun time: " + serverRunTime + "h");
 }
 
 void CommandMain::CommandLogLast() {

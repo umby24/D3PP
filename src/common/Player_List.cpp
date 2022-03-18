@@ -74,6 +74,10 @@ void Player_List::OpenDatabase() {
 Player_List::Player_List() {
     dbOpen = false;
     fileName = Files::GetFile(PLAYERLIST_FILE_NAME);
+
+    if (fileName.empty())
+        fileName = "playerdb.sqlite3";
+
     _numberCounter = -1;
     this->Setup = [this] { Load(); };
     this->Main = [this] { MainFunc(); };

@@ -321,8 +321,7 @@ void NetworkClient::SendChat(std::string message) {
 }
 
 std::shared_ptr<NetworkClient> NetworkClient::GetSelfPointer() const {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> selfPointer = std::static_pointer_cast<NetworkClient>(nm->GetClient(this->Id));
+    std::shared_ptr<NetworkClient> selfPointer = std::static_pointer_cast<NetworkClient>(Network::GetClient(this->Id));
     return selfPointer;
 }
 
@@ -347,7 +346,7 @@ bool NetworkClient::IsStopped() {
 }
 
 int NetworkClient::GetPing() {
-    return Ping;
+    return static_cast<int>(Ping);
 }
 
 std::string NetworkClient::GetLoginName() {
@@ -406,7 +405,7 @@ void NetworkClient::SendQueued() {
     D3PP::network::Server::SentIncrement += bytesSent;
 }
 
-void NetworkClient::ReadData() {
+bool NetworkClient::ReadData() {
     if (canReceive) {
         auto* receiveBuf = new char[1026];
         receiveBuf[1024] = 99;
@@ -416,9 +415,11 @@ void NetworkClient::ReadData() {
             delete[] receiveBuf;
             ReceiveBuffer->Write(receive, dataRead);
             D3PP::network::Server::ReceivedIncrement += dataRead;
+            return true;
         } else {
             delete[] receiveBuf;
-            D3PP::network::Server::UnregisterClient(GetSelfPointer());
+            Shutdown("Connection Lost");
+            return false;
         }
     }
 
@@ -427,7 +428,8 @@ void NetworkClient::ReadData() {
 
 void NetworkClient::HandleData() {
     if (DataWaiting) {
-        ReadData();
+        if (!ReadData())
+            return;
     }
 
     int maxRepeat = 10;
@@ -437,6 +439,9 @@ void NetworkClient::HandleData() {
 
         if (!LoggedIn) {
             bool isAllowedPacket = (commandByte == 0) || (commandByte == 1) || commandByte == 16 || commandByte == 17 || commandByte == 19;
+            if (CPE) {
+                isAllowedPacket = isAllowedPacket || (commandByte == 43);
+            }
             if (!isAllowedPacket) {
                 Logger::LogAdd(MODULE_NAME, "Disconnecting " + this->IP + ": Unexpected handshake opcode.", WARNING, GLF);
                 Kick("Invalid Packet", true);
@@ -526,6 +531,7 @@ void NetworkClient::HandleData() {
 }
 
 void NetworkClient::SendPacket(D3PP::network::IPacket &p) {
+    const std::scoped_lock sLock(sendLock);
     p.Write(SendBuffer);
 }
 
@@ -597,9 +603,9 @@ void NetworkClient::Shutdown(const std::string& reason) {
     Client::Logout(Id, reason, true);
     canSend = false;
     canReceive = false;
-    D3PP::network::Server::UnregisterClient(GetSelfPointer());
     Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(Id) + "] [" + reason + "]", LogType::NORMAL, GLF);
     clientSocket->Disconnect();
+    D3PP::network::Server::UnregisterClient(GetSelfPointer());
 }
 
 bool NetworkClient::GetLoggedIn() {

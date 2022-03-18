@@ -30,7 +30,7 @@ using namespace std;
 void mainLoop();
 void MainConsole();
 int MainVersion = 1018;
-
+bool System::IsRunning = false;
 int main()
 {
     std::set_terminate([](){ 
@@ -62,7 +62,6 @@ int main()
 
     Block *b = Block::GetInstance();
     Rank *r = Rank::GetInstance();
-    System *s = System::GetInstance();
     Player_List *l = Player_List::GetInstance();
     PlayerMain *pm = PlayerMain::GetInstance();
     EntityMain em;
@@ -75,10 +74,7 @@ int main()
     D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();
 
     TaskScheduler::RunSetupTasks();
-
     System::IsRunning = true;
-    System::startTime = time(nullptr);
-
     D3PP::network::Server::Start();
     
     std::thread mainThread(mainLoop);

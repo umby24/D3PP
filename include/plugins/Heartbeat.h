@@ -27,6 +27,7 @@ public:
     static Heartbeat* GetInstance();
     static Heartbeat* Instance;
 private:
+    bool isFirstBeat;
     std::string salt;
     std::string serverUrl;
     bool isPublic;

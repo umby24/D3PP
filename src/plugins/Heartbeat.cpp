@@ -4,9 +4,6 @@
 
 #include "plugins/Heartbeat.h"
 
-
-#include "System.h"
-#include "common/TaskScheduler.h"
 #include "network/Network.h"
 #include "world/Player.h"
 #include "network/httplib.h"
@@ -22,10 +19,6 @@ const std::string MODULE_NAME = "Heartbeat";
 Heartbeat* Heartbeat::Instance = nullptr;
 
 void Heartbeat::Beat() {
-    System* sMain = System::GetInstance();
-    Network* nMain = Network::GetInstance();
-    PlayerMain* pMain = PlayerMain::GetInstance();
-
     httplib::Client cli(CLASSICUBE_NET_URL);
 
     httplib::Params params;
@@ -47,8 +40,11 @@ void Heartbeat::Beat() {
         json j = json::parse(res->body);
         Logger::LogAdd(MODULE_NAME, j["response"], LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
     } else {
-        Logger::LogAdd(MODULE_NAME, "Heartbeat sent.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-        serverUrl = res->body;
+        if (isFirstBeat) {
+            Logger::LogAdd(MODULE_NAME, "Heartbeat sent.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+            serverUrl = res->body;
+            Logger::LogAdd(MODULE_NAME, "Heartbeat URL: " + serverUrl, LogType::NORMAL, GLF);
+        }
     }
 
     lastBeat = time(nullptr);
@@ -57,6 +53,7 @@ void Heartbeat::Beat() {
 Heartbeat::Heartbeat() {
     salt = "";
     isPublic = false;
+    isFirstBeat = true;
     lastBeat = time(nullptr);
 
     this->Setup = [this] { Init(); };

@@ -24,7 +24,7 @@ std::string TaskScheduler::RegisterTask(std::string name, TaskItem &item) {
 
     _tasks.insert(std::make_pair(name, item));
     //std::cout << "Registered task: " << name << std::endl;
-    Logger::LogAdd(MODULE_NAME, "Registered Task: " + name, NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Registered Task: " + name, VERBOSE, __FILE__, __LINE__, __FUNCTION__);
     return name;
 }
 

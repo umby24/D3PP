@@ -53,7 +53,8 @@ void NetworkFunctions::SystemMessageNetworkSend(const int& clientId, const std::
         std::string text = linev.at(i);
         
         if (!text.empty()) {
-            Packets::SendChatMessage(clientId, text, static_cast<char>(type));
+            D3PP::network::ChatPacket thisP(static_cast<char>(type), text);
+            Network::GetClient(clientId)->SendPacket(thisP);
         }
     }
 }
@@ -71,7 +72,13 @@ void NetworkFunctions::SystemMessageNetworkSend2All(const int& mapId, const std:
 
             if (mapId == -1)
                 D3PP::network::Server::SendToAll(thisP, "", 0);
-
+            else {
+                for(auto const &nc : D3PP::network::Server::roClients) {
+                    if (nc->GetMapId() == mapId) {
+                        nc->SendPacket(thisP);
+                    }
+                }
+            }
         }
     }
 }

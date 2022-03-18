@@ -4,18 +4,12 @@
 
 #ifndef D3PP_SYSTEM_H
 #define D3PP_SYSTEM_H
-#include <string>
-#include <mutex>
 
 const float SYSTEM_VERSION_NUMBER = 0.10f;
-
-class System  {
+class System {
 public:
     static bool IsRunning;
-    static time_t startTime;
-    static System* GetInstance();
-    static System* Instance_;
-    static std::mutex mainMutex;
-    static std::string ServerName;
 };
+
+
 #endif //D3PP_SYSTEM_H
