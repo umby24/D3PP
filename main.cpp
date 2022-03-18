@@ -29,8 +29,6 @@ using namespace std;
 
 void mainLoop();
 void MainConsole();
-int MainVersion = 1018;
-bool System::IsRunning = false;
 int main()
 {
     std::set_terminate([](){ 

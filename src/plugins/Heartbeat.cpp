@@ -44,6 +44,7 @@ void Heartbeat::Beat() {
             Logger::LogAdd(MODULE_NAME, "Heartbeat sent.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
             serverUrl = res->body;
             Logger::LogAdd(MODULE_NAME, "Heartbeat URL: " + serverUrl, LogType::NORMAL, GLF);
+            isFirstBeat = false;
         }
     }
 

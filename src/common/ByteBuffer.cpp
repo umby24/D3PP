@@ -6,17 +6,20 @@
 #include "Utils.h"
 
 
-ByteBuffer::ByteBuffer(std::function<void()> callback) : _buffer(initial_size), _bufLock() {
+ByteBuffer::ByteBuffer(const std::function<void()>& callback) : _buffer(initial_size), _bufLock() {
     this->_size = (unsigned int) ByteBuffer::initial_size;
-    this->cbfunc = callback;
+
+    if (callback != nullptr)
+        this->cbfunc = callback;
+
     this->Interval = std::chrono::seconds(10);
     this->LastRun = std::chrono::system_clock::now();
     this->Main = [this] { MainFunc(); };
     _readPos = 0;
     _writePos = 0;
     _largestAlloc = 0;
-    std::string myId = TaskScheduler::RegisterTask("ByteBuffer", *this);
-    this->TaskId = myId;
+   // std::string myId = TaskScheduler::RegisterTask("ByteBuffer", *this);
+   // this->TaskId = myId;
 }
 
 void ByteBuffer::MainFunc() {
