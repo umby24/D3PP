@@ -147,10 +147,14 @@ void ByteBuffer::Write(std::string value) {
 }
 
 void ByteBuffer::Write(std::vector<unsigned char> memory, int length) {
+    int actualLen = length;
+    if (memory.size() != length) {
+        actualLen = memory.size();
+    }
     const std::scoped_lock<std::mutex> pqlock(_bufLock);
-    Resize(length);
-    _buffer.insert(_buffer.begin()+_writePos, memory.begin(), memory.begin()+length);
-    _writePos += length;
+    Resize(actualLen);
+    _buffer.insert(_buffer.begin()+_writePos, memory.begin(), memory.begin()+actualLen);
+    _writePos += actualLen;
 }
 
 void ByteBuffer::Shift(int size) {
