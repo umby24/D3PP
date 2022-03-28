@@ -13,6 +13,7 @@ namespace D3PP::world {
 
         FillState(Common::Vector3S mapSize) { MapSize = mapSize; fillData.resize((mapSize.X * mapSize.Y * mapSize.Z) * 4);}
         void SetBlock(Common::Vector3S location, unsigned char type) { int index = GetIndex(location.X, location.Y, location.Z); fillData.at(index) = type; }
+        unsigned char GetBlock(Common::Vector3S location) { int index = GetIndex(location.X, location.Y, location.Z); return fillData.at(index); }
     private:
         Common::Vector3S MapSize;
         int GetIndex(int x, int y, int z) {

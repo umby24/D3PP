@@ -9,7 +9,7 @@
 #include "common/Files.h"
 #include "common/Logger.h"
 
-const std::string MODULE_NAME = "Rank";
+#define MODULE_NAME "Rank"
 Rank* Rank::Instance = nullptr;
 
 Rank::Rank() {

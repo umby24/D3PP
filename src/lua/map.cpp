@@ -48,6 +48,7 @@ const struct luaL_Reg LuaMapLib::lib[] = {
         {"import", &LuaMapImportPlayer},
         {"exportsize", &LuaMapExportGetSize},
         {"beginfill", &LuaBeginFill},
+        {"getfillblock", &LuaGetFillBlock},
         {"setfillblock", &LuaSetFillBlock},
         {"endfill", &LuaEndFill},
         {"fillflat", &LuaFillFlat},
@@ -935,6 +936,35 @@ int LuaMapLib::LuaEndFill(lua_State *L) {
             map->SetBlocks(map->CurrentFillState->fillData);
             map->CurrentFillState.reset();
             result = 1;
+        }
+    }
+
+    lua_pushinteger(L, result);
+    return 1;
+}
+
+int LuaMapLib::LuaGetFillBlock(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 4) {
+        Logger::LogAdd("Lua", "LuaError: Map.GetFillBlock called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    int mapId = static_cast<int>(luaL_checkinteger(L, 1));
+    int X = static_cast<int>(luaL_checkinteger(L, 2));
+    int Y = static_cast<int>(luaL_checkinteger(L, 3));
+    int Z = static_cast<int>(luaL_checkinteger(L, 4));
+
+    int result = -1;
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map != nullptr) {
+        if (map->CurrentFillState == nullptr) {
+            result = 0;
+        } else {
+            result = map->CurrentFillState->GetBlock(Vector3S((short)X, Y, Z));
         }
     }
 

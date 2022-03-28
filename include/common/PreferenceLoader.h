@@ -4,13 +4,8 @@
 
 #ifndef D3PP_PREFERENCELOADER_H
 #define D3PP_PREFERENCELOADER_H
-#include <fstream>
 #include <string>
-#include <filesystem>
 #include <map>
-
-#include "../Utils.h"
-
 class PreferenceLoader {
 public:
     std::string Filename;
@@ -19,15 +14,15 @@ public:
     std::map<std::string, std::map<std::string, std::string>> SettingsDictionary;
     bool Save;
 
-    explicit PreferenceLoader(std::string filename, std::string folder = "Settings/", bool save = true);
+    explicit PreferenceLoader(const std::string& filename, const std::string& folder = "Settings/", bool save = true);
     void LoadFile();
     void SaveFile();
-    void SelectGroup(std::string group);
-    std::string Read(std::string key, std::string def);
-    int Read(std::string key, int def);
-    void Write(std::string key, std::string value);
-    void Write(std::string key, int value);
-    void Write(std::string key, float value);
+    void SelectGroup(const std::string& group);
+    std::string Read(const std::string& key, std::string def);
+    int Read(const std::string& key, int def);
+    void Write(const std::string& key, const std::string& value);
+    void Write(const std::string& key, int value);
+    void Write(const std::string& key, float value);
 private:
     void LoadFile_();
 };

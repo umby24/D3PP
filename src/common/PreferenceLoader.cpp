@@ -4,9 +4,14 @@
 
 #include "common/PreferenceLoader.h"
 
-PreferenceLoader::PreferenceLoader(std::string filename, std::string folder, bool save) {
+#include <fstream>
+#include <filesystem>
+#include "Utils.h"
+
+PreferenceLoader::PreferenceLoader(const std::string& filename, const std::string& folder, bool save) {
     Filename = folder + filename;
     CurrentGroup = "";
+    LastModified = 0;
     SettingsDictionary.insert(std::make_pair("", std::map<std::string, std::string>()));
     Save = save;
 }
@@ -60,7 +65,7 @@ void PreferenceLoader::LoadFile_() {
         Utils::TrimString(key);
         Utils::TrimString(value);
 
-        if (CurrentGroup == "" && SettingsDictionary.find("") == SettingsDictionary.end()) {
+        if (CurrentGroup.empty() && SettingsDictionary.find("") == SettingsDictionary.end()) {
             SettingsDictionary.insert(std::make_pair("", std::map<std::string, std::string>()));
         }
 
@@ -77,7 +82,7 @@ void PreferenceLoader::SaveFile() {
 
     std::ofstream oStream(Filename);
     for (auto const &pair : SettingsDictionary) {
-        if (pair.first != "") {
+        if (!pair.first.empty()) {
             std::string grpName = pair.first;
             Utils::replaceAll(grpName, "§", "");
             oStream << "[" << grpName << "]" << std::endl;
@@ -91,7 +96,7 @@ void PreferenceLoader::SaveFile() {
     LastModified = Utils::FileModTime(Filename);
 }
 
-void PreferenceLoader::SelectGroup(std::string group) {
+void PreferenceLoader::SelectGroup(const std::string& group) {
     CurrentGroup = group;
     if (SettingsDictionary.find(group) != SettingsDictionary.end())
         return;
@@ -99,7 +104,7 @@ void PreferenceLoader::SelectGroup(std::string group) {
     SettingsDictionary.insert(std::make_pair(group, std::map<std::string, std::string>()));
 }
 
-std::string PreferenceLoader::Read(std::string key, std::string def) {
+std::string PreferenceLoader::Read(const std::string& key, std::string def) {
     if (SettingsDictionary[CurrentGroup].find(key) != SettingsDictionary[CurrentGroup].end())
         return SettingsDictionary[CurrentGroup][key];
 
@@ -107,12 +112,12 @@ std::string PreferenceLoader::Read(std::string key, std::string def) {
     return def;
 }
 
-int PreferenceLoader::Read(std::string key, int def) {
+int PreferenceLoader::Read(const std::string& key, int def) {
     if (SettingsDictionary[CurrentGroup].find(key) != SettingsDictionary[CurrentGroup].end()) {
         try {
             return stoi(SettingsDictionary[CurrentGroup][key]);
         } catch (const std::exception& e) {
-            SettingsDictionary[CurrentGroup][key] = def;
+            SettingsDictionary[CurrentGroup][key] = stringulate(def);
             return def;
         }
     }
@@ -121,7 +126,7 @@ int PreferenceLoader::Read(std::string key, int def) {
     return def;
 }
 
-void PreferenceLoader::Write(std::string key, std::string value) {
+void PreferenceLoader::Write(const std::string& key, const std::string& value) {
     if (SettingsDictionary[CurrentGroup].find(key) != SettingsDictionary[CurrentGroup].end()) {
         SettingsDictionary[CurrentGroup][key] = value;
         return;
@@ -130,7 +135,7 @@ void PreferenceLoader::Write(std::string key, std::string value) {
     SettingsDictionary[CurrentGroup].insert(std::make_pair(key, value));
 }
 
-void PreferenceLoader::Write(std::string key, int value) {
+void PreferenceLoader::Write(const std::string& key, int value) {
     if (SettingsDictionary[CurrentGroup].find(key) != SettingsDictionary[CurrentGroup].end()) {
         SettingsDictionary[CurrentGroup][key] = stringulate(value);
         return;
@@ -139,7 +144,7 @@ void PreferenceLoader::Write(std::string key, int value) {
     SettingsDictionary[CurrentGroup].insert(std::make_pair(key, stringulate(value)));
 }
 
-void PreferenceLoader::Write(std::string key, float value) {
+void PreferenceLoader::Write(const std::string& key, float value) {
     if (SettingsDictionary[CurrentGroup].find(key) != SettingsDictionary[CurrentGroup].end()) {
         SettingsDictionary[CurrentGroup][key] = stringulate(value);
         return;
