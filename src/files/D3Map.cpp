@@ -4,6 +4,7 @@
 #include "Utils.h"
 #include "compression.h"
 #include <climits>
+#include <filesystem>
 
 namespace D3PP::files {
 		D3Map::D3Map(const std::string& folder) :

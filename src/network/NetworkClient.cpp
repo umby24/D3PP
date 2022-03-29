@@ -159,6 +159,7 @@ NetworkClient::~NetworkClient() {
     Dispatcher::unsubscribe(eventSubId);
     Dispatcher::unsubscribe(addSubId);
     Dispatcher::unsubscribe(removeSubId);
+    Logger::LogAdd("Meh", "Dtor complete", LogType::VERBOSE, GLF);
 }
 
 void NetworkClient::SubEvents() {

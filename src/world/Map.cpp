@@ -7,6 +7,7 @@
 #include <utility>
 #include <world/D3MapProvider.h>
 #include <network/Server.h>
+#include "files/D3Map.h"
 
 #include "common/Files.h"
 #include "network/Network.h"
@@ -15,6 +16,7 @@
 #include "common/ByteBuffer.h"
 #include "common/Logger.h"
 #include "common/UndoItem.h"
+#include "common/PreferenceLoader.h"
 #include "compression.h"
 #include "Utils.h"
 #include "Block.h"

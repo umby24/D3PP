@@ -18,8 +18,8 @@ ByteBuffer::ByteBuffer(const std::function<void()>& callback) : _buffer(initial_
     _readPos = 0;
     _writePos = 0;
     _largestAlloc = 0;
-   // std::string myId = TaskScheduler::RegisterTask("ByteBuffer", *this);
-   // this->TaskId = myId;
+    std::string myId = TaskScheduler::RegisterTask("ByteBuffer", *this);
+    this->TaskId = myId;
 }
 
 void ByteBuffer::MainFunc() {

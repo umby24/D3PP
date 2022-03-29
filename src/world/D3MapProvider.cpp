@@ -3,6 +3,8 @@
 //
 
 #include "world/D3MapProvider.h"
+#include "files/D3Map.h"
+#include <iterator>
 
 D3PP::world::D3MapProvider::D3MapProvider() {
     CreatingService = "D3 Server";
@@ -24,7 +26,7 @@ void D3PP::world::D3MapProvider::CreateNew(const D3PP::Common::Vector3S &size, c
 }
 
 bool D3PP::world::D3MapProvider::Save(const std::string &filePath) {
-    if (filePath == "")
+    if (filePath.empty())
         return m_d3map->Save();
 
     return m_d3map->Save(filePath);
