@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 class LuaPlugin;
+class Cplugin;
 
 namespace D3PP::plugins {
     class PluginManager {
@@ -32,6 +33,7 @@ namespace D3PP::plugins {
         static PluginManager* Instance;
         void RefreshPluginList();
         std::vector<std::shared_ptr<LuaPlugin>> m_plugins;
+        std::vector<std::shared_ptr<Cplugin>> m_cplugins;
     };
 }
 #endif //D3PP_PLUGINMANAGER_H

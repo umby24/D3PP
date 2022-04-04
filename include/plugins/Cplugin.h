@@ -1,5 +1,9 @@
-#ifndef D3PP_LUA_PLUGIN_H
-#define D3PP_LUA_PLUGIN_H
+//
+// Created by Wande on 3/29/2022.
+//
+
+#ifndef D3PP_CPLUGIN_H
+#define D3PP_CPLUGIN_H
 
 #include <string>
 #include <map>
@@ -9,29 +13,17 @@
 #include "common/TaskScheduler.h"
 
 struct lua_State;
+typedef bool(*CPluginInitFunc)();
+typedef void(*bindFunc)(void*);
 
 namespace D3PP::plugins {
     class PluginManager;
     class LuaState;
 }
 
-struct LuaFile {
-    std::string FilePath;
-    time_t LastLoaded;
-};
-
-struct LuaEvent {
-    std::string functionName;
-    Event::DescriptorType type;
-    clock_t lastRun;
-    long duration;
-    int mapId;
-};
-
-class LuaPlugin : TaskItem {
+class Cplugin : TaskItem {
 public:
-    explicit LuaPlugin(std::string folder);
-    ~LuaPlugin();
+    explicit Cplugin(std::string folder);
 
     void Load();
     void Unload();
@@ -46,25 +38,22 @@ public:
 private:
     std::string m_status;
     std::string m_folder;
-    std::shared_ptr<D3PP::plugins::LuaState> m_luaState;
     std::vector<int> m_eventDescriptors;
     bool m_loaded;
     std::recursive_mutex executionMutex;
-
-    std::map<std::string, LuaFile> _files;
-
-
+    bool LibLoad(std::string libraryPath, void** lib);
+    bool LibGetSym(void *lib, std::string sname, void *sym);
     static void Init();
     void TimerMain();
     void MainFunc();
     // -- Lua interface functions :)
-    
+
     // -- Event executors
-    void LuaDoEventTimer();
+    void CDoEventTimer();
 
     void RegisterEventListener();
     void HandleEvent(const Event &event);
     friend class D3PP::plugins::PluginManager;
 };
 
-#endif
+#endif //D3PP_CPLUGIN_H

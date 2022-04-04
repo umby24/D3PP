@@ -4,6 +4,7 @@
 
 #include "plugins/PluginManager.h"
 #include "plugins/LuaPlugin.h"
+#include "plugins/Cplugin.h"
 
 #include <vector>
 #include <string>
@@ -40,6 +41,7 @@ void D3PP::plugins::PluginManager::RefreshPluginList() {
     Files* fm = Files::GetInstance();
     std::string pluginBaseDirectory = fm->GetFolder("Plugins");
     std::vector<std::string> pluginDirectories = GetDirectories(pluginBaseDirectory);
+    std::vector<std::string> CPP_Plugins = GetDirectories("CPPlugins");
 
     for (auto &plugin : m_plugins) { // -- Mark unfound plugins for removal.
         if (std::find(pluginDirectories.begin(), pluginDirectories.end(), plugin->GetFolderName()) == pluginDirectories.end()) {
@@ -62,6 +64,21 @@ void D3PP::plugins::PluginManager::RefreshPluginList() {
             m_plugins.push_back(std::make_shared<LuaPlugin>(folder));
         }
     }
+
+    for(auto &folder : CPP_Plugins) {
+        bool alreadyHave = false;
+
+        for (auto const &plugin : m_cplugins) {
+            if (plugin->GetFolderName() == folder) {
+                alreadyHave = true;
+                break;
+            }
+        }
+
+        if (!alreadyHave) {
+            m_cplugins.push_back(std::make_shared<Cplugin>(folder));
+        }
+    }
 }
 
 void D3PP::plugins::PluginManager::LoadPlugins() {
@@ -76,6 +93,11 @@ void D3PP::plugins::PluginManager::LoadPlugins() {
         }
     }
 
+    for(auto & plugin : m_cplugins) {
+        if (!plugin->IsLoaded()) {
+            plugin->Load();
+        }
+    }
     Logger::LogAdd("PluginManager", "Loaded " + stringulate(m_plugins.size()) + " plugins.", LogType::NORMAL, GLF);
 }
 
