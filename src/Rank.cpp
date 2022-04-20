@@ -24,24 +24,12 @@ Rank::Rank() {
 }
 
 void Rank::Save() {
-    json j;
     Files* f = Files::GetInstance();
     std::string rankFile = f->GetFile(RANK_FILE_NAME);
 
-    for(const auto& x : _ranks) {
-        struct RankItem item = x.second;
-        std::string key = stringulate(item.Rank);
-
-        j[key] = nullptr;
-        j[key]["Rank"] = item.Rank;
-        j[key]["Name"] = item.Name;
-        j[key]["Prefix"] = item.Prefix;
-        j[key]["Suffix"] = item.Suffix;
-        j[key]["OnClient"] = item.OnClient;
-    }
 
     std::ofstream oStream(rankFile, std::ios::trunc);
-    oStream << std::setw(4) << j;
+    oStream << GetJson();
     oStream.flush();
     oStream.close();
 
@@ -165,5 +153,25 @@ Rank *Rank::GetInstance() {
         Instance = new Rank();
 
     return Instance;
+}
+
+std::string Rank::GetJson() {
+    json j;
+
+    for(const auto& x : _ranks) {
+        struct RankItem item = x.second;
+        std::string key = stringulate(item.Rank);
+
+        j[key] = nullptr;
+        j[key]["Rank"] = item.Rank;
+        j[key]["Name"] = item.Name;
+        j[key]["Prefix"] = item.Prefix;
+        j[key]["Suffix"] = item.Suffix;
+        j[key]["OnClient"] = item.OnClient;
+    }
+
+    std::ostringstream oss;
+    oss << std::setw(4) << j;
+    return oss.str();
 }
 

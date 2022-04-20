@@ -28,6 +28,7 @@ public:
     void Add(RankItem item);
     RankItem GetRank(int rank, bool exact);
     void Delete(int id, bool isExact);
+    std::string GetJson();
     static Rank* GetInstance();
     std::map<int, RankItem> _ranks;
 private:
