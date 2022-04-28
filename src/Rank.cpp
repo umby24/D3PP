@@ -9,7 +9,7 @@
 #include "common/Files.h"
 #include "common/Logger.h"
 
-const std::string MODULE_NAME = "Rank";
+#define MODULE_NAME "Rank"
 Rank* Rank::Instance = nullptr;
 
 Rank::Rank() {
@@ -89,7 +89,7 @@ void Rank::Load() {
         loadedItem.OnClient = item["OnClient"];
         _ranks[loadedItem.Rank] = loadedItem;
     }
-
+    
     Logger::LogAdd("Rank", "File loaded [" + filePath + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
 
     time_t modTime = Utils::FileModTime(filePath);

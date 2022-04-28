@@ -33,6 +33,7 @@ std::atomic<int> D3PP::network::Server::SentIncrement = 0;
 float D3PP::network::Server::BytesSent = 0;
 float D3PP::network::Server::BytesReceived = 0;
 std::atomic<int> D3PP::network::Server::ReceivedIncrement = 0;
+std::mutex D3PP::network::Server::m_roMutex;
 
 std::vector<std::shared_ptr<IMinecraftClient>> D3PP::network::Server::roClients;
 std::map<int,std::shared_ptr<IMinecraftClient>> D3PP::network::Server::m_clients;
@@ -44,9 +45,8 @@ D3PP::network::Server::Server() {
 
     Interval = std::chrono::seconds(5);
     Main = [this](){ this->MainFunc(); };
-
     TaskScheduler::RegisterTask("Bandwidth", *this);
-    
+    m_needsUpdate = false;
     m_serverSocket = std::make_unique<ServerSocket>(m_Port);
     m_serverSocket->Listen();
 
@@ -95,12 +95,14 @@ void D3PP::network::Server::Shutdown() {
 void D3PP::network::Server::HandleClientData() {
     while (System::IsRunning) {
         HandleEvents();
+        {
+            std::scoped_lock<std::mutex> clientLock(m_roMutex);
+            for (auto const &c: roClients) {
+                if (c->IsDataAvailable())
+                    c->SendQueued();
 
-        for(auto const& c : roClients) {
-            if (c->IsDataAvailable())
-                c->SendQueued();
-
-            c->HandleData();
+                c->HandleData();
+            }
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -117,6 +119,10 @@ void Server::HandleEvents() {
     if (e == ServerSocketEvent::SOCKET_EVENT_DATA) {
         int clientId = static_cast<int>(m_serverSocket->GetEventSocket());
         m_clients[clientId]->NotifyDataAvailable();
+    }
+
+    if (m_needsUpdate) {
+        RebuildRoClients();
     }
 }
 
@@ -145,19 +151,21 @@ void D3PP::network::Server::UnregisterClient(const std::shared_ptr<IMinecraftCli
     EventClientDelete ecd;
     ecd.clientId = client->GetId();
     Dispatcher::post(ecd);
-
-    std::scoped_lock<std::mutex> clientLock(m_ClientMutex);
-    m_clients.erase(client->GetId());
     m_Instance->m_serverSocket->Unaccept(client->GetId());
-    RebuildRoClients();
+    m_Instance->m_needsUpdate = true;
+    std::scoped_lock<std::mutex> clientLock(m_ClientMutex);
+    D3PP::network::Server::m_clients.erase(client->GetId());
 }
 
 void D3PP::network::Server::RebuildRoClients() {
+
     std::vector<std::shared_ptr<IMinecraftClient>> newRo;
     newRo.reserve(m_clients.size());
     for(auto const &nc : m_clients) {
         newRo.push_back(nc.second);
     }
+
+    std::scoped_lock<std::mutex> clientLock(m_roMutex);
     std::swap(newRo, roClients); // -- Should happen in an instant, but I suppose edge cases could happen \_(o_o)_/
 }
 

@@ -4,6 +4,7 @@
 
 #include "Block.h"
 
+#include <filesystem>
 #include "common/PreferenceLoader.h"
 #include "common/Files.h"
 #include "common/Logger.h"

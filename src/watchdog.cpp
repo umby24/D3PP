@@ -3,10 +3,13 @@
 //
 
 #include "watchdog.h"
-#include "common/Files.h"
-#include "Utils.h"
-#include "common/Logger.h"
 #include <time.h>
+#include <fstream>
+
+#include "common/Files.h"
+#include "common/Logger.h"
+#include "Utils.h"
+
 
 watchdog* watchdog::singleton_ = nullptr;
 

@@ -46,7 +46,8 @@ namespace D3PP::network {
      std::thread m_handleThread;
      static std::mutex m_ClientMutex;
      int m_Port;
-
+     static std::mutex m_roMutex;
+     bool m_needsUpdate;
      void HandleClientData();
      void HandleIncomingClient();
      void MainFunc();

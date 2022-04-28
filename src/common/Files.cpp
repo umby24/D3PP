@@ -20,9 +20,9 @@ Files::~Files()
 }
 
 std::string Files::GetFile(std::string name) {
-    if (files.find(name) == files.end()) {
+    if (files.find(name) == files.end())         
         return "";
-    }
+    
 
     std::string result = files[name];
 

@@ -18,8 +18,8 @@ ByteBuffer::ByteBuffer(const std::function<void()>& callback) : _buffer(initial_
     _readPos = 0;
     _writePos = 0;
     _largestAlloc = 0;
-   // std::string myId = TaskScheduler::RegisterTask("ByteBuffer", *this);
-   // this->TaskId = myId;
+    std::string myId = TaskScheduler::RegisterTask("ByteBuffer", *this);
+    this->TaskId = myId;
 }
 
 void ByteBuffer::MainFunc() {
@@ -147,10 +147,14 @@ void ByteBuffer::Write(std::string value) {
 }
 
 void ByteBuffer::Write(std::vector<unsigned char> memory, int length) {
+    int actualLen = length;
+    if (memory.size() != length) {
+        actualLen = memory.size();
+    }
     const std::scoped_lock<std::mutex> pqlock(_bufLock);
-    Resize(length);
-    _buffer.insert(_buffer.begin()+_writePos, memory.begin(), memory.begin()+length);
-    _writePos += length;
+    Resize(actualLen);
+    _buffer.insert(_buffer.begin()+_writePos, memory.begin(), memory.begin()+actualLen);
+    _writePos += actualLen;
 }
 
 void ByteBuffer::Shift(int size) {

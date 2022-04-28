@@ -6,7 +6,7 @@
 #define D3PP_BLOCK_H
 #include <string>
 #include <vector>
-#include <time.h>
+#include <ctime>
 
 #include "common/TaskScheduler.h"
 #include "json.hpp"

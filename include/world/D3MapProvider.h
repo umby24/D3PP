@@ -5,8 +5,11 @@
 #ifndef D3PP_D3MAPPROVIDER_H
 #define D3PP_D3MAPPROVIDER_H
 #include "IMapProvider.h"
-#include "files/D3Map.h"
+#include <memory>
 
+namespace D3PP::files {
+    class D3Map;
+}
 namespace D3PP::world {
     class D3MapProvider : public IMapProvider {
     public:

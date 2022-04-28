@@ -12,11 +12,10 @@
 
 #include "common/TaskScheduler.h"
 
-const std::string CREATE_SQL = "CREATE TABLE Player_List (Number INTEGER PRIMARY KEY, Name TEXT UNIQUE, Rank INTEGER, Counter_Login INTEGER, Counter_Kick INTEGER, Ontime_Counter FLOAT, IP TEXT, Stopped BOOL, Banned BOOL, Time_Muted INTEGER, Message_Ban TEXT, Message_Kick TEXT, Message_Mute TEXT, Message_Rank TEXT, Message_Stop TEXT, Inventory BLOB, Global INTEGER);";
-const std::string REPLACE_SQL = "REPLACE INTO Player_List (Number, Name, Rank, Counter_Login, Counter_Kick, Ontime_Counter, IP, Stopped, Banned, Time_Muted, Message_Ban, Message_Kick, Message_Mute, Message_Rank, Message_Stop, Global) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
-
-const std::string PLAYERLIST_FILE_NAME = "Playerlist";
-const int NUM_PLAYER_ATTRIBUTES = 5;
+#define CREATE_SQL "CREATE TABLE Player_List (Number INTEGER PRIMARY KEY, Name TEXT UNIQUE, Rank INTEGER, Counter_Login INTEGER, Counter_Kick INTEGER, Ontime_Counter FLOAT, IP TEXT, Stopped BOOL, Banned BOOL, Time_Muted INTEGER, Message_Ban TEXT, Message_Kick TEXT, Message_Mute TEXT, Message_Rank TEXT, Message_Stop TEXT, Inventory BLOB, Global INTEGER);"
+#define REPLACE_SQL "REPLACE INTO Player_List (Number, Name, Rank, Counter_Login, Counter_Kick, Ontime_Counter, IP, Stopped, Banned, Time_Muted, Message_Ban, Message_Kick, Message_Mute, Message_Rank, Message_Stop, Global) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+#define PLAYERLIST_FILE_NAME "Playerlist"
+#define NUM_PLAYER_ATTRIBUTES 5
 
 class PlayerListEntry {
 public:
@@ -44,19 +43,19 @@ public:
     PlayerListEntry();
 
     std::string GetDisplayName();
-    int GetAttribute(std::string attrName);
-    std::string GetAttributeStr(std::string attrName);
+    int GetAttribute(const std::string& attrName);
+    std::string GetAttributeStr(const std::string& attrName);
 
-    void SetAttribute(std::string attrName, int value);
-    void SetAttribute(std::string attrName, std::string value);
+    void SetAttribute(const std::string& attrName, int value);
+    void SetAttribute(const std::string& attrName, const std::string& value);
 
     void SetRank(int rank, const std::string &reason);
     void Kick(const std::string &reason, int count, bool log, bool show);
-    void Ban(std::string reason);
+    void Ban(const std::string& reason);
     void Unban();
-    void Mute(int minutes, std::string reason);
+    void Mute(int minutes, const std::string& reason);
     void Unmute();
-    void Stop(std::string reason);
+    void Stop(const std::string& reason);
     void Unstop();
     void SetGlobal(bool globalChat);
 };
@@ -68,10 +67,10 @@ public:
     void CloseDatabase();
     void OpenDatabase();
     PlayerListEntry* GetPointer(int playerId);
-    PlayerListEntry* GetPointer(std::string playerName);
+    PlayerListEntry* GetPointer(const std::string& playerName);
     void Load();
     void Save();
-    void Add(std::string name);
+    void Add(const std::string& name);
     void MainFunc();
     std::vector<PlayerListEntry> _pList;
     static Player_List* GetInstance();
