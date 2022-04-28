@@ -21,7 +21,6 @@ Files::~Files()
 
 std::string Files::GetFile(std::string name) {
     if (files.find(name) == files.end()) {
-        Logger::LogAdd(MODULE_NAME, "Path to file [" + name + "] not defined", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
         return "";
     }
 

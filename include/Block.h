@@ -60,7 +60,7 @@ public:
 protected:
     static Block* Instance;
 private:
-
+    std::string m_filepath;
     bool hasLoaded;
     time_t LastFileDate;
     

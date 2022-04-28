@@ -16,6 +16,7 @@ Block::Block() {
     SaveFile = false;
     hasLoaded = false;
     LastFileDate = 0;
+    m_filepath = Files::GetFile(BLOCK_FILE_NAME);
     for(auto i = 0; i < 255; i++) { // -- Pre-pop..
         struct MapBlock shell{};
         shell.Id = i;
@@ -120,10 +121,9 @@ void Block::Load() {
         return;
     }
 
-    std::string filePath = Files::GetFile(BLOCK_FILE_NAME);
     json j;
 
-    std::ifstream iStream(filePath);
+    std::ifstream iStream(m_filepath);
 
     if (!iStream.is_open()) {
         Logger::LogAdd(MODULE_NAME, "Failed to load blocks!!", LogType::L_ERROR, GLF);
@@ -217,15 +217,14 @@ void Block::Load() {
         }
     }
 
-    Logger::LogAdd(MODULE_NAME, "File loaded [" + filePath + "]", LogType::NORMAL, GLF );
+    Logger::LogAdd(MODULE_NAME, "File loaded [" + m_filepath + "]", LogType::NORMAL, GLF );
     hasLoaded = true;
-    time_t modTime = Utils::FileModTime(filePath);
+    time_t modTime = Utils::FileModTime(m_filepath);
     LastFileDate = modTime;
 }
 
 void Block::Save() {
     json j;
-    std::string blockFile = Files::GetFile(BLOCK_FILE_NAME);
     
     std::sort(Blocks.begin(), Blocks.end(), compareBlockIds);
 
@@ -255,15 +254,15 @@ void Block::Save() {
         };
     }
 
-    std::ofstream oStream(blockFile, std::ios::trunc);
+    std::ofstream oStream(m_filepath, std::ios::trunc);
     oStream << std::setw(4) << j;
     oStream.flush();
     oStream.close();
 
-    time_t modTime = Utils::FileModTime(blockFile);
+    time_t modTime = Utils::FileModTime(m_filepath);
     LastFileDate = modTime;
 
-    Logger::LogAdd(MODULE_NAME, "File saved [" + blockFile + "]", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "File saved [" + m_filepath + "]", LogType::NORMAL, GLF);
 }
 
 void Block::MainFunc() {
@@ -271,9 +270,8 @@ void Block::MainFunc() {
         SaveFile = false;
         Save();
     }
-
-    std::string blockFile = Files::GetFile(BLOCK_FILE_NAME);
-    time_t modTime = Utils::FileModTime(blockFile);
+    
+    time_t modTime = Utils::FileModTime(m_filepath);
 
     if (modTime != LastFileDate) {
         Load();

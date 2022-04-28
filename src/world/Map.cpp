@@ -379,7 +379,7 @@ void MapMain::MapListLoad() {
     SaveFile = false;
 
     LastWriteTime = Utils::FileModTime(fName);
-    Logger::LogAdd(MODULE_NAME, "File loaded. [" + fName + "]", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "File loaded [" + fName + "]", LogType::NORMAL, GLF);
 }
 
 int MapMain::Add(int id, short x, short y, short z, const std::string& name) {

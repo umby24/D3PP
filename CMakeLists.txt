@@ -55,10 +55,10 @@ endif ()
 #--------------------------------------------------------------
 find_package(Lua REQUIRED)
 if (Lua_FOUND)
-    include_directories(${Lua_INCLUDE_DIRS})
+    include_directories(${LUA_INCLUDE_DIR})
     target_link_libraries(D3PP ${LUA_LIBRARIES})
 
-    MESSAGE(STATUS "Lua found at: " ${LUA_LIBRARIES})
+    MESSAGE(STATUS "Lua found at: " ${LUA_INCLUDE_DIR})
 endif ()
 #______________________________________________________________
 # *NIX BUILD REQUIREMENTS

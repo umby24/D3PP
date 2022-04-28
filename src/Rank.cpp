@@ -90,7 +90,7 @@ void Rank::Load() {
         _ranks[loadedItem.Rank] = loadedItem;
     }
 
-    Logger::LogAdd("Rank", "File loaded.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
+    Logger::LogAdd("Rank", "File loaded [" + filePath + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
 
     time_t modTime = Utils::FileModTime(filePath);
     LastFileDate = modTime;
