@@ -231,40 +231,11 @@ void Block::Load() {
 }
 
 void Block::Save() {
-    json j;
     Files* f = Files::GetInstance();
     std::string blockFile = f->GetFile(BLOCK_FILE_NAME);
-    
-    std::sort(Blocks.begin(), Blocks.end(), compareBlockIds);
-
-    for(auto i = 0; i < 255; i++) {
-        j[i] = nullptr;
-        j[i] = {
-                {"Id", i},
-                {"Name", Blocks[i].Name},
-                {"OnClient", Blocks[i].OnClient},
-                {"Physics", Blocks[i].Physics},
-                {"PhysicsPlugin", Blocks[i].PhysicsPlugin},
-                {"PhysicsTime", Blocks[i].PhysicsTime},
-                {"PhysicsRandom", Blocks[i].PhysicsRandom},
-                {"PhysicsRepeat", Blocks[i].PhysicsRepeat},
-                {"PhysicsOnLoad", Blocks[i].PhysicsOnLoad},
-                {"CreatePlugin", Blocks[i].CreatePlugin},
-                {"DeletePlugin", Blocks[i].DeletePlugin},
-                {"ReplaceOnLoad", Blocks[i].ReplaceOnLoad},
-                {"RankPlace", Blocks[i].RankPlace},
-                {"RankDelete", Blocks[i].RankDelete},
-                {"AfterDelete", Blocks[i].AfterDelete},
-                {"Kills", Blocks[i].Kills},
-                {"Special", Blocks[i].Special},
-                {"OverviewColor", Blocks[i].OverviewColor},
-                {"CpeLevel", Blocks[i].CpeLevel},
-                {"CpeReplace", Blocks[i].CpeReplace},
-        };
-    }
 
     std::ofstream oStream(blockFile, std::ios::trunc);
-    oStream << std::setw(4) << j;
+    oStream << GetJson();
     oStream.flush();
     oStream.close();
 
@@ -295,4 +266,40 @@ Block *Block::GetInstance() {
         Instance = new Block();
 
     return Instance;
+}
+
+std::string Block::GetJson() {
+    json j;
+
+    std::sort(Blocks.begin(), Blocks.end(), compareBlockIds);
+
+    for(auto i = 0; i < 255; i++) {
+        j[i] = nullptr;
+        j[i] = {
+                {"Id", i},
+                {"Name", Blocks[i].Name},
+                {"OnClient", Blocks[i].OnClient},
+                {"Physics", Blocks[i].Physics},
+                {"PhysicsPlugin", Blocks[i].PhysicsPlugin},
+                {"PhysicsTime", Blocks[i].PhysicsTime},
+                {"PhysicsRandom", Blocks[i].PhysicsRandom},
+                {"PhysicsRepeat", Blocks[i].PhysicsRepeat},
+                {"PhysicsOnLoad", Blocks[i].PhysicsOnLoad},
+                {"CreatePlugin", Blocks[i].CreatePlugin},
+                {"DeletePlugin", Blocks[i].DeletePlugin},
+                {"ReplaceOnLoad", Blocks[i].ReplaceOnLoad},
+                {"RankPlace", Blocks[i].RankPlace},
+                {"RankDelete", Blocks[i].RankDelete},
+                {"AfterDelete", Blocks[i].AfterDelete},
+                {"Kills", Blocks[i].Kills},
+                {"Special", Blocks[i].Special},
+                {"OverviewColor", Blocks[i].OverviewColor},
+                {"CpeLevel", Blocks[i].CpeLevel},
+                {"CpeReplace", Blocks[i].CpeReplace},
+        };
+    }
+
+    std::ostringstream oss;
+    oss << std::setw(4) << j;
+    return oss.str();
 }

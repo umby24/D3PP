@@ -53,6 +53,7 @@ public:
     Block();
     MapBlock GetBlock(int id);
     MapBlock GetBlock(std::string name);
+    std::string GetJson();
     void Save();
     static Block* GetInstance();
     std::vector<MapBlock> Blocks;
