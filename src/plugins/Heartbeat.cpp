@@ -35,7 +35,7 @@ void Heartbeat::Beat() {
     params.emplace("public", Configuration::NetSettings.Public ? "true" : "false");
     params.emplace("version", "7");
     params.emplace("salt", salt);
-    params.emplace("software", "&eD3PP");
+    params.emplace("software", "&eD3PP Beta");
 
     auto res = cli.Post(CLASSICUBE_HEARTBEAT_PATH, params);
     if (!res) {
@@ -46,8 +46,12 @@ void Heartbeat::Beat() {
         json j = json::parse(res->body);
         Logger::LogAdd(MODULE_NAME, j["response"], LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
     } else {
-        Logger::LogAdd(MODULE_NAME, "Heartbeat sent.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-        serverUrl = res->body;
+        if (isFirstBeat) {
+            Logger::LogAdd(MODULE_NAME, "Heartbeat sent.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+            serverUrl = res->body;
+            Logger::LogAdd(MODULE_NAME, "Heartbeat URL: " + serverUrl, LogType::NORMAL, GLF);
+            isFirstBeat = false;
+        }
     }
 
     lastBeat = time(nullptr);

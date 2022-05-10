@@ -1,8 +1,7 @@
 #include "common/Logger.h"
 #include <iostream>
 #include <iomanip>
-#include <chrono>
-#include <mutex>
+#include <common/Configuration.h>
 
 #include "Utils.h"
 #include "common/Files.h"
@@ -58,12 +57,35 @@ void Logger::FileWrite() {
     fileStream << last.Message << std::endl;
 }
 
+LogType StringToLogLevel(std::string message) {
+    if (Utils::InsensitiveCompare("info", message))
+        return LogType::NORMAL;
+    if (Utils::InsensitiveCompare("chat", message))
+        return LogType::CHAT;
+    if (Utils::InsensitiveCompare("command", message))
+        return LogType::COMMAND;
+    if (Utils::InsensitiveCompare("debug", message))
+        return LogType::DEBUG;
+    if (Utils::InsensitiveCompare("error", message))
+        return LogType::L_ERROR;
+    if (Utils::InsensitiveCompare("verbose", message))
+        return LogType::VERBOSE;
+    if (Utils::InsensitiveCompare("warning", message))
+        return LogType::WARNING;
+
+    return LogType::NORMAL;
+}
+
 void Logger::Add(struct LogMessage message) {
     Messages.push_back(message);
     FileWrite();
 
     if (Messages.size() > LOG_SIZE_MAX) {
         Messages.erase(Messages.begin());
+    }
+
+    if (message.Type < StringToLogLevel(Configuration::GenSettings.logLevel)) {
+        return;
     }
 
     if (GuiOutput) {
@@ -147,10 +169,14 @@ void Logger::SizeCheck() {
     time_t MaxDate = 2147483647;
     if ((Filename.empty()) || Utils::FileSize(Filename) > LOG_FILE_SIZE_MAX) {
         int number = 0;
-        Files* f = Files::GetInstance();
 
         std::string tempName;
-        std::string logFile = f->GetFile("Log");
+        Files* fi = Files::GetInstance();
+        std::string logFile = fi->GetFile("Log");
+
+        if (logFile.empty())
+            logFile = "Log[i].txt";
+
         time_t fileTime;
 
         for (auto i = 0; i < 5; i++) {
