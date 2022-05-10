@@ -117,10 +117,20 @@ void NetworkClient::HandleEvent(const Event& e) {
         }
         if (eventEntity->MapID != player->tEntity->MapID)
             return;
-        if (eventEntity->Id != player->tEntity->Id)
-            NetworkFunctions::NetworkOutEntityAdd(Id, eventEntity->ClientId, Entity::GetDisplayname(ea.entityId), eventEntity->Location);
-        else
+        std::shared_ptr<NetworkClient> selfPoint = GetSelfPointer();
+        if (eventEntity->Id != player->tEntity->Id) {
+            NetworkFunctions::NetworkOutEntityAdd(Id, eventEntity->ClientId, Entity::GetDisplayname(ea.entityId),
+                                                  eventEntity->Location);
+
+            if (eventEntity->model != "" && eventEntity->model != "humanoid" && CPE::GetClientExtVersion(selfPoint, CHANGE_MODEL_EXT_NAME) > 0) {
+                Packets::SendChangeModel(selfPoint, eventEntity->ClientId, eventEntity->model);
+            }
+        } else {
             NetworkFunctions::NetworkOutEntityAdd(Id, -1, Entity::GetDisplayname(ea.entityId), eventEntity->Location);
+            if (eventEntity->model != "" && eventEntity->model != "humanoid" && CPE::GetClientExtVersion(selfPoint, CHANGE_MODEL_EXT_NAME) > 0) {
+                Packets::SendChangeModel(selfPoint, -1, eventEntity->model);
+            }
+        }
     } else if (stringulate(e.type()) == ENTITY_EVENT_DESPAWN) {
         const EventEntityDelete& ea = static_cast<const EventEntityDelete&>(e);
         std::shared_ptr<Entity> eventEntity = Entity::GetPointer(ea.entityId);

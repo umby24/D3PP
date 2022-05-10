@@ -20,6 +20,7 @@
 #define BLOCK_DEFS_EXT_NAME "BlockDefinitions"
 #define BLOCK_DEFS_EXTENDED_EXT_NAME "BlockDefinitionsExt"
 #define EXTENDED_TEXTURES_EXT_NAME "ExtendedTextures"
+#define FULL_CODEPAGE_EXT_NAME "FullCP437"
 
 #include <memory>
 #include <string>

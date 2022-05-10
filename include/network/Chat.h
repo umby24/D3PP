@@ -8,7 +8,7 @@
 #include <string>
 #include <regex>
 
-const std::regex AllowedRegexp("[^A-Za-z0-9!\\^\\~$%&\\/()=?{}\t\\[\\]\\\\ ,\\\";.:\\-_#'+*<>|@\n]");
+const std::regex AllowedRegexp("[^\\x00-\\xFF]");
 class NetworkClient;
 
 class Chat {
@@ -22,6 +22,7 @@ public:
     static void NetworkSend2Map(const int& entityId, const std::string& message);
     static void NetworkSend2All(const int& entityId, const std::string& message);
     static void HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, const std::string& input, const char& playerId);
+    static void EmoteReplace(std::string &message);
 };
 
 

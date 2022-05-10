@@ -28,6 +28,7 @@ const struct luaL_Reg LuaEntityLib::lib[] = {
        {"setdisplayname", &LuaEntityDisplaynameSet},
        {"setposition", &LuaEntityPositionSet},
        {"kill", &LuaEntityKill},
+       {"setmodel", &LuaEntitySetModel},
        {NULL, NULL}
 };
 
@@ -67,7 +68,7 @@ int LuaEntityLib::LuaEntityAdd(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 7) {
-        Logger::LogAdd("Lua", "LuaError: Entity_Add called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Entity.Add called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -251,19 +252,29 @@ int LuaEntityLib::LuaEntityDisplaynameGet(lua_State* L) {
 int LuaEntityLib::LuaEntityDisplaynameSet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
-    if (nArgs != 4) {
+    if (nArgs != 4 && nArgs != 2) {
         Logger::LogAdd("Lua", "LuaError: ENTITY_displayname_set called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
+
     int entityId = luaL_checkinteger(L, 1);
-    std::string prefix(lua_tostring(L, 2));
-    std::string displayName(lua_tostring(L, 3));
-    std::string suffix(lua_tostring(L, 4));
+    std::string prefix = "";
+    std::string displayName = "";
+    std::string suffix = "";
+
+    if (nArgs == 4) {
+        prefix = lua_tostring(L, 2);
+        displayName = lua_tostring(L, 3);
+        suffix = lua_tostring(L, 4);
+    } else {
+        displayName = lua_tostring(L, 2);
+    }
 
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
 
     if (foundEntity != nullptr) {
         Entity::SetDisplayName(entityId, prefix, displayName, suffix);
+        foundEntity->Resend(entityId);
     }
 
     return 0;
@@ -307,6 +318,24 @@ int LuaEntityLib::LuaEntityKill(lua_State* L) {
 
     if (foundEntity != nullptr) {
         foundEntity->Kill();
+    }
+
+    return 0;
+}
+
+int LuaEntityLib::LuaEntitySetModel(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Entity.SetModel called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+    int entityId = static_cast<int>(luaL_checkinteger(L, 1));
+    std::string modelName(luaL_checkstring(L, 2));
+    std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
+
+    if (foundEntity != nullptr) {
+        foundEntity->SetModel(modelName);
     }
 
     return 0;

@@ -713,8 +713,9 @@ void Map::Resend() {
 
     for (auto const &me : Entity::AllEntities) {
         if (me.second->MapID == ID) {
-            Vector3S newLocation{static_cast<short>(mapSize.X+16), static_cast<short>(mapSize.Y+16), static_cast<short>(mapSize.Z+16)};
-            me.second->Location.SetAsPlayerCoords(newLocation);
+            me.second->Resend(me.second->Id);
+            //Vector3S newLocation{static_cast<short>(mapSize.X+16), static_cast<short>(mapSize.Y+16), static_cast<short>(mapSize.Z+16)};
+            //me.second->Location.SetAsPlayerCoords(newLocation);
         }
     }
 
