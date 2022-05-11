@@ -86,7 +86,7 @@ void RestApi::Init() {
         }
         j["log"] = items;
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
-        res.set_content(j, "application/json");
+        res.set_content(stringulate(j), "application/json");
     });
 
     std::thread apiThread ([this]{ RunHttpServer(); });
