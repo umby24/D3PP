@@ -211,7 +211,7 @@ int LuaSystemLib::LuaMessageToAll(lua_State* L) {
     }
 
     int mapId = luaL_checkinteger(L, 1);
-    std::string message = lua_tostring(L, 2);
+    std::string message(luaL_checkstring(L, 2));
 
     int messageType = 0;
 

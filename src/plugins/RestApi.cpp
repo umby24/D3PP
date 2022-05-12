@@ -10,6 +10,8 @@
 #include "Rank.h"
 #include "Block.h"
 #include <json.hpp>
+#include <network/Network.h>
+#include "network/Network_Functions.h"
 #include "Utils.h"
 
 const std::string MODULE_NAME = "RestAPI";
@@ -30,18 +32,56 @@ void RestApi::Init() {
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         res.set_content(stringulate(j), "application/json");
     });
+
+    m_restServer->Post("/settings/general", [](const httplib::Request& req, httplib::Response& res) {
+        auto j = json::parse(req.body);
+        Configuration::GenSettings.LoadFromJson(j);
+        Configuration* cc = Configuration::GetInstance();
+        cc->Save();
+
+        json j2;
+        Configuration::GenSettings.SaveToJson(j2);
+        res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
+        res.set_content(stringulate(j2), "application/json");
+    });
+
     m_restServer->Get("/settings/network",[](const httplib::Request& req, httplib::Response& res) {
         json j;
         Configuration::NetSettings.SaveToJson(j);
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         res.set_content(stringulate(j), "application/json");
     });
+    m_restServer->Post("/settings/network",[](const httplib::Request& req, httplib::Response& res) {
+        auto j = json::parse(req.body);
+        Configuration::NetSettings.LoadFromJson(j);
+        Configuration* cc = Configuration::GetInstance();
+        cc->Save();
+
+        json j2;
+        Configuration::NetSettings.SaveToJson(j2);
+        res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
+        res.set_content(stringulate(j2), "application/json");
+    });
+
     m_restServer->Get("/settings/text",[](const httplib::Request& req, httplib::Response& res) {
+        auto j = json::parse(req.body);
+        Configuration::textSettings.LoadFromJson(j);
+        Configuration* cc = Configuration::GetInstance();
+        cc->Save();
+
+        json j2;
+        Configuration::textSettings.SaveToJson(j2);
+        res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
+        res.set_content(stringulate(j2), "application/json");
+    });
+
+    m_restServer->Post("/settings/text",[](const httplib::Request& req, httplib::Response& res) {
         json j;
         Configuration::textSettings.SaveToJson(j);
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         res.set_content(stringulate(j), "application/json");
     });
+
     m_restServer->Get("/settings/ranks",[](const httplib::Request& req, httplib::Response& res) {
         Rank* rm = Rank::GetInstance();
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
@@ -56,7 +96,16 @@ void RestApi::Init() {
     m_restServer->Get("/settings/buildmodes",[](const httplib::Request& req, httplib::Response& res) {});
 
     m_restServer->Get("/world/maps",[](const httplib::Request& req, httplib::Response& res) {});
-    m_restServer->Get("/network/players",[](const httplib::Request& req, httplib::Response& res) {});
+    m_restServer->Get("/network/players",[](const httplib::Request& req, httplib::Response& res) {
+        Network* nMain = Network::GetInstance();
+
+        json j;
+        j["max"] = Configuration::NetSettings.MaxPlayers;
+        j["current"] = nMain->roClients.size();
+        res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
+        res.set_content(stringulate(j), "application/json");
+    });
+
     m_restServer->Get("/plugins/",[](const httplib::Request& req, httplib::Response& res) {});
     m_restServer->Get("/playerdb",[](const httplib::Request& req, httplib::Response& res) {});
     m_restServer->Get("/system/log",[](const httplib::Request& req, httplib::Response& res) {
@@ -88,7 +137,12 @@ void RestApi::Init() {
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         res.set_content(stringulate(j), "application/json");
     });
-
+    m_restServer->Post("/system/message", [](const httplib::Request& req, httplib::Response& res){
+       auto j = json::parse(req.body);
+        if (j.is_object() && !j["message"].is_null()) {
+            NetworkFunctions::SystemMessageNetworkSend2All(-1, "&c[&fCONSOLE&c]:&f " + j["message"].get<std::string>());
+        }
+    });
     std::thread apiThread ([this]{ RunHttpServer(); });
     std::swap(m_serverThread, apiThread);
     Logger::LogAdd(MODULE_NAME, "API Running on port 8080", LogType::NORMAL, GLF);

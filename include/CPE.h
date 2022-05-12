@@ -21,6 +21,8 @@
 #define BLOCK_DEFS_EXTENDED_EXT_NAME "BlockDefinitionsExt"
 #define EXTENDED_TEXTURES_EXT_NAME "ExtendedTextures"
 #define FULL_CODEPAGE_EXT_NAME "FullCP437"
+#define CUSTOM_PARTICLES_EXT_NAME "CustomParticles"
+#define CUSTOM_MODELS_EXT_NAME "CustomModels"
 
 #include <memory>
 #include <string>
@@ -36,7 +38,6 @@ class CPE {
     static void AfterLoginActions(const std::shared_ptr<IMinecraftClient>& client);
     static void PreEntityActions();
     static void PostEntityActions(const std::shared_ptr<IMinecraftClient>& client, const std::shared_ptr<Entity>& postEntity);
-    //static std::map<std::string, int> SupportedExtensions { std::pair<std::string, int>("CustomBlocks", 1)};
     static void DuringMapActions(const std::shared_ptr<IMinecraftClient>& client);
 };
 #endif

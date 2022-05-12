@@ -129,13 +129,14 @@ public:
     static TextSettings textSettings;
     Configuration();
     static Configuration* GetInstance();
+    void Save();
 private:
     static Configuration* _instance;
     time_t lastLoaded;
     bool saveFile;
 
     void Load();
-    void Save();
+
     void MainFunc();
 };
 

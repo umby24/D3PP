@@ -95,8 +95,19 @@ int LuaEntityLib::LuaEntityDelete(lua_State* L) {
         Logger::LogAdd("Lua", "LuaError: Entity_Delete called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
+    int entityId = static_cast<int>(luaL_checkinteger(L, 1));
+    std::shared_ptr<Entity> e = Entity::GetPointer(entityId);
 
-    Entity::Delete(static_cast<int>(luaL_checkinteger(L, 1)));
+    if (e == nullptr) {
+        return 0;
+    }
+
+    if (e->associatedClient != nullptr) {
+        Logger::LogAdd("Lua", "LuaError: Cannot delete a player's entity.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    Entity::Delete(entityId);
     return 0;
 }
 
