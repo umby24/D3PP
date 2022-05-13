@@ -342,7 +342,10 @@ int NetworkClient::GetPing() {
 }
 
 std::string NetworkClient::GetLoginName() {
-    return player->LoginName;
+    if (player != nullptr) {
+        return player->LoginName;
+    }
+    return "--";
 }
 
 bool NetworkClient::GetGlobalChat() {

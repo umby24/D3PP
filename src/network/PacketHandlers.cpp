@@ -120,6 +120,11 @@ void PacketHandlers::HandleCustomBlockSupportLevel(const std::shared_ptr<Network
     client->CustomBlocksLevel = supportLevel;
 
     Logger::LogAdd("CPE", "CPE Process complete.", LogType::NORMAL, GLF);
+    if (client->player == nullptr) {
+        client->Kick("&cInternal server error!!!", true);
+        return;
+    }
+
     Client::Login(client->GetId(), client->player->LoginName, client->player->MPPass, client->player->ClientVersion);
 }
 

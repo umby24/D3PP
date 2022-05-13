@@ -12,6 +12,7 @@
 #include <json.hpp>
 #include <network/Network.h>
 #include "network/Network_Functions.h"
+#include "network/NetworkClient.h"
 #include "Utils.h"
 
 const std::string MODULE_NAME = "RestAPI";
@@ -102,6 +103,13 @@ void RestApi::Init() {
         json j;
         j["max"] = Configuration::NetSettings.MaxPlayers;
         j["current"] = nMain->roClients.size();
+        auto jPlayers = json::array();
+
+        for (auto const &nc : nMain->roClients) {
+            jPlayers.push_back(nc->GetLoginName());
+        }
+
+        j["list"] = jPlayers;
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         res.set_content(stringulate(j), "application/json");
     });
@@ -137,12 +145,21 @@ void RestApi::Init() {
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         res.set_content(stringulate(j), "application/json");
     });
+    m_restServer->Options("/system/message", [](const httplib::Request& req, httplib::Response& res){
+        res.set_header("Allow", "POST");
+        res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
+        res.set_header("Access-Control-Allow-Headers", "content-type");
+    });
+
     m_restServer->Post("/system/message", [](const httplib::Request& req, httplib::Response& res){
        auto j = json::parse(req.body);
         if (j.is_object() && !j["message"].is_null()) {
             NetworkFunctions::SystemMessageNetworkSend2All(-1, "&c[&fCONSOLE&c]:&f " + j["message"].get<std::string>());
+            Logger::LogAdd("RestAPI", "[CONSOLE]: " + j["message"].get<std::string>(), CHAT, GLF);
         }
+        res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
     });
+
     std::thread apiThread ([this]{ RunHttpServer(); });
     std::swap(m_serverThread, apiThread);
     Logger::LogAdd(MODULE_NAME, "API Running on port 8080", LogType::NORMAL, GLF);

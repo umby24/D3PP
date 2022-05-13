@@ -265,7 +265,7 @@ void MapMain::MapBlockPhysics() {
                 if (map.second->pQueue == nullptr) { // -- Avoid edge cases while the map is still loading
                     continue;
                 }
-                if (map.second->pQueue->TryDequeue(physItem)) {
+                if (map.second->pQueue != nullptr && map.second->pQueue->TryDequeue(physItem)) {
                     if (physItem.Time < std::chrono::steady_clock::now()) {
                         map.second->ProcessPhysics(physItem.Location.X, physItem.Location.Y, physItem.Location.Z);
                         counter++;
@@ -726,16 +726,18 @@ void Map::Resend() {
 void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type) {
     if (client == nullptr)
         return;
-
-    if (client->IsStopped()) {
-        NetworkFunctions::SystemMessageNetworkSend(client->GetId(), "&eYou are not allowed to build (stopped).");
-        return;
-    }
-
     Vector3S blockLocation {(short)X, (short)Y, (short)Z};
 
     Block* bm = Block::GetInstance();
     auto rawBlock = m_mapProvider->GetBlock(blockLocation);
+
+    if (client->IsStopped()) {
+        NetworkFunctions::SystemMessageNetworkSend(client->GetId(), "&eYou are not allowed to build (stopped).");
+        NetworkFunctions::NetworkOutBlockSet(client->GetId(), X, Y, Z, rawBlock);
+        return;
+    }
+
+
     unsigned char rawNewType;
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(client->GetId(), true);
     MapBlock oldType = bm->GetBlock(rawBlock);
