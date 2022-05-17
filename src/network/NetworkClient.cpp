@@ -150,6 +150,7 @@ void NetworkClient::OutputPing() {
 }
 
 void NetworkClient::Kick(const std::string& message, bool hide) {
+    canReceive = false;
     NetworkFunctions::SystemRedScreen(this->Id, message);
 
     if (DisconnectTime == 0) {

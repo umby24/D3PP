@@ -8,7 +8,7 @@
 #include <string>
 #include <regex>
 
-const std::regex AllowedRegexp("[^\\x00-\\xFF]");
+const std::regex AllowedRegexp {R"(^\x00-\xFF)", std::regex_constants::ECMAScript };
 class NetworkClient;
 
 class Chat {

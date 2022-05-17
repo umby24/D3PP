@@ -107,10 +107,14 @@ void NetworkFunctions::NetworkOutBlockSet2Map(const int& mapId, const unsigned s
             continue;
 
         int onClient = mb.OnClient;
+        int dbl = CPE::GetClientExtVersion(nc, BLOCK_DEFS_EXT_NAME);
         if (mb.CpeLevel > nc->CustomBlocksLevel) {
             onClient = mb.CpeReplace;
         }
-
+        if (mb.OnClient > 65 && dbl < 1) { // -- If the user doesn't support customblocks and this is a custom block, replace with stone.
+            onClient = 1;
+            continue;
+        }
         Packets::SendBlockChange(nc->GetId(), x, y, z, onClient);
     }
 }

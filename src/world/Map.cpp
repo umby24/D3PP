@@ -639,6 +639,7 @@ void Map::Send(int clientId) {
     tempBuf.at(tempBufferOffset++) = static_cast<unsigned char>(mapVolume & 0xFF);
 
     int cbl = nc->GetCustomBlocksLevel();
+    int dbl = CPE::GetClientExtVersion(nc, BLOCK_DEFS_EXT_NAME);
     std::vector<unsigned char> mapBlocks = m_mapProvider->GetBlocks();
     
     if (mapBlocks.size() != (mapVolume * 4)) {
@@ -652,6 +653,10 @@ void Map::Send(int clientId) {
         unsigned char blockAt = mapBlocks[index];
         if (blockAt < 49) { // -- If its an original block, Dont bother checking. Just speed past.
             tempBuf[tempBufferOffset++] = blockAt;
+            continue;
+        }
+        if (blockAt > 65 && dbl < 1) { // -- If the user doesn't support customblocks and this is a custom block, replace with stone.
+            tempBuf[tempBufferOffset++] = 1;
             continue;
         }
 

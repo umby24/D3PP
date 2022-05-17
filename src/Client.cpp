@@ -116,9 +116,6 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     c->player->tEntity = newEntity;
     c->player->MapId = spawnMap->ID;
     c->LoggedIn = true;
-    Entity::Add(newEntity);
-    Entity::SetDisplayName(newEntity->Id, currentRank.Prefix, name, currentRank.Suffix);
-
 
     std::string motd = MapMain::GetMapMOTDOverride(spawnMap->ID);
 
@@ -127,10 +124,13 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 
     NetworkFunctions::SystemLoginScreen(c->GetId(), Configuration::GenSettings.name, motd, currentRank.OnClient);
 
+    Entity::SetDisplayName(newEntity->Id, currentRank.Prefix, name, currentRank.Suffix);
+    Entity::Add(newEntity);
+
     c->player->SendMap();
 
-    newEntity->SpawnSelf = true;
-    newEntity->Spawn();
+//    newEntity->SpawnSelf = true;
+//    newEntity->Spawn();
 
     Logger::LogAdd(MODULE_NAME, "Player Logged in (IP:" + c->IP + " Name:" + name + ")", LogType::NORMAL, GLF);
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(newEntity->Id) + "&e' logged in");
@@ -140,18 +140,18 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     ecl.clientId = c->GetId();
     Dispatcher::post(ecl);
 
-    { // -- Spawn other entities too.
-        for(auto const &e : Entity::AllEntities) {
-            if (e.second->MapID != spawnMap->ID)
-                continue;
-            
-            c->SpawnEntity(e.second);
-
-            if (e.second->model != "" && e.second->model != "humanoid" && CPE::GetClientExtVersion(c, CHANGE_MODEL_EXT_NAME) > 0) {
-                Packets::SendChangeModel(c, e.second->ClientId, e.second->model);
-            }
-        }
-    }
+//    { // -- Spawn other entities too.
+//        for(auto const &e : Entity::AllEntities) {
+//            if (e.second->MapID != spawnMap->ID)
+//                continue;
+//
+//            c->SpawnEntity(e.second);
+//
+//            if (e.second->model != "" && e.second->model != "humanoid" && CPE::GetClientExtVersion(c, CHANGE_MODEL_EXT_NAME) > 0) {
+//                Packets::SendChangeModel(c, e.second->ClientId, e.second->model);
+//            }
+//        }
+//    }
     newEntity->SendPosOwn = true;
     newEntity->HandleMove();
     spawnMap->AddEntity(newEntity);

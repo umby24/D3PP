@@ -31,15 +31,13 @@ class Entity;
 
 namespace D3PP::world {
     class Teleporter;
-
     enum MapAction {
         SAVE = 0,
-        LOAD,
+        LOAD = 2,
         RESIZE = 5,
-        FILL,
+        FILL = 7,
         DELETE = 10,
     };
-
     struct MapActionItem {
         int ID;
         int ClientID;
@@ -54,7 +52,6 @@ namespace D3PP::world {
     struct MapBlockChanged {
 
     };
-
     struct UndoStep {
         short PlayerNumber;
         int MapId;

@@ -28,9 +28,11 @@ public:
     void Add(RankItem item);
     RankItem GetRank(int rank, bool exact);
     void Delete(int id, bool isExact);
+    void SetJson(json j);
     std::string GetJson();
     static Rank* GetInstance();
     std::map<int, RankItem> _ranks;
+    void Save();
 private:
     static Rank* Instance;
     bool SaveFile;
@@ -38,7 +40,7 @@ private:
 
 
     void Load();
-    void Save();
+
     void MainFunc();
     void DefaultRanks();
 };
