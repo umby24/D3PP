@@ -37,7 +37,6 @@ void TaskScheduler::UnregisterTask(std::string name) {
      
         return;
     }
-
     _tasks.erase(i->first);
 }
 

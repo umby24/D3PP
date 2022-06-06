@@ -42,8 +42,8 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) : Selections(MAX_S
     Id= static_cast<int>(socket->GetSocketFd());
     CustomExtensions = 0;
     m_currentUndoIndex = 0;
-    SendBuffer = std::make_unique<ByteBuffer>([this]{this->DataReady();});
-    ReceiveBuffer = std::make_unique<ByteBuffer>(nullptr);
+    SendBuffer = std::make_shared<ByteBuffer>([this]{this->DataReady();});
+    ReceiveBuffer = std::make_shared<ByteBuffer>(nullptr);
     DataAvailable = false;
     canReceive = true;
     canSend = true;
@@ -273,7 +273,7 @@ void NetworkClient::DataReady() {
 
 NetworkClient::NetworkClient(NetworkClient &client) : Selections(MAX_SELECTION_BOXES) {
     Id= client.Id;
-    SendBuffer = std::make_unique<ByteBuffer>([this]{ this->DataReady(); });//
+    SendBuffer = std::make_shared<ByteBuffer>([this]{ this->DataReady(); });//
     ReceiveBuffer = std::move(client.ReceiveBuffer);
     DataAvailable = false;
     canReceive = true;
@@ -399,108 +399,108 @@ void NetworkClient::SendQueued() {
 }
 
 void NetworkClient::HandleData() {
-    int maxRepeat = 10;
-    while (ReceiveBuffer->Size() > 0 && maxRepeat > 0 && canReceive) {
-        unsigned char commandByte = ReceiveBuffer->PeekByte();
-        LastTimeEvent = time(nullptr);
-
-        if (!LoggedIn) {
-            bool isAllowedPacket = (commandByte == 0) || (commandByte == 1) || commandByte == 16 || commandByte == 17 || commandByte == 19;
-            if (!isAllowedPacket) {
-                Logger::LogAdd(MODULE_NAME, "Disconnecting " + this->IP + ": Unexpected handshake opcode.", WARNING, GLF);
-                Kick("Invalid Packet", true);
-                return;
-            }
-        }
-
-        switch(commandByte) {
-            case 0: // -- Login
-                if (ReceiveBuffer->Size() >= 1 + 1 + 64 + 64 + 1) {
-                    lastPacket = 0;
-                    ReceiveBuffer->ReadByte();
-                    PacketHandlers::HandleHandshake(GetSelfPointer());
-                    ReceiveBuffer->Shift(1 + 1 + 64 + 64 + 1);
-                }
-                break;
-            case 1: // -- Ping
-                if (ReceiveBuffer->Size() >= 1) {
-                    lastPacket = 1;
-                    ReceiveBuffer->ReadByte();
-                    PacketHandlers::HandlePing(GetSelfPointer());
-                    ReceiveBuffer->Shift(1);
-                }
-                break;
-            case 5: // -- Block Change
-                if (ReceiveBuffer->Size() >= 9) {
-                    lastPacket = 5;
-                    ReceiveBuffer->ReadByte();
-                    PacketHandlers::HandleBlockChange(GetSelfPointer());
-                    ReceiveBuffer->Shift(9);
-                }
-                break;
-            case 8: // -- Player Movement
-                if (ReceiveBuffer->Size() >= 10) {
-                    lastPacket = 8;
-                    ReceiveBuffer->ReadByte();
-                    PacketHandlers::HandlePlayerTeleport(GetSelfPointer());
-                    ReceiveBuffer->Shift(10);
-                }
-                break;
-            case 13: // -- Chat Message
-                if (ReceiveBuffer->Size() >= 66) {
-                    lastPacket = 13;
-                    ReceiveBuffer->ReadByte();
-                    PacketHandlers::HandleChatPacket(GetSelfPointer());
-                    ReceiveBuffer->Shift(66);
-                }
-                break;
-            case 16: // -- CPe ExtInfo
-                if (ReceiveBuffer->Size() >= 67) {
-                    lastPacket = 16;
-                    ReceiveBuffer->ReadByte();
-                    PacketHandlers::HandleExtInfo(GetSelfPointer());
-                    ReceiveBuffer->Shift(67);
-                }
-                break;
-            case 17: // -- CPE ExtEntry
-                if (ReceiveBuffer->Size() >= 1 + 64 + 4) {
-                    lastPacket = 17;
-                    ReceiveBuffer->ReadByte();
-                    PacketHandlers::HandleExtEntry(GetSelfPointer());
-                    ReceiveBuffer->Shift(69);
-                }
-                break;
-            case 19: // -- CPE Custom Block Support
-                if (ReceiveBuffer->Size() >= 2) {
-                    lastPacket = 19;
-                    ReceiveBuffer->ReadByte();
-                    PacketHandlers::HandleCustomBlockSupportLevel(GetSelfPointer());
-                    ReceiveBuffer->Shift(2);
-                }
-                break;
-            case 34: // -- CPE Player Clicked.
-                if (ReceiveBuffer->Size() >= 15) {
-                    lastPacket = 34;
-                    ReceiveBuffer->ReadByte();
-                    PacketHandlers::HandlePlayerClicked(GetSelfPointer());
-                    ReceiveBuffer->Shift(15);
-                }
-                break;
-            case 43:
-                if (ReceiveBuffer->Size() >= 4) {
-                    ReceiveBuffer->ReadByte();
-                    PacketHandlers::HandleTwoWayPing(GetSelfPointer());
-                    ReceiveBuffer->Shift(4);
-                }
-                break;
-
-            default:
-                Logger::LogAdd(MODULE_NAME, "Unknown Packet Received [" + stringulate((int)commandByte) + "]", LogType::WARNING, GLF);
-                Kick("Invalid Packet", true);
-        }
-
-        maxRepeat--;
-    } // -- /While
+//    int maxRepeat = 10;
+//    while (ReceiveBuffer->Size() > 0 && maxRepeat > 0 && canReceive) {
+//        unsigned char commandByte = ReceiveBuffer->PeekByte();
+//        LastTimeEvent = time(nullptr);
+//
+//        if (!LoggedIn) {
+//            bool isAllowedPacket = (commandByte == 0) || (commandByte == 1) || commandByte == 16 || commandByte == 17 || commandByte == 19;
+//            if (!isAllowedPacket) {
+//                Logger::LogAdd(MODULE_NAME, "Disconnecting " + this->IP + ": Unexpected handshake opcode.", WARNING, GLF);
+//                Kick("Invalid Packet", true);
+//                return;
+//            }
+//        }
+//
+//        switch(commandByte) {
+//            case 0: // -- Login
+//                if (ReceiveBuffer->Size() >= 1 + 1 + 64 + 64 + 1) {
+//                    lastPacket = 0;
+//                    ReceiveBuffer->ReadByte();
+//                    PacketHandlers::HandleHandshake(GetSelfPointer());
+//                    ReceiveBuffer->Shift(1 + 1 + 64 + 64 + 1);
+//                }
+//                break;
+//            case 1: // -- Ping
+//                if (ReceiveBuffer->Size() >= 1) {
+//                    lastPacket = 1;
+//                    ReceiveBuffer->ReadByte();
+//                    PacketHandlers::HandlePing(GetSelfPointer());
+//                    ReceiveBuffer->Shift(1);
+//                }
+//                break;
+//            case 5: // -- Block Change
+//                if (ReceiveBuffer->Size() >= 9) {
+//                    lastPacket = 5;
+//                    ReceiveBuffer->ReadByte();
+//                    PacketHandlers::HandleBlockChange(GetSelfPointer());
+//                    ReceiveBuffer->Shift(9);
+//                }
+//                break;
+//            case 8: // -- Player Movement
+//                if (ReceiveBuffer->Size() >= 10) {
+//                    lastPacket = 8;
+//                    ReceiveBuffer->ReadByte();
+//                    PacketHandlers::HandlePlayerTeleport(GetSelfPointer());
+//                    ReceiveBuffer->Shift(10);
+//                }
+//                break;
+//            case 13: // -- Chat Message
+//                if (ReceiveBuffer->Size() >= 66) {
+//                    lastPacket = 13;
+//                    ReceiveBuffer->ReadByte();
+//                    PacketHandlers::HandleChatPacket(GetSelfPointer());
+//                    ReceiveBuffer->Shift(66);
+//                }
+//                break;
+//            case 16: // -- CPe ExtInfo
+//                if (ReceiveBuffer->Size() >= 67) {
+//                    lastPacket = 16;
+//                    ReceiveBuffer->ReadByte();
+//                    PacketHandlers::HandleExtInfo(GetSelfPointer());
+//                    ReceiveBuffer->Shift(67);
+//                }
+//                break;
+//            case 17: // -- CPE ExtEntry
+//                if (ReceiveBuffer->Size() >= 1 + 64 + 4) {
+//                    lastPacket = 17;
+//                    ReceiveBuffer->ReadByte();
+//                    PacketHandlers::HandleExtEntry(GetSelfPointer());
+//                    ReceiveBuffer->Shift(69);
+//                }
+//                break;
+//            case 19: // -- CPE Custom Block Support
+//                if (ReceiveBuffer->Size() >= 2) {
+//                    lastPacket = 19;
+//                    ReceiveBuffer->ReadByte();
+//                    PacketHandlers::HandleCustomBlockSupportLevel(GetSelfPointer());
+//                    ReceiveBuffer->Shift(2);
+//                }
+//                break;
+//            case 34: // -- CPE Player Clicked.
+//                if (ReceiveBuffer->Size() >= 15) {
+//                    lastPacket = 34;
+//                    ReceiveBuffer->ReadByte();
+//                    PacketHandlers::HandlePlayerClicked(GetSelfPointer());
+//                    ReceiveBuffer->Shift(15);
+//                }
+//                break;
+//            case 43:
+//                if (ReceiveBuffer->Size() >= 4) {
+//                    ReceiveBuffer->ReadByte();
+//                    PacketHandlers::HandleTwoWayPing(GetSelfPointer());
+//                    ReceiveBuffer->Shift(4);
+//                }
+//                break;
+//
+//            default:
+//                Logger::LogAdd(MODULE_NAME, "Unknown Packet Received [" + stringulate((int)commandByte) + "]", LogType::WARNING, GLF);
+//                Kick("Invalid Packet", true);
+//        }
+//
+//        maxRepeat--;
+//    } // -- /While
 }
 
 void NetworkClient::SendPacket(const D3PP::network::IPacket &p) {

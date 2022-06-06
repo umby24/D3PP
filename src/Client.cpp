@@ -140,18 +140,6 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     ecl.clientId = c->GetId();
     Dispatcher::post(ecl);
 
-//    { // -- Spawn other entities too.
-//        for(auto const &e : Entity::AllEntities) {
-//            if (e.second->MapID != spawnMap->ID)
-//                continue;
-//
-//            c->SpawnEntity(e.second);
-//
-//            if (e.second->model != "" && e.second->model != "humanoid" && CPE::GetClientExtVersion(c, CHANGE_MODEL_EXT_NAME) > 0) {
-//                Packets::SendChangeModel(c, e.second->ClientId, e.second->model);
-//            }
-//        }
-//    }
     newEntity->SendPosOwn = true;
     newEntity->HandleMove();
     spawnMap->AddEntity(newEntity);

@@ -42,6 +42,7 @@ void RestApi::Init() {
     });
 
     m_restServer->Post("/settings/general", [](const httplib::Request& req, httplib::Response& res) {
+        res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         auto j = json::parse(req.body);
         Configuration::GenSettings.LoadFromJson(j);
         Configuration* cc = Configuration::GetInstance();
@@ -49,7 +50,7 @@ void RestApi::Init() {
 
         json j2;
         Configuration::GenSettings.SaveToJson(j2);
-        res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
+
         res.set_content(stringulate(j2), "application/json");
     });
     m_restServer->Options("/settings/network", [](const httplib::Request& req, httplib::Response& res){
@@ -64,6 +65,7 @@ void RestApi::Init() {
         res.set_content(stringulate(j), "application/json");
     });
     m_restServer->Post("/settings/network",[](const httplib::Request& req, httplib::Response& res) {
+        res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         auto j = json::parse(req.body);
         Configuration::NetSettings.LoadFromJson(j);
         Configuration* cc = Configuration::GetInstance();
@@ -71,9 +73,10 @@ void RestApi::Init() {
 
         json j2;
         Configuration::NetSettings.SaveToJson(j2);
-        res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
+
         res.set_content(stringulate(j2), "application/json");
     });
+
     m_restServer->Options("/settings/text", [](const httplib::Request& req, httplib::Response& res){
         res.set_header("Allow", "GET,POST");
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
