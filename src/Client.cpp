@@ -124,8 +124,9 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 
     NetworkFunctions::SystemLoginScreen(c->GetId(), Configuration::GenSettings.name, motd, currentRank.OnClient);
 
-    Entity::SetDisplayName(newEntity->Id, currentRank.Prefix, name, currentRank.Suffix);
+
     Entity::Add(newEntity);
+    Entity::SetDisplayName(newEntity->Id, currentRank.Prefix, name, currentRank.Suffix);
 
     c->player->SendMap();
 
