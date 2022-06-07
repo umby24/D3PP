@@ -5,7 +5,6 @@ project(D3PP)
 set(CMAKE_COMPILER_)
 set (MALLOC_CHECK_ 3)
 # set project standard
-set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
