@@ -305,5 +305,12 @@ void Block::SetJson(json j) {
 
             Blocks[loadedItem.Id] = loadedItem;
         }
+ }
+}
+
+void Block::DeleteBlock(int id) {
+    if (id > 0 && id <= 255) {
+        struct MapBlock shell{id};
+        Blocks[id] = shell;
     }
 }

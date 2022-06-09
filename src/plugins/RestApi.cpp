@@ -115,39 +115,64 @@ void RestApi::Init() {
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         res.set_content(rm->GetJson(), "application/json");
     });
-    m_restServer->Post("/settings/ranks",[](const httplib::Request& req, httplib::Response& res) {
+    m_restServer->Post("/settings/ranks", [](const httplib::Request &req, httplib::Response &res) {
         auto j = json::parse(req.body);
 
-        Rank* rm = Rank::GetInstance();
+        Rank *rm = Rank::GetInstance();
         rm->SetJson(j);
         rm->Save();
 
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         res.set_content(rm->GetJson(), "application/json");
     });
-    m_restServer->Options("/settings/blocks", [](const httplib::Request& req, httplib::Response& res){
+    m_restServer->Delete(R"(/settings/ranks/(\d+))", [](const httplib::Request &req, httplib::Response &res) {
+        res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
+        int rankId = std::stoi(req.matches[1].str().c_str());
+
+        Rank *rm = Rank::GetInstance();
+        rm->Delete(rankId, true);
+        rm->Save();
+
+        res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
+        res.set_content(rm->GetJson(), "application/json");
+    });
+
+    m_restServer->Options("/settings/blocks", [](const httplib::Request &req, httplib::Response &res) {
         res.set_header("Allow", "GET,POST");
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         res.set_header("Access-Control-Allow-Headers", "content-type");
     });
-    m_restServer->Get("/settings/blocks",[](const httplib::Request& req, httplib::Response& res) {
-        Block* b = Block::GetInstance();
+    m_restServer->Get("/settings/blocks", [](const httplib::Request &req, httplib::Response &res) {
+        Block *b = Block::GetInstance();
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         res.set_content(b->GetJson(), "application/json");
     });
-    m_restServer->Post("/settings/blocks",[](const httplib::Request& req, httplib::Response& res) {
+    m_restServer->Post("/settings/blocks", [](const httplib::Request &req, httplib::Response &res) {
         auto j = json::parse(req.body);
-        Block* b = Block::GetInstance();
+        Block *b = Block::GetInstance();
         b->SetJson(j);
         b->Save();
 
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         res.set_content(b->GetJson(), "application/json");
     });
-    m_restServer->Get("/settings/customblocks",[](const httplib::Request& req, httplib::Response& res) {});
-    m_restServer->Get("/settings/buildmodes",[](const httplib::Request& req, httplib::Response& res) {});
+    m_restServer->Delete(R"(/settings/blocks/(\d+))", [](const httplib::Request &req, httplib::Response &res) {
+        res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
+        int blockId = std::stoi(req.matches[1].str().c_str());
 
-    m_restServer->Options("/world/maps", [](const httplib::Request& req, httplib::Response& res){
+        auto j = json::parse(req.body);
+        Block *b = Block::GetInstance();
+
+        b->DeleteBlock(blockId);
+        b->Save();
+
+
+        res.set_content(b->GetJson(), "application/json");
+    });
+    m_restServer->Get("/settings/customblocks", [](const httplib::Request &req, httplib::Response &res) {});
+    m_restServer->Get("/settings/buildmodes", [](const httplib::Request &req, httplib::Response &res) {});
+
+    m_restServer->Options("/world/maps", [](const httplib::Request &req, httplib::Response &res) {
         res.set_header("Allow", "GET,POST");
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         res.set_header("Access-Control-Allow-Headers", "content-type");
