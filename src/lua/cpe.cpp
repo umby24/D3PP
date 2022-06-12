@@ -343,7 +343,7 @@ int LuaCPELib::LuaClientSetBlockPermissions(lua_State* L) {
 int LuaCPELib::LuaMapEnvSet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
-    if (nArgs != 4) {
+    if (nArgs != 5) {
         Logger::LogAdd("Lua", "LuaError: CPE_Map_Env_Appearance_Set called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }

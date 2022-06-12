@@ -61,7 +61,8 @@ Heartbeat::Heartbeat() {
     salt = "";
     isPublic = false;
     lastBeat = time(nullptr);
-
+    isFirstBeat = true;
+    
     this->Setup = [this] { Init(); };
     this->Main = [this] { MainFunc(); };
     this->Interval = std::chrono::seconds(1);
