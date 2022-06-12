@@ -16,13 +16,14 @@
 void NetworkFunctions::SystemLoginScreen(const int& clientId, const std::string& message0, const std::string& message1, const char& opMode) {
     std::string sanitized0 = Chat::StringGV(message0);
     std::string sanitized1 = Chat::StringGV(message1);
-
+    Chat::EmoteReplace(sanitized0);
+    Chat::EmoteReplace(sanitized1);
     Packets::SendClientHandshake(clientId, 7, message0, message1, opMode);
 }
 
 void NetworkFunctions::SystemRedScreen(const int& clientId, const std::string& message) {
     std::string sanitized = Chat::StringGV(message);
-
+    Chat::EmoteReplace(sanitized);
     Packets::SendDisconnect(clientId, message);
 }
 
@@ -39,6 +40,7 @@ void NetworkFunctions::SystemMessageNetworkSend(const int& clientId, const std::
     Utils::replaceAll(sanitized, "<br>", "\n");
     sanitized = Chat::StringMultiline(sanitized);
     sanitized = Chat::StringGV(sanitized);
+    Chat::EmoteReplace(sanitized);
     int lines = Utils::strCount(sanitized, '\n') + 1;
     std::vector<std::string> linev = Utils::splitString(sanitized, '\n');
     // -- emote replace
@@ -58,7 +60,7 @@ void NetworkFunctions::SystemMessageNetworkSend2All(const int& mapId, const std:
     Utils::replaceAll(sanitized, "<br>", "\n");
     sanitized = Chat::StringMultiline(sanitized);
     sanitized = Chat::StringGV(sanitized);
-
+    Chat::EmoteReplace(sanitized);
     int lines = Utils::strCount(sanitized, '\n') + 1;
     std::vector<std::string> linev = Utils::splitString(sanitized, '\n');
     // -- emote replace
@@ -105,10 +107,14 @@ void NetworkFunctions::NetworkOutBlockSet2Map(const int& mapId, const unsigned s
             continue;
 
         int onClient = mb.OnClient;
+        int dbl = CPE::GetClientExtVersion(nc, BLOCK_DEFS_EXT_NAME);
         if (mb.CpeLevel > nc->CustomBlocksLevel) {
             onClient = mb.CpeReplace;
         }
-
+        if (mb.OnClient > 65 && dbl < 1) { // -- If the user doesn't support customblocks and this is a custom block, replace with stone.
+            onClient = 1;
+            continue;
+        }
         Packets::SendBlockChange(nc->GetId(), x, y, z, onClient);
     }
 }

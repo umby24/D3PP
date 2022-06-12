@@ -194,7 +194,6 @@ void Network::UpdateNetworkStats() {
 void Network::NetworkEvents() {
     watchdog::Watch("Network", "Begin events", 0);
 
-    while (isListening) {
         ServerSocketEvent e = listenSocket->CheckEvents();
 
         if (e == ServerSocketEvent::SOCKET_EVENT_CONNECT) { 
@@ -238,14 +237,14 @@ void Network::NetworkEvents() {
                 } else {
                     delete[] receiveBuf;
                     DeleteClient(clientId, "Disconnected", true);
-                    break;
+
                 }
             }
         } else {
-            break;
         }
 
-    }
+
+
     for(auto const &nc : roClients) {
         if (nc->DisconnectTime > 0 && nc->DisconnectTime < time(nullptr)) {
             DeleteClient(nc->GetId(), "Forced Disconnect", true);

@@ -116,9 +116,6 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     c->player->tEntity = newEntity;
     c->player->MapId = spawnMap->ID;
     c->LoggedIn = true;
-    Entity::Add(newEntity);
-    Entity::SetDisplayName(newEntity->Id, currentRank.Prefix, name, currentRank.Suffix);
-
 
     std::string motd = MapMain::GetMapMOTDOverride(spawnMap->ID);
 
@@ -127,10 +124,14 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 
     NetworkFunctions::SystemLoginScreen(c->GetId(), Configuration::GenSettings.name, motd, currentRank.OnClient);
 
+
+    Entity::Add(newEntity);
+    Entity::SetDisplayName(newEntity->Id, currentRank.Prefix, name, currentRank.Suffix);
+
     c->player->SendMap();
 
-    newEntity->SpawnSelf = true;
-    newEntity->Spawn();
+//    newEntity->SpawnSelf = true;
+//    newEntity->Spawn();
 
     Logger::LogAdd(MODULE_NAME, "Player Logged in (IP:" + c->IP + " Name:" + name + ")", LogType::NORMAL, GLF);
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(newEntity->Id) + "&e' logged in");
@@ -140,14 +141,6 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     ecl.clientId = c->GetId();
     Dispatcher::post(ecl);
 
-    { // -- Spawn other entities too.
-        for(auto const &e : Entity::AllEntities) {
-            if (e.second->MapID != spawnMap->ID)
-                continue;
-            
-            c->SpawnEntity(e.second);
-        }
-    }
     newEntity->SendPosOwn = true;
     newEntity->HandleMove();
     spawnMap->AddEntity(newEntity);
@@ -165,7 +158,7 @@ void Client::LoginCpe(int clientId, std::string name, std::string mppass, char v
     c->player->MPPass = mppass;
     c->CPE = true;
     c->player->ClientVersion = version;
-    Packets::SendExtInfo(c, "D3PP Server Alpha", 19);
+    Packets::SendExtInfo(c, "D3PP Server Alpha", 22);
     Packets::SendExtEntry(c, CUSTOM_BLOCKS_EXT_NAME, 1);
     Packets::SendExtEntry(c, HELDBLOCK_EXT_NAME, 1);
     Packets::SendExtEntry(c, CLICK_DISTANCE_EXT_NAME, 1);
@@ -185,6 +178,9 @@ void Client::LoginCpe(int clientId, std::string name, std::string mppass, char v
     Packets::SendExtEntry(c, BLOCK_DEFS_EXT_NAME, 1);
     Packets::SendExtEntry(c, BLOCK_DEFS_EXTENDED_EXT_NAME, 2);
     Packets::SendExtEntry(c, EXTENDED_TEXTURES_EXT_NAME, 1);
+    Packets::SendExtEntry(c, FULL_CODEPAGE_EXT_NAME, 1);
+    Packets::SendExtEntry(c, CUSTOM_PARTICLES_EXT_NAME, 1);
+    Packets::SendExtEntry(c, CUSTOM_MODELS_EXT_NAME, 2);
 
     Logger::LogAdd(MODULE_NAME, "LoginCPE complete", LogType::NORMAL, GLF);
 }

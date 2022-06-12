@@ -139,7 +139,90 @@ void Block::Load() {
     }
     iStream.close();
 
-    for(auto &item : j) {
+    SetJson(j);
+
+    Logger::LogAdd(MODULE_NAME, "File loaded [" + filePath + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
+    hasLoaded = true;
+    time_t modTime = Utils::FileModTime(filePath);
+    LastFileDate = modTime;
+}
+
+void Block::Save() {
+    Files* f = Files::GetInstance();
+    std::string blockFile = f->GetFile(BLOCK_FILE_NAME);
+
+    std::ofstream oStream(blockFile, std::ios::trunc);
+    oStream << GetJson();
+    oStream.flush();
+    oStream.close();
+
+    time_t modTime = Utils::FileModTime(blockFile);
+    LastFileDate = modTime;
+
+    Logger::LogAdd(MODULE_NAME, "File saved [" + blockFile + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+}
+
+void Block::MainFunc() {
+    if (SaveFile) {
+        SaveFile = false;
+        Save();
+    }
+
+    Files* f = Files::GetInstance();
+    std::string blockFile = f->GetFile(BLOCK_FILE_NAME);
+    time_t modTime = Utils::FileModTime(blockFile);
+
+    if (modTime != LastFileDate) {
+        Load();
+        LastFileDate = modTime;
+    }
+}
+
+Block *Block::GetInstance() {
+    if (Instance == nullptr)
+        Instance = new Block();
+
+    return Instance;
+}
+
+std::string Block::GetJson() {
+    json j;
+
+    std::sort(Blocks.begin(), Blocks.end(), compareBlockIds);
+
+    for(auto i = 0; i < 255; i++) {
+        j[i] = nullptr;
+        j[i] = {
+                {"Id", i},
+                {"Name", Blocks[i].Name},
+                {"OnClient", Blocks[i].OnClient},
+                {"Physics", Blocks[i].Physics},
+                {"PhysicsPlugin", Blocks[i].PhysicsPlugin},
+                {"PhysicsTime", Blocks[i].PhysicsTime},
+                {"PhysicsRandom", Blocks[i].PhysicsRandom},
+                {"PhysicsRepeat", Blocks[i].PhysicsRepeat},
+                {"PhysicsOnLoad", Blocks[i].PhysicsOnLoad},
+                {"CreatePlugin", Blocks[i].CreatePlugin},
+                {"DeletePlugin", Blocks[i].DeletePlugin},
+                {"ReplaceOnLoad", Blocks[i].ReplaceOnLoad},
+                {"RankPlace", Blocks[i].RankPlace},
+                {"RankDelete", Blocks[i].RankDelete},
+                {"AfterDelete", Blocks[i].AfterDelete},
+                {"Kills", Blocks[i].Kills},
+                {"Special", Blocks[i].Special},
+                {"OverviewColor", Blocks[i].OverviewColor},
+                {"CpeLevel", Blocks[i].CpeLevel},
+                {"CpeReplace", Blocks[i].CpeReplace},
+        };
+    }
+
+    std::ostringstream oss;
+    oss << std::setw(4) << j;
+    return oss.str();
+}
+
+void Block::SetJson(json j) {
+ for(auto &item : j) {
         struct MapBlock loadedItem {-1, };
         if (item["Id"].is_number()) {
             loadedItem.Id = item["Id"];
@@ -222,77 +305,12 @@ void Block::Load() {
 
             Blocks[loadedItem.Id] = loadedItem;
         }
-    }
-
-    Logger::LogAdd(MODULE_NAME, "File loaded [" + filePath + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
-    hasLoaded = true;
-    time_t modTime = Utils::FileModTime(filePath);
-    LastFileDate = modTime;
+ }
 }
 
-void Block::Save() {
-    json j;
-    Files* f = Files::GetInstance();
-    std::string blockFile = f->GetFile(BLOCK_FILE_NAME);
-    
-    std::sort(Blocks.begin(), Blocks.end(), compareBlockIds);
-
-    for(auto i = 0; i < 255; i++) {
-        j[i] = nullptr;
-        j[i] = {
-                {"Id", i},
-                {"Name", Blocks[i].Name},
-                {"OnClient", Blocks[i].OnClient},
-                {"Physics", Blocks[i].Physics},
-                {"PhysicsPlugin", Blocks[i].PhysicsPlugin},
-                {"PhysicsTime", Blocks[i].PhysicsTime},
-                {"PhysicsRandom", Blocks[i].PhysicsRandom},
-                {"PhysicsRepeat", Blocks[i].PhysicsRepeat},
-                {"PhysicsOnLoad", Blocks[i].PhysicsOnLoad},
-                {"CreatePlugin", Blocks[i].CreatePlugin},
-                {"DeletePlugin", Blocks[i].DeletePlugin},
-                {"ReplaceOnLoad", Blocks[i].ReplaceOnLoad},
-                {"RankPlace", Blocks[i].RankPlace},
-                {"RankDelete", Blocks[i].RankDelete},
-                {"AfterDelete", Blocks[i].AfterDelete},
-                {"Kills", Blocks[i].Kills},
-                {"Special", Blocks[i].Special},
-                {"OverviewColor", Blocks[i].OverviewColor},
-                {"CpeLevel", Blocks[i].CpeLevel},
-                {"CpeReplace", Blocks[i].CpeReplace},
-        };
+void Block::DeleteBlock(int id) {
+    if (id > 0 && id <= 255) {
+        struct MapBlock shell{id};
+        Blocks[id] = shell;
     }
-
-    std::ofstream oStream(blockFile, std::ios::trunc);
-    oStream << std::setw(4) << j;
-    oStream.flush();
-    oStream.close();
-
-    time_t modTime = Utils::FileModTime(blockFile);
-    LastFileDate = modTime;
-
-    Logger::LogAdd(MODULE_NAME, "File saved [" + blockFile + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-}
-
-void Block::MainFunc() {
-    if (SaveFile) {
-        SaveFile = false;
-        Save();
-    }
-
-    Files* f = Files::GetInstance();
-    std::string blockFile = f->GetFile(BLOCK_FILE_NAME);
-    time_t modTime = Utils::FileModTime(blockFile);
-
-    if (modTime != LastFileDate) {
-        Load();
-        LastFileDate = modTime;
-    }
-}
-
-Block *Block::GetInstance() {
-    if (Instance == nullptr)
-        Instance = new Block();
-
-    return Instance;
 }

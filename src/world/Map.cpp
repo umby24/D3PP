@@ -265,7 +265,7 @@ void MapMain::MapBlockPhysics() {
                 if (map.second->pQueue == nullptr) { // -- Avoid edge cases while the map is still loading
                     continue;
                 }
-                if (map.second->pQueue->TryDequeue(physItem)) {
+                if (map.second->pQueue != nullptr && map.second->pQueue->TryDequeue(physItem)) {
                     if (physItem.Time < std::chrono::steady_clock::now()) {
                         map.second->ProcessPhysics(physItem.Location.X, physItem.Location.Y, physItem.Location.Z);
                         counter++;
@@ -639,6 +639,7 @@ void Map::Send(int clientId) {
     tempBuf.at(tempBufferOffset++) = static_cast<unsigned char>(mapVolume & 0xFF);
 
     int cbl = nc->GetCustomBlocksLevel();
+    int dbl = CPE::GetClientExtVersion(nc, BLOCK_DEFS_EXT_NAME);
     std::vector<unsigned char> mapBlocks = m_mapProvider->GetBlocks();
     
     if (mapBlocks.size() != (mapVolume * 4)) {
@@ -652,6 +653,10 @@ void Map::Send(int clientId) {
         unsigned char blockAt = mapBlocks[index];
         if (blockAt < 49) { // -- If its an original block, Dont bother checking. Just speed past.
             tempBuf[tempBufferOffset++] = blockAt;
+            continue;
+        }
+        if (blockAt > 65 && dbl < 1) { // -- If the user doesn't support customblocks and this is a custom block, replace with stone.
+            tempBuf[tempBufferOffset++] = 1;
             continue;
         }
 
@@ -713,8 +718,9 @@ void Map::Resend() {
 
     for (auto const &me : Entity::AllEntities) {
         if (me.second->MapID == ID) {
-            Vector3S newLocation{static_cast<short>(mapSize.X+16), static_cast<short>(mapSize.Y+16), static_cast<short>(mapSize.Z+16)};
-            me.second->Location.SetAsPlayerCoords(newLocation);
+            me.second->Resend(me.second->Id);
+            //Vector3S newLocation{static_cast<short>(mapSize.X+16), static_cast<short>(mapSize.Y+16), static_cast<short>(mapSize.Z+16)};
+            //me.second->Location.SetAsPlayerCoords(newLocation);
         }
     }
 
@@ -725,16 +731,18 @@ void Map::Resend() {
 void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type) {
     if (client == nullptr)
         return;
-
-    if (client->IsStopped()) {
-        NetworkFunctions::SystemMessageNetworkSend(client->GetId(), "&eYou are not allowed to build (stopped).");
-        return;
-    }
-
     Vector3S blockLocation {(short)X, (short)Y, (short)Z};
 
     Block* bm = Block::GetInstance();
     auto rawBlock = m_mapProvider->GetBlock(blockLocation);
+
+    if (client->IsStopped()) {
+        NetworkFunctions::SystemMessageNetworkSend(client->GetId(), "&eYou are not allowed to build (stopped).");
+        NetworkFunctions::NetworkOutBlockSet(client->GetId(), X, Y, Z, rawBlock);
+        return;
+    }
+
+
     unsigned char rawNewType;
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(client->GetId(), true);
     MapBlock oldType = bm->GetBlock(rawBlock);
