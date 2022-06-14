@@ -856,6 +856,11 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
              std::this_thread::sleep_for(std::chrono::milliseconds(100));
          }
      }
+     auto mapSize = m_mapProvider->GetSize();
+
+     if (X > mapSize.X || Y > mapSize.Y || Z > mapSize.Z) {
+         return 255;
+     }
 
      return m_mapProvider->GetBlock(Vector3S(X, Y, Z));
 }

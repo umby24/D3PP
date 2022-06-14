@@ -104,7 +104,9 @@ void NetworkClient::HandleEvent(const Event& e) {
         std::shared_ptr<Entity> eventEntity = Entity::GetPointer(ea.entityId);
         if (eventEntity->Id == player->tEntity->Id && !eventEntity->SendPosOwn)
             return;
-        
+
+        if (eventEntity->MapID != player->tEntity->MapID)
+            return;
         if (eventEntity->Id != player->tEntity->Id)
             NetworkFunctions::NetworkOutEntityPosition(Id, eventEntity->ClientId, eventEntity->Location);
         else
