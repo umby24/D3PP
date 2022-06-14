@@ -19,6 +19,7 @@
 #include "common/Player_List.h"
 #include "Command.h"
 #include "plugins/LuaPlugin.h"
+#include "plugins/RestApi.h"
 #include "common/Configuration.h"
 #include "ConsoleClient.h"
 #include "network/Network_Functions.h"
@@ -42,12 +43,12 @@ int main()
             }
             catch (const std::exception& e)
             {
-                std::cout << "An Exception occured: " << e.what() << std::endl;
+                std::cout << "An Exception occurred: " << e.what() << std::endl;
                 //DBG_FAIL(e.what());
             }
             catch (...)
             {
-                std::cout << "Unknown exception occured, exiting.";
+                std::cout << "Unknown exception occurred, exiting.";
                 std::abort();
             }
         }
@@ -69,6 +70,7 @@ int main()
     CommandMain *cm = CommandMain::GetInstance();
     BuildModeMain *bmm = BuildModeMain::GetInstance();
     Heartbeat* hb = Heartbeat::GetInstance();
+    RestApi rapi;
     D3PP::plugins::PluginManager *plugm = D3PP::plugins::PluginManager::GetInstance();
     watchdog* wd = watchdog::GetInstance();
     CustomBlocks* cb = CustomBlocks::GetInstance();

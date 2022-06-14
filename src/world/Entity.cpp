@@ -391,5 +391,11 @@ void Entity::SetModel(std::string modelName) {
 }
 
 void Entity::Resend(int id) {
-    resend = true;
+    EventEntityDelete ed;
+    ed.entityId = id;
+    Dispatcher::post(ed);
+
+    EventEntityAdd ea;
+    ea.entityId = id;
+    Dispatcher::post(ea);
 }

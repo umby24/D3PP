@@ -24,6 +24,7 @@ protected:
    static int LuaEntityDisplaynameSet(lua_State* L);
    static int LuaEntityPositionSet(lua_State* L);
    static int LuaEntityKill(lua_State* L);
+   static int LuaEntitySetModel(lua_State* L);
 private:
 };
 

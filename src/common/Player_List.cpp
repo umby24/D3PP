@@ -35,7 +35,7 @@ void Player_List::CloseDatabase() {
     if (dbOpen) {
         dbOpen = false;
         sqlite3_close(db);
-        Logger::LogAdd(MODULE_NAME, "Database closed [" + fileName + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Database closed [" + fileName + "]", LogType::DEBUG, __FILE__, __LINE__, __FUNCTION__);
     }
 }
 
@@ -67,7 +67,7 @@ void Player_List::OpenDatabase() {
     }
     sqlite3_open(fileName.c_str(), &db);
     dbOpen = true;
-    Logger::LogAdd(MODULE_NAME, "Database Opened.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Database Opened.", LogType::DEBUG, __FILE__, __LINE__, __FUNCTION__);
 }
 
 Player_List::Player_List() {

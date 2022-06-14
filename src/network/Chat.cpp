@@ -207,6 +207,8 @@ void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, cons
             client->player->tEntity->ChatBuffer = "";
         }
     }
+
+
     CommandMain* cm = CommandMain::GetInstance();
 
     if (output[0] == '/') {
@@ -229,5 +231,120 @@ void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, cons
         else
             NetworkSend2Map(client->player->tEntity->Id, output);
     }
-    
+}
+
+void Chat::EmoteReplace(std::string& message) {
+    Utils::replaceAll(message,"{:)}", "\u0001"); // ☺
+    Utils::replaceAll(message,"{smile}", "\u0001");
+
+    Utils::replaceAll(message,"{smile2}", "\u0002"); // ☻
+
+    Utils::replaceAll(message,"{heart}", "\u0003"); // ♥
+    Utils::replaceAll(message,"{hearts}", "\u0003");
+    Utils::replaceAll(message,"{<3}", "\u0003");
+
+    Utils::replaceAll(message,"{diamond}", "\u0004"); // ♦
+    Utils::replaceAll(message,"{diamonds}", "\u0004");
+    Utils::replaceAll(message,"{rhombus}", "\u0004");
+
+    Utils::replaceAll(message,"{club}", "\u0005"); // ♣
+    Utils::replaceAll(message,"{clubs}", "\u0005");
+    Utils::replaceAll(message,"{clover}", "\u0005");
+    Utils::replaceAll(message,"{shamrock}", "\u0005");
+
+    Utils::replaceAll(message,"{spade}", "\u0006"); // ♠
+    Utils::replaceAll(message,"{spades}", "\u0006");
+
+    Utils::replaceAll(message,"{*}", "\u0007"); // •
+    Utils::replaceAll(message,"{bullet}", "\u0007");
+    Utils::replaceAll(message,"{dot}", "\u0007");
+    Utils::replaceAll(message,"{point}", "\u0007");
+
+    Utils::replaceAll(message,"{hole}", "\u0008"); // ◘
+
+    Utils::replaceAll(message,"{circle}", "\u0009"); // ○
+    Utils::replaceAll(message,"{o}", "\u0009");
+
+    Utils::replaceAll(message,"{male}", "\u000B"); // ♂
+    Utils::replaceAll(message,"{mars}", "\u000B");
+
+    Utils::replaceAll(message,"{female}", "\u000C"); // ♀
+    Utils::replaceAll(message,"{venus}", "\u000C");
+
+    Utils::replaceAll(message,"{8}", "\u000D"); // ♪
+    Utils::replaceAll(message,"{note}", "\u000D");
+    Utils::replaceAll(message,"{quaver}", "\u000D");
+
+    Utils::replaceAll(message,"{notes}", "\u000E"); // ♫
+    Utils::replaceAll(message,"{music}", "\u000E");
+
+    Utils::replaceAll(message,"{sun}", "\u000F"); // ☼
+    Utils::replaceAll(message,"{celestia}", "\u000F");
+
+    Utils::replaceAll(message,"{>>}", "\u0010"); // ►
+    Utils::replaceAll(message,"{right2}", "\u0010");
+
+    Utils::replaceAll(message,"{<<}", "\u0011"); // ◄
+    Utils::replaceAll(message,"{left2}", "\u0011");
+
+    Utils::replaceAll(message,"{updown}", "\u0012"); // ↕
+    Utils::replaceAll(message,"{^v}", "\u0012");
+
+    Utils::replaceAll(message,"{!!}", "\u0013"); // ‼
+
+    Utils::replaceAll(message,"{p}", "\u0014"); // ¶
+    Utils::replaceAll(message,"{para}", "\u0014");
+    Utils::replaceAll(message,"{pilcrow}", "\u0014");
+    Utils::replaceAll(message,"{paragraph}", "\u0014");
+
+    Utils::replaceAll(message,"{s}", "\u0015"); // §
+    Utils::replaceAll(message,"{sect}", "\u0015");
+    Utils::replaceAll(message,"{section}", "\u0015");
+
+    Utils::replaceAll(message,"{-}", "\u0016"); // ▬
+    Utils::replaceAll(message,"{_}", "\u0016");
+    Utils::replaceAll(message,"{bar}", "\u0016");
+    Utils::replaceAll(message,"{half}", "\u0016");
+
+    Utils::replaceAll(message,"{updown2}", "\u0017"); // ↨
+    Utils::replaceAll(message,"{^v_}", "\u0017");
+
+    Utils::replaceAll(message,"{^}", "\u0018"); // ↑
+    Utils::replaceAll(message,"{up}", "\u0018");
+
+    Utils::replaceAll(message,"{v}", "\u0019"); // ↓
+    Utils::replaceAll(message,"{down}", "\u0019");
+
+    Utils::replaceAll(message,"{>}", "\u001A"); // →
+    Utils::replaceAll(message,"{->}", "\u001A");
+    Utils::replaceAll(message,"{right}", "\u001A");
+
+    Utils::replaceAll(message,"{<}", "\u001B"); // ←
+    Utils::replaceAll(message,"{<-}", "\u001B");
+    Utils::replaceAll(message,"{left}", "\u001B");
+
+    Utils::replaceAll(message,"{l}", "\u001C"); // ∟
+    Utils::replaceAll(message,"{angle}", "\u001C");
+    Utils::replaceAll(message,"{corner}", "\u001C");
+
+    Utils::replaceAll(message,"{<>}", "\u001D"); // ↔
+    Utils::replaceAll(message,"{<->}", "\u001D");
+    Utils::replaceAll(message,"{leftright}", "\u001D");
+
+    Utils::replaceAll(message,"{^^}", "\u001E"); // ▲
+    Utils::replaceAll(message,"{up2}", "\u001E");
+
+    Utils::replaceAll(message,"{vv}", "\u001F"); // ▼
+    Utils::replaceAll(message,"{down2}", "\u001F");
+
+    Utils::replaceAll(message,"{house}", "\u007F"); // ⌂
+
+    Utils::replaceAll(message,"{caret}", "^");
+    Utils::replaceAll(message,"{hat}", "^");
+
+    Utils::replaceAll(message,"{tilde}", "~");
+    Utils::replaceAll(message,"{wave}", "~");
+
+    Utils::replaceAll(message,"{grave}", "`");
+    Utils::replaceAll(message,"{\"}", "`");
 }

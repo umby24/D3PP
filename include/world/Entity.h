@@ -87,8 +87,9 @@ public:
 
     static std::map<int, std::shared_ptr<Entity>> AllEntities;
     static std::mutex entityMutex;
-private:
     std::shared_ptr<NetworkClient> associatedClient;
+private:
+
 };
 
 class EntityMain : TaskItem {

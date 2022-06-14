@@ -24,31 +24,19 @@ Rank::Rank() {
 }
 
 void Rank::Save() {
-    json j;
     Files* f = Files::GetInstance();
     std::string rankFile = f->GetFile(RANK_FILE_NAME);
 
-    for(const auto& x : _ranks) {
-        struct RankItem item = x.second;
-        std::string key = stringulate(item.Rank);
-
-        j[key] = nullptr;
-        j[key]["Rank"] = item.Rank;
-        j[key]["Name"] = item.Name;
-        j[key]["Prefix"] = item.Prefix;
-        j[key]["Suffix"] = item.Suffix;
-        j[key]["OnClient"] = item.OnClient;
-    }
 
     std::ofstream oStream(rankFile, std::ios::trunc);
-    oStream << std::setw(4) << j;
+    oStream << GetJson();
     oStream.flush();
     oStream.close();
 
     time_t modTime = Utils::FileModTime(rankFile);
     LastFileDate = modTime;
 
-    Logger::LogAdd(MODULE_NAME, "File saved [" + rankFile + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File saved [" + rankFile + "]", LogType::NORMAL, GLF);
 }
 
 void Rank::MainFunc() {
@@ -75,7 +63,7 @@ void Rank::Load() {
     std::ifstream iStream(filePath);
 
     if (!iStream.is_open()) {
-        Logger::LogAdd(MODULE_NAME, "Failed to load ranks!!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Failed to load ranks!!", LogType::L_ERROR, GLF);
         DefaultRanks();
         return;
     }
@@ -83,17 +71,9 @@ void Rank::Load() {
     iStream >> j;
     iStream.close();
 
-    for(auto &item : j) {
-        struct RankItem loadedItem;
-        loadedItem.Rank = item["Rank"];
-        loadedItem.Name = item["Name"];
-        loadedItem.Prefix = item["Prefix"];
-        loadedItem.Suffix = item["Suffix"];
-        loadedItem.OnClient = item["OnClient"];
-        _ranks[loadedItem.Rank] = loadedItem;
-    }
+    SetJson(j);
 
-    Logger::LogAdd("Rank", "File loaded.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
+    Logger::LogAdd("Rank", "File loaded.", LogType::NORMAL, GLF);
 
     time_t modTime = Utils::FileModTime(filePath);
     LastFileDate = modTime;
@@ -105,7 +85,7 @@ void Rank::Load() {
 
 void Rank::Add(RankItem item) {
     _ranks[item.Rank] = item;
-    Logger::LogAdd(MODULE_NAME, "Rank added [" + stringulate(item.Rank) + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
+    Logger::LogAdd(MODULE_NAME, "Rank added [" + stringulate(item.Rank) + "]", LogType::NORMAL, GLF );
     SaveFile = true;
 }
 
@@ -132,7 +112,7 @@ RankItem Rank::GetRank(const int rank, bool exact) {
     if (found)
         return result;
 
-    Logger::LogAdd(MODULE_NAME, "Can't find rank [" + stringulate(rank) + "]", NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Can't find rank [" + stringulate(rank) + "]", NORMAL, GLF);
     return result;
 }
 
@@ -167,3 +147,34 @@ Rank *Rank::GetInstance() {
     return Instance;
 }
 
+std::string Rank::GetJson() {
+    json j;
+
+    for(const auto& x : _ranks) {
+        struct RankItem item = x.second;
+        std::string key = stringulate(item.Rank);
+
+        j[key] = nullptr;
+        j[key]["Rank"] = item.Rank;
+        j[key]["Name"] = item.Name;
+        j[key]["Prefix"] = item.Prefix;
+        j[key]["Suffix"] = item.Suffix;
+        j[key]["OnClient"] = item.OnClient;
+    }
+
+    std::ostringstream oss;
+    oss << std::setw(4) << j;
+    return oss.str();
+}
+
+void Rank::SetJson(json j) {
+     for(auto &item : j) {
+        struct RankItem loadedItem;
+        loadedItem.Rank = item["Rank"];
+        loadedItem.Name = item["Name"];
+        loadedItem.Prefix = item["Prefix"];
+        loadedItem.Suffix = item["Suffix"];
+        loadedItem.OnClient = item["OnClient"];
+        _ranks[loadedItem.Rank] = loadedItem;
+    }
+}

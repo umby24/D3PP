@@ -22,7 +22,7 @@ using namespace D3PP::world;
 using namespace D3PP::Common;
 
 CommandMain::CommandMain() : ParsedOperator{} {
-    this->Setup = [this] { Init(); };
+    this->Setup = [this] { Load(); };
     this->Main = [this] { MainFunc(); };
     this->Interval = std::chrono::seconds(1);
     SaveFile = false;
@@ -542,7 +542,7 @@ void CommandMain::Init() {
     placeCmd.CanConsole = false;
     placeCmd.Function = [this] { CommandMain::CommandPlace(); };
     Commands.push_back(placeCmd);
-    Load();
+
 }
 
 void CommandMain::Load() {
@@ -556,18 +556,8 @@ void CommandMain::Load() {
 
     PreferenceLoader pl(cmdFilename, "");
     pl.LoadFile();
-
-    std::vector<int> toRemove;
-    int i = 0;
-    for(auto const &cmd : Commands) {
-        if (!cmd.Internal && pl.SettingsDictionary.find(cmd.Id) == pl.SettingsDictionary.end()) {
-            toRemove.push_back(i);
-        }
-        i++;
-    }
-    for(auto const &rmi : toRemove) {
-        Commands.erase(Commands.begin() + rmi);
-    }
+    Commands.clear();
+    Init();
 
     // -- Iterate everything in the commands file to load.
     for (auto const &si : pl.SettingsDictionary) {
