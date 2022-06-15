@@ -648,7 +648,7 @@ void Map::Send(int clientId) {
         return;
     }
 
-    for (int i = 0; i < mapVolume-1; i++) {
+    for (int i = 0; i < mapVolume; i++) {
         int index = i * MAP_BLOCK_ELEMENT_SIZE;
         unsigned char blockAt = mapBlocks[index];
         if (blockAt < 49) { // -- If its an original block, Dont bother checking. Just speed past.
