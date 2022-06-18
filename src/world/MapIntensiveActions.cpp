@@ -15,6 +15,7 @@ void D3PP::world::MapIntensiveActions::MainFunc() {
             taskToComplete();
             itemQueue.pop();
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 
