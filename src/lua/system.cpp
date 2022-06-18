@@ -232,12 +232,17 @@ int LuaSystemLib::LuaMessage(lua_State* L) {
     }
 
     int clientId = luaL_checkinteger(L, 1);
-    std::string message = lua_tostring(L, 2);
+    std::string message = luaL_checkstring(L, 2);
 
     int messageType = 0;
 
     if (nArgs == 3 && lua_isnumber(L, 3)) {
         messageType = luaL_checkinteger(L, 3);
+    }
+
+    if (clientId != -200) {
+        // -- Verify this is a valid client id.
+
     }
 
     NetworkFunctions::SystemMessageNetworkSend(clientId, message, messageType);

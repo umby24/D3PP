@@ -28,10 +28,12 @@ set(D3PP_SOURCE_FILES src/common/Files.cpp include/common/Files.h src/common/Log
  include/plugins/LuaPlugin.h src/plugins/LuaPlugin.cpp  include/world/Physics.h src/world/Physics.cpp include/Build.h src/Build.cpp include/EventSystem.h src/EventSystem.cpp include/events/EventTimer.h include/events/EventClientAdd.h include/events/EventClientDelete.h include/events/EventClientLogin.h include/events/EventClientLogout.h include/events/EventEntityAdd.h include/events/EventEntityDelete.h include/events/EventEntityPositionSet.h include/events/EventEntityDie.h include/events/EventMapAdd.h include/events/EventMapActionDelete.h include/events/EventMapActionResize.h include/events/EventMapActionFill.h include/events/EventMapActionSave.h include/events/EventMapActionLoad.h include/events/EventMapBlockChange.h include/events/EventMapBlockChangeClient.h include/events/EventMapBlockChangePlayer.h include/events/EventChatMap.h include/events/EventChatAll.h include/events/EventChatPrivate.h include/events/EventEntityMapChange.h src/events/EventChatAll.cpp src/events/EventChatMap.cpp src/events/EventClientAdd.cpp src/events/EventClientDelete.cpp src/events/EventClientLogin.cpp src/events/EventClientLogout.cpp src/events/EventEntityAdd.cpp src/events/EventEntityDelete.cpp src/events/EventEntityDie.cpp include/CustomBlocks.h
  src/events/EventEntityMapChange.cpp src/events/EventEntityPositionSet.cpp src/events/EventMapActionDelete.cpp src/events/EventMapActionFill.cpp src/events/EventMapActionLoad.cpp src/events/EventMapActionResize.cpp src/events/EventMapActionSave.cpp src/events/EventMapAdd.cpp src/events/EventMapBlockChange.cpp src/events/EventMapBlockChangeClient.cpp src/events/EventMapBlockChangePlayer.cpp src/events/EventTimer.cpp include/common/ByteBuffer.h src/common/ByteBuffer.cpp include/network/NetworkClient.h src/network/NetworkClient.cpp include/common/MinecraftLocation.h src/common/MinecraftLocation.cpp include/events/EntityEventArgs.h src/events/EntityEventArgs.cpp include/common/Configuration.h src/common/Configuration.cpp src/ConsoleClient.cpp include/ConsoleClient.h src/CustomBlocks.cpp src/events/PlayerEventArgs.cpp include/events/PlayerEventArgs.h "include/lua/client.h" "src/lua/client.cpp" "include/lua/buildmode.h" "src/lua/buildmode.cpp" "src/lua/build.cpp" "include/lua/build.h" "include/lua/entity.h" "src/lua/entity.cpp" "src/lua/player.cpp" "include/lua/player.h" "src/lua/map.cpp" "include/lua/map.h" "src/lua/cpe.cpp" "include/lua/cpe.h" "src/lua/block.cpp" "include/lua/block.h" "include/lua/rank.h" "include/lua/teleporter.h" "include/lua/system.h" "include/lua/network.h" "src/lua/system.cpp" "src/lua/rank.cpp" "src/lua/network.cpp" "src/lua/teleporter.cpp" src/world/IMapProvider.cpp include/world/IMapProvider.h src/world/D3MapProvider.cpp include/world/D3MapProvider.h src/world/MapActions.cpp src/world/BlockChangeQueue.cpp include/world/BlockChangeQueue.h include/world/IUniqueQueue.h src/world/IUniqueQueue.cpp src/world/PhysicsQueue.cpp include/world/PhysicsQueue.h include/world/TimeQueueItem.h include/world/ChangeQueueItem.h src/network/Server.cpp include/network/Server.h include/network/IPacket.h include/network/packets/HandshakePacket.h include/network/packets/PingPacket.h include/network/packets/BlockChangePacket.h
  "src/files/D3Map.cpp" "include/files/D3Map.h" "include/common/Vectors.h" include/world/MapActions.h include/world/MapPermissions.h include/world/MapEnvironment.h
- src/network/packets/BlockChangePacket.cpp include/network/packets/ChatPacket.h  src/network/packets/ChatPacket.cpp include/network/packets/CustomBlockSupportLevelPacket.h include/network/packets/ExtEntryPacket.h include/network/packets/ExtInfoPacket.h include/network/packets/PlayerClickedPacket.h include/network/packets/PlayerTeleportPacket.h include/network/packets/TwoWayPingPacket.h include/generation/flatgrass.cpp include/common/UndoItem.h include/world/FillState.h include/plugins/LuaState.h include/plugins/PluginManager.h src/plugins/LuaState.cpp src/plugins/PluginManager.cpp include/plugins/RestApi.h src/plugins/RestApi.cpp)
+ src/network/packets/BlockChangePacket.cpp include/network/packets/ChatPacket.h  src/network/packets/ChatPacket.cpp include/network/packets/CustomBlockSupportLevelPacket.h include/network/packets/ExtEntryPacket.h include/network/packets/ExtInfoPacket.h include/network/packets/PlayerClickedPacket.h include/network/packets/PlayerTeleportPacket.h include/network/packets/TwoWayPingPacket.h include/generation/flatgrass.cpp include/common/UndoItem.h include/world/FillState.h include/plugins/LuaState.h include/plugins/PluginManager.h src/plugins/LuaState.cpp src/plugins/PluginManager.cpp include/plugins/RestApi.h src/plugins/RestApi.cpp src/Nbt/cppNbt.h)
+
+set(NBT_SOURCE_FILES include/nbt-cpp/src/nbt.cpp)
 
 # add the executable
-add_executable(D3PP main.cpp ${D3PP_SOURCE_FILES})
+add_executable(D3PP main.cpp ${NBT_SOURCE_FILES} ${D3PP_SOURCE_FILES})
 
 
 #______________________________________________________________
@@ -86,6 +88,7 @@ enable_testing()
 
 add_executable(
   hello_test
+        ${NBT_SOURCE_FILES}
   ${D3PP_SOURCE_FILES}
   Testing/hello_test.cc
   Testing/utils_test.cc
@@ -94,6 +97,7 @@ add_executable(
   Testing/world/entity_test.cc
   Testing/world/mapactions_test.cc
   Testing/world/PhysicsQueueTest.cc
+        Testing/nbt/nbt_test.cc
  "src/files/D3Map.cpp" "include/files/D3Map.h" "include/common/Vectors.h" Testing/world/IUniqueQueueTest.cc)
 
 target_link_libraries(
