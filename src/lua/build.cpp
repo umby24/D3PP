@@ -5,6 +5,8 @@
 #include "common/Logger.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "world/Map.h"
+#include "world/MapActions.h"
 #include "Build.h"
 #include "Utils.h"
 
@@ -78,8 +80,17 @@ int LuaBuildLib::LuaBuildBoxPlayer(lua_State* L) {
     unsigned char priority = luaL_checkinteger(L, 12);
     bool undo = (luaL_checkinteger(L, 13) > 0);
     bool physics = lua_toboolean(L, 14);
+    D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();
+    auto mapPointer = mm->GetPointer(mapId);
+    if (mapPointer != nullptr) {
 
-    Build::BuildBoxPlayer(static_cast<short>(playerNumber), mapId, x0, y0, z0, x1, y1, z1, material, static_cast<char>(replaceMaterial), hollow, priority, undo, physics);
+        std::function<void()> boxAction = [playerNumber, mapId, x0, y0, z0, x1, y1, z1, material, replaceMaterial, hollow, priority, undo, physics](){
+            Build::BuildBoxPlayer(static_cast<short>(playerNumber), mapId, x0, y0, z0, x1, y1, z1, material,
+                                                              static_cast<char>(replaceMaterial), hollow, priority, undo, physics);
+        };
+
+        mapPointer->IActions.AddTask(boxAction);
+    }
     return 0;
 }
 

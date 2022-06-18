@@ -21,6 +21,7 @@
 
 #include "world/IMapProvider.h"
 #include "world/MapActions.h"
+#include "world/MapIntensiveActions.h"
 #include "world/FillState.h"
 
 #include "BlockChangeQueue.h"
@@ -31,6 +32,7 @@ class Entity;
 
 namespace D3PP::world {
     class Teleporter;
+
     enum MapAction {
         SAVE = 0,
         LOAD = 2,
@@ -139,6 +141,7 @@ namespace D3PP::world {
         void SetBlocks(const std::vector<unsigned char>& blocks) { m_mapProvider->SetBlocks(blocks); }
         std::mutex BlockChangeMutex;
         std::unique_ptr<FillState> CurrentFillState;
+        MapIntensiveActions IActions;
     protected:
         std::unique_ptr<IMapProvider> m_mapProvider;
     private:

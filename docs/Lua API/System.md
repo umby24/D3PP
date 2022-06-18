@@ -1,9 +1,23 @@
 # Lua System Module
 
 ## System.msgAll(Map_ID, Message)
+## System.msgAll(Map_ID, Message, messageType)
 Send the given message to the given map. Map_ID of -1 will send to all maps.
 ## System.msg(Client_ID, Message)
+## System.msgAll(Map_ID, Message, messageType)
 Sends the given message to a specific client.
+
+If MessageType is specified, the message will be sent to the corresponding location on the client's screen.
+* 0 = Chat
+* 1 = Top Right
+* 2 = Top Middle Right
+* 3 = Top Bottom Right
+* 11 = Bottom Right
+* 12 = Bottom Middle Right
+* 13 = Bottom top right
+* 100 = Announcement
+
+
 ## System.getfile(FileAlias)
 Returns the full filepath of the given file alias, from files.json
 ## System.getfolder(FolderAlias)

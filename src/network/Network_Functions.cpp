@@ -103,7 +103,7 @@ void NetworkFunctions::NetworkOutBlockSet2Map(const int& mapId, const unsigned s
     MapBlock mb = b->GetBlock(type);
 
     for(auto const &nc : n->roClients) {
-        if (nc->player != NULL && nc->player->MapId != mapId || !nc->LoggedIn)
+        if (nc->player != nullptr && nc->player->MapId != mapId || !nc->LoggedIn)
             continue;
 
         int onClient = mb.OnClient;

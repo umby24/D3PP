@@ -5,7 +5,7 @@
 #include <cmath>
 
 namespace D3PP::world {
-    IUniqueQueue::IUniqueQueue(Common::Vector3S size) : m_queueData((size.X*size.Y*size.Z)/8), m_size{} {
+    IUniqueQueue::IUniqueQueue(Common::Vector3S size) : m_queueData(ceil((size.X*size.Y*size.Z)/8.0f)), m_size{} {
         m_size = size;
     }
 

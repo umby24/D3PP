@@ -162,11 +162,11 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
 
     if (setOrCheck == 1) {
         if (m_thisPlugin->events.find(typeAsEvent) != m_thisPlugin->events.end()) {
-            m_thisPlugin->events[typeAsEvent].push_back(newEvent);
+            m_thisPlugin->events[typeAsEvent].insert(std::make_pair(eventId, newEvent));
         }
         else {
-            m_thisPlugin->events.insert(std::make_pair(typeAsEvent, std::vector<LuaEvent>()));
-            m_thisPlugin->events[typeAsEvent].push_back(newEvent);
+            m_thisPlugin->events.insert(std::make_pair(typeAsEvent, std::map<std::string, LuaEvent>()));
+            m_thisPlugin->events[typeAsEvent].insert(std::make_pair(eventId, newEvent));
         }
     }
     else {
@@ -174,7 +174,7 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
 
         if (m_thisPlugin->events.find(typeAsEvent) != m_thisPlugin->events.end()) {
             for (const auto& i : m_thisPlugin->events[typeAsEvent]) {
-                if (i.type == typeAsEvent && i.functionName == function) {
+                if (i.second.type == typeAsEvent && i.second.functionName == function && i.first == eventId) {
                     eventExists = true;
                     break;
                 }
@@ -192,15 +192,19 @@ int LuaSystemLib::LuaEventDelete(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Event_Delete called with invalid number of arguments.", LogType::WARNING,GLF);
+        Logger::LogAdd("Lua", "LuaError: System.deleteEvent called with invalid number of arguments.", LogType::WARNING,GLF);
         return 0;
     }
 
-    std::string eventId(lua_tostring(L, 1));
-    // -- TODO:
+    std::string eventId(luaL_checkstring(L, 1));
+
+    for(const auto& i : m_thisPlugin->events) {
+        if (m_thisPlugin->events[i.first].contains(eventId))
+            m_thisPlugin->events[i.first].erase(eventId);
+    }
+
     return 0;
 }
-
 
 int LuaSystemLib::LuaMessageToAll(lua_State* L) {
     int nArgs = lua_gettop(L);
@@ -232,13 +236,8 @@ int LuaSystemLib::LuaMessage(lua_State* L) {
     }
 
     int clientId = luaL_checkinteger(L, 1);
-    std::string message = lua_tostring(L, 2);
-
-    int messageType = 0;
-
-    if (nArgs == 3 && lua_isnumber(L, 3)) {
-        messageType = luaL_checkinteger(L, 3);
-    }
+    std::string message = luaL_checkstring(L, 2);
+    int messageType = luaL_optinteger(L, 3, 0);
 
     NetworkFunctions::SystemMessageNetworkSend(clientId, message, messageType);
     return 0;

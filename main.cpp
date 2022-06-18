@@ -25,11 +25,27 @@
 #include "network/Network_Functions.h"
 #include "world/Map.h"
 
+#if _WIN32
+#include <windows.h>
+#endif
 using namespace std;
 
 void mainLoop();
 void MainConsole();
 int MainVersion = 1018;
+
+void fixWindowsTerminal() {
+#if _WIN32
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD dwMode = 0;
+    GetConsoleMode(hOut, &dwMode);
+    if (!(dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+    {
+        dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+        SetConsoleMode(hOut, dwMode);
+    }
+#endif
+}
 
 int main()
 {
@@ -54,6 +70,9 @@ int main()
         }
     }
     );
+
+    fixWindowsTerminal();
+
     //_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF);
     srand(time(nullptr));
     Logger::LogAdd("Main", "====== Welcome to D3PP =====", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);

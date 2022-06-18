@@ -89,7 +89,7 @@ void LuaPlugin::HandleEvent(const Event& event) {
 
     for( auto&& observer : observers ) {
         executionMutex.lock();
-        lua_getglobal(m_luaState->GetState(), observer.functionName.c_str()); // -- Get the function to be called
+        lua_getglobal(m_luaState->GetState(), observer.second.functionName.c_str()); // -- Get the function to be called
         if (!lua_isfunction(m_luaState->GetState(), -1)) {
             lua_pop(m_luaState->GetState(), 1);
             executionMutex.unlock();
@@ -172,10 +172,10 @@ void LuaPlugin::TimerMain() {
 
     auto &eventsAt = m_luaState->events[timerDescriptor];
     for(auto &e : eventsAt) {
-        if (clock() >= (e.lastRun + e.duration)) {
-            e.lastRun = clock();
+        if (clock() >= (e.second.lastRun + e.second.duration)) {
+            e.second.lastRun = clock();
             executionMutex.lock();
-            lua_getglobal(m_luaState->GetState(), e.functionName.c_str()); // -- Get the function to be called
+            lua_getglobal(m_luaState->GetState(), e.second.functionName.c_str()); // -- Get the function to be called
             if (!lua_isfunction(m_luaState->GetState(), -1)) {
                 lua_pop(m_luaState->GetState(), 1);
                 executionMutex.unlock();
@@ -184,20 +184,20 @@ void LuaPlugin::TimerMain() {
             if (!lua_checkstack(m_luaState->GetState(), 1)) {
 
             }
-            lua_pushinteger(m_luaState->GetState(), e.mapId);
+            lua_pushinteger(m_luaState->GetState(), e.second.mapId);
             int result = lua_pcall(m_luaState->GetState(), 1, 0, 0);
             if (result == LUA_ERRRUN) {
-                bail(m_luaState->GetState(), "[Timer Event Handler]" + e.functionName); // -- catch errors
+                bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
                 executionMutex.unlock();
                 return;
             }
             else if (result == LUA_ERRMEM) {
-                bail(m_luaState->GetState(), "[Timer Event Handler]" + e.functionName); // -- catch errors
+                bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
                 executionMutex.unlock();
                 return;
             }
             else if (result == LUA_ERRERR) {
-               bail(m_luaState->GetState(), "[Timer Event Handler]" + e.functionName); // -- catch errors
+               bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
                 executionMutex.unlock();
                 return;
             }

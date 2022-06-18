@@ -886,7 +886,7 @@ void Map::QueueBlockChange(Common::Vector3S location, unsigned char priority, un
     bcQueue->TryQueue(newQueueItem);
 }
 
-Map::Map() {
+Map::Map() : IActions() {
     //ID = -1;
     loaded = false;
     loading = false;
