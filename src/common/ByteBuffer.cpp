@@ -3,12 +3,13 @@
 //
 #include "common/ByteBuffer.h"
 #include <cmath>
+#include <utility>
 #include "Utils.h"
 
 
 ByteBuffer::ByteBuffer(std::function<void()> callback) : _buffer(initial_size), _bufLock() {
     this->_size = (unsigned int) ByteBuffer::initial_size;
-    this->cbfunc = callback;
+    this->cbfunc = std::move(callback);
     this->Interval = std::chrono::seconds(10);
     this->LastRun = std::chrono::system_clock::now();
     this->Main = [this] { MainFunc(); };

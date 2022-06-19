@@ -212,34 +212,31 @@ void MapMain::AddDeleteAction(int clientId, int mapId) {
 
 void MapMain::MapBlockChange() {
     while (System::IsRunning) {
-            watchdog::Watch("Map_Blockchanging", "Begin thread-slope", 0);
+        watchdog::Watch("Map_Blockchanging", "Begin thread-slope", 0);
 
-            for(auto const &m : _maps) {
-                if (m.second->BlockchangeStopped || !m.second->loaded)
+        for(auto const &m : _maps) {
+            if (m.second->BlockchangeStopped || !m.second->loaded)
+                continue;
+
+            int maxChangedSec = 1100 / 10;
+            ChangeQueueItem i{};
+
+            while (maxChangedSec > 0) {
+                if (m.second->bcQueue == nullptr) {
                     continue;
-
-                int maxChangedSec = 1100 / 10;
-                ChangeQueueItem i{};
-
-                while (maxChangedSec > 0) {
-                    if (m.second->bcQueue == nullptr) {
-                        continue;
-                    }
-                    if (m.second->bcQueue->TryDequeue(i)) {
-                        unsigned char currentMat = m.second->GetBlockType(i.Location.X, i.Location.Y, i.Location.Z);
-
-                        if (currentMat != i.OldMaterial) {
-                            NetworkFunctions::NetworkOutBlockSet2Map(m.first, i.Location.X, i.Location.Y, i.Location.Z,
-                                                                     currentMat);
-                        }
-                    }
-                    maxChangedSec--;
                 }
+                if (m.second->bcQueue->TryDequeue(i)) {
+                    unsigned char currentMat = m.second->GetBlockType(i.Location.X, i.Location.Y, i.Location.Z);
+                    NetworkFunctions::NetworkOutBlockSet2Map(m.first, i.Location.X, i.Location.Y, i.Location.Z,
+                                                             currentMat);
+                }
+                maxChangedSec--;
             }
-
-            watchdog::Watch("Map_Blockchanging", "End thread-slope", 2);
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+
+        watchdog::Watch("Map_Blockchanging", "End thread-slope", 2);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
 }
 
 //bool comparePhysicsTime(const TimeQueueItem& first, const TimeQueueItem& second) {
@@ -533,11 +530,7 @@ void Map::Fill(const std::string& functionName, const std::string& paramString) 
     m_mapProvider->SetBlocks(blankMap);
 
     D3PP::plugins::PluginManager *pm = D3PP::plugins::PluginManager::GetInstance();
-    clock_t stop = clock();
-    start = clock();
     pm->TriggerMapFill(ID, mapSize.X, mapSize.Y, mapSize.Z, "Mapfill_" + functionName, std::move(paramString));
-    stop = clock();
-    Logger::LogAdd("Debug", "Time to fill.." + stringulate(stop - start), DEBUG, GLF);
     Resend();
     Logger::LogAdd(MODULE_NAME, "Map '" + m_mapProvider->MapName + "' filled.", LogType::NORMAL, GLF);
 }
@@ -719,8 +712,6 @@ void Map::Resend() {
     for (auto const &me : Entity::AllEntities) {
         if (me.second->MapID == ID) {
             me.second->Resend(me.second->Id);
-            //Vector3S newLocation{static_cast<short>(mapSize.X+16), static_cast<short>(mapSize.Y+16), static_cast<short>(mapSize.Z+16)};
-            //me.second->Location.SetAsPlayerCoords(newLocation);
         }
     }
 
@@ -741,7 +732,6 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
         NetworkFunctions::NetworkOutBlockSet(client->GetId(), X, Y, Z, rawBlock);
         return;
     }
-
 
     unsigned char rawNewType;
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(client->GetId(), true);
@@ -780,7 +770,7 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
     Dispatcher::post(mbc);
 
     BlockChange(clientEntity->playerList->Number, X, Y, Z, rawNewType, true, true, true, 250);
-    QueueBlockChange(Vector3S(X, Y, Z), 250, -1);
+    //QueueBlockChange(Vector3S(X, Y, Z), 250, -1);
     // -- PluginEventBlockCreate (one for delete, one for create.)
 
 }
