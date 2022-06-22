@@ -62,7 +62,7 @@ private:
     void LuaDoEventTimer();
 
     void RegisterEventListener();
-    void HandleEvent(const Event &event);
+    void HandleEvent(Event &event);
     friend class D3PP::plugins::PluginManager;
 };
 

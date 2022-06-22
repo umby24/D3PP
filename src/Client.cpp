@@ -17,6 +17,7 @@
 #include "world/Player.h"
 #include "common/Player_List.h"
 #include "world/Entity.h"
+#include "world/MapMain.h"
 
 #include "network/Network_Functions.h"
 #include "network/Packets.h"

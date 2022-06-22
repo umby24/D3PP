@@ -4,6 +4,6 @@
 
 #include "System.h"
 
-const std::string MODULE_NAME = "System";
 bool System::IsRunning = false;
 time_t System::startTime = time(nullptr);
+std::string System::ServerName = "D3PP";

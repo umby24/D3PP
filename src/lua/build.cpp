@@ -6,6 +6,7 @@
 #include "network/Network.h"
 #include "network/NetworkClient.h"
 #include "world/Map.h"
+#include "world/MapMain.h"
 #include "world/MapActions.h"
 #include "Build.h"
 #include "Utils.h"

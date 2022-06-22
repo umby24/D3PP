@@ -14,6 +14,7 @@
 
 #include "world/Teleporter.h"
 #include "world/Map.h"
+#include "world/MapMain.h"
 #include "network/Network_Functions.h"
 #include "common/Logger.h"
 #include "common/Vectors.h"
@@ -247,11 +248,14 @@ void Entity::Kill() {
     std::shared_ptr<Map> cm = mm->GetPointer(MapID);
 
     if (timeMessageDeath < time(nullptr)) {
-        timeMessageDeath = time(nullptr) + 2;
-        
         EventEntityDie ed;
         ed.entityId = this->Id;
         Dispatcher::post(ed);
+        if (ed.isCancelled())
+            return;
+
+        timeMessageDeath = time(nullptr) + 2;
+        
 
         NetworkFunctions::SystemMessageNetworkSend2All(MapID, "&c" + Name + " died.");
 
@@ -282,7 +286,7 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
         return;
     }
 
-    Location = location;
+    
 
 
     std::shared_ptr<Map> currentMap = mm->GetPointer(MapID);
@@ -290,15 +294,22 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
     EventEntityPositionSet eps;
     eps.entityId = Id;
     eps.mapId = mapId;
-    eps.x = Location.X() / 32.0f;
-    eps.y = Location.Y() / 32.0f;
-    eps.z = (Location.Z() -51.0f) / 32.0f;
-    eps.rotation = Location.Rotation;
-    eps.look = Location.Look;
+    eps.x = location.X() / 32.0f;
+    eps.y = location.Y() / 32.0f;
+    eps.z = (location.Z() -51.0f) / 32.0f;
+    eps.rotation = location.Rotation;
+    eps.look = location.Look;
     eps.priority = priority;
     eps.sendOwnClient = sendOwn;
     Dispatcher::post(eps);
 
+    if (eps.isCancelled()) {
+        SendPosOwn = true;
+        HandleMove();
+        return;
+    }
+
+    Location = location;
     PositionCheck();
 
     if (currentMap != nullptr) {

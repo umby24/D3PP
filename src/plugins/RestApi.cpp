@@ -5,6 +5,7 @@
 #include "plugins/RestApi.h"
 
 #include "world/Map.h"
+#include "world/MapMain.h"
 #include "network/httplib.h"
 #include "common/Configuration.h"
 #include "common/Logger.h"

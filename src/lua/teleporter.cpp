@@ -4,6 +4,7 @@
 #include "common/Logger.h"
 #include "common/MinecraftLocation.h"
 #include "world/Map.h"
+#include "world/MapMain.h"
 #include "world/Teleporter.h"
 #include "network/NetworkClient.h"
 

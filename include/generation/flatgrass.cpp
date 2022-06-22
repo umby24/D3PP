@@ -3,6 +3,7 @@
 
 #include "world/Map.h"
 #include "common/Vectors.h"
+#include "world/MapMain.h"
 
 class GenTools {
     public:

@@ -8,6 +8,7 @@
 #include "network/NetworkClient.h"
 #include "network/Packets.h"
 #include "world/Map.h"
+#include "world/MapMain.h"
 #include "CustomBlocks.h"
 
 using namespace D3PP::world;

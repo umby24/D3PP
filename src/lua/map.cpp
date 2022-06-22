@@ -2,6 +2,7 @@
 
 #include <lua.hpp>
 #include "world/Map.h"
+#include "world/MapMain.h"
 #include "Utils.h"
 #include "common/Logger.h"
 #include "common/Player_List.h"

@@ -14,6 +14,7 @@
 #include "network/Network_Functions.h"
 #include "world/Map.h"
 #include "world/Player.h"
+#include "world/MapMain.h"
 #include "network/Network.h"
 #include "CPE.h"
 #include "network/Packets.h"

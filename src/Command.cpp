@@ -8,6 +8,7 @@
 #include "world/Entity.h"
 #include "Block.h"
 #include "world/Map.h"
+#include "world/MapMain.h"
 #include "Rank.h"
 #include "common/Logger.h"
 #include "common/Files.h"

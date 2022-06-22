@@ -156,12 +156,17 @@ void Chat::NetworkSend2Map(const int& entityId, const std::string& message) {
         if (em->playerList->MuteTime < time(nullptr)) {
             int mapId = em->MapID;
             HandleChatEscapes(output, entityId);
-            Logger::LogAdd("Chat", em->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
-
             EventChatMap ecm;
             ecm.entityId = entityId;
             ecm.message = output;
             Dispatcher::post(ecm);
+
+            if (ecm.isCancelled())
+                return;
+                
+            Logger::LogAdd("Chat", em->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
+
+
 
             output = Entity::GetDisplayname(entityId) + "&f: " + output;
             NetworkFunctions::SystemMessageNetworkSend2All(mapId, output);
@@ -181,12 +186,16 @@ void Chat::NetworkSend2All(const int& entityId, const std::string& message) {
     if (em->playerList != nullptr) {
         if (em->playerList->MuteTime < time(nullptr)) {
             HandleChatEscapes(output, entityId);
-            Logger::LogAdd("Chat", "# " + em->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
-
             EventChatAll eca;
             eca.message = output;
             eca.entityId = entityId;
             Dispatcher::post(eca);
+
+            if (eca.isCancelled())
+                return;
+            
+            Logger::LogAdd("Chat", "# " + em->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
+
 
             output = "&c# " + Entity::GetDisplayname(entityId) + "&f: " + output;
             NetworkFunctions::SystemMessageNetworkSend2All(-1, output);

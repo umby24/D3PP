@@ -6,6 +6,7 @@
 #include "world/Player.h"
 #include "world/Entity.h"
 #include "world/Map.h"
+#include "world/MapMain.h"
 #include "common/Logger.h"
 #include "Utils.h"
 #include "network/Network_Functions.h"

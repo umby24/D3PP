@@ -5,6 +5,7 @@
 #include "world/Player.h"
 #include <network/Network.h>
 #include <world/Map.h>
+#include "world/MapMain.h"
 #include <events/PlayerEventArgs.h>
 #include <events/EventEntityMapChange.h>
 #include "network/NetworkClient.h"

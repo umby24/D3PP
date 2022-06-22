@@ -7,7 +7,7 @@
 #include "Rank.h"
 #include "System.h"
 #include "common/Logger.h"
-
+#include "world/MapMain.h"
 #include "Block.h"
 #include "world/Player.h"
 #include "world/Entity.h"
@@ -81,7 +81,7 @@ int main()
 
     Block *b = Block::GetInstance();
     Rank *r = Rank::GetInstance();
-    System *s = System::GetInstance();
+    
     Player_List *l = Player_List::GetInstance();
     PlayerMain *pm = PlayerMain::GetInstance();
     Network *n = Network::GetInstance();
@@ -99,6 +99,7 @@ int main()
 
     System::IsRunning = true;
     System::startTime = time(nullptr);
+    System::ServerName = "D3PP Beta v" + stringulate(SYSTEM_VERSION_NUMBER);
     
     n->Start();
     

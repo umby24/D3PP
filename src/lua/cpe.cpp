@@ -9,6 +9,7 @@
 #include "world/Entity.h"
 #include "world/Player.h"
 #include "world/Map.h"
+#include "world/MapMain.h"
 #include "Block.h"
 #include "CustomBlocks.h"
 #include "Utils.h"

@@ -48,7 +48,7 @@ bool Dispatcher::hasDescriptor(const std::string& item) {
     return found;
 }
 
-void Dispatcher::post( const Event& event )
+void Dispatcher::post( Event& event )
 {
     Event::DescriptorType type = event.type();
 

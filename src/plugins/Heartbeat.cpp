@@ -21,7 +21,6 @@ const std::string MODULE_NAME = "Heartbeat";
 Heartbeat* Heartbeat::Instance = nullptr;
 
 void Heartbeat::Beat() {
-    System* sMain = System::GetInstance();
     Network* nMain = Network::GetInstance();
     PlayerMain* pMain = PlayerMain::GetInstance();
 
@@ -35,7 +34,7 @@ void Heartbeat::Beat() {
     params.emplace("public", Configuration::NetSettings.Public ? "true" : "false");
     params.emplace("version", "7");
     params.emplace("salt", salt);
-    params.emplace("software", "&eD3PP Beta");
+    params.emplace("software", "&e" + System::ServerName);
 
     auto res = cli.Post(CLASSICUBE_HEARTBEAT_PATH, params);
     if (!res) {

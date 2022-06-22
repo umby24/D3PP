@@ -73,7 +73,7 @@ void LuaPlugin::RegisterEventListener() {
     Dispatcher::subscribe(PlayerClickEventArgs::clickDescriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
 }
 
-void LuaPlugin::HandleEvent(const Event& event) {
+void LuaPlugin::HandleEvent(Event& event) {
     if (!event.PushLua)
         return;
     
@@ -97,11 +97,17 @@ void LuaPlugin::HandleEvent(const Event& event) {
         }
         int argCount = event.PushLua(m_luaState->GetState()); // -- Have the event push its args and return how many were pushed..
         try {
-            if (lua_pcall(m_luaState->GetState(), argCount, 0, 0) != 0) { // -- Call the function.
+            if (lua_pcall(m_luaState->GetState(), argCount, 1, 0) != 0) { // -- Call the function.
                 bail(m_luaState->GetState(), "[Event Handler]"); // -- catch errors
                 executionMutex.unlock();
                 return;
             }
+            int result = luaL_optinteger(m_luaState->GetState(), -1, 0);
+            
+            if (result == 0) {
+                event.setCancelled();
+            }
+
         } catch (const int exception) {
             bail(m_luaState->GetState(), "[Error Handler]"); // -- catch errors
             executionMutex.unlock();
