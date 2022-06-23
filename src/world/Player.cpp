@@ -32,8 +32,8 @@ void PlayerMain::MainFunc() {
         Player_List* pll = Player_List::GetInstance();
 
         for(auto &pli : pll->_pList) {
-            if (pli.Online) {
-                pli.OntimeCounter += difference;
+            if (pli->Online) {
+                pli->OntimeCounter += difference;
             }
         }
     }

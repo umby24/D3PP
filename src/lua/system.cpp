@@ -10,6 +10,7 @@
 #include "plugins/PluginManager.h"
 #include "plugins/LuaPlugin.h"
 #include "plugins/LuaState.h"
+#include "System.h"
 #include "Command.h"
 
 int eAdd(lua_State* L) {
@@ -32,6 +33,7 @@ const struct luaL_Reg LuaSystemLib::lib[] = {
         {"log", &LuaSystemLog},
         {"getplatform", &LuaGetPlatform},
         {"addCmd", &LuaAddCommand},
+        {"setSoftwareName", &LuaSetSoftwareName},
         {NULL, NULL}
 };
 
@@ -270,6 +272,20 @@ int LuaSystemLib::LuaAddCommand(lua_State* L) {
     newCmd.Hidden = false;
     newCmd.Internal = false;
     cm->Commands.push_back(newCmd);
+
+    return 0;
+}
+
+int LuaSystemLib::LuaSetSoftwareName(lua_State* L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs < 1) {
+        Logger::LogAdd("Lua", "LuaError: System.setSoftwareName called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    std::string softwareName(luaL_checkstring(L, 1));
+    System::ServerName = softwareName;
 
     return 0;
 }

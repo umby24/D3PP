@@ -24,6 +24,7 @@ protected:
     static int LuaSystemLog(lua_State* L);
     static int LuaGetPlatform(lua_State* L);
     static int LuaAddCommand(lua_State* L);
+    static int LuaSetSoftwareName(lua_State* L);
 private:
     std::shared_ptr<D3PP::plugins::LuaState> m_thisPlugin;
 };

@@ -84,7 +84,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
         return;
     }
 
-    PlayerListEntry *entry = pl->GetPointer(c->player->LoginName);
+    std::shared_ptr<PlayerListEntry> entry = pl->GetPointer(c->player->LoginName);
 
     if (entry == nullptr) {
         pl->Add(c->player->LoginName);

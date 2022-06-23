@@ -17,7 +17,7 @@
 const std::string MODULE_NAME = "Player_List";
 Player_List* Player_List::Instance = nullptr;
 
-PlayerListEntry::PlayerListEntry() {
+PlayerListEntry::PlayerListEntry() : NumAttributes(NUM_PLAYER_ATTRIBUTES) {
     MuteTime = 0;
     Stopped = 0;
     Banned = false;
@@ -100,55 +100,56 @@ void Player_List::Load() {
     }
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        PlayerListEntry newEntry;
+        auto newEntry = std::make_shared<PlayerListEntry>();
 
         sqlite3_column_text(stmt, 3);
-        newEntry.Number = sqlite3_column_int(stmt, 0);
+        newEntry->Number = sqlite3_column_int(stmt, 0);
         const char *tmp;
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        newEntry.Name = std::string(tmp);
+        newEntry->Name = std::string(tmp);
 
-        newEntry.PRank = sqlite3_column_int(stmt, 2);
-        newEntry.LoginCounter = sqlite3_column_int(stmt, 3);
-        newEntry.KickCounter = sqlite3_column_int(stmt, 4);
-        newEntry.OntimeCounter = sqlite3_column_int(stmt, 5);
+        newEntry->PRank = sqlite3_column_int(stmt, 2);
+        newEntry->LoginCounter = sqlite3_column_int(stmt, 3);
+        newEntry->KickCounter = sqlite3_column_int(stmt, 4);
+        newEntry->OntimeCounter = sqlite3_column_int(stmt, 5);
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
         if (tmp != nullptr)
-        newEntry.IP = std::string(tmp);
-        newEntry.Stopped = sqlite3_column_int(stmt, 7);
-        newEntry.Banned = sqlite3_column_int(stmt, 8);
-        newEntry.MuteTime = sqlite3_column_int(stmt, 9);
+        newEntry->IP = std::string(tmp);
+        newEntry->Stopped = sqlite3_column_int(stmt, 7);
+        newEntry->Banned = sqlite3_column_int(stmt, 8);
+        newEntry->MuteTime = sqlite3_column_int(stmt, 9);
 
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
         if (tmp != nullptr)
-        newEntry.BanMessage = std::string(tmp);
+        newEntry->BanMessage = std::string(tmp);
 
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 11));
         if (tmp != nullptr)
-        newEntry.KickMessage = std::string(tmp);
+        newEntry->KickMessage = std::string(tmp);
 
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 12));
         if (tmp != nullptr)
-        newEntry.MuteMessage = std::string(tmp);
+        newEntry->MuteMessage = std::string(tmp);
 
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 13));
         if (tmp != nullptr)
-        newEntry.RankMessage = std::string(tmp);
+        newEntry->RankMessage = std::string(tmp);
 
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 14));
         if (tmp != nullptr)
-        newEntry.StopMessage = std::string(tmp);
+        newEntry->StopMessage = std::string(tmp);
 
-        newEntry.GlobalChat = sqlite3_column_int(stmt, 16);
+        newEntry->GlobalChat = sqlite3_column_int(stmt, 16);
         _pList.push_back(newEntry);
     }
 
     sqlite3_finalize(stmt);
     Logger::LogAdd(MODULE_NAME, "Database Loaded.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     CloseDatabase();
+
     for(auto const &i : _pList) {
-        if ((_numberCounter & 65535) <= (i.Number & 65535))
-            _numberCounter = i.Number + 1;
+        if ((_numberCounter & 65535) <= (i->Number & 65535))
+            _numberCounter = i->Number + 1;
     }
 }
 
@@ -156,28 +157,28 @@ void Player_List::Save() {
     OpenDatabase();
     
     for(auto const &i : _pList) {
-        if (!i.Save)
+        if (!i->Save)
             continue;
 
         sqlite3_stmt *res;
         int rc = sqlite3_prepare_v2(db, REPLACE_SQL.c_str(), -1, &res, nullptr);
         if (rc == SQLITE_OK) {
-            sqlite3_bind_int(res, 1, i.Number);
-            sqlite3_bind_text(res, 2, i.Name.c_str(), i.Name.size(), nullptr);
-            sqlite3_bind_int(res, 3, i.PRank);
-            sqlite3_bind_int(res, 4, i.LoginCounter);
-            sqlite3_bind_int(res, 5, i.KickCounter);
-            sqlite3_bind_int(res, 6, i.OntimeCounter);
-            sqlite3_bind_text(res, 7, i.IP.c_str(), i.IP.size(), nullptr);
-            sqlite3_bind_int(res, 8, i.Stopped);
-            sqlite3_bind_int(res, 9, i.Banned);
-            sqlite3_bind_int(res, 10, i.MuteTime);
-            sqlite3_bind_text(res, 11, i.BanMessage.c_str(), i.BanMessage.size(), nullptr);
-            sqlite3_bind_text(res, 12, i.KickMessage.c_str(), i.KickMessage.size(), nullptr);
-            sqlite3_bind_text(res, 13, i.MuteMessage.c_str(), i.MuteMessage.size(), nullptr);
-            sqlite3_bind_text(res, 14, i.RankMessage.c_str(), i.RankMessage.size(), nullptr);
-            sqlite3_bind_text(res, 15, i.StopMessage.c_str(), i.StopMessage.size(), nullptr);
-            sqlite3_bind_int(res, 16, i.GlobalChat);
+            sqlite3_bind_int(res, 1, i->Number);
+            sqlite3_bind_text(res, 2, i->Name.c_str(), i->Name.size(), nullptr);
+            sqlite3_bind_int(res, 3, i->PRank);
+            sqlite3_bind_int(res, 4, i->LoginCounter);
+            sqlite3_bind_int(res, 5, i->KickCounter);
+            sqlite3_bind_int(res, 6, i->OntimeCounter);
+            sqlite3_bind_text(res, 7, i->IP.c_str(), i->IP.size(), nullptr);
+            sqlite3_bind_int(res, 8, i->Stopped);
+            sqlite3_bind_int(res, 9, i->Banned);
+            sqlite3_bind_int(res, 10, i->MuteTime);
+            sqlite3_bind_text(res, 11, i->BanMessage.c_str(), i->BanMessage.size(), nullptr);
+            sqlite3_bind_text(res, 12, i->KickMessage.c_str(), i->KickMessage.size(), nullptr);
+            sqlite3_bind_text(res, 13, i->MuteMessage.c_str(), i->MuteMessage.size(), nullptr);
+            sqlite3_bind_text(res, 14, i->RankMessage.c_str(), i->RankMessage.size(), nullptr);
+            sqlite3_bind_text(res, 15, i->StopMessage.c_str(), i->StopMessage.size(), nullptr);
+            sqlite3_bind_int(res, 16, i->GlobalChat);
         }
         int dbSaveResult = sqlite3_step(res);
         sqlite3_finalize(res);
@@ -189,20 +190,20 @@ void Player_List::Save() {
     CloseDatabase();
 }
 
-PlayerListEntry* Player_List::GetPointer(int playerId) {
+std::shared_ptr<PlayerListEntry> Player_List::GetPointer(int playerId) {
     for (auto & i : _pList) {
-        if (i.Number == playerId) {
-            return &i;
+        if (i->Number == playerId) {
+            return i;
         }
     }
 
     return nullptr;
 }
 
-PlayerListEntry *Player_List::GetPointer(std::string player) {
+std::shared_ptr<PlayerListEntry> Player_List::GetPointer(std::string player) {
     for (auto & i : _pList) {
-        if (i.Name == player) {
-            return &i;
+        if (i->Name == player) {
+            return i;
         }
     }
 
@@ -220,14 +221,14 @@ void Player_List::Add(std::string name) {
     if (GetPointer(name) != nullptr)
         return;
 
-    PlayerListEntry newEntry;
-    newEntry.Number = GetNumber();
-    newEntry.Name = name;
-    newEntry.PRank = 0;
-    newEntry.MuteTime = 0;
-    newEntry.Stopped = 0;
-    newEntry.Save = true;
-    newEntry.GlobalChat = true;
+    auto newEntry = std::make_shared<PlayerListEntry>();
+    newEntry->Number = GetNumber();
+    newEntry->Name = name;
+    newEntry->PRank = 0;
+    newEntry->MuteTime = 0;
+    newEntry->Stopped = 0;
+    newEntry->Save = true;
+    newEntry->GlobalChat = true;
     SaveFile = true;
     _pList.push_back(newEntry);
 }

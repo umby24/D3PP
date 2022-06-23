@@ -39,7 +39,7 @@ public:
     std::string Name;
     std::string Suffix;
     char ClientId;
-    PlayerListEntry* playerList;
+    std::shared_ptr<PlayerListEntry> playerList;
     bool resend;
     // --
     int MapID;

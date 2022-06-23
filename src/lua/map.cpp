@@ -204,7 +204,7 @@ int LuaMapLib::LuaMapBlockChangePlayer(lua_State* L) {
     unsigned char priority = luaL_checkinteger(L, 10);
 
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* pEntry = pll->GetPointer(playerId);
+    auto pEntry = pll->GetPointer(playerId);
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> map = mm->GetPointer(mapId);

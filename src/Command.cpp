@@ -817,7 +817,7 @@ void CommandMain::CommandPlayerInfo() {
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
 
-    PlayerListEntry* ple = pll->GetPointer(ParsedOperator.at(0));
+    auto ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
         c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
@@ -861,7 +861,7 @@ void CommandMain::CommandChangeRank() {
     std::string reason = ParsedText2;
 
     if (rankVal >= -32768 && rankVal <= 32767) {
-        PlayerListEntry* ple = pll->GetPointer(ParsedOperator.at(0));
+        auto ple = pll->GetPointer(ParsedOperator.at(0));
         if (ple == nullptr) {
             c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
             return;
@@ -969,7 +969,7 @@ void CommandMain::CommandGetRank() {
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
     
     if (ParsedOperator.at(0).empty()) {
         ple = clientEntity->playerList;
@@ -1013,7 +1013,7 @@ void CommandMain::CommandKick() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
@@ -1034,7 +1034,7 @@ void CommandMain::CommandBan() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
@@ -1054,7 +1054,7 @@ void CommandMain::CommandUnban() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
@@ -1073,7 +1073,7 @@ void CommandMain::CommandStop() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
@@ -1093,7 +1093,7 @@ void CommandMain::CommandUnStop() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
@@ -1112,7 +1112,7 @@ void CommandMain::CommandMute() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
@@ -1136,7 +1136,7 @@ void CommandMain::CommandUnmute() {
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
@@ -1247,7 +1247,7 @@ void CommandMain::CommandUndoPlayer() {
     Player_List* playerList= Player_List::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
-    PlayerListEntry* entry= playerList->GetPointer(ParsedOperator.at(0));
+    auto entry= playerList->GetPointer(ParsedOperator.at(0));
     
     if (entry == nullptr) {
         c->SendChat("§EUnable to find a player named '" + ParsedOperator.at(0) + "'.");
