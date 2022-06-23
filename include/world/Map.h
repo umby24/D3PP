@@ -105,7 +105,7 @@ namespace D3PP::world {
 
         void
         AddTeleporter(std::string id, MinecraftLocation start, MinecraftLocation end, MinecraftLocation destination,
-                      std::string destMapUniqueId, int destMapId);
+                      std::string destMapName);
 
         void DeleteTeleporter(std::string id);
         Teleporter GetTeleporter(std::string id);

@@ -29,7 +29,7 @@ public:
     static void BlockPhysics21(std::shared_ptr<D3PP::world::Map> physMap, int x, int y, int z);
 private:
     static std::vector<BlockFillPhysics> _blockFill;
-    static char BlockFillArray[Physics_Fill_X][Physics_Fill_Y];
-    static char blockFillArrayEmpty[Physics_Fill_X][Physics_Fill_Y];
+    static std::vector<std::vector<char>> FillArray;
 };
+
 #endif //D3PP_PHYSICS_H

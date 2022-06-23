@@ -585,7 +585,7 @@ void Map::SetRankBox(unsigned short X0, unsigned short Y0, unsigned short Z0, un
 //    RankBoxes.push_back(mre);
 }
 
-void Map::AddTeleporter(std::string id, MinecraftLocation start, MinecraftLocation end, MinecraftLocation destination, std::string destMapUniqueId, int destMapId) {
+void Map::AddTeleporter(std::string id, MinecraftLocation start, MinecraftLocation end, MinecraftLocation destination, std::string destMapName) {
     MapTeleporterElement mte;
     Vector3S startVec = start.GetAsBlockCoords();
     Vector3S endVec = end.GetAsBlockCoords();
@@ -606,8 +606,10 @@ void Map::AddTeleporter(std::string id, MinecraftLocation start, MinecraftLocati
         startVec.Z = endVec.Z;
         endVec.Z = tmp;
     }
-
-    Teleporter newTp(start, end, destination, id, destMapUniqueId);
+    start.SetAsBlockCoords(startVec);
+    end.SetAsBlockCoords(endVec);
+    
+    Teleporter newTp(start, end, destination, id, destMapName);
     Portals.push_back(newTp);
 }
 

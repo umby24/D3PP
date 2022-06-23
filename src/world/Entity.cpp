@@ -334,26 +334,24 @@ void Entity::PositionCheck() {
         return;
     }
     // -- do a teleporter check..
-//    for(auto const &tp : theMap->Portals) {
-//        D3PP::Common::Vector3S startLoc = tp.OriginStart.GetAsBlockCoords();
-//        D3PP::Common::Vector3S endLoc = tp.OriginEnd.GetAsBlockCoords();
-//
-//        if (blockLocation.X >= startLoc.X && blockLocation.X <= endLoc.X && blockLocation.Y >= startLoc.Y && blockLocation.Y<= endLoc.Y && blockLocation.Z>= startLoc.Z && blockLocation.Z <= endLoc.Z) {
-//            int destMapId = MapID;
-//
-//            if (!tp.DestinationMap.empty()) {
-//                std::shared_ptr<Map> mapInstance = mm->GetPointerUniqueId(tp.second.DestMapUniqueId);
-//                if (mapInstance != nullptr) {
-//                    destMapId = mapInstance->data.ID;
-//                }
-//            } else if (tp.second.DestMapId != -1) {
-//                destMapId = tp.second.DestMapId;
-//            }
-//
-//            PositionSet(destMapId, tp.Destination, 10, true);
-//            break;
-//        }
-//    }
+   for(auto const &tp : theMap->Portals) {
+       D3PP::Common::Vector3S startLoc = tp.OriginStart.GetAsBlockCoords();
+       D3PP::Common::Vector3S endLoc = tp.OriginEnd.GetAsBlockCoords();
+
+       if (blockLocation.X >= startLoc.X && blockLocation.X <= endLoc.X && blockLocation.Y >= startLoc.Y && blockLocation.Y<= endLoc.Y && blockLocation.Z>= startLoc.Z && blockLocation.Z <= endLoc.Z) {
+           int destMapId = MapID;
+
+           if (!tp.DestinationMap.empty()) {
+               std::shared_ptr<Map> mapInstance = mm->GetPointer(tp.DestinationMap);
+               if (mapInstance != nullptr) {
+                   destMapId = mapInstance->ID;
+               }
+           }
+
+           PositionSet(destMapId, tp.Destination, 10, true);
+           break;
+       }
+   }
 
     // -- check if the block we're touching is a killing block, if so call kill.
     for (int i = 0; i < 2; i++) {

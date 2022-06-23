@@ -102,7 +102,7 @@ void LuaPlugin::HandleEvent(Event& event) {
                 executionMutex.unlock();
                 return;
             }
-            int result = luaL_optinteger(m_luaState->GetState(), -1, 0);
+            int result = luaL_optinteger(m_luaState->GetState(), -1, 1);
             
             if (result == 0) {
                 event.setCancelled();
