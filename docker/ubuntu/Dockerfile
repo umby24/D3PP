@@ -13,16 +13,14 @@ RUN apt-get update && apt-get install -y \
   libsqlite3-dev \
   libc6 \
   libstdc++6 \
-  zlib1g-dev
+  zlib1g-dev \
+  libreadline-dev
 
-RUN wget https://www.lua.org/ftp/lua-5.4.4.tar.gz
-RUN tar -zxf lua-5.4.4.tar.gz
-RUN cd lua-5.4.4
-RUN wget https://gist.githubusercontent.com/dcarrith/899047f3a2d603b25a58/raw/7fa41ee5c0113ed721abe979c269afe48472baf5/Makefile.patch -O Makefile.patch --no-check-certificate
-RUN patch -l < Makefile.patch && unexpand Makefile > Makefile.unexpanded && mv Makefile.unexpanded Makefile
-RUN cd src/ && wget https://gist.githubusercontent.com/dcarrith/6095183b8dc60c909779/raw/614d769d5b70b69b5d67cfb618696bfb906e2aca/src.Makefile.patch -O Makefile.patch --no-check-certificate && patch -l < Makefile.patch && unexpand Makefile > Makefile.unexpanded && mv Makefile.unexpanded Makefile
-RUN cd ../ && make all test && make install
-RUN ln -s /usr/local/lib/liblua.so /lib/x86_64-linux-gnu/liblua-5.4.so
+RUN wget http://ftp.us.debian.org/debian/pool/main/l/lua5.4/liblua5.4-0_5.4.2-2_amd64.deb
+RUN wget http://ftp.us.debian.org/debian/pool/main/l/lua5.4/liblua5.4-dev_5.4.2-2_amd64.deb
+RUN dpkg -i liblua5.4-0_5.4.2-2_amd64.deb && dpkg -i liblua5.4-dev_5.4.2-2_amd64.deb
+
+#RUN ln -s /usr/local/lib/liblua.so /lib/x86_64-linux-gnu/liblua-5.4.so
 
 
 COPY ./run_cmake.sh /
