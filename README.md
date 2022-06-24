@@ -1,5 +1,8 @@
 D3PP
 ----
+
+[![discord](https://img.shields.io/badge/Discord-blue?style=for-the-badge)](https://discord.gg/CcnAaZpy)
+
 The [D3classic](https://github.com/umby24/D3classic) server, ported to C++.
 
 Porting it for better maintainability and for fun.

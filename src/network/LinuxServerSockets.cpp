@@ -122,12 +122,12 @@ std::map<ServerSocketEvent, std::vector<int>> ServerSocket::CheckEvents() {
 
     if (activity == -1) {
         Logger::LogAdd("ServerSocket", "Some error occured calling select.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
-        return SOCKET_EVENT_NONE;
+        return std::map<ServerSocketEvent, std::vector<int>> { std::make_pair(SOCKET_EVENT_NONE, std::vector<int>())};
     }
 
     if (FD_ISSET(listenSocket, &readfds)) {
         // -- Incoming connection
-        return SOCKET_EVENT_CONNECT;
+        return std::map<ServerSocketEvent, std::vector<int>> { std::make_pair(SOCKET_EVENT_CONNECT, std::vector<int>())};
     }
     std::vector<int> resultSockets;
     bool hasData = false;
