@@ -11,6 +11,8 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <netdb.h>
+#include <vector>
+#include <map>
 
 #define MAXIMUM_CONNECTIONS 255
 
@@ -29,7 +31,7 @@ public:
     ServerSocket(int port);
     void Init(int port);
     void Listen();
-    ServerSocketEvent CheckEvents();
+    std::map<ServerSocketEvent, std::vector<int>> CheckEvents();
     std::unique_ptr<Sockets> Accept();
     [[nodiscard]] int GetEventSocket() const;
     void Unaccept(int fd);

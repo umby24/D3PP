@@ -194,9 +194,9 @@ void Network::UpdateNetworkStats() {
 void Network::NetworkEvents() {
     watchdog::Watch("Network", "Begin events", 0);
 
-        ServerSocketEvent e = listenSocket->CheckEvents();
+        auto e = listenSocket->CheckEvents();
 
-        if (e == ServerSocketEvent::SOCKET_EVENT_CONNECT) { 
+        if (e.contains(ServerSocketEvent::SOCKET_EVENT_CONNECT)) {
             std::unique_ptr<Sockets> newClient = listenSocket->Accept();
 
             if (newClient != nullptr && newClient->GetSocketFd() != -1) {
@@ -219,27 +219,28 @@ void Network::NetworkEvents() {
                 _clients.at(clientId)->canReceive = true;
                 _clients.at(clientId)->canSend = true;
             }
-        } else if (e == ServerSocketEvent::SOCKET_EVENT_DATA) {
-            int clientId = static_cast<int>(listenSocket->GetEventSocket());
-            std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(GetClient(clientId));
+        } else if (e.contains(ServerSocketEvent::SOCKET_EVENT_DATA)) {
+            for(auto &s : e[ServerSocketEvent::SOCKET_EVENT_DATA]) {
+                int clientId = static_cast<int>(s);
+                std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(GetClient(clientId));
 
-            if (client->canReceive) {
-                auto* receiveBuf = new char[1026];
-                receiveBuf[1024] = 99;
-                int dataRead = client->clientSocket->Read(receiveBuf, 1024);
-                client->LastTimeEvent = time(nullptr);
+                if (client->canReceive) {
+                    auto *receiveBuf = new char[1026];
+                    receiveBuf[1024] = 99;
+                    int dataRead = client->clientSocket->Read(receiveBuf, 1024);
+                    client->LastTimeEvent = time(nullptr);
 
-                if (dataRead > 0) {
-                    std::vector<unsigned char> receive(receiveBuf, receiveBuf+dataRead);
-                    delete[] receiveBuf;
-                    unsigned long mySize = receive.size();
-                    client->ReceiveBuffer->Write(receive, dataRead);
-                    client->DownloadRateCounter += dataRead;
-                    DownloadRateCounter += dataRead;
-                } else {
-                    delete[] receiveBuf;
-                    DeleteClient(clientId, "Disconnected", true);
-
+                    if (dataRead > 0) {
+                        std::vector<unsigned char> receive(receiveBuf, receiveBuf + dataRead);
+                        unsigned long mySize = receive.size();
+                        client->ReceiveBuffer->Write(receive, dataRead);
+                        client->DownloadRateCounter += dataRead;
+                        DownloadRateCounter += dataRead;
+                        delete[] receiveBuf;
+                    } else {
+                        delete[] receiveBuf;
+                        DeleteClient(clientId, "Disconnected", true);
+                    }
                 }
             }
         } else {

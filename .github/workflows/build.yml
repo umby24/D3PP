@@ -8,7 +8,6 @@ jobs:
       matrix:
         version:
           - "21.10"
-          - "20.04"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
