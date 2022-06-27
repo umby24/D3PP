@@ -23,7 +23,7 @@ jobs:
         name: "make"
       - run: docker exec -t build ls /
         name: "debug"
-      - run: docker cp build:/tmp/D3PP/D3PP ${{ github.workspace }}/D3PP
+      - run: docker cp build:/D3PP ${{ github.workspace }}/D3PP
         name: "Copy Files"
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
