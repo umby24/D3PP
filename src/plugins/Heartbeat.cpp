@@ -59,7 +59,7 @@ void Heartbeat::Beat() {
 Heartbeat::Heartbeat() {
     salt = "";
     isPublic = false;
-    lastBeat = time(nullptr);
+    lastBeat = time(nullptr)-25;
     isFirstBeat = true;
     
     this->Setup = [this] { Init(); };
