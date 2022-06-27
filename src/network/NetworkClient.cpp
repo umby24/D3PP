@@ -124,7 +124,10 @@ void NetworkClient::HandleEvent(const Event& e) {
         if (eventEntity->Id != player->tEntity->Id) {
             NetworkFunctions::NetworkOutEntityAdd(Id, eventEntity->ClientId, Entity::GetDisplayname(ea.entityId),
                                                   eventEntity->Location);
-
+            EntityShort s{};
+            s.Id = eventEntity->Id;
+            s.ClientId = eventEntity->ClientId;
+            player->Entities.push_back(s); // -- track the new client
             if (eventEntity->model != "" && eventEntity->model != "humanoid" && CPE::GetClientExtVersion(selfPoint, CHANGE_MODEL_EXT_NAME) > 0) {
                 Packets::SendChangeModel(selfPoint, eventEntity->ClientId, eventEntity->model);
             }

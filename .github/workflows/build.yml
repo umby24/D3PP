@@ -21,6 +21,8 @@ jobs:
         name: "cmake"
       - run: docker exec -t build /run_compile.sh
         name: "make"
+      - run: docker exec -t build ls /
+        name: "debug"
       - run: docker cp build:/tmp/D3PP/D3PP ${{ github.workspace }}/D3PP
         name: "Copy Files"
       - name: Upload artifacts

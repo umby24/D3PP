@@ -131,7 +131,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     c->player->SendMap();
 
 //    newEntity->SpawnSelf = true;
-//    newEntity->Spawn();
+    newEntity->Spawn();
 
     Logger::LogAdd(MODULE_NAME, "Player Logged in (IP:" + c->IP + " Name:" + name + ")", LogType::NORMAL, GLF);
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(newEntity->Id) + "&e' logged in");
