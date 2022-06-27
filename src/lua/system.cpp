@@ -163,11 +163,12 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
     };
 
     if (setOrCheck == 1) {
-        if (m_thisPlugin->events.find(typeAsEvent) != m_thisPlugin->events.end()) {
-            m_thisPlugin->events[typeAsEvent].insert(std::make_pair(eventId, newEvent));
-        }
-        else {
+        if (m_thisPlugin->events.find(typeAsEvent) == m_thisPlugin->events.end())
             m_thisPlugin->events.insert(std::make_pair(typeAsEvent, std::map<std::string, LuaEvent>()));
+
+        if (m_thisPlugin->events[typeAsEvent].find(eventId) != m_thisPlugin->events[typeAsEvent].end()) {
+            m_thisPlugin->events[typeAsEvent][eventId] = newEvent;
+        } else {
             m_thisPlugin->events[typeAsEvent].insert(std::make_pair(eventId, newEvent));
         }
     }
@@ -259,14 +260,18 @@ int LuaSystemLib::LuaAddCommand(lua_State* L) {
     std::string handleFunction(luaL_checkstring(L, 4));
     std::string description(luaL_checkstring(L, 5));
 
+    if (!handleFunction.starts_with("Lua:"))
+        handleFunction = "Lua:" + handleFunction;
+
     CommandMain* cm = CommandMain::GetInstance();
+    std::erase_if(cm->Commands, [&commandName](const Command &c){ return c.Id == commandName; });
 
     Command newCmd;
     newCmd.Id = commandName;
     newCmd.Name = commandName;
     newCmd.Rank = minRank;
     newCmd.RankShow = minRank;
-    newCmd.Plugin = "Lua:" + handleFunction;
+    newCmd.Plugin = handleFunction;
     newCmd.Group = commandGroup;
     newCmd.Description = description;
     newCmd.Hidden = false;

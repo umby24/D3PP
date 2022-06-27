@@ -39,7 +39,6 @@ using namespace D3PP::Common;
 
 void Client::Login(int clientId, std::string name, std::string mppass, char version) {
     Network *n = Network::GetInstance();
-    PlayerMain *pm = PlayerMain::GetInstance();
     Player_List *pl = Player_List::GetInstance();
     MapMain *mm = MapMain::GetInstance();
     Rank *rm = Rank::GetInstance();
@@ -193,11 +192,10 @@ void Client::Logout(int clientId, std::string message, bool showtoall) {
     if (!c || c == nullptr || c == NULL) {
         return;
     }
-    if (!c->LoggedIn) {
-        return;
+    if (c->LoggedIn) {
+        c->LoggedIn = false;
+        Logger::LogAdd(MODULE_NAME, "Player logged out (IP: " + c->IP + " Name: " + c->player->LoginName + " Message: " + message + ")", LogType::NORMAL, GLF);
     }
-    c->LoggedIn = false;
-    Logger::LogAdd(MODULE_NAME, "Player logged out (IP: " + c->IP + " Name: " + c->player->LoginName + " Message: " + message + ")", LogType::NORMAL, GLF);
 
     if (c->player && c->player->tEntity) {
         std::shared_ptr<Map> currentMap = mm->GetPointer(c->player->tEntity->MapID);

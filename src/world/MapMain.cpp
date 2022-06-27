@@ -1,9 +1,6 @@
 #include "world/MapMain.h"
 
 #include <string>
-#include "common/TaskScheduler.h"
-#include "common/Vectors.h"
-#include "common/MinecraftLocation.h"
 #include "common/Files.h"
 #include "common/PreferenceLoader.h"
 #include "common/Logger.h"
@@ -13,8 +10,6 @@
 #include "events/EventMapActionFill.h"
 #include "events/EventMapActionSave.h"
 #include "events/EventMapActionLoad.h"
-#include "events/EventMapBlockChange.h"
-#include "events/EventMapBlockChangeClient.h"
 #include "events/EventMapAdd.h"
 #include "network/Network_Functions.h"
 #include "network/Network.h"
