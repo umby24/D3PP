@@ -5,6 +5,7 @@
 #include "common/Logger.h"
 #include "Utils.h"
 #include "common/Files.h"
+#include "common/Configuration.h"
 #include "network/Network_Functions.h"
 #include "EventSystem.h"
 #include "plugins/PluginManager.h"
@@ -34,6 +35,7 @@ const struct luaL_Reg LuaSystemLib::lib[] = {
         {"getplatform", &LuaGetPlatform},
         {"addCmd", &LuaAddCommand},
         {"setSoftwareName", &LuaSetSoftwareName},
+        {"setServerName", &LuaSetServerName},
         {NULL, NULL}
 };
 
@@ -291,6 +293,23 @@ int LuaSystemLib::LuaSetSoftwareName(lua_State* L) {
 
     std::string softwareName(luaL_checkstring(L, 1));
     System::ServerName = softwareName;
+
+    return 0;
+}
+
+int LuaSystemLib::LuaSetServerName(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs < 1) {
+        Logger::LogAdd("Lua", "LuaError: System.setServerName called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    std::string softwareName(luaL_checkstring(L, 1));
+    Configuration::GenSettings.name = softwareName;
+    Configuration* cc = Configuration::GetInstance();
+    cc->Save();
+
 
     return 0;
 }
