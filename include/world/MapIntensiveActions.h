@@ -13,11 +13,13 @@ namespace D3PP::world {
     public:
         MapIntensiveActions();
         ~MapIntensiveActions();
+        void Terminate();
         void MainFunc();
         void AddTask(const std::function<void()>& task);
     private:
         std::queue<std::function<void()>> itemQueue;
         std::thread runner;
+        bool m_finished;
     };
 }
 #endif //D3PP_MAPINTENSIVEACTIONS_H

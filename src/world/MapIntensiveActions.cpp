@@ -6,10 +6,11 @@
 #include "Utils.h"
 
 D3PP::world::MapIntensiveActions::MapIntensiveActions() : runner([this]() {this->MainFunc();}) {
+    m_finished = false;
 }
 
 void D3PP::world::MapIntensiveActions::MainFunc() {
-    while (System::IsRunning) {
+    while (System::IsRunning && !m_finished) {
         if (!itemQueue.empty()) {
             std::function<void()> taskToComplete = itemQueue.front();
             taskToComplete();
@@ -24,4 +25,10 @@ void D3PP::world::MapIntensiveActions::AddTask(const std::function<void()>& task
 }
 
 D3PP::world::MapIntensiveActions::~MapIntensiveActions() {
+    Terminate();
+}
+
+void D3PP::world::MapIntensiveActions::Terminate() {
+    m_finished = true;
+    runner.join();
 }
