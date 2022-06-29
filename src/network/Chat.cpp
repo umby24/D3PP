@@ -4,6 +4,7 @@
 
 #include <events/EventChatAll.h>
 #include <events/EventChatMap.h>
+#include <events/EventChatPrivate.h>
 #include "network/Chat.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
@@ -127,6 +128,13 @@ void Chat::NetworkSend2Player(const int& entityId, const std::string& message, s
                 if (nc->player != nullptr && nc->player->tEntity != nullptr) {
                     if (Utils::InsensitiveCompare(nc->player->tEntity->Name, playerName)) {
                         em->lastPrivateMessage = playerName;
+
+                        EventChatPrivate ecp;
+                        ecp.toEntityId = nc->player->tEntity->Id;
+                        ecp.fromEntityId = em->Id;
+                        ecp.message = output;
+                        Dispatcher::post(ecp);
+
                         Logger::LogAdd("Chat", em->Name + " > " + nc->player->tEntity->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
                         NetworkFunctions::SystemMessageNetworkSend(nc->GetId(), message1);
 
