@@ -7,6 +7,7 @@
 #include <string>
 #include <map>
 #include <chrono>
+#include <mutex>
 
 #include "common/TaskScheduler.h"
 #include "json.hpp"
@@ -25,22 +26,22 @@ struct RankItem {
 class Rank : TaskItem {
 public:
     Rank();
-    void Add(RankItem item);
+    void Add(const RankItem& item);
     RankItem GetRank(int rank, bool exact);
     void Delete(int id, bool isExact);
     void SetJson(json j);
     std::string GetJson();
     static Rank* GetInstance();
-    std::map<int, RankItem> _ranks;
+
     void Save();
 private:
+    std::map<int, RankItem> m_ranks;
+    std::mutex m_rankLock;
     static Rank* Instance;
     bool SaveFile;
     time_t LastFileDate;
 
-
     void Load();
-
     void MainFunc();
     void DefaultRanks();
 };

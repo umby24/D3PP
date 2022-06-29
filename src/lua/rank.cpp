@@ -31,13 +31,13 @@ int LuaRankLib::openLib(lua_State* L)
 
 int LuaRankLib::LuaRankGetTable(lua_State* L) {
     Rank* rm = Rank::GetInstance();
-    int numRanks = static_cast<int>(rm->_ranks.size());
+    int numRanks = static_cast<int>(rm->m_ranks.size());
     int index = 1;
 
     lua_newtable(L);
 
     if (numRanks > 0) {
-        for (auto const& nc : rm->_ranks) {
+        for (auto const& nc : rm->m_ranks) {
             lua_pushinteger(L, index++);
             lua_pushinteger(L, nc.first);
             lua_settable(L, -3);
