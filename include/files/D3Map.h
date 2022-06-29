@@ -66,7 +66,8 @@ namespace D3PP::files {
 		private:
 			PreferenceLoader m_configFile;
 			std::string mapPath;
-			
+			bool m_hasChanged;
+
 		public:
 			Common::Vector3S MapSize;
 			MinecraftLocation MapSpawn;

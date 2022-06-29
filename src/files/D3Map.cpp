@@ -16,6 +16,7 @@ namespace D3PP::files {
             JoinRank = 0;
             ShowRank = 0;
             OverviewType = D3OverviewType::Iso;
+            m_hasChanged = true;
 		}
 
 		D3Map::D3Map(const std::string& folder, const std::string& name, const Common::Vector3S& mapSize) :
@@ -27,7 +28,7 @@ namespace D3PP::files {
             OverviewType = D3OverviewType::Iso;
             Name= name;
             MapSize = mapSize;
-
+            m_hasChanged = true;
             Common::Vector3S defaultSpawn {
                 static_cast<short>(MapSize.X/2),
                 static_cast<short>(MapSize.Y/2),
@@ -50,7 +51,7 @@ namespace D3PP::files {
             bool loadResult = ReadConfig() && ReadMapData();
             ReadRankBoxes();
             ReadPortals();
-           
+           m_hasChanged = false;
             return loadResult;
 		}
         bool D3Map::Load(std::string path)
@@ -68,10 +69,14 @@ namespace D3PP::files {
             ReadRankBoxes();
             ReadPortals();
             mapPath = ogMapPath;
+            m_hasChanged = false;
             return loadResult;
         }
 		bool D3Map::Save()
 		{
+            if (!m_hasChanged)
+                return true;
+
             std::filesystem::create_directory(mapPath);
             bool result = false;
             result = SaveConfig();
@@ -85,14 +90,18 @@ namespace D3PP::files {
             if (result)
                 result = SaveMapData();
 
+            m_hasChanged = false;
 			return result;
 		}
         bool D3Map::Save(std::string filePath)
         {
+            if (!m_hasChanged)
+                return true;
+
             std::filesystem::create_directory(filePath);
             std::string oldPath = mapPath;
             mapPath = filePath;
-            
+
             bool result = false;
             result = SaveConfig();
 
@@ -106,6 +115,7 @@ namespace D3PP::files {
                 result = SaveMapData();
 
             mapPath = oldPath;
+            m_hasChanged = false;
             return result;
         }
         void D3Map::Resize(Common::Vector3S newSize) {
@@ -123,6 +133,7 @@ namespace D3PP::files {
 
             MapSize = newSize;
             MapData.resize(newMapSize);
+            m_hasChanged = true;
         }
 
         unsigned char D3Map::GetBlock(Common::Vector3S blockLocation) {
@@ -158,6 +169,7 @@ namespace D3PP::files {
 
             int index = GetBlockIndex(blockLocation);
             MapData[(index*4)] = type;
+            m_hasChanged = true;
         }
 
         void D3Map::SetBlockMetadata(Common::Vector3S blockLocation, unsigned char metadata) {
@@ -166,6 +178,7 @@ namespace D3PP::files {
 
             int index = GetBlockIndex(blockLocation);
             MapData[(index*4)+1] = metadata;
+            m_hasChanged = true;
         }
 
         void D3Map::SetBlockLastPlayer(Common::Vector3S blockLocation, short playerNumber) {
@@ -175,6 +188,7 @@ namespace D3PP::files {
             int index = GetBlockIndex(blockLocation);
             MapData[(index*4)+2] = (playerNumber & 0xFF00) >> 8;
             MapData[(index*4)+3] = (playerNumber&0xFF);
+            m_hasChanged = true;
         }
 
         std::string D3Map::GenerateUuid() {
