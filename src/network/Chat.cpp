@@ -239,7 +239,8 @@ void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, cons
     } else if (output[0] == '@') {
         std::vector<std::string> splitString = Utils::splitString(output);
         std::string pmName = splitString[0].substr(1); // -- Trim off the '@'.
-        if (pmName.empty() || output.size() < 4) {
+        int pmNameOffset = 2+pmName.size();
+        if (pmName.empty() || output.size() < pmNameOffset) {
             if (client->GlobalChat)
                 NetworkSend2All(client->player->tEntity->Id, output);
             else
@@ -247,7 +248,7 @@ void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, cons
 
             return;
         }
-        NetworkSend2Player(client->player->tEntity->Id, output.substr(2+pmName.size()), pmName);
+        NetworkSend2Player(client->player->tEntity->Id, output.substr(pmNameOffset), pmName);
     } 
     else
     {
