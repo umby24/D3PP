@@ -108,7 +108,10 @@ void NetworkFunctions::NetworkOutBlockSet2Map(const int& mapId, const unsigned s
 
     std::shared_lock lock(D3PP::network::Server::roMutex);
     for(auto const &nc : D3PP::network::Server::roClients) {
-        if (nc->GetPlayerInstance() != nullptr && nc->GetPlayerInstance()->GetEntity()->MapID != mapId || !nc->GetLoggedIn())
+        if (!nc->GetLoggedIn() || nc->GetPlayerInstance() == nullptr)
+            continue;
+
+        if (nc->GetPlayerInstance()->GetEntity()->MapID != mapId)
             continue;
 
         int onClient = mb.OnClient;

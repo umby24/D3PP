@@ -134,7 +134,6 @@ void CPE::PostEntityActions(const std::shared_ptr<IMinecraftClient>& client, con
 }
 
 void CPE::AfterLoginActions(const std::shared_ptr<IMinecraftClient>& client) {
-    Network* nm = Network::GetInstance();
     MapMain* mapMain = MapMain::GetInstance();
     auto concrete = std::static_pointer_cast<NetworkClient>(client);
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(client->GetId(), true);
@@ -152,7 +151,8 @@ void CPE::AfterLoginActions(const std::shared_ptr<IMinecraftClient>& client) {
 
         if (nc->GetId() != clientId) {
             if (CPE::GetClientExtVersion(nc, EXT_PLAYER_LIST_EXT_NAME) == 2) {
-                Packets::SendExtAddPlayerName(concrete, tempNameId, loginName, prettyName, clientMap->Name(), 0);
+                auto concrete2 = std::static_pointer_cast<NetworkClient>(nc);
+                Packets::SendExtAddPlayerName(concrete2, tempNameId, loginName, prettyName, clientMap->Name(), 0);
             }
             if (extVersion == 2) {
                 std::shared_ptr<Map> dudesMap = mapMain->GetPointer(nc->GetPlayerInstance()->GetEntity()->MapID);
