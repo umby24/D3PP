@@ -10,8 +10,9 @@
 #include "../../common/Vectors.h"
 
 namespace D3PP::network {
-    class BlockChangePacket : IPacket {
+    class BlockChangePacket : public IPacket {
     public:
+        BlockChangePacket(Common::Vector3S location, char mode, unsigned char type) { m_blockLocation = location; m_createMode = mode; m_blockType = type; }
         int GetLength() override { return 8; }
         void Read(std::shared_ptr<ByteBuffer> buf) override;
         void Write(std::shared_ptr<ByteBuffer> buf) override;

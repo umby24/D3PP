@@ -2,6 +2,7 @@
 // Created by Wande on 3/17/2021.
 //
 
+#include "common/Vectors.h"
 #include "network/Network_Functions.h"
 #include "network/Chat.h"
 #include "network/Server.h"
@@ -9,6 +10,7 @@
 #include "network/Packets.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "network/packets/BlockChangePacket.h"
 #include "world/Entity.h"
 #include "Block.h"
 #include "world/Player.h"
@@ -118,7 +120,9 @@ void NetworkFunctions::NetworkOutBlockSet2Map(const int& mapId, const unsigned s
             onClient = 1;
             continue;
         }
-        Packets::SendBlockChange(nc->GetId(), x, y, z, onClient);
+
+        D3PP::network::BlockChangePacket p(D3PP::Common::Vector3S(x, y, z), 0, onClient);
+        nc->SendPacket(p);
     }
 }
 

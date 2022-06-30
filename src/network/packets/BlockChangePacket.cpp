@@ -19,7 +19,6 @@ namespace D3PP::network {
         buf->Write(m_blockLocation.X);
         buf->Write(m_blockLocation.Z);
         buf->Write(m_blockLocation.Y);
-        buf->Write(m_createMode);
         buf->Write(m_blockType);
         buf->Purge();
     }

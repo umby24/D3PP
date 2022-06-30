@@ -61,6 +61,10 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) : Selections(MAX_S
     CustomBlocksLevel = 0;
     GlobalChat = false;
     IP = clientSocket->GetSocketIp();
+    PingVal = 0;
+    eventSubId = 0;
+    addSubId = 0;
+    removeSubId = 0;
     SubEvents();
     Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", LogType::NORMAL, GLF);
 }
@@ -81,6 +85,10 @@ NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
     Ping = 0;
     CustomBlocksLevel = 0;
     GlobalChat = false;
+    PingVal = 0;
+    eventSubId = 0;
+    addSubId = 0;
+    removeSubId = 0;
     SubEvents();
 }
 
@@ -296,6 +304,10 @@ NetworkClient::NetworkClient(NetworkClient &client) : Selections(MAX_SELECTION_B
     CustomBlocksLevel = 0;
     GlobalChat = false;
     IP = clientSocket->GetSocketIp();
+    PingVal = 0;
+    eventSubId = 0;
+    addSubId = 0;
+    removeSubId = 0;
     SubEvents();
 }
 
@@ -410,10 +422,10 @@ bool NetworkClient::ReadData() {
         receiveBuf[1024] = 99;
         int dataRead = clientSocket->Read(receiveBuf, 1024);
         LastTimeEvent = time(nullptr);
+        DataWaiting = false;
 
         if (dataRead > 0) {
             std::vector<unsigned char> receive(receiveBuf, receiveBuf + dataRead);
-            unsigned long mySize = receive.size();
             ReceiveBuffer->Write(receive, dataRead);
             D3PP::network::Server::ReceivedIncrement += dataRead;
             delete[] receiveBuf;
@@ -425,8 +437,6 @@ bool NetworkClient::ReadData() {
             return false;
         }
     }
-
-    DataWaiting = false;
 }
 void NetworkClient::HandleData() {
     if (DataWaiting) {

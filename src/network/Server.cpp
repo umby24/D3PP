@@ -44,12 +44,13 @@ D3PP::network::Server::Server() {
     Interval = std::chrono::seconds(5);
     Main = [this](){ this->MainFunc(); };
     TaskScheduler::RegisterTask("Bandwidth", *this);
+    m_needsUpdate = false;
     m_serverSocket = std::make_unique<ServerSocket>(m_port);
     m_serverSocket->Listen();
-    m_needsUpdate = false;
 
     std::thread handleThread([this]() { this->HandleClientData(); });
     std::swap(m_handleThread, handleThread);
+
     Logger::LogAdd("Server", "Network server started on port " + stringulate(this->m_port), LogType::NORMAL, GLF);
 }
 
@@ -108,6 +109,37 @@ void D3PP::network::Server::HandleClientData() {
     }
 }
 
+void D3PP::network::Server::HandleEvents() {
+    auto e = m_serverSocket->CheckEvents();
+
+    if (e.contains(ServerSocketEvent::SOCKET_EVENT_CONNECT)) {
+        HandleIncomingClient();
+    }
+    if (e.contains(ServerSocketEvent::SOCKET_EVENT_DATA)) {
+        for(auto &s : e[ServerSocketEvent::SOCKET_EVENT_DATA]) {
+            int clientId = static_cast<int>(s);
+            m_clients[clientId]->NotifyDataAvailable();
+        }
+    }
+
+    if (m_needsUpdate)
+        RebuildRoClients();
+}
+
+void D3PP::network::Server::HandleIncomingClient() {
+    std::unique_ptr<Sockets> newClient = m_serverSocket->Accept();
+
+    if (newClient != nullptr && newClient->GetSocketFd() != -1) {
+        NetworkClient newNcClient(std::move(newClient));
+        int clientId = newNcClient.GetId();
+        RegisterClient(newNcClient);
+
+        EventClientAdd eca;
+        eca.clientId = clientId;
+        Dispatcher::post(eca);
+    }
+}
+
 void D3PP::network::Server::RegisterClient(NetworkClient client) {
     std::scoped_lock<std::mutex> clientLock(m_ClientMutex);
     m_clients.insert(std::make_pair(client.GetId(), std::make_shared<NetworkClient>(client)));
@@ -159,33 +191,7 @@ void D3PP::network::Server::SendAllExcept(IPacket& packet, std::shared_ptr<IMine
     }
 }
 
-void D3PP::network::Server::HandleEvents() {
-    auto e = m_serverSocket->CheckEvents();
 
-    if (e.contains(ServerSocketEvent::SOCKET_EVENT_CONNECT)) {
-        HandleIncomingClient();
-    } else if (e.contains(ServerSocketEvent::SOCKET_EVENT_DATA)) {
-        for(auto &s : e[ServerSocketEvent::SOCKET_EVENT_DATA]) {
-            int clientId = static_cast<int>(s);
-            m_clients[clientId]->NotifyDataAvailable();
-        }
-    }
 
-    if (m_needsUpdate)
-        RebuildRoClients();
-}
 
-void D3PP::network::Server::HandleIncomingClient() {
-    std::unique_ptr<Sockets> newClient = m_serverSocket->Accept();
-
-    if (newClient != nullptr && newClient->GetSocketFd() != -1) {
-        NetworkClient newNcClient(std::move(newClient));
-        int clientId = newNcClient.GetId();
-        RegisterClient(newNcClient);
-
-        EventClientAdd eca;
-        eca.clientId = clientId;
-        Dispatcher::post(eca);
-    }
-}
 
