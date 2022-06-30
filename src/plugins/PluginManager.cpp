@@ -37,8 +37,7 @@ std::vector<std::string> GetDirectories(const std::string &dir) {
 }
 
 void D3PP::plugins::PluginManager::RefreshPluginList() {
-    Files* fm = Files::GetInstance();
-    std::string pluginBaseDirectory = fm->GetFolder("Plugins");
+    std::string pluginBaseDirectory = Files::GetFolder("Plugins");
     std::vector<std::string> pluginDirectories = GetDirectories(pluginBaseDirectory);
 
     for (auto &plugin : m_plugins) { // -- Mark unfound plugins for removal.

@@ -47,6 +47,7 @@ TEST(EntityTest, GetPointerTest) {
     assert(nothingPointer == nullptr);
 }
 TEST(EntityTest, GetFreeIdTest) {
+    Entity::AllEntities.clear();
     auto newEPointer = std::make_shared<Entity>("testEntity", 0, 1, 2, 3, 4, 5);
     Entity::Add(newEPointer);
 
@@ -55,6 +56,7 @@ TEST(EntityTest, GetFreeIdTest) {
 }
 
 TEST(EntityTest, SetDisplayNameTest) {
+    Entity::AllEntities.clear();
     Entity::SetDisplayName(123, "givenPrefix", "givenName", "givenSuffix");
     auto newEPointer = std::make_shared<Entity>("testEntity", 0, 1, 2, 3, 4, 5);
     Entity::Add(newEPointer);

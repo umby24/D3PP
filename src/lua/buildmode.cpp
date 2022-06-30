@@ -3,6 +3,7 @@
 #include <lua.hpp>
 
 #include "common/Logger.h"
+#include "common/Vectors.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
 #include "world/Player.h"
@@ -137,9 +138,9 @@ int LuaBuildModeLib::LuaBuildModeCoordinateSet(lua_State* L) {
     float X = luaL_checknumber(L, 3);
     float Y = luaL_checknumber(L, 4);
     float Z = luaL_checknumber(L, 5);
-
+    D3PP::Common::Vector3F position{X,Y,Z};
     BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
-    buildModeMain->SetCoordinate(clientId, index, X, Y, Z);
+    buildModeMain->SetCoordinate(clientId, index, position);
 
     return 0;
 }

@@ -8,6 +8,7 @@
 #include "network/Chat.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "network/Server.h"
 #include "common/Configuration.h"
 #include "world/Player.h"
 #include "common/Player_List.h"
@@ -116,29 +117,29 @@ void Chat::NetworkSend2Player(const int& entityId, const std::string& message, s
         playerName = em->lastPrivateMessage;
 
     std::string output(message);
-    Network* nm = Network::GetInstance();
 
     if (em->playerList != nullptr) {
         if (em->playerList->MuteTime < time(nullptr)) {
             HandleChatEscapes(output, entityId);
+            std::shared_lock lock(D3PP::network::Server::roMutex);
             std::string message1 = "&cP " + Entity::GetDisplayname(entityId) + "&f: " + output;
             bool found = false;
 
-            for (const auto &nc : nm->roClients) {
-                if (nc->player != nullptr && nc->player->tEntity != nullptr) {
-                    if (Utils::InsensitiveCompare(nc->player->tEntity->Name, playerName)) {
+            for (const auto &nc : D3PP::network::Server::roClients) {
+                if (nc->GetPlayerInstance() != nullptr && nc->GetPlayerInstance()->GetEntity() != nullptr) {
+                    if (Utils::InsensitiveCompare(nc->GetPlayerInstance()->GetEntity()->Name, playerName)) {
                         em->lastPrivateMessage = playerName;
 
                         EventChatPrivate ecp;
-                        ecp.toEntityId = nc->player->tEntity->Id;
+                        ecp.toEntityId = nc->GetPlayerInstance()->GetEntity()->Id;
                         ecp.fromEntityId = em->Id;
                         ecp.message = output;
                         Dispatcher::post(ecp);
 
-                        Logger::LogAdd("Chat", em->Name + " > " + nc->player->tEntity->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
+                        Logger::LogAdd("Chat", em->Name + " > " + nc->GetPlayerInstance()->GetEntity()->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
                         NetworkFunctions::SystemMessageNetworkSend(nc->GetId(), message1);
 
-                        std::string message0 = "&c@ " + Entity::GetDisplayname(nc->player->tEntity->Id) + "&f: " +output;
+                        std::string message0 = "&c@ " + Entity::GetDisplayname(nc->GetPlayerInstance()->GetEntity()->Id) + "&f: " +output;
                         Entity::MessageToClients(entityId, message0);
                         found = true;
                         break;
@@ -217,11 +218,11 @@ void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, cons
     std::string output(input);
     if (CPE::GetClientExtVersion(client, LONG_MESSAGES_EXT_NAME) == 1){
         if (playerId == 1) {
-            client->player->tEntity->ChatBuffer += input;
+            client->GetPlayerInstance()->GetEntity()->ChatBuffer += input;
             return;
         } else {
-            output = client->player->tEntity->ChatBuffer + input;
-            client->player->tEntity->ChatBuffer = "";
+            output = client->GetPlayerInstance()->GetEntity()->ChatBuffer + input;
+            client->GetPlayerInstance()->GetEntity()->ChatBuffer = "";
         }
     }
 
@@ -232,9 +233,9 @@ void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, cons
         cm->CommandDo(client, output.substr(1));
     } else if (output[0] == '#') {
         if (client->GlobalChat)
-            NetworkSend2Map(client->player->tEntity->Id, output.substr(1));
+            NetworkSend2Map(client->GetPlayerInstance()->GetEntity()->Id, output.substr(1));
         else
-            NetworkSend2All(client->player->tEntity->Id, output.substr(1));
+            NetworkSend2All(client->GetPlayerInstance()->GetEntity()->Id, output.substr(1));
         // -- do global chat
     } else if (output[0] == '@') {
         std::vector<std::string> splitString = Utils::splitString(output);
@@ -242,20 +243,20 @@ void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, cons
         int pmNameOffset = 2+pmName.size();
         if (pmName.empty() || output.size() < pmNameOffset) {
             if (client->GlobalChat)
-                NetworkSend2All(client->player->tEntity->Id, output);
+                NetworkSend2All(client->GetPlayerInstance()->GetEntity()->Id, output);
             else
-                NetworkSend2Map(client->player->tEntity->Id, output);
+                NetworkSend2Map(client->GetPlayerInstance()->GetEntity()->Id, output);
 
             return;
         }
-        NetworkSend2Player(client->player->tEntity->Id, output.substr(pmNameOffset), pmName);
+        NetworkSend2Player(client->GetPlayerInstance()->GetEntity()->Id, output.substr(pmNameOffset), pmName);
     } 
     else
     {
         if (client->GlobalChat)
-            NetworkSend2All(client->player->tEntity->Id, output);
+            NetworkSend2All(client->GetPlayerInstance()->GetEntity()->Id, output);
         else
-            NetworkSend2Map(client->player->tEntity->Id, output);
+            NetworkSend2Map(client->GetPlayerInstance()->GetEntity()->Id, output);
     }
 }
 

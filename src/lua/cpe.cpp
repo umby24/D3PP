@@ -143,7 +143,7 @@ int LuaCPELib::LuaSelectionCuboidAdd(lua_State* L) {
     if (nc == nullptr)
         return 0;
 
-    nc->CreateSelection(static_cast<unsigned char>(selectionId), label, start.X, start.Y, start.Z, end.X, end.Y, end.Z, red, green, blue, static_cast<short>(opacity));
+    nc->CreateSelection(static_cast<unsigned char>(selectionId), label, start, end, Vector3S(red, green, blue), static_cast<short>(opacity));
     return 0;
 }
 
@@ -208,7 +208,7 @@ int LuaCPELib::LuaSetHeldBlock(lua_State* L) {
     if (nc == nullptr)
         return 0;
 
-    if (nc->LoggedIn && nc->player && nc->player->tEntity) {
+    if (nc->LoggedIn && nc->GetPlayerInstance() && nc->GetPlayerInstance()->GetEntity()) {
         nc->HoldThis(blockId, canChange);
         return 1;
     }

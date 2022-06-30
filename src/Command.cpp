@@ -3,6 +3,7 @@
 #include "common/PreferenceLoader.h"
 #include "network/NetworkClient.h"
 #include "network/Network.h"
+#include "network/Server.h"
 #include "world/Player.h"
 #include "common/Player_List.h"
 #include "world/Entity.h"
@@ -547,8 +548,7 @@ void CommandMain::Init() {
 }
 
 void CommandMain::Load() {
-    Files* f = Files::GetInstance();
-    std::string cmdFilename = f->GetFile(COMMAND_FILENAME);
+    std::string cmdFilename = Files::GetFile(COMMAND_FILENAME);
 
     if (Utils::FileSize(cmdFilename) == -1) {
         Logger::LogAdd(MODULE_NAME, "Commands file does not exist.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
@@ -635,8 +635,7 @@ void CommandMain::Load() {
 }
 
 void CommandMain::MainFunc() {
-    Files* f = Files::GetInstance();
-    std::string blockFile = f->GetFile(COMMAND_FILENAME);
+    std::string blockFile = Files::GetFile(COMMAND_FILENAME);
     time_t modTime = Utils::FileModTime(blockFile);
 
     if (modTime != FileDateLast) {
@@ -788,14 +787,13 @@ void CommandMain::CommandHelp() {
 }
 
 void CommandMain::CommandPlayers() {
-     Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
      c->SendChat("§SPlayers:");
     std::string textToSend;
-
-     for(auto const &nc : nm->roClients) {
-         if (nc != nullptr && nc->player != nullptr && nc->player->tEntity->playerList != nullptr) {
-             std::string playerName = Entity::GetDisplayname(nc->player->tEntity->Id);
+    std::shared_lock lock(D3PP::network::Server::roMutex);
+     for(auto const &nc : D3PP::network::Server::roClients) {
+         if (nc != nullptr && nc->GetPlayerInstance() != nullptr && nc->GetPlayerInstance()->GetEntity()->playerList != nullptr) {
+             std::string playerName = Entity::GetDisplayname(nc->GetPlayerInstance()->GetEntity()->Id);
 
             std::string toAdd = playerName + " &c| ";
             if (64 - textToSend.size() >= toAdd.size()) {
@@ -931,8 +929,10 @@ void CommandMain::CommandChangeMap() {
             Entity::MessageToClients(clientEntity->Id, "§EYou are not allowed to join map '" + mi->Name() + "'");
             return;
         }
-        auto concrete = std::static_pointer_cast<NetworkClient>(c);
-        concrete->player->ChangeMap(mi);
+
+        auto concrete = std::static_pointer_cast<D3PP::world::Player>(c->GetPlayerInstance());
+        concrete->ChangeMap(mi);
+
         clientEntity->PositionSet(mi->ID, mi->GetSpawn(), 255, true);
 
     } else {
@@ -949,11 +949,10 @@ void CommandMain::CommandSaveMap() {
         return;
 
     MapMain* mm = MapMain::GetInstance();
-    Files* fm = Files::GetInstance();
     std::string mapDirectory;
 
     if (!ParsedText0.empty()) {
-        mapDirectory = fm->GetFolder("Maps") + ParsedText0;
+        mapDirectory = Files::GetFolder("Maps") + ParsedText0;
         if (mapDirectory.substr(mapDirectory.size()-2, 1) != "/") {
             mapDirectory += "/";
         }
@@ -1333,11 +1332,10 @@ void CommandMain::CommandLoadMap() {
     Network* nm = Network::GetInstance();
     std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
     std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
-    Files* fm = Files::GetInstance();
     std::string mapDirectory;
 
     if (!ParsedText0.empty()) {
-        mapDirectory = fm->GetFolder("Maps") + ParsedText0;
+        mapDirectory = Files::GetFolder("Maps") + ParsedText0;
     }
 
     MapMain* mapMain = MapMain::GetInstance();
@@ -1655,10 +1653,8 @@ void CommandMain::CommandPlace() {
 }
 
 void CommandMain::CommandUserMaps() {
-    Files* fm = Files::GetInstance();
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
-    std::string usermapDirectory = fm->GetFolder("Usermaps");
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
+    std::string usermapDirectory = Files::GetFolder("Usermaps");
 
     c->SendChat("§SUsermaps:");
     std::string textToSend;

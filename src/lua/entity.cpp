@@ -4,7 +4,6 @@
 
 #include "Utils.h"
 #include "common/Logger.h"
-#include "network/Network.h"
 #include "network/NetworkClient.h"
 #include "world/Player.h"
 #include "world/Entity.h"

@@ -2,6 +2,8 @@
 #define D3PP_CONFIGURATION_H
 
 #include <string>
+constexpr std::string_view CONFIGURATION_FILENAME = "configuration";
+
 #include "TaskScheduler.h"
 #include "json.hpp"
 #include "Vectors.h"
@@ -132,6 +134,7 @@ public:
     void Save();
 private:
     static Configuration* _instance;
+    std::string filepath;
     time_t lastLoaded;
     bool saveFile;
 

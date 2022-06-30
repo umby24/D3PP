@@ -5,6 +5,7 @@
 #include "common/Logger.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "network/Server.h"
 #include "world/Player.h"
 #include "world/Entity.h"
 #include "plugins/LuaPlugin.h"
@@ -33,14 +34,14 @@ int LuaClientLib::openLib(lua_State* L)
 }
 
 int LuaClientLib::LuaClientGetTable(lua_State* L) {
-    Network* nm = Network::GetInstance();
-    int numClients = static_cast<int>(nm->roClients.size());
+    std::shared_lock lock(D3PP::network::Server::roMutex);
+    int numClients = static_cast<int>(D3PP::network::Server::roClients.size());
     int index = 1;
 
     lua_newtable(L);
 
     if (numClients > 0) {
-        for (auto const& nc : nm->roClients) {
+        for (auto const& nc : D3PP::network::Server::roClients) {
             lua_pushinteger(L, index++);
             lua_pushinteger(L, nc->GetId());
             lua_settable(L, -3);
@@ -65,7 +66,7 @@ int LuaClientLib::LuaClientGetMapId(lua_State* L) {
     Network* nm = Network::GetInstance();
     std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
     if (client != nullptr) {
-        result = client->player->MapId;
+        result = client->GetPlayerInstance()->GetEntity()->MapID;
     }
 
     lua_pushinteger(L, result);

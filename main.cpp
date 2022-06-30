@@ -4,6 +4,7 @@
 #include <CustomBlocks.h>
 
 #include "network/Network.h"
+#include "network/Server.h"
 #include "Rank.h"
 #include "System.h"
 #include "common/Logger.h"
@@ -75,8 +76,9 @@ int main()
 
     //_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF);
     srand(time(nullptr));
+
+    Files::Load();
     Logger::LogAdd("Main", "====== Welcome to D3PP =====", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-    Files *fm = Files::GetInstance();
     Configuration* config = Configuration::GetInstance();
 
     Block *b = Block::GetInstance();
@@ -84,7 +86,6 @@ int main()
     
     Player_List *l = Player_List::GetInstance();
     PlayerMain *pm = PlayerMain::GetInstance();
-    Network *n = Network::GetInstance();
     EntityMain em;
     CommandMain *cm = CommandMain::GetInstance();
     BuildModeMain *bmm = BuildModeMain::GetInstance();
@@ -101,12 +102,13 @@ int main()
     System::startTime = time(nullptr);
     System::ServerName = "D3PP Beta v" + stringulate(SYSTEM_VERSION_NUMBER);
     
-    n->Start();
+    D3PP::network::Server::Start();
     
     std::thread mainThread(mainLoop);
     plugm->LoadPlugins();
     MainConsole();
 
+    D3PP::network::Server::Stop();
     TaskScheduler::RunTeardownTasks();
 
     Logger::LogAdd("Module", "Server shutdown complete.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
