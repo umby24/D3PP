@@ -158,7 +158,7 @@ void Client::LoginCpe(int clientId, std::string name, std::string mppass, char v
     c->CPE = true;
     myPlayer->myClientId = c->GetId();
 
-    Packets::SendExtInfo(c, "D3PP Server Alpha", 22);
+    Packets::SendExtInfo(c, "D3PP Server " + stringulate(SYSTEM_VERSION_NUMBER), 22);
     Packets::SendExtEntry(c, CUSTOM_BLOCKS_EXT_NAME, 1);
     Packets::SendExtEntry(c, HELDBLOCK_EXT_NAME, 1);
     Packets::SendExtEntry(c, CLICK_DISTANCE_EXT_NAME, 1);
