@@ -74,7 +74,7 @@ void D3PP::network::Server::MainFunc() {
     BytesSent = SentIncrement/1024.0f;
     ReceivedIncrement = 0;
     SentIncrement = 0;
-    Logger::LogAdd("Server", "Recv: " + stringulate(BytesReceived) + " KB/s, Sent: " + stringulate(BytesSent) + " KB/s.", DEBUG, GLF);
+    //Logger::LogAdd("Server", "Recv: " + stringulate(BytesReceived) + " KB/s, Sent: " + stringulate(BytesSent) + " KB/s.", DEBUG, GLF);
 }
 
 void D3PP::network::Server::Shutdown() {
