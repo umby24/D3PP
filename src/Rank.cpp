@@ -186,3 +186,15 @@ void Rank::SetJson(json j) {
         m_ranks[loadedItem.Rank] = loadedItem;
     }
 }
+
+std::vector<RankItem> Rank::GetAllRanks() {
+    std::vector<RankItem> result;
+    {
+        std::scoped_lock<std::mutex> _pqLock(m_rankLock);
+        for (auto const &r: m_ranks) {
+            result.push_back(r.second);
+        }
+    }
+
+    return result;
+}

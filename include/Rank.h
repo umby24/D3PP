@@ -28,6 +28,7 @@ public:
     Rank();
     void Add(const RankItem& item);
     RankItem GetRank(int rank, bool exact);
+    std::vector<RankItem> GetAllRanks();
     void Delete(int id, bool isExact);
     void SetJson(json j);
     std::string GetJson();

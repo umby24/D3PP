@@ -9,8 +9,6 @@
 #include "world/Map.h"
 #include "common/Logger.h"
 #include "Utils.h"
-#include "network/NetworkClient.h"
-#include "Rank.h"
 #include "EventSystem.h"
 #include "Block.h"
 // -- Events..
