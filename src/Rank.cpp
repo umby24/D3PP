@@ -24,8 +24,7 @@ Rank::Rank() {
 }
 
 void Rank::Save() {
-    Files* f = Files::GetInstance();
-    std::string rankFile = f->GetFile(RANK_FILE_NAME);
+    std::string rankFile = Files::GetFile(RANK_FILE_NAME);
 
 
     std::ofstream oStream(rankFile, std::ios::trunc);
@@ -45,8 +44,7 @@ void Rank::MainFunc() {
         SaveFile = false;
     }
 
-    Files* f = Files::GetInstance();
-    const std::string blockFile = f->GetFile(RANK_FILE_NAME);
+    const std::string blockFile = Files::GetFile(RANK_FILE_NAME);
     const time_t modTime = Utils::FileModTime(blockFile);
 
     if (modTime != LastFileDate) {
@@ -56,8 +54,7 @@ void Rank::MainFunc() {
 }
 
 void Rank::Load() {
-    Files* f = Files::GetInstance();
-    std::string filePath = f->GetFile(RANK_FILE_NAME);
+    std::string filePath = Files::GetFile(RANK_FILE_NAME);
     json j;
 
     std::ifstream iStream(filePath);

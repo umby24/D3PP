@@ -6,6 +6,7 @@
 #include "world/Entity.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "network/Server.h"
 #include "network/Packets.h"
 #include "world/Map.h"
 #include "world/MapMain.h"
@@ -16,6 +17,7 @@ using namespace D3PP::Common;
 
 void CPE::PreLoginExtensions(const std::shared_ptr<IMinecraftClient>& client) {
     auto concrete = std::static_pointer_cast<NetworkClient>(client);
+    auto playerConcrete = std::static_pointer_cast<D3PP::world::Player>(client->GetPlayerInstance());
 
     if (GetClientExtVersion(client, CLICK_DISTANCE_EXT_NAME) == 1) {
         // -- do click distance things
@@ -24,7 +26,7 @@ void CPE::PreLoginExtensions(const std::shared_ptr<IMinecraftClient>& client) {
     if (GetClientExtVersion(client, CUSTOM_BLOCKS_EXT_NAME) == 1) {
         Packets::SendCustomBlockSupportLevel(concrete, 1);
     } else {
-        Client::Login(client->GetId(), concrete->player->LoginName, concrete->player->MPPass, concrete->player->ClientVersion);
+        Client::Login(client->GetId(), concrete->GetLoginName(), playerConcrete->MPPass, playerConcrete->ClientVersion);
     }
 }
 
@@ -70,7 +72,7 @@ int CPE::GetClientExtVersion(const std::shared_ptr<IMinecraftClient>& client, co
 void CPE::AfterMapActions(const std::shared_ptr<IMinecraftClient>& client) {
     MapMain* mm = MapMain::GetInstance();
     auto concrete = std::static_pointer_cast<NetworkClient>(client);
-    std::shared_ptr<Map> clientMap = mm->GetPointer(concrete->player->tEntity->MapID);
+    std::shared_ptr<Map> clientMap = mm->GetPointer(concrete->GetPlayerInstance()->GetEntity()->MapID);
     MapEnvironment perms = clientMap->GetMapEnvironment();
 
     if (GetClientExtVersion(client, ENV_COLORS_EXT_NAME) == 1) {
@@ -141,19 +143,20 @@ void CPE::AfterLoginActions(const std::shared_ptr<IMinecraftClient>& client) {
     std::string loginName = client->GetLoginName();
     std::string prettyName = Entity::GetDisplayname(clientEntity->Id);
     int extVersion = CPE::GetClientExtVersion(client, EXT_PLAYER_LIST_EXT_NAME);
-    int tempNameId = concrete->player->NameId;
+    int tempNameId = concrete->GetPlayerInstance()->GetNameId();
 
-    for(auto const &nc : nm->roClients) {
-        if (!nc->LoggedIn)
+    std::shared_lock lock(D3PP::network::Server::roMutex);
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (!nc->GetLoggedIn())
             continue;
 
         if (nc->GetId() != clientId) {
             if (CPE::GetClientExtVersion(nc, EXT_PLAYER_LIST_EXT_NAME) == 2) {
-                Packets::SendExtAddPlayerName(nc, tempNameId, loginName, prettyName, clientMap->Name(), 0);
+                Packets::SendExtAddPlayerName(concrete, tempNameId, loginName, prettyName, clientMap->Name(), 0);
             }
             if (extVersion == 2) {
-                std::shared_ptr<Map> dudesMap = mapMain->GetPointer(nc->player->tEntity->MapID);
-                Packets::SendExtAddPlayerName(concrete, nc->player->NameId, nc->player->LoginName, Entity::GetDisplayname(nc->player->tEntity->Id), dudesMap->Name(), 0);
+                std::shared_ptr<Map> dudesMap = mapMain->GetPointer(nc->GetPlayerInstance()->GetEntity()->MapID);
+                Packets::SendExtAddPlayerName(concrete, nc->GetPlayerInstance()->GetNameId(), nc->GetPlayerInstance()->GetLoginName(), Entity::GetDisplayname(nc->GetPlayerInstance()->GetEntity()->Id), dudesMap->Name(), 0);
             }
         } else {
             if (extVersion == 2) {

@@ -168,8 +168,7 @@ void Logger::SizeCheck() {
         int number = 0;
 
         std::string tempName;
-        Files* fi = Files::GetInstance();
-        std::string logFile = fi->GetFile("Log");
+        std::string logFile = Files::GetFile("Log");
 
         if (logFile.empty())
             logFile = "Log[i].txt";

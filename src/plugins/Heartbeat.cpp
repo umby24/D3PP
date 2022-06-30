@@ -6,8 +6,8 @@
 
 
 #include "System.h"
-#include "common/TaskScheduler.h"
 #include "network/Network.h"
+#include "network/Server.h"
 #include "world/Player.h"
 #include "network/httplib.h"
 #include "digestpp/digestpp.hpp"
@@ -21,15 +21,12 @@ const std::string MODULE_NAME = "Heartbeat";
 Heartbeat* Heartbeat::Instance = nullptr;
 
 void Heartbeat::Beat() {
-    Network* nMain = Network::GetInstance();
-    PlayerMain* pMain = PlayerMain::GetInstance();
-
     httplib::Client cli(CLASSICUBE_NET_URL);
 
     httplib::Params params;
     params.emplace("name", Configuration::GenSettings.name);
     params.emplace("port", stringulate(Configuration::NetSettings.ListenPort));
-    params.emplace("users", stringulate(nMain->roClients.size()));
+    params.emplace("users", stringulate(D3PP::network::Server::roClients.size()));
     params.emplace("max", stringulate(Configuration::NetSettings.MaxPlayers));
     params.emplace("public", Configuration::NetSettings.Public ? "true" : "false");
     params.emplace("version", "7");

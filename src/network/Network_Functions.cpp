@@ -4,14 +4,24 @@
 
 #include "network/Network_Functions.h"
 #include "network/Chat.h"
+#include "network/Server.h"
 #include "Utils.h"
 #include "network/Packets.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "world/Entity.h"
 #include "Block.h"
 #include "world/Player.h"
 #include "CPE.h"
-#include "common/MinecraftLocation.h"
+
+std::string SanitizeMessageString(const std::string &message) {
+    std::string sanitized(message);
+    Utils::replaceAll(sanitized, "\n", "");
+    Utils::replaceAll(sanitized, "<br>", "\n");
+    sanitized = Chat::StringMultiline(sanitized);
+    sanitized = Chat::StringGV(sanitized);
+    return sanitized;
+}
 
 void NetworkFunctions::SystemLoginScreen(const int& clientId, const std::string& message0, const std::string& message1, const char& opMode) {
     std::string sanitized0 = Chat::StringGV(message0);
@@ -35,11 +45,7 @@ void NetworkFunctions::SystemMessageNetworkSend(const int& clientId, const std::
         return;
     }
 
-    std::string sanitized(message);
-    Utils::replaceAll(sanitized, "\n", "");
-    Utils::replaceAll(sanitized, "<br>", "\n");
-    sanitized = Chat::StringMultiline(sanitized);
-    sanitized = Chat::StringGV(sanitized);
+    std::string sanitized = SanitizeMessageString(message);
     Chat::EmoteReplace(sanitized);
     int lines = Utils::strCount(sanitized, '\n') + 1;
     std::vector<std::string> linev = Utils::splitString(sanitized, '\n');
@@ -48,18 +54,14 @@ void NetworkFunctions::SystemMessageNetworkSend(const int& clientId, const std::
         std::string text = linev.at(i);
         
         if (!text.empty()) {
-            Packets::SendChatMessage(clientId, text, type);
+            Packets::SendChatMessage(clientId, text, static_cast<char>(type));
         }
     }
 }
 
 void NetworkFunctions::SystemMessageNetworkSend2All(const int& mapId, const std::string& message, const int& type) {
     Network* n = Network::GetInstance();
-    std::string sanitized(message);
-    Utils::replaceAll(sanitized, "\n", "");
-    Utils::replaceAll(sanitized, "<br>", "\n");
-    sanitized = Chat::StringMultiline(sanitized);
-    sanitized = Chat::StringGV(sanitized);
+    std::string sanitized = SanitizeMessageString(message);
     Chat::EmoteReplace(sanitized);
     int lines = Utils::strCount(sanitized, '\n') + 1;
     std::vector<std::string> linev = Utils::splitString(sanitized, '\n');
@@ -68,11 +70,12 @@ void NetworkFunctions::SystemMessageNetworkSend2All(const int& mapId, const std:
         std::string text = linev.at(i);
 
         if (!text.empty()) {
-            for (auto const &nc : n->roClients) {
-                if (!nc->LoggedIn || nc->player == nullptr)
+            std::shared_lock lock(D3PP::network::Server::roMutex);
+            for (auto const &nc : D3PP::network::Server::roClients) {
+                if (!nc->GetLoggedIn() || nc->GetPlayerInstance() == nullptr)
                     continue;
 
-                if (mapId == -1 || nc->player->MapId == mapId) {
+                if (mapId == -1 || nc->GetPlayerInstance()->GetEntity()->MapID == mapId) {
                     Packets::SendChatMessage(nc->GetId(), text, type);
                 }
             }
@@ -98,17 +101,17 @@ void NetworkFunctions::NetworkOutBlockSet(const int& clientId, const short& x, c
 }
 
 void NetworkFunctions::NetworkOutBlockSet2Map(const int& mapId, const unsigned short& x, const unsigned short& y, const unsigned short& z, const unsigned char& type) {
-    Network* n = Network::GetInstance();
     Block* b = Block::GetInstance();
     MapBlock mb = b->GetBlock(type);
 
-    for(auto const &nc : n->roClients) {
-        if (nc->player != nullptr && nc->player->MapId != mapId || !nc->LoggedIn)
+    std::shared_lock lock(D3PP::network::Server::roMutex);
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (nc->GetPlayerInstance() != nullptr && nc->GetPlayerInstance()->GetEntity()->MapID != mapId || !nc->GetLoggedIn())
             continue;
 
         int onClient = mb.OnClient;
         int dbl = CPE::GetClientExtVersion(nc, BLOCK_DEFS_EXT_NAME);
-        if (mb.CpeLevel > nc->CustomBlocksLevel) {
+        if (mb.CpeLevel > nc->GetCustomBlocksLevel()) {
             onClient = mb.CpeReplace;
         }
         if (mb.OnClient > 65 && dbl < 1) { // -- If the user doesn't support customblocks and this is a custom block, replace with stone.

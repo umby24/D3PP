@@ -9,6 +9,7 @@
 #include <events/PlayerEventArgs.h>
 #include <events/EventEntityMapChange.h>
 #include "network/NetworkClient.h"
+#include "network/Server.h"
 #include "world/Entity.h"
 #include "common/Player_List.h"
 #include "network/Network_Functions.h"
@@ -47,16 +48,16 @@ PlayerMain *PlayerMain::GetInstance() {
 }
 
 int PlayerMain::GetFreeNameId() {
-    Network* nm = Network::GetInstance();
     int id = 0;
     bool found = false;
     while (true) {
         found = false;
-        for(auto const &nc: nm->roClients) {
-            if (!nc->LoggedIn)
+        std::shared_lock lock(D3PP::network::Server::roMutex);
+        for(auto const &nc: D3PP::network::Server::roClients) {
+            if (!nc->GetLoggedIn())
                 continue;
 
-            if (nc->player->NameId == id)
+            if (nc->GetPlayerInstance()->GetNameId() == id)
                 found = true;
         }
 
@@ -68,7 +69,7 @@ int PlayerMain::GetFreeNameId() {
     }
 }
 
-Player::Player() {
+D3PP::world::Player::Player() {
     ClientVersion = 0;
     MapId = -1;
     timeDeathMessage = 0;
@@ -77,7 +78,7 @@ Player::Player() {
     NameId = PlayerMain::GetFreeNameId();
 }
 
-void Player::SendMap() {
+void D3PP::world::Player::SendMap() {
     D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();
     std::shared_ptr<D3PP::world::Map> myMap = mm->GetPointer(MapId);
     myMap->Send(myClientId);
@@ -94,7 +95,7 @@ void Player::SendMap() {
     }
 }
 
-void Player::PlayerClicked(ClickButton button, ClickAction action, short yaw, short pitch, char targetEntity,
+void D3PP::world::Player::PlayerClicked(ClickButton button, ClickAction action, short yaw, short pitch, char targetEntity,
                            D3PP::Common::Vector3S targetBlock, ClickTargetBlockFace blockFace) {
     PlayerClickEventArgs event;
     event.playerId = this->tEntity->playerList->Number;
@@ -108,7 +109,7 @@ void Player::PlayerClicked(ClickButton button, ClickAction action, short yaw, sh
     Dispatcher::post(event);
 }
 
-void Player::ChangeMap(std::shared_ptr<D3PP::world::Map> map) {
+void D3PP::world::Player::ChangeMap(std::shared_ptr<D3PP::world::Map> map) {
     Network* nm = Network::GetInstance();
     auto myClient =  nm->GetClient(myClientId);
 
@@ -152,7 +153,7 @@ void Player::ChangeMap(std::shared_ptr<D3PP::world::Map> map) {
     }
 }
 
-void Player::DespawnEntities() {
+void D3PP::world::Player::DespawnEntities() {
     auto* mm = D3PP::world::MapMain::GetInstance();
     Network* nm = Network::GetInstance();
     auto myClient = nm->GetClient(myClientId);
@@ -163,4 +164,47 @@ void Player::DespawnEntities() {
             myClient->DespawnEntity(Entity::GetPointer(eId));
         }
     }
+}
+
+std::string D3PP::world::Player::GetLoginName() {
+    return LoginName;
+}
+
+D3PP::world::Player::Player(const std::string& name, const std::string& mppass, const char &version) {
+    MapId = -1;
+    timeDeathMessage = 0;
+    timeBuildMessage = 0;
+    LogoutHide = false;
+    NameId = PlayerMain::GetFreeNameId();
+    LoginName = std::move(name);
+    MPPass = std::move(mppass);
+    ClientVersion = version;
+}
+
+int D3PP::world::Player::GetId() {
+    return tEntity->playerList->Number;
+}
+
+int D3PP::world::Player::GetRank() {
+    return tEntity->playerList->PRank;
+}
+
+int D3PP::world::Player::GetCustomBlockLevel() {
+    return Network::GetClient(myClientId)->GetCustomBlocksLevel();
+}
+
+std::shared_ptr<Entity> D3PP::world::Player::GetEntity() {
+    return tEntity;
+}
+
+void D3PP::world::Player::Login() {
+
+}
+
+void D3PP::world::Player::Logout() {
+
+}
+
+int D3PP::world::Player::GetNameId() {
+    return NameId;
 }

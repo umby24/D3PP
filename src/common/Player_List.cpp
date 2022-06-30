@@ -5,6 +5,7 @@
 
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "network/Server.h"
 #include "common/Logger.h"
 #include "common/Files.h"
 #include "Rank.h"
@@ -72,8 +73,11 @@ void Player_List::OpenDatabase() {
 
 Player_List::Player_List() {
     dbOpen = false;
-    Files* f = Files::GetInstance();
-    fileName = f->GetFile(PLAYERLIST_FILE_NAME);
+    fileName = Files::GetFile(PLAYERLIST_FILE_NAME);
+
+    if (fileName.empty())
+        fileName = "playerdb.sqlite3";
+
     _numberCounter = -1;
     this->Setup = [this] { Load(); };
     this->Main = [this] { MainFunc(); };
@@ -334,13 +338,12 @@ void PlayerListEntry::SetRank(int rank, const std::string &reason) {
     Player_List* i = Player_List::GetInstance();
     i->SaveFile = true;
 
-    Network* ni = Network::GetInstance();
     Rank* r = Rank::GetInstance();
-
-    for(auto &nc : ni->roClients) {
-        if (nc->player && nc->player->tEntity && nc->player->tEntity->playerList && nc->player->tEntity->playerList->Number == Number) {
+    std::shared_lock lock(D3PP::network::Server::roMutex);
+    for(auto &nc : D3PP::network::Server::roClients) {
+        if (nc->GetPlayerInstance() && nc->GetPlayerInstance()->GetEntity() && nc->GetPlayerInstance()->GetEntity()->playerList && nc->GetPlayerInstance()->GetEntity()->playerList->Number == Number) {
             RankItem ri = r->GetRank(rank, false);
-            Entity::SetDisplayName(nc->player->tEntity->Id, ri.Prefix, this->Name, ri.Suffix);
+            Entity::SetDisplayName(nc->GetPlayerInstance()->GetEntity()->Id, ri.Prefix, this->Name, ri.Suffix);
             NetworkFunctions::SystemMessageNetworkSend(nc->GetId(), "&eYour rank has been changed to '" + ri.Name + "' (" + reason + ")");
         }
     }
@@ -348,10 +351,9 @@ void PlayerListEntry::SetRank(int rank, const std::string &reason) {
 
 void PlayerListEntry::Kick(const std::string &reason, int count, bool log, bool show) {
     bool found = false;
-    Network* ni = Network::GetInstance();
-
-    for(auto &nc : ni->roClients) {
-        if (nc->player && nc->player->tEntity && nc->player->tEntity->playerList && nc->player->tEntity->playerList->Number == Number) {
+    std::shared_lock lock(D3PP::network::Server::roMutex);
+    for(auto &nc : D3PP::network::Server::roClients) {
+        if (nc->GetPlayerInstance() && nc->GetPlayerInstance()->GetEntity() && nc->GetPlayerInstance()->GetEntity()->playerList && nc->GetPlayerInstance()->GetEntity()->playerList->Number == Number) {
             nc->Kick("You got kicked (" + reason + ")", !show);
             found = true;
         }

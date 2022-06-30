@@ -14,6 +14,7 @@
 #include "network/Network_Functions.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "network/Server.h"
 #include "world/Entity.h"
 #include "world/Map.h"
 #include "world/D3MapProvider.h"
@@ -44,8 +45,7 @@ D3PP::world::MapMain::MapMain() {
 }
 
 void D3PP::world::MapMain::MainFunc() {
-    Files* f = Files::GetInstance();
-    std::string mapListFile = f->GetFile(MAP_LIST_FILE);
+    std::string mapListFile = Files::GetFile(MAP_LIST_FILE);
     long fileTime = Utils::FileModTime(mapListFile);
     
     if (System::IsRunning && !mbcStarted) {
@@ -84,7 +84,7 @@ void D3PP::world::MapMain::MainFunc() {
             m.second->Unload();
         }
     }
-    fileTime = Utils::FileModTime(f->GetFile(MAP_SETTINGS_FILE));
+    fileTime = Utils::FileModTime(Files::GetFile(MAP_SETTINGS_FILE));
     if (fileTime != mapSettingsLastWriteTime) {
         MapSettingsLoad();
     }
@@ -309,8 +309,7 @@ std::string D3PP::world::MapMain::GetMapMOTDOverride(int mapId) {
 }
 
 void D3PP::world::MapMain::MapListSave() {
-    Files* f = Files::GetInstance();
-    std::string fName = f->GetFile(MAP_LIST_FILE);
+    std::string fName = Files::GetFile(MAP_LIST_FILE);
     PreferenceLoader pl(fName, "");
 
     for(auto const &m : _maps) {
@@ -329,8 +328,7 @@ void D3PP::world::MapMain::MapListSave() {
 }
 
 void D3PP::world::MapMain::MapListLoad() {
-    Files* f = Files::GetInstance();
-    std::string fName = f->GetFile(MAP_LIST_FILE);
+    std::string fName = Files::GetFile(MAP_LIST_FILE);
     PreferenceLoader pl(fName, "");
     pl.LoadFile();
 
@@ -341,7 +339,7 @@ void D3PP::world::MapMain::MapListLoad() {
 
         pl.SelectGroup(m.first);
         std::string mapName = pl.Read("Name", m.first);
-        std::string directory = pl.Read("Directory", f->GetFolder("Maps") + m.first + "/");
+        std::string directory = pl.Read("Directory", Files::GetFolder("Maps") + m.first + "/");
         bool mapDelete = (pl.Read("Delete", 0) == 1);
         bool mapReload = (pl.Read("Reload", 0) == 1);
         if (mapDelete) {
@@ -379,8 +377,6 @@ int D3PP::world::MapMain::Add(int id, short x, short y, short z, const std::stri
         return -1;
 
 
-    Files *f = Files::GetInstance();
-
     std::shared_ptr<Map> newMap = std::make_shared<Map>();
     int mapSize = GetMapSize(x, y, z, MAP_BLOCK_ELEMENT_SIZE);
     newMap->ID = id;
@@ -391,7 +387,7 @@ int D3PP::world::MapMain::Add(int id, short x, short y, short z, const std::stri
     newMap->LastClient = time(nullptr);
     Common::Vector3S sizeVector {x, y, z};
     newMap->m_mapProvider = std::make_unique<D3MapProvider>();
-    newMap->filePath = f->GetFolder("Maps") + name + "/";
+    newMap->filePath = Files::GetFolder("Maps") + name + "/";
     
     if (createNew)
         newMap->m_mapProvider->CreateNew(sizeVector, newMap->filePath, name);
@@ -420,10 +416,10 @@ void D3PP::world::MapMain::Delete(int id) {
     Network* nm = Network::GetInstance();
 
     if (mp->Clients > 0) {
-        for(auto const &nc : nm->roClients) {
-            if (nc->LoggedIn && nc->player->tEntity != nullptr&& nc->player->tEntity->MapID == id) {
+        for(auto const &nc : D3PP::network::Server::roClients) {
+            if (nc->GetLoggedIn() && nc->GetPlayerInstance()->GetEntity() != nullptr&& nc->GetPlayerInstance()->GetEntity()->MapID == id) {
                 MinecraftLocation somewhere {0, 0, D3PP::Common::Vector3S{(short)0, (short)0, (short)0}};
-                nc->player->tEntity->PositionSet(0, somewhere, 4, true);
+                nc->GetPlayerInstance()->GetEntity()->PositionSet(0, somewhere, 4, true);
             }
         }
     }
@@ -434,8 +430,7 @@ void D3PP::world::MapMain::Delete(int id) {
 }
 
 void D3PP::world::MapMain::MapSettingsLoad() {
-    Files* fm = Files::GetInstance();
-    std::string mapSettingsFile = fm->GetFile("Map_Settings");
+    std::string mapSettingsFile = Files::GetFile("Map_Settings");
     json j;
     std::ifstream iStream(mapSettingsFile);
     if (!iStream.is_open()) {
@@ -458,8 +453,7 @@ void D3PP::world::MapMain::MapSettingsLoad() {
 }
 
 void D3PP::world::MapMain::MapSettingsSave() {
-    Files* fm = Files::GetInstance();
-    std::string hbSettingsFile = fm->GetFile("Map_Settings");
+    std::string hbSettingsFile = Files::GetFile("Map_Settings");
     json j;
     j["Max_Changes_s"] = mapSettingsMaxChangesSec;
 

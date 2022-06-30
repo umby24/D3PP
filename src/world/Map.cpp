@@ -10,6 +10,7 @@
 #include "common/Files.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "network/Server.h"
 #include "System.h"
 #include "common/ByteBuffer.h"
 #include "common/Logger.h"
@@ -250,18 +251,16 @@ void Map::Send(int clientId) {
 }
 
 void Map::Resend() {
-    Network* nMain = Network::GetInstance();
-
-    for(auto const &nc : nMain->roClients) {
-        if (nc->player == nullptr)
+    std::shared_lock lock(D3PP::network::Server::roMutex);
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (nc->GetPlayerInstance() == nullptr)
             continue;
+        auto concret = std::static_pointer_cast<D3PP::world::Player>(nc->GetPlayerInstance());
 
-        if (nc->player->MapId == ID) {
-            nc->player->SendMap();
+        if (nc->GetMapId() == ID) {
+            concret->SendMap();
         }
     }
-
-    Vector3S mapSize= m_mapProvider->GetSize();
 
     for (auto const &me : Entity::AllEntities) {
         if (me.second->MapID == ID) {
@@ -337,11 +336,10 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
 void AddUndoByPlayerId(short playerId, const UndoItem& item) {
     if (playerId == -1) return;
 
-    Network* nMain = Network::GetInstance();
-
-    for(auto const& nc : nMain->roClients) {
-        if (nc->LoggedIn && nc->player && nc->player->tEntity && nc->player->tEntity->playerList) {
-            if (nc->player->tEntity->playerList->Number == playerId) {
+    std::shared_lock lock(D3PP::network::Server::roMutex);
+    for(auto const& nc : D3PP::network::Server::roClients) {
+        if (nc->GetLoggedIn() && nc->GetPlayerInstance() && nc->GetPlayerInstance()->GetEntity() && nc->GetPlayerInstance()->GetEntity()->playerList) {
+            if (nc->GetPlayerInstance()->GetEntity()->playerList->Number == playerId) {
                 nc->AddUndoItem(item);
                 break;
             }
@@ -776,9 +774,8 @@ Teleporter Map::GetTeleporter(std::string id) {
 
 void Map::SetMapEnvironment(const MapEnvironment &env) {
     m_mapProvider->SetEnvironment(env);
-    Network* nm = Network::GetInstance();
-
-    for(auto const &nc : nm->roClients) {
+    std::shared_lock lock(D3PP::network::Server::roMutex);
+    for(auto const &nc : D3PP::network::Server::roClients) {
         CPE::AfterMapActions(nc);
     }
 }
