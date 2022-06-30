@@ -7,6 +7,8 @@
 #include <utility>
 #include <world/D3MapProvider.h>
 #include <network/Server.h>
+#include <common/PreferenceLoader.h>
+#include <files/D3Map.h>
 
 #include "common/Files.h"
 #include "network/Network.h"
@@ -432,6 +434,7 @@ void MapMain::Delete(int id) {
         return;
 
     if (mp->Clients > 0) {
+        std::shared_lock lock(D3PP::network::Server::roMutex);
         for(auto const &nc : D3PP::network::Server::roClients) {
             if (nc->GetLoggedIn() && nc->GetPlayerInstance()->GetEntity() != nullptr&& nc->GetPlayerInstance()->GetEntity()->MapID == id) {
                 MinecraftLocation somewhere {0, 0, Vector3S{(short)0, (short)0, (short)0}};
@@ -689,7 +692,7 @@ void Map::Send(int clientId) {
 }
 
 void Map::Resend() {
-
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     for(auto const &nc : D3PP::network::Server::roClients) {
         if (nc->GetPlayerInstance() == nullptr)
             continue;
@@ -770,7 +773,7 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
 
 void AddUndoByPlayerId(short playerId, const UndoItem& item) {
     if (playerId == -1) return;
-
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     for(auto const& nc : D3PP::network::Server::roClients) {
         if (nc->GetLoggedIn() && nc->GetPlayerInstance() && nc->GetPlayerInstance()->GetEntity() && nc->GetPlayerInstance()->GetEntity()->playerList) {
             if (nc->GetPlayerInstance()->GetEntity()->playerList->Number == playerId) {
@@ -1224,7 +1227,7 @@ Teleporter Map::GetTeleporter(std::string id) {
 void Map::SetMapEnvironment(const MapEnvironment &env) {
     m_mapProvider->SetEnvironment(env);
     Network* nm = Network::GetInstance();
-
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     for(auto const &nc : D3PP::network::Server::roClients) {
         CPE::AfterMapActions(nc);
     }

@@ -10,12 +10,13 @@
 #include <vector>
 #include <string>
 #include <mutex>
+#include <shared_mutex>
 
 #include "common/TaskScheduler.h"
 
 class ServerSocket;
 class IMinecraftClient;
-
+class NetworkClient;
 
 namespace D3PP::network {
     class IPacket;
@@ -28,6 +29,7 @@ namespace D3PP::network {
      static std::atomic<int> SentIncrement;
      static std::atomic<int> ReceivedIncrement;
      static std::vector<std::shared_ptr<IMinecraftClient>> roClients;
+     static std::shared_mutex roMutex;
 
      Server();
      void Shutdown();
@@ -35,7 +37,7 @@ namespace D3PP::network {
      static void Start();
      static void Stop();
 
-     static void RegisterClient(const std::shared_ptr<IMinecraftClient>& client);
+     static void RegisterClient(NetworkClient client);
      static void UnregisterClient(const std::shared_ptr<IMinecraftClient>& client);
      static void SendToAll(IPacket& packet, std::string extension, int extVersion);
      static void SendAllExcept(IPacket& packet, std::shared_ptr<IMinecraftClient> toNot);
@@ -46,7 +48,6 @@ namespace D3PP::network {
      std::thread m_handleThread;
      static std::mutex m_ClientMutex;
      int m_Port;
-     static std::mutex m_roMutex;
      bool m_needsUpdate;
      void HandleClientData();
      void HandleIncomingClient();

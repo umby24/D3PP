@@ -95,9 +95,9 @@ std::unique_ptr<Sockets> ServerSocket::Accept() {
     return std::make_unique<Sockets>(newSocket, inet_ntoa(address.sin_addr));
 }
 
-ServerSocketEvent ServerSocket::CheckEvents() {
+std::map<ServerSocketEvent, std::vector<SOCKET>> ServerSocket::CheckEvents() {
     if (!hasInit)
-        return SOCKET_EVENT_NONE;
+        return std::map<ServerSocketEvent, std::vector<SOCKET>> { std::make_pair(SOCKET_EVENT_NONE, std::vector<SOCKET>())};
 
     FD_ZERO(&readfds);
     FD_SET(listenSocket, &readfds);
@@ -112,27 +112,33 @@ ServerSocketEvent ServerSocket::CheckEvents() {
     int activity = select(0, &readfds, NULL, NULL, &time);
 
     if (activity == SOCKET_ERROR) {
-        
+
         int errMsg = WSAGetLastError();
         Logger::LogAdd("ServerSocket", "Some error occured calling select." + stringulate(errMsg), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
 
-        return SOCKET_EVENT_NONE;
+        return std::map<ServerSocketEvent, std::vector<SOCKET>> { std::make_pair(SOCKET_EVENT_NONE, std::vector<SOCKET>())};;
     }
 
     if (FD_ISSET(listenSocket, &readfds)) {
         // -- Incoming connection
-        return SOCKET_EVENT_CONNECT;
+        return std::map<ServerSocketEvent, std::vector<SOCKET>> { std::make_pair(SOCKET_EVENT_CONNECT, std::vector<SOCKET>())};;
     }
+    std::vector<SOCKET> resultSockets;
+    bool hasData = false;
 
     for (auto i = 0; i < MAXIMUM_CONNECTIONS; i++) {
         SOCKET s = clientSockets[i];
         if (FD_ISSET(s, &readfds)) {
-            eventSocket = s;
-            return SOCKET_EVENT_DATA;
+            hasData = true;
+            resultSockets.push_back(s);
         }
     }
 
-    return SOCKET_EVENT_NONE;
+    if (hasData) {
+        return std::map<ServerSocketEvent, std::vector<SOCKET>> { std::make_pair(SOCKET_EVENT_DATA, resultSockets) };
+    }
+
+    return std::map<ServerSocketEvent, std::vector<SOCKET>> { std::make_pair(SOCKET_EVENT_NONE, std::vector<SOCKET>())};;;
 }
 
 SOCKET ServerSocket::GetEventSocket() {

@@ -159,6 +159,7 @@ std::shared_ptr<Entity> Entity::GetPointer(int id, bool isClientId) {
 }
 
 void Entity::MessageToClients(int id, const std::string& message) {
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     for(auto const &nc : D3PP::network::Server::roClients) {
         if (nc->GetPlayerInstance()->GetEntity()->Id == id) {
             NetworkFunctions::SystemMessageNetworkSend(nc->GetId(), message);
@@ -190,7 +191,7 @@ void Entity::Delete(int id) {
 
     if (e == nullptr)
         return;
-
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     for(auto const &nc : D3PP::network::Server::roClients) {
         if (nc->GetPlayerInstance() == nullptr || nc->GetPlayerInstance()->GetEntity() == nullptr)
             continue;
@@ -211,7 +212,7 @@ void Entity::Delete(int id) {
 void Entity::Spawn() {
     // -- Entity::Add(); should be called..
     std::shared_ptr<Entity> selfPointer = GetPointer(Id);
-
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     for(auto const &nc : D3PP::network::Server::roClients) {
         if (!nc->GetLoggedIn() || nc->GetPlayerInstance() == nullptr || nc->GetPlayerInstance()->GetEntity() == nullptr)
             continue;
@@ -225,7 +226,7 @@ void Entity::Spawn() {
 
 void Entity::Despawn() {
     std::shared_ptr<Entity> selfPointer = GetPointer(Id);
-
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     for(auto const &nc : D3PP::network::Server::roClients) {
         if (!nc->GetLoggedIn() || nc->GetPlayerInstance() == nullptr || nc->GetPlayerInstance()->GetEntity() == nullptr)
             continue;
@@ -366,6 +367,7 @@ void Entity::Add(const std::shared_ptr<Entity> &e) {
 void Entity::SetModel(std::string modelName) {
     model = std::move(modelName);
     std::shared_ptr<IMinecraftClient> myClient = nullptr;
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     for(auto const &nc : D3PP::network::Server::roClients) {
         if (!nc->GetLoggedIn())
             continue;

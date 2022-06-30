@@ -43,10 +43,8 @@ set_target_properties(D3PP PROPERTIES VERSION ${VERSION})
 if (MSVC)
     find_package(ZLIB REQUIRED)
     find_package(unofficial-sqlite3 CONFIG REQUIRED)
-    find_package(lua REQUIRED)
     target_link_libraries(D3PP unofficial::sqlite3::sqlite3)
     target_link_libraries(D3PP ZLIB::ZLIB)
-    target_link_libraries(D3PP lua)
     MESSAGE(STATUS "MSVC Build!")
 endif ()
 
@@ -55,10 +53,10 @@ endif ()
 #--------------------------------------------------------------
 find_package(Lua REQUIRED)
 if (Lua_FOUND)
-    include_directories(${LUA_INCLUDE_DIR})
+    include_directories(${Lua_INCLUDE_DIR})
     target_link_libraries(D3PP ${LUA_LIBRARIES})
 
-    MESSAGE(STATUS "Lua found at: " ${LUA_INCLUDE_DIR})
+    MESSAGE(STATUS "Lua found at: " ${LUA_LIBRARIES})
 endif ()
 #______________________________________________________________
 # *NIX BUILD REQUIREMENTS

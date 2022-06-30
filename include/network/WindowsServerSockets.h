@@ -13,6 +13,8 @@
 #include <ws2def.h>
 #include <stdio.h>
 #include <memory>
+#include <map>
+#include <vector>
 
 class Sockets;
 
@@ -29,7 +31,7 @@ public:
     ServerSocket(int port);
     void Init(int port);
     void Listen();
-    ServerSocketEvent CheckEvents();
+    std::map<ServerSocketEvent, std::vector<SOCKET>> CheckEvents();
     std::unique_ptr<Sockets> Accept();
     void Unaccept(SOCKET fd);
     void Stop();

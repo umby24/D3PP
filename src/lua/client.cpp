@@ -35,6 +35,7 @@ int LuaClientLib::openLib(lua_State* L)
 
 int LuaClientLib::LuaClientGetTable(lua_State* L) {
     Network* nm = Network::GetInstance();
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     int numClients = static_cast<int>(D3PP::network::Server::roClients.size());
     int index = 1;
 

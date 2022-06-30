@@ -60,6 +60,7 @@ int PlayerMain::GetFreeNameId() {
 
     while (true) {
         found = false;
+        std::shared_lock lock(D3PP::network::Server::roMutex);
         for(auto const &nc: D3PP::network::Server::roClients) {
             if (!nc->GetLoggedIn())
                 continue;

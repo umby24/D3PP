@@ -73,6 +73,7 @@ void NetworkFunctions::SystemMessageNetworkSend2All(const int& mapId, const std:
             if (mapId == -1)
                 D3PP::network::Server::SendToAll(thisP, "", 0);
             else {
+                std::shared_lock lock(D3PP::network::Server::roMutex);
                 for(auto const &nc : D3PP::network::Server::roClients) {
                     if (nc->GetMapId() == mapId) {
                         nc->SendPacket(thisP);
@@ -103,7 +104,7 @@ void NetworkFunctions::NetworkOutBlockSet(const int& clientId, const short& x, c
 void NetworkFunctions::NetworkOutBlockSet2Map(const int& mapId, const unsigned short& x, const unsigned short& y, const unsigned short& z, const unsigned char& type) {
     Block* b = Block::GetInstance();
     MapBlock mb = b->GetBlock(type);
-
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     for(auto const &nc : D3PP::network::Server::roClients) {
         if (nc->GetPlayerInstance() != nullptr && nc->GetMapId() != mapId || !nc->GetLoggedIn())
             continue;

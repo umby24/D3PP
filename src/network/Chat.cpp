@@ -122,7 +122,7 @@ void Chat::NetworkSend2Player(const int& entityId, const std::string& message, s
             HandleChatEscapes(output, entityId);
             std::string message1 = "&cP " + Entity::GetDisplayname(entityId) + "&f: " + output;
             bool found = false;
-
+            std::shared_lock lock(D3PP::network::Server::roMutex);
             for (const auto &nc : D3PP::network::Server::roClients) {
                 if (nc->GetPlayerInstance() != nullptr && nc->GetPlayerInstance()->GetEntity() != nullptr) {
                     if (Utils::InsensitiveCompare(nc->GetPlayerInstance()->GetEntity()->Name, playerName)) {

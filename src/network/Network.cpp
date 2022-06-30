@@ -23,7 +23,7 @@ std::shared_ptr<IMinecraftClient> Network::GetClient(int id) {
     }
 
     std::shared_ptr<IMinecraftClient> result = nullptr;
-
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     for(auto const &nc : D3PP::network::Server::roClients) {
         if (nc->GetId() == id) {
             result = std::static_pointer_cast<IMinecraftClient>(nc);

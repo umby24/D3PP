@@ -144,7 +144,7 @@ void CPE::AfterLoginActions(const std::shared_ptr<IMinecraftClient>& client) {
     std::string prettyName = Entity::GetDisplayname(clientEntity->Id);
     int extVersion = CPE::GetClientExtVersion(client, EXT_PLAYER_LIST_EXT_NAME);
     int tempNameId = concrete->GetPlayerInstance()->GetNameId();
-
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     for(auto const &nc : D3PP::network::Server::roClients) {
         if (!nc->GetLoggedIn())
             continue;

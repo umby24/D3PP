@@ -33,11 +33,11 @@ std::atomic<int> D3PP::network::Server::SentIncrement = 0;
 float D3PP::network::Server::BytesSent = 0;
 float D3PP::network::Server::BytesReceived = 0;
 std::atomic<int> D3PP::network::Server::ReceivedIncrement = 0;
-std::mutex D3PP::network::Server::m_roMutex;
 
 std::vector<std::shared_ptr<IMinecraftClient>> D3PP::network::Server::roClients;
 std::map<int,std::shared_ptr<IMinecraftClient>> D3PP::network::Server::m_clients;
 std::mutex D3PP::network::Server::m_ClientMutex;
+std::shared_mutex D3PP::network::Server::roMutex;
 Server* Server::m_Instance = nullptr;
 
 D3PP::network::Server::Server() {
@@ -81,9 +81,11 @@ void D3PP::network::Server::MainFunc() {
 
 void D3PP::network::Server::Shutdown() {
     m_serverSocket->Stop();
-
-    for (auto const& c : roClients) {
-        c->Kick("Server shutting down", false);
+    {
+        std::shared_lock lock(roMutex);
+        for (auto const &c: roClients) {
+            c->Kick("Server shutting down", false);
+        }
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -96,7 +98,7 @@ void D3PP::network::Server::HandleClientData() {
     while (System::IsRunning) {
         HandleEvents();
         {
-            std::scoped_lock<std::mutex> clientLock(m_roMutex);
+            std::shared_lock lock(roMutex);
             for (auto const &c: roClients) {
                 if (c->IsDataAvailable())
                     c->SendQueued();
@@ -110,15 +112,17 @@ void D3PP::network::Server::HandleClientData() {
 }
 
 void Server::HandleEvents() {
-    ServerSocketEvent e = m_serverSocket->CheckEvents();
+    auto e = m_serverSocket->CheckEvents();
 
-    if (e == ServerSocketEvent::SOCKET_EVENT_CONNECT) { 
+    if (e.contains(ServerSocketEvent::SOCKET_EVENT_CONNECT)) {
         HandleIncomingClient();
     }
 
-    if (e == ServerSocketEvent::SOCKET_EVENT_DATA) {
-        int clientId = static_cast<int>(m_serverSocket->GetEventSocket());
-        m_clients[clientId]->NotifyDataAvailable();
+    if (e.contains(ServerSocketEvent::SOCKET_EVENT_DATA)) {
+        for(auto &s : e[ServerSocketEvent::SOCKET_EVENT_DATA]) {
+            int clientId = static_cast<int>(s);
+            m_clients[clientId]->NotifyDataAvailable();
+        }
     }
 
     if (m_needsUpdate) {
@@ -130,9 +134,8 @@ void Server::HandleIncomingClient() {
     std::unique_ptr<Sockets> newClient = m_serverSocket->Accept();
 
     if (newClient != nullptr && newClient->GetSocketFd() != -1) {
-        std::shared_ptr<NetworkClient> newNcClient = std::make_shared<NetworkClient>(std::move(newClient));
-        int clientId = newNcClient->GetId();
-
+        NetworkClient newNcClient(std::move(newClient));
+        int clientId = newNcClient.GetId();
         RegisterClient(newNcClient);
 
         EventClientAdd eca;
@@ -141,9 +144,9 @@ void Server::HandleIncomingClient() {
     }
 }
 
-void D3PP::network::Server::RegisterClient(const std::shared_ptr<IMinecraftClient>& client) {
+void D3PP::network::Server::RegisterClient(NetworkClient client) {
     std::scoped_lock<std::mutex> clientLock(m_ClientMutex);
-    m_clients.insert(std::make_pair(client->GetId(), client));
+    m_clients.insert(std::make_pair(client.GetId(), std::make_shared<NetworkClient>(client)));
     RebuildRoClients();
 }
 
@@ -165,11 +168,12 @@ void D3PP::network::Server::RebuildRoClients() {
         newRo.push_back(nc.second);
     }
 
-    std::scoped_lock<std::mutex> clientLock(m_roMutex);
-    std::swap(newRo, roClients); // -- Should happen in an instant, but I suppose edge cases could happen \_(o_o)_/
+    std::unique_lock lock(roMutex);
+    std::swap(newRo, roClients);
 }
 
 void D3PP::network::Server::SendToAll(IPacket& packet, std::string extension, int extVersion) {
+    std::shared_lock lock(roMutex);
     for ( auto const & c : roClients ) {
         if (!extension.empty()) {
             int currentVer = CPE::GetClientExtVersion(c, extension);
@@ -183,6 +187,7 @@ void D3PP::network::Server::SendToAll(IPacket& packet, std::string extension, in
 }
 
 void D3PP::network::Server::SendAllExcept(IPacket& packet, std::shared_ptr<IMinecraftClient> toNot) {
+    std::shared_lock lock(roMutex);
     for ( auto const & c : roClients ) {
         if (c == toNot)
             continue;
