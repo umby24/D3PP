@@ -74,6 +74,7 @@ struct NetworkSettings {
     int ListenPort;
     bool VerifyNames;
     bool Public;
+    std::string Salt;
 
     void LoadFromJson(json &j) {
         if (j.is_object() && !j["Network"].is_null()) {
@@ -81,6 +82,8 @@ struct NetworkSettings {
             ListenPort = j["Network"]["ListenPort"];
             VerifyNames = j["Network"]["VerifyName"];
             Public = j["Network"]["Public"];
+            if (!j["Network"]["Salt"].is_null())
+                Salt = j["Network"]["Salt"];
         }
     }
 
@@ -90,6 +93,7 @@ struct NetworkSettings {
         j["Network"]["ListenPort"] = ListenPort;
         j["Network"]["VerifyName"] = VerifyNames;
         j["Network"]["Public"] = Public;
+        j["Network"]["Salt"] = Salt;
     }
 };
 

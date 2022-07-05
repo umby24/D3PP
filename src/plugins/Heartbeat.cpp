@@ -76,7 +76,12 @@ std::string Heartbeat::CreateSalt() {
 }
 
 void Heartbeat::Init() {
-    salt = CreateSalt();
+    salt = Configuration::NetSettings.Salt;
+    if (salt.empty()) {
+        salt = CreateSalt();
+        Configuration::NetSettings.Salt = salt;
+        Configuration::GetInstance()->Save();
+    }
 }
 
 void Heartbeat::MainFunc() {
