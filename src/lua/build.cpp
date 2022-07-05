@@ -127,15 +127,15 @@ int LuaBuildLib::LuaBuildRankBox(lua_State* L) {
         Logger::LogAdd("Lua", "LuaError: Build_Rank_Box called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
-    int mapId = lua_tointeger(L, 1);
-    int X0 = lua_tointeger(L, 2);
-    int Y0 = lua_tointeger(L, 3);
-    int Z0 = lua_tointeger(L, 4);
-    int X1 = lua_tointeger(L, 5);
-    int Y1 = lua_tointeger(L, 6);
-    int Z1 = lua_tointeger(L, 7);
-    int Rank = lua_tointeger(L, 8);
-    int MaxRank = lua_tointeger(L, 9);
+    int mapId = luaL_checkinteger(L, 1);
+    int X0 = luaL_checkinteger(L, 2);
+    int Y0 = luaL_checkinteger(L, 3);
+    int Z0 = luaL_checkinteger(L, 4);
+    int X1 = luaL_checkinteger(L, 5);
+    int Y1 = luaL_checkinteger(L, 6);
+    int Z1 = luaL_checkinteger(L, 7);
+    int Rank = luaL_checkinteger(L, 8);
+    int MaxRank = luaL_checkinteger(L, 9);
 
     Build::BuildRankBox(mapId, X0, Y0, Z0, X1, Y1, Z1, static_cast<short>(Rank), static_cast<short>(MaxRank));
 

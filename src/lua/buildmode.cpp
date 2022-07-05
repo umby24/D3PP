@@ -49,8 +49,8 @@ int LuaBuildModeLib::LuaBuildModeSet(lua_State* L) {
         Logger::LogAdd("Lua", "LuaError: Build_Mode_Set called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
-    int clientId = lua_tointeger(L, 1);
-    std::string buildMode(lua_tostring(L, 2));
+    int clientId = luaL_checkinteger(L, 1);
+    std::string buildMode(luaL_checkstring(L, 2));
 
     BuildModeMain* buildModeMain = BuildModeMain::GetInstance();
     buildModeMain->SetMode(clientId, buildMode);

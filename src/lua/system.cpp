@@ -63,7 +63,7 @@ int LuaSystemLib::LuaFileGet(lua_State* L) {
         return 0;
     }
 
-    std::string fileName(lua_tostring(L, 1));
+    std::string fileName(luaL_checkstring(L, 1));
     lua_pushstring(L, Files::GetFile(fileName).c_str());
     return 1;
 }
@@ -77,7 +77,7 @@ int LuaSystemLib::LuaFolderGet(lua_State* L) {
         return 0;
     }
 
-    std::string fileName(lua_tostring(L, 1));
+    std::string fileName(luaL_checkstring(L, 1));
     lua_pushstring(L, Files::GetFolder(fileName).c_str());
     return 1;
 }
@@ -140,9 +140,9 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
         return 0;
     }
 
-    std::string eventId(lua_tostring(L, 1));
-    std::string function(lua_tostring(L, 2));
-    std::string type(lua_tostring(L, 3));
+    std::string eventId(luaL_checkstring(L, 1));
+    std::string function(luaL_checkstring(L, 2));
+    std::string type(luaL_checkstring(L, 3));
     int setOrCheck = luaL_checkinteger(L, 4);
     int timed = luaL_checkinteger(L, 5);
     int mapId = luaL_checkinteger(L, 6);

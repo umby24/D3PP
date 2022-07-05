@@ -71,7 +71,7 @@ int LuaEntityLib::LuaEntityAdd(lua_State* L) {
         return 0;
     }
 
-    std::string eName(lua_tostring(L, 1));
+    std::string eName(luaL_checkstring(L, 1));
     int mapId = static_cast<int>(luaL_checkinteger(L, 2));
     auto x = static_cast<float>(luaL_checknumber(L, 3));
     auto y = static_cast<float>(luaL_checknumber(L, 4));
@@ -234,7 +234,7 @@ int LuaEntityLib::LuaEntityMessage2Clients(lua_State* L) {
         return 0;
     }
     int entityid = luaL_checkinteger(L, 1);
-    std::string message(lua_tostring(L, 2));
+    std::string message(luaL_checkstring(L, 2));
 
     Entity::MessageToClients(entityid, message);
     return 0;
@@ -273,11 +273,11 @@ int LuaEntityLib::LuaEntityDisplaynameSet(lua_State* L) {
     std::string suffix = "";
 
     if (nArgs == 4) {
-        prefix = lua_tostring(L, 2);
-        displayName = lua_tostring(L, 3);
-        suffix = lua_tostring(L, 4);
+        prefix = std::string(luaL_checkstring(L, 2));
+        displayName = std::string(luaL_checkstring(L, 3));
+        suffix = std::string(luaL_checkstring(L, 4));
     } else {
-        displayName = lua_tostring(L, 2);
+        displayName = std::string(luaL_checkstring(L, 2));
     }
 
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
