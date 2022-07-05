@@ -109,6 +109,8 @@ namespace D3PP::world {
 
         void DeleteTeleporter(std::string id);
         Teleporter GetTeleporter(std::string id);
+
+
         void MapExport(MinecraftLocation start, MinecraftLocation end, std::string filename);
         void MapImport(std::string filename, MinecraftLocation location, short scaleX, short scaleY, short scaleZ);
 

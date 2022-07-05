@@ -5,11 +5,16 @@
 #include "common/MinecraftLocation.h"
 #include "common/PreferenceLoader.h"
 
+namespace D3PP::world {
+    class CustomParticle;
+}
+
 namespace D3PP::files {
 #define D3_MAP_CONFIG_NAME "Config.txt"
 #define D3_MAP_BLOCKS_NAME "Data-Layer.gz"
 #define D3_MAP_RBOX_NAME "Rank-Layer.txt" // -- Aka regions
 #define D3_MAP_PORTALS_NAME "Teleporter.txt"
+#define D3_MAP_PARTICLES_NAME "Particles.txt"
 #define D3_MAP_FILE_VERSION 1050
 
 		enum D3OverviewType {
@@ -84,6 +89,7 @@ namespace D3PP::files {
 			std::vector<unsigned char> MapData;
             std::map<std::string, MapTeleporterElement> Teleporter;
             std::vector<MapRankElement> RankBoxes;
+            std::vector<D3PP::world::CustomParticle> Particles;
 			// -----------------------
 			D3Map(const std::string& folder);
 			D3Map(const std::string& folder, const std::string& name, const Common::Vector3S& mapSize);
@@ -101,16 +107,25 @@ namespace D3PP::files {
 			void SetBlock(Common::Vector3S blockLocation, unsigned char type);
 			void SetBlockMetadata(Common::Vector3S blockLocation, unsigned char metadata);
 			void SetBlockLastPlayer(Common::Vector3S blockLocation, short playerNumber);
+
+            std::vector<MapTeleporterElement> getPortals();
+            void SetPortals(std::vector<MapTeleporterElement> portals);
+
+            std::vector<D3PP::world::CustomParticle> GetParticles();
+            void SetParticles(std::vector<D3PP::world::CustomParticle> particles);
 		private:
 			std::string GenerateUuid();
 			bool SaveConfig();
 			bool SavePortals();
 			bool SaveRankBoxes();
 			bool SaveMapData();
+            bool SaveParticles();
+
 			bool ReadConfig();
 			bool ReadMapData();
 			void ReadPortals();
 			void ReadRankBoxes();
+            void ReadParticles();
 
 			bool BlockInBounds(Common::Vector3S loc);
 			int GetBlockIndex(Common::Vector3S loc);

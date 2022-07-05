@@ -8,6 +8,9 @@
 #include "files/D3Map.h"
 
 namespace D3PP::world {
+    class Teleporter;
+    class CustomParticle;
+
     class D3MapProvider : public IMapProvider {
     public:
         D3MapProvider();
@@ -30,6 +33,12 @@ namespace D3PP::world {
         void SetPermissions(const MapPermissions& perms) override;
         MapEnvironment GetEnvironment() override;
         void SetEnvironment(const MapEnvironment& env) override;
+
+        std::vector<D3PP::world::Teleporter> getPortals() override;
+        void SetPortals(const std::vector<D3PP::world::Teleporter> portals) override;
+
+        std::vector<CustomParticle> getParticles() override;
+        void SetParticles(std::vector<CustomParticle> particles) override;
     private:
         std::string m_currentPath;
         std::unique_ptr<files::D3Map> m_d3map;
