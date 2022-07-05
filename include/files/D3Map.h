@@ -4,10 +4,7 @@
 #include "common/Vectors.h"
 #include "common/MinecraftLocation.h"
 #include "common/PreferenceLoader.h"
-
-namespace D3PP::world {
-    class CustomParticle;
-}
+#include "world/CustomParticle.h"
 
 namespace D3PP::files {
 #define D3_MAP_CONFIG_NAME "Config.txt"
