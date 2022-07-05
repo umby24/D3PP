@@ -7,6 +7,7 @@
 #include "network/Network.h"
 #include "network/NetworkClient.h"
 #include "network/Server.h"
+#include "network/packets/DefineEffectPacket.h"
 #include "network/Packets.h"
 #include "world/Map.h"
 #include "world/MapMain.h"
@@ -122,7 +123,29 @@ void CPE::AfterMapActions(const std::shared_ptr<IMinecraftClient>& client) {
     if (GetClientExtVersion(client, EXT_WEATHER_CONTROL_EXT_NAME) == 1) {
         // -- Send current map weather
     }
-
+    if (GetClientExtVersion(client, CUSTOM_PARTICLES_EXT_NAME) == 1) {
+        D3PP::network::DefineEffectPacket effectPacket;
+        effectPacket.effectId = 0;
+        effectPacket.U1 = 0;
+        effectPacket.V1 = 47;
+        effectPacket.U2 = 15;
+        effectPacket.V2 = 62;
+        effectPacket.redTint = 255;
+        effectPacket.blueTint = 255;
+        effectPacket.greenTint = 255;
+        effectPacket.frameCount = 2;
+        effectPacket.particleCount = 100;
+        effectPacket.size = 8;
+        effectPacket.sizeVariation = 10000;
+        effectPacket.spread = 50;
+        effectPacket.speed = 1;
+        effectPacket.gravity = -1*10000;
+        effectPacket.baseLifetime = 10000;
+        effectPacket.lifetimeVariation = 10000;
+        effectPacket.collideFlags = 0x60;
+        effectPacket.fullBright = 0;
+        client->SendPacket(effectPacket);
+    }
     AfterLoginActions(client);
 }
 

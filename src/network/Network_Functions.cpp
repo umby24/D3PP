@@ -11,6 +11,7 @@
 #include "network/Network.h"
 #include "network/NetworkClient.h"
 #include "network/packets/BlockChangePacket.h"
+#include "network/packets/SpawnEffectPacket.h"
 #include "world/Entity.h"
 #include "Block.h"
 #include "world/Player.h"
@@ -125,7 +126,16 @@ void NetworkFunctions::NetworkOutBlockSet2Map(const int& mapId, const unsigned s
         }
 
         D3PP::network::BlockChangePacket p(D3PP::Common::Vector3S(x, y, z), 0, onClient);
+        D3PP::network::SpawnEffectPacket pp;
+        pp.effectId = 0;
+        pp.originX = x;
+        pp.originY = y;
+        pp.originZ = z;
+        pp.positionX = x;
+        pp.positionY = y;
+        pp.positionZ = z+2;
         nc->SendPacket(p);
+        nc->SendPacket(pp);
     }
 }
 

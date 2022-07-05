@@ -17,6 +17,7 @@ const struct luaL_Reg LuaClientLib::d3ClientLib[] = {
        {"getloginname",  &LuaClientGetLoginName},
        {"isloggedin", &LuaClientGetLoggedIn},
        {"getentity", &LuaClientGetEntity},
+       {"kick", &LuaClientKick},
        {NULL, NULL}
 };
 
@@ -57,14 +58,13 @@ int LuaClientLib::LuaClientGetMapId(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Client_Get_Map_Id called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("Lua", "LuaError: client.getmapid called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
 
-    int clientId = lua_tointeger(L, 1);
+    int clientId = static_cast<int>(luaL_checkinteger(L, 1));
     int result = -1;
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
+    std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
     if (client != nullptr) {
         result = client->GetPlayerInstance()->GetEntity()->MapID;
     }
@@ -81,10 +81,9 @@ int LuaClientLib::LuaClientGetIp(lua_State* L) {
         return 0;
     }
 
-    int clientId = lua_tointeger(L, 1);
+    int clientId = static_cast<int>(luaL_checkinteger(L, 1));
     std::string result;
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
+    std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
     if (client != nullptr) {
         result = client->IP;
     }
@@ -97,14 +96,13 @@ int LuaClientLib::LuaClientGetLoginName(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: CLient_Get_Login_Name called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("Lua", "LuaError: Client.getloginname called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
 
-    int clientId = lua_tointeger(L, 1);
+    int clientId = static_cast<int>(luaL_checkinteger(L, 1));
     std::string result;
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> client = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> client = Network::GetClient(clientId);
 
     if (client != nullptr) {
         result = client->GetLoginName();
@@ -118,15 +116,14 @@ int LuaClientLib::LuaClientGetLoggedIn(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: CLient_Get_Map_Id called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("Lua", "LuaError: client.getloggedin called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
 
-    int clientId = lua_tointeger(L, 1);
+    int clientId = static_cast<int>(luaL_checkinteger(L, 1));
     int result = -1;
 
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
+    std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
 
     if (client != nullptr) {
         result = client->LoggedIn;
@@ -140,20 +137,40 @@ int LuaClientLib::LuaClientGetEntity(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: CLient_Get_Map_Id called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("Lua", "LuaError: Client.getEntity called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
 
-    int clientId = lua_tointeger(L, 1);
+    int clientId = static_cast<int>(luaL_checkinteger(L, 1));
     int result = -1;
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> client = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> client = Network::GetClient(clientId);
 
     if (client != nullptr) {
         std::shared_ptr<Entity> clientEntity = Entity::GetPointer(clientId, true);
 
         if (clientEntity != nullptr)
             result = clientEntity->Id;
+    }
+
+    lua_pushinteger(L, result);
+    return 1;
+}
+
+int LuaClientLib::LuaClientKick(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs < 1) {
+        Logger::LogAdd("Lua", "LuaError: Client.kick called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int clientId = static_cast<int>(luaL_checkinteger(L, 1));
+    std::string reason(luaL_optstring(L, 2, "Kicked by script"));
+    int result = -1;
+    std::shared_ptr<IMinecraftClient> client = Network::GetClient(clientId);
+
+    if (client != nullptr) {
+        client->Kick(reason, true);
     }
 
     lua_pushinteger(L, result);
