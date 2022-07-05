@@ -12,10 +12,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 set(VERSION_STRING 0.1.2)
 set(VERSION ${VERSION_STRING})
 
+
 include(FetchContent)
 FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL //github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -32,7 +36,13 @@ set(D3PP_SOURCE_FILES src/common/Files.cpp include/common/Files.h src/common/Log
  src/network/packets/BlockChangePacket.cpp include/network/packets/ChatPacket.h  src/network/packets/ChatPacket.cpp include/network/packets/CustomBlockSupportLevelPacket.h include/network/packets/ExtEntryPacket.h include/network/packets/ExtInfoPacket.h include/network/packets/PlayerClickedPacket.h include/network/packets/PlayerTeleportPacket.h include/network/packets/TwoWayPingPacket.h include/generation/flatgrass.cpp include/common/UndoItem.h include/world/FillState.h include/plugins/LuaState.h include/plugins/PluginManager.h src/plugins/LuaState.cpp src/plugins/PluginManager.cpp include/plugins/RestApi.h src/plugins/RestApi.cpp src/world/MapIntensiveActions.cpp include/world/MapMain.h src/world/MapMain.cpp src/events/EventChatPrivate.cpp include/network/packets/ExtRemovePlayerName.h include/world/IMinecraftPlayer.h src/network/packets/ExtRemovePlayerName.cpp src/network/packets/DefineEffectPacket.cpp include/network/packets/DefineEffectPacket.h include/network/packets/SpawnEffectPacket.h src/network/packets/SpawnEffectPacket.cpp src/CustomParticle.cpp include/world/CustomParticle.h)
 
 # add the executable
-add_executable(D3PP main.cpp ${D3PP_SOURCE_FILES})
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    enable_language("RC")
+    set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appicon.rc")
+    add_executable(D3PP main.cpp ${D3PP_SOURCE_FILES} ${APP_ICON_RESOURCE_WINDOWS})
+else()
+    add_executable(D3PP main.cpp ${D3PP_SOURCE_FILES} ${APP_ICON_RESOURCE_WINDOWS})
+endif()
 set_target_properties(D3PP PROPERTIES VERSION ${VERSION})
 
 #______________________________________________________________
