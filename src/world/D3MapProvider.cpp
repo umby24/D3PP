@@ -210,7 +210,8 @@ std::vector<D3PP::world::CustomParticle> D3PP::world::D3MapProvider::getParticle
 }
 
 void D3PP::world::D3MapProvider::SetParticles(std::vector<D3PP::world::CustomParticle> particles) {
-    m_d3map->SetParticles(particles);
+    if (m_d3map != nullptr)
+        m_d3map->SetParticles(particles);
 }
 
 

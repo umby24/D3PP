@@ -71,7 +71,6 @@ namespace D3PP::files {
 		private:
 			PreferenceLoader m_configFile;
 			std::string mapPath;
-			bool m_hasChanged;
 
 		public:
 			Common::Vector3S MapSize;
@@ -114,6 +113,8 @@ namespace D3PP::files {
             std::vector<D3PP::world::CustomParticle> GetParticles();
             void SetParticles(std::vector<D3PP::world::CustomParticle> particles);
 		private:
+            bool configChanged, portalsChanged, rboxChanged, dataChanged, particleChanged;
+
 			std::string GenerateUuid();
 			bool SaveConfig();
 			bool SavePortals();

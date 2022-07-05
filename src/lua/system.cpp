@@ -276,7 +276,9 @@ int LuaSystemLib::LuaAddCommand(lua_State* L) {
     newCmd.Description = description;
     newCmd.Hidden = false;
     newCmd.Internal = false;
+    newCmd.CanConsole = true;
     cm->Commands.push_back(newCmd);
+    cm->RefreshGroups();
 
     return 0;
 }

@@ -12,6 +12,7 @@
 #include "world/Map.h"
 #include "world/MapMain.h"
 #include "CustomBlocks.h"
+#include "world/CustomParticle.h"
 
 using namespace D3PP::world;
 using namespace D3PP::Common;
@@ -124,28 +125,31 @@ void CPE::AfterMapActions(const std::shared_ptr<IMinecraftClient>& client) {
         // -- Send current map weather
     }
     if (GetClientExtVersion(client, CUSTOM_PARTICLES_EXT_NAME) == 1) {
-        D3PP::network::DefineEffectPacket effectPacket;
-        effectPacket.effectId = 0;
-        effectPacket.U1 = 0;
-        effectPacket.V1 = 47;
-        effectPacket.U2 = 15;
-        effectPacket.V2 = 62;
-        effectPacket.redTint = 255;
-        effectPacket.blueTint = 255;
-        effectPacket.greenTint = 255;
-        effectPacket.frameCount = 2;
-        effectPacket.particleCount = 100;
-        effectPacket.size = 8;
-        effectPacket.sizeVariation = 10000;
-        effectPacket.spread = 50;
-        effectPacket.speed = 1;
-        effectPacket.gravity = -1*10000;
-        effectPacket.baseLifetime = 10000;
-        effectPacket.lifetimeVariation = 10000;
-        effectPacket.collideFlags = 0x60;
-        effectPacket.fullBright = 0;
-        client->SendPacket(effectPacket);
+        for (const auto& p : clientMap->Particles) {
+            D3PP::network::DefineEffectPacket effectPacket;
+            effectPacket.effectId = p.effectId;
+            effectPacket.U1 = p.U1;
+            effectPacket.V1 = p.V1;
+            effectPacket.U2 = p.U2;
+            effectPacket.V2 = p.V2;
+            effectPacket.redTint = p.redTint;
+            effectPacket.blueTint = p.blueTint;
+            effectPacket.greenTint = p.greenTint;
+            effectPacket.frameCount = p.frameCount;
+            effectPacket.particleCount = p.particleCount;
+            effectPacket.size = p.size;
+            effectPacket.sizeVariation = p.sizeVariation;
+            effectPacket.spread = p.spread;
+            effectPacket.speed = p.speed;
+            effectPacket.gravity = p.gravity;
+            effectPacket.baseLifetime = p.baseLifetime;
+            effectPacket.lifetimeVariation = p.lifetimeVariation;
+            effectPacket.collideFlags = p.collideFlags;
+            effectPacket.fullBright = p.fullBright;
+            client->SendPacket(effectPacket);
+        }
     }
+
     AfterLoginActions(client);
 }
 

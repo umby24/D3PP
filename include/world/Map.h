@@ -23,12 +23,17 @@
 #include "world/MapActions.h"
 #include "world/MapIntensiveActions.h"
 #include "world/FillState.h"
+#include "world/CustomParticle.h"
 
 #include "BlockChangeQueue.h"
 #include "PhysicsQueue.h"
 
 class IMinecraftClient;
 class Entity;
+
+namespace D3PP::files {
+    struct MapRankElement;
+}
 
 namespace D3PP::world {
     class Teleporter;
@@ -49,7 +54,6 @@ namespace D3PP::world {
 
     const std::string MAP_LIST_FILE = "Map_List";
     const std::string MAP_SETTINGS_FILE = "Map_Settings";
-    const std::string MAP_HTML_FILE = "Map_HTML";
 
     const int MAP_BLOCK_ELEMENT_SIZE = 4;
 
@@ -65,6 +69,8 @@ namespace D3PP::world {
 
         std::vector<UndoStep> UndoCache;
         std::vector<Teleporter> Portals;
+        std::vector<CustomParticle> Particles;
+        std::vector<D3PP::files::MapRankElement> RankBoxes;
 
         bool BlockchangeStopped, PhysicsStopped, loading, loaded;
         std::string filePath;
@@ -110,6 +116,8 @@ namespace D3PP::world {
         void DeleteTeleporter(std::string id);
         Teleporter GetTeleporter(std::string id);
 
+        void AddParticle(CustomParticle p);
+        void DeleteParticle(int effectId);
 
         void MapExport(MinecraftLocation start, MinecraftLocation end, std::string filename);
         void MapImport(std::string filename, MinecraftLocation location, short scaleX, short scaleY, short scaleZ);

@@ -19,7 +19,11 @@ namespace D3PP::files {
             JoinRank = 0;
             ShowRank = 0;
             OverviewType = D3OverviewType::Iso;
-            m_hasChanged = true;
+            dataChanged = true;
+            portalsChanged = true;
+            configChanged = true;
+            particleChanged = true;
+            rboxChanged = true;
 		}
 
 		D3Map::D3Map(const std::string& folder, const std::string& name, const Common::Vector3S& mapSize) :
@@ -33,7 +37,11 @@ namespace D3PP::files {
             OverviewType = D3OverviewType::Iso;
             Name= name;
             MapSize = mapSize;
-            m_hasChanged = true;
+            dataChanged = true;
+            portalsChanged = true;
+            configChanged = true;
+            particleChanged = true;
+            rboxChanged = true;
             Common::Vector3S defaultSpawn {
                 static_cast<short>(MapSize.X/2),
                 static_cast<short>(MapSize.Y/2),
@@ -57,7 +65,6 @@ namespace D3PP::files {
             ReadRankBoxes();
             ReadPortals();
             ReadParticles();
-           m_hasChanged = false;
             return loadResult;
 		}
         bool D3Map::Load(std::string path)
@@ -76,14 +83,10 @@ namespace D3PP::files {
             ReadPortals();
             ReadParticles();
             mapPath = ogMapPath;
-            m_hasChanged = false;
             return loadResult;
         }
 		bool D3Map::Save()
 		{
-            if (!m_hasChanged)
-                return true;
-
             std::filesystem::create_directory(mapPath);
             bool result = false;
             result = SaveConfig();
@@ -100,14 +103,10 @@ namespace D3PP::files {
             if (result)
                 result = SaveParticles();
 
-            m_hasChanged = false;
 			return result;
 		}
         bool D3Map::Save(std::string filePath)
         {
-            if (!m_hasChanged)
-                return true;
-
             std::filesystem::create_directory(filePath);
             std::string oldPath = mapPath;
             mapPath = filePath;
@@ -128,7 +127,6 @@ namespace D3PP::files {
                 result = SaveParticles();
 
             mapPath = oldPath;
-            m_hasChanged = false;
             return result;
         }
         void D3Map::Resize(Common::Vector3S newSize) {
@@ -146,7 +144,7 @@ namespace D3PP::files {
 
             MapSize = newSize;
             MapData.resize(newMapSize);
-            m_hasChanged = true;
+            dataChanged = true;
         }
 
         unsigned char D3Map::GetBlock(Common::Vector3S blockLocation) {
@@ -182,7 +180,7 @@ namespace D3PP::files {
 
             int index = GetBlockIndex(blockLocation);
             MapData[(index*4)] = type;
-            m_hasChanged = true;
+            dataChanged = true;
         }
 
         void D3Map::SetBlockMetadata(Common::Vector3S blockLocation, unsigned char metadata) {
@@ -191,7 +189,7 @@ namespace D3PP::files {
 
             int index = GetBlockIndex(blockLocation);
             MapData[(index*4)+1] = metadata;
-            m_hasChanged = true;
+            dataChanged = true;
         }
 
         void D3Map::SetBlockLastPlayer(Common::Vector3S blockLocation, short playerNumber) {
@@ -201,7 +199,8 @@ namespace D3PP::files {
             int index = GetBlockIndex(blockLocation);
             MapData[(index*4)+2] = (playerNumber & 0xFF00) >> 8;
             MapData[(index*4)+3] = (playerNumber&0xFF);
-            m_hasChanged = true;
+            dataChanged = true;
+
         }
 
         std::string D3Map::GenerateUuid() {
@@ -214,6 +213,9 @@ namespace D3PP::files {
         }
 
         bool D3Map::SaveConfig() {
+            if (!configChanged)
+                return true;
+
             std::string configName = mapPath + D3_MAP_CONFIG_NAME;
             std::ofstream oStream(configName);
 
@@ -262,12 +264,15 @@ namespace D3PP::files {
                 oStream << "Jumpheight = " << JumpHeight << "\n";
                 oStream.close();
                 Logger::LogAdd("D3Map", "File saved [" + mapPath + D3_MAP_CONFIG_NAME + "]", LogType::NORMAL, GLF);
+                configChanged = false;
                 return true;
             }
             return false;
         }
 
         bool D3Map::SavePortals() {
+            if (!portalsChanged)
+                return true;
             PreferenceLoader pLoader(D3_MAP_PORTALS_NAME, mapPath, true);
             for (auto const &tp : Teleporter) {
                 pLoader.SelectGroup(tp.first);
@@ -287,10 +292,14 @@ namespace D3PP::files {
             }
             pLoader.SaveFile();
             Logger::LogAdd("D3Map", "File saved [" + mapPath + D3_MAP_PORTALS_NAME + "]", LogType::NORMAL, GLF);
+            portalsChanged = false;
             return true;
         }
 
         bool D3Map::SaveRankBoxes() {
+            if (!rboxChanged)
+                return true;
+
             PreferenceLoader pLoader(D3_MAP_RBOX_NAME, mapPath, true);
             int rBoxNumber = 0;
             for(auto const &rb : RankBoxes) {
@@ -305,10 +314,13 @@ namespace D3PP::files {
             }
             pLoader.SaveFile();
             Logger::LogAdd("D3Map", "File saved [" + mapPath + D3_MAP_RBOX_NAME + "]", LogType::NORMAL, GLF);
+            rboxChanged = false;
             return true;
         }
 
         bool D3Map::SaveMapData() {
+            if (!dataChanged)
+                return true;
             int mapDataSize = MapSize.X * MapSize.Y * MapSize.Z * 4;
 
             if (!GZIP::GZip_CompressToFile(MapData.data(), mapDataSize, "temp.gz"))
@@ -325,6 +337,7 @@ namespace D3PP::files {
             }
 
             Logger::LogAdd("D3Map", "File saved [" + mapPath + D3_MAP_BLOCKS_NAME + "]", LogType::NORMAL, GLF);
+            dataChanged = false;
             return true;
         }
 
@@ -502,6 +515,8 @@ namespace D3PP::files {
     }
 
     bool D3Map::SaveParticles() {
+        if (!particleChanged)
+            return true;
         PreferenceLoader pLoader(D3_MAP_PARTICLES_NAME, mapPath, true);
         int rBoxNumber = 0;
         for(auto const &rb : Particles) {
@@ -526,6 +541,7 @@ namespace D3PP::files {
 
         pLoader.SaveFile();
         Logger::LogAdd("D3Map", "File saved [" + mapPath + D3_MAP_PARTICLES_NAME + "]", LogType::NORMAL, GLF);
+        particleChanged = false;
         return true;
     }
 
@@ -564,5 +580,6 @@ namespace D3PP::files {
 
     void D3Map::SetParticles(std::vector<D3PP::world::CustomParticle> inParts) {
         Particles = inParts;
+        particleChanged = true;
     }
 }

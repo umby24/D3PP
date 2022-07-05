@@ -7,7 +7,6 @@
 #include <utility>
 #include <world/D3MapProvider.h>
 
-#include "common/Files.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
 #include "network/Server.h"
@@ -18,7 +17,6 @@
 #include "compression.h"
 #include "Utils.h"
 #include "Block.h"
-#include "watchdog.h"
 #include "network/Network_Functions.h"
 #include "network/Packets.h"
 #include "world/Entity.h"
@@ -28,15 +26,11 @@
 #include "world/Physics.h"
 #include "CPE.h"
 #include "EventSystem.h"
-#include "events/EventMapActionDelete.h"
-#include "events/EventMapActionFill.h"
-#include "events/EventMapActionSave.h"
-#include "events/EventMapActionLoad.h"
 #include "events/EventMapBlockChange.h"
 #include "events/EventMapBlockChangeClient.h"
-#include "events/EventMapAdd.h"
 #include "world/Teleporter.h"
 #include "world/MapMain.h"
+#include "world/CustomParticle.h"
 
 using namespace D3PP::world;
 using namespace D3PP::Common;
@@ -72,7 +66,7 @@ void Map::Fill(const std::string& functionName, const std::string& paramString) 
     }
 
     //UniqueID = MapMain::GetUniqueId();
-    //RankBoxes.clear();
+    RankBoxes.clear();
     Portals.clear();
     bcQueue->Clear();
     pQueue->Clear();
@@ -123,7 +117,8 @@ void Map::Load(const std::string& directory) {
 
     pQueue = std::make_unique<PhysicsQueue>(GetSize());
     bcQueue = std::make_unique<BlockChangeQueue>(GetSize());
-
+    Particles = m_mapProvider->getParticles();
+    Portals = m_mapProvider->getPortals();
     loading = false;
 }
 
@@ -437,7 +432,7 @@ void Map::QueueBlockChange(Common::Vector3S location, unsigned char priority, un
     bcQueue->TryQueue(newQueueItem);
 }
 
-Map::Map() : IActions() {
+Map::Map() : IActions(), RankBoxes(), Particles() {
     //ID = -1;
     loaded = false;
     loading = false;
@@ -546,41 +541,43 @@ void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
 }
 
 int Map::BlockGetRank(unsigned short X, unsigned short Y, unsigned short Z) {
-//    int result = RankBuild;
-//
-//    for(auto const &r : RankBoxes) {
-//        bool matches = (X >= r.X0 && X < r.X1 && Y >= r.Y0 && Y < r.Y1 && Z >= r.Z0 && Z < r.Z1);
-//
-//        if (r.Rank > result && matches) {
-//            result = r.Rank;
-//        }
-//    }
-//
-//    return result;
-    return -1;
+    MapPermissions perms = m_mapProvider->GetPermissions();
+
+    int result = perms.RankBuild;
+
+    for(auto const &r : RankBoxes) {
+        bool matches = (X >= r.X0 && X < r.X1 && Y >= r.Y0 && Y < r.Y1 && Z >= r.Z0 && Z < r.Z1);
+
+        if (r.Rank > result && matches) {
+            result = r.Rank;
+        }
+    }
+
+    return result;
 }
 
 void Map::SetRankBox(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1,
                      unsigned short Z1, short rank) {
-//
-//    for(auto i = 0; i < RankBoxes.size(); i++) {
-//        auto item = RankBoxes.at(i);
-//        if (item.X0 >= X0 && item.X1 <= X1 && item.Y0 >= Y0 && item.Y1 <= Y1 && item.Z0 >= Z0 && item.Z1 <= Z1) {
-//            RankBoxes.erase(RankBoxes.begin() + i);
-//            i--;
-//        }
-//    }
-//
-//    MapRankElement mre{};
-//    mre.Rank = rank;
-//    mre.X0 = X0;
-//    mre.Y0 = Y0;
-//    mre.Z0 = Z0;
-//
-//    mre.Z1 = Z1;
-//    mre.Y1 = Y1;
-//    mre.X1 = X1;
-//    RankBoxes.push_back(mre);
+
+    for(auto i = 0; i < RankBoxes.size(); i++) {
+        auto item = RankBoxes.at(i);
+        if (item.X0 >= X0 && item.X1 <= X1 && item.Y0 >= Y0 && item.Y1 <= Y1 && item.Z0 >= Z0 && item.Z1 <= Z1) {
+            RankBoxes.erase(RankBoxes.begin() + i);
+            i--;
+        }
+    }
+
+    MapRankElement mre{};
+    mre.Rank = rank;
+    mre.X0 = X0;
+    mre.Y0 = Y0;
+    mre.Z0 = Z0;
+
+    mre.Z1 = Z1;
+    mre.Y1 = Y1;
+    mre.X1 = X1;
+    RankBoxes.push_back(mre);
+
 }
 
 void Map::AddTeleporter(std::string id, MinecraftLocation start, MinecraftLocation end, MinecraftLocation destination, std::string destMapName) {
@@ -609,6 +606,8 @@ void Map::AddTeleporter(std::string id, MinecraftLocation start, MinecraftLocati
     
     Teleporter newTp(start, end, destination, id, destMapName);
     Portals.push_back(newTp);
+
+    m_mapProvider->SetPortals(Portals);
 }
 
 void Map::DeleteTeleporter(std::string id) {
@@ -623,6 +622,8 @@ void Map::DeleteTeleporter(std::string id) {
     if (index != -1) {
         Portals.erase(Portals.begin() + index);
     }
+
+    m_mapProvider->SetPortals(Portals);
 }
 
 void Map::MapExport(MinecraftLocation start, MinecraftLocation end, std::string filename) {
@@ -778,5 +779,16 @@ void Map::SetMapEnvironment(const MapEnvironment &env) {
     for(auto const &nc : D3PP::network::Server::roClients) {
         CPE::AfterMapActions(nc);
     }
+}
+
+void Map::AddParticle(CustomParticle p) {
+    Particles.push_back(p);
+    m_mapProvider->SetParticles(Particles);
+}
+
+void Map::DeleteParticle(int effectId) {
+    // std::erase_if(cm->Commands, [&commandName](const Command &c){ return c.Id == commandName; });
+    erase_if(Particles, [&effectId](const CustomParticle &p){ return p.effectId == effectId; });
+    m_mapProvider->SetParticles(Particles);
 }
 
