@@ -48,7 +48,7 @@ void Configuration::Load() {
         Configuration::GenSettings.LoadFromJson(j);
         Configuration::killSettings.LoadFromJson(j);
         Configuration::textSettings.LoadFromJson(j);
-    } catch (int Exception) {
+    } catch (std::exception e) {
         Logger::LogAdd("Configuration", "Error loading config file! using defaults.", LogType::L_ERROR, GLF);
     }
 

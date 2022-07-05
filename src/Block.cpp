@@ -132,8 +132,8 @@ void Block::Load() {
     }
     try {
         iStream >> j;
-    } catch (int exception) {
-        Logger::LogAdd(MODULE_NAME, "Failed to load blocks! [" + stringulate(exception) + "]", LogType::L_ERROR, GLF);
+    } catch (std::exception e) {
+        Logger::LogAdd(MODULE_NAME, "Failed to load blocks! [" + stringulate(e.what()) + "]", LogType::L_ERROR, GLF);
         return;
     }
     iStream.close();

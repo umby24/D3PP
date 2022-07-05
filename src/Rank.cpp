@@ -65,7 +65,14 @@ void Rank::Load() {
         return;
     }
 
-    iStream >> j;
+    try {
+        iStream >> j;
+    } catch (std::exception e) {
+        Logger::LogAdd(MODULE_NAME, "Failed to load ranks file! Json parse error", LogType::L_ERROR, GLF);
+        iStream.close();
+        return;
+    }
+
     iStream.close();
 
     SetJson(j);
