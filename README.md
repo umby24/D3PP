@@ -1,4 +1,4 @@
-D3PP
+![D3PP](./d3pp_logo.png)
 ----
 
 [![discord](https://img.shields.io/badge/Discord-blue?style=for-the-badge)](https://discord.gg/CcnAaZpy)
@@ -10,7 +10,7 @@ Porting it for better maintainability and for fun.
 ## Roadmap
  - ~~Port the primary server functionality (See issue #1)~~
  - ~~First pass refactor~~
- - Bring up to date with latest CPE
+ - Bring up to date with latest CPE (In Progress)
  - Second pass refactor
  - Bring in lesser used features if requested
 
