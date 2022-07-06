@@ -4,7 +4,7 @@
 
 #include "plugins/Heartbeat.h"
 
-
+#include <algorithm>
 #include "System.h"
 #include "network/Network.h"
 #include "network/Server.h"
@@ -14,6 +14,7 @@
 #include "Utils.h"
 #include "common/Logger.h"
 #include "common/Configuration.h"
+#include "network/NetworkClient.h"
 #include "json.hpp"
 using json = nlohmann::json;
 
@@ -26,7 +27,7 @@ void Heartbeat::Beat() {
     httplib::Params params;
     params.emplace("name", Configuration::GenSettings.name);
     params.emplace("port", stringulate(Configuration::NetSettings.ListenPort));
-    params.emplace("users", stringulate(D3PP::network::Server::roClients.size()));
+    params.emplace("users", stringulate(GetUniqueOnlinePlayers()));
     params.emplace("max", stringulate(Configuration::NetSettings.MaxPlayers));
     params.emplace("public", Configuration::NetSettings.Public ? "true" : "false");
     params.emplace("version", "7");
@@ -103,4 +104,23 @@ bool Heartbeat::VerifyName(std::string name, std::string pass) {
     std::string valid = digestpp::md5().absorb(toHash).hexdigest();
 
     return Utils::InsensitiveCompare(valid, pass);
+}
+
+int Heartbeat::GetUniqueOnlinePlayers() {
+    int result = 0;
+    std::vector<std::string> uniqueNames;
+    std::shared_lock sharedLock(D3PP::network::Server::roMutex);
+    for (auto const &nc: D3PP::network::Server::roClients) {
+        if (!nc->GetLoggedIn())
+            continue;
+
+        if (std::find(uniqueNames.begin(), uniqueNames.end(), nc->GetLoginName()) != uniqueNames.end()) {
+            continue;
+        }
+
+        uniqueNames.push_back(nc->GetLoginName());
+        result++;
+    }
+
+    return result;
 }

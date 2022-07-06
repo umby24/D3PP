@@ -32,6 +32,8 @@ private:
     std::string serverUrl;
     bool isPublic;
     time_t lastBeat;
+
+    static int GetUniqueOnlinePlayers();
 };
 
 #endif //D3PP_HEARTBEAT_H
