@@ -18,8 +18,8 @@ using namespace D3PP::world;
 using namespace D3PP::Common;
 
 const struct luaL_Reg LuaCPELib::lib[] = {
-        {"getsrvexts", &LuaServerGetExtensions},
-        {"getexts", &LuaClientGetExtension},
+        {"getextversion", &LuaClientGetExtension},
+        {"getexts", &LuaClientGetExtensions},
         {"addselection", &LuaSelectionCuboidAdd},
         {"deleteselection", &LuaSelectionCuboidDelete},
         {"getheld", &LuaGetHeldBlock},
@@ -53,11 +53,6 @@ int LuaCPELib::openLib(lua_State* L)
     luaL_setfuncs(L, LuaCPELib::lib, 0);
     lua_setglobal(L, "CPE");
     return 1;
-}
-
-
-int LuaCPELib::LuaServerGetExtensions(lua_State* L) {
-    return 0;
 }
 
 
