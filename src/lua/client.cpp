@@ -1,6 +1,7 @@
 #include "lua/client.h"
 
 #include <lua.hpp>
+#include <shared_mutex>
 
 #include "common/Logger.h"
 #include "network/Network.h"
