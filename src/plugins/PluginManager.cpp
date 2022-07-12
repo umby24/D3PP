@@ -73,6 +73,10 @@ void D3PP::plugins::PluginManager::LoadPlugins() {
         if (!plugin->IsLoaded()) {
             plugin->Load();
         }
+        else {
+            plugin->Unload();
+            plugin->Load();
+        }
     }
 
     Logger::LogAdd("PluginManager", "Loaded " + stringulate(m_plugins.size()) + " plugins.", LogType::NORMAL, GLF);
@@ -121,6 +125,24 @@ void PluginManager::TriggerBuildMode(const std::string &function, int clientId, 
     for(auto & plugin : m_plugins) {
         if (plugin->IsLoaded()) {
             plugin->TriggerBuildMode(function, clientId, mapId, X, Y, Z, mode, block);
+        }
+    }
+}
+
+void D3PP::plugins::PluginManager::TriggerBlockCreate(const std::string& function, int mapId, unsigned short X, unsigned short Y, unsigned short Z)
+{
+    for (auto& plugin : m_plugins) {
+        if (plugin->IsLoaded()) {
+            plugin->TriggerBlockCreate(function, mapId, X, Y, Z);
+        }
+    }
+}
+
+void D3PP::plugins::PluginManager::TriggerBlockDelete(const std::string& function, int mapId, unsigned short X, unsigned short Y, unsigned short Z)
+{
+    for (auto& plugin : m_plugins) {
+        if (plugin->IsLoaded()) {
+            plugin->TriggerBlockDelete(function, mapId, X, Y, Z);
         }
     }
 }

@@ -262,6 +262,14 @@ namespace D3PP::files {
                 oStream << "Allow_Thirdperson = " << ThirdPerson << "\n";
                 oStream << "Allow_Weatherchange = " << Weather << "\n";
                 oStream << "Jumpheight = " << JumpHeight << "\n";
+                oStream << "cloudHeight = " << cloudHeight << "\n";
+                oStream << "maxFogDistance = " << maxFogDistance << "\n";
+                oStream << "cloudSpeed = " << cloudSpeed << "\n";
+                oStream << "weatherSpeed = " << weatherSpeed << "\n";
+                oStream << "weatherFade = " << weatherFade << "\n";
+                oStream << "expoFog = " << expoFog << "\n";
+                oStream << "mapSideOffset = " << mapSideOffset << "\n";
+
                 oStream.close();
                 Logger::LogAdd("D3Map", "File saved [" + mapPath + D3_MAP_CONFIG_NAME + "]", LogType::NORMAL, GLF);
                 configChanged = false;
@@ -393,6 +401,15 @@ namespace D3PP::files {
             ThirdPerson = (pLoader.Read("Allow_Thirdperson", 1) > 0);
             Weather = (pLoader.Read("Allow_Weatherchange", 1) > 0);
             JumpHeight = pLoader.Read("Jumpheight", -1);
+
+            cloudHeight = pLoader.Read("cloudHeight", sizeZ+2);
+            maxFogDistance = pLoader.Read("maxFogDistance", 0);
+            cloudSpeed = pLoader.Read("cloudSpeed", 256);
+            weatherSpeed = pLoader.Read("weatherSpeed", 256);
+            weatherFade = pLoader.Read("weatherFade", 128);
+            expoFog = pLoader.Read("expoFog", 0);
+            mapSideOffset = pLoader.Read("mapSideOffset", -2);
+
             // -- Sanity checks
             if (JumpHeight > 1000 || JumpHeight < -1)
                 JumpHeight = -1;
@@ -423,6 +440,9 @@ namespace D3PP::files {
 
             if (dlight < -1)
                 dlight = -1;
+            
+            if (expoFog > 1)
+                expoFog = 1;
 
             return true;
         }

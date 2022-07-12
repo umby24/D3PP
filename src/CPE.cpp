@@ -8,6 +8,9 @@
 #include "network/NetworkClient.h"
 #include "network/Server.h"
 #include "network/packets/DefineEffectPacket.h"
+#include "network/packets/SetMapEnvPropertyPacket.h"
+#include "network/packets/SetMapEnvUrlPacket.h"
+#include "network/packets/SetTextColor.h"
 #include "network/Packets.h"
 #include "world/Map.h"
 #include "world/MapMain.h"
@@ -113,6 +116,55 @@ void CPE::AfterMapActions(const std::shared_ptr<IMinecraftClient>& client) {
             Packets::SendEnvMapAppearance(std::static_pointer_cast<NetworkClient>(client), perms.TextureUrl, perms.SideBlock, perms.EdgeBlock, perms.SideLevel);
 //        }
     }
+    if (GetClientExtVersion(client, MAP_ASPECT_EXT_NAME) == 1) {
+        if (perms.TextureUrl.starts_with("http")) {
+            D3PP::network::SetMapEnvUrlPacket urlPacket;
+            urlPacket.textureUrl = perms.TextureUrl;
+            Utils::padTo(urlPacket.textureUrl, 64);
+            client->SendPacket(urlPacket);
+        }
+
+        D3PP::network::SetMapEnvPropertyPacket prop;
+        prop.propertyType = static_cast<unsigned char>(D3PP::network::MapEnvProperty::SideBlockId);
+        prop.propertyValue = perms.SideBlock;
+        client->SendPacket(prop);
+
+        prop.propertyType = static_cast<unsigned char>(D3PP::network::MapEnvProperty::EdgeBlockId);
+        prop.propertyValue = perms.EdgeBlock;
+        client->SendPacket(prop);
+
+        prop.propertyType = static_cast<unsigned char>(D3PP::network::MapEnvProperty::EdgeHeight);
+        prop.propertyValue = perms.SideLevel;
+        client->SendPacket(prop);
+
+        prop.propertyType = static_cast<unsigned char>(D3PP::network::MapEnvProperty::CloudHeight);
+        prop.propertyValue = perms.cloudHeight;
+        client->SendPacket(prop);
+
+        prop.propertyType = static_cast<unsigned char>(D3PP::network::MapEnvProperty::FogDistance);
+        prop.propertyValue = perms.maxFogDistance;
+        client->SendPacket(prop);
+
+        prop.propertyType = static_cast<unsigned char>(D3PP::network::MapEnvProperty::CloudSpeed);
+        prop.propertyValue = perms.cloudSpeed;
+        client->SendPacket(prop);
+
+        prop.propertyType = static_cast<unsigned char>(D3PP::network::MapEnvProperty::WeatherSpeed);
+        prop.propertyValue = perms.weatherSpeed;
+        client->SendPacket(prop);
+
+        prop.propertyType = static_cast<unsigned char>(D3PP::network::MapEnvProperty::WeatherFade);
+        prop.propertyValue = perms.weatherFade;
+        client->SendPacket(prop);
+
+        prop.propertyType = static_cast<unsigned char>(D3PP::network::MapEnvProperty::ExpoFog);
+        prop.propertyValue = perms.expoFog;
+        client->SendPacket(prop);
+
+        prop.propertyType = static_cast<unsigned char>(D3PP::network::MapEnvProperty::SideOffset);
+        prop.propertyValue = perms.mapSideOffset;
+        client->SendPacket(prop);
+    }
     if (GetClientExtVersion(client, HACKCONTROL_EXT_NAME) == 1) {
         // -- Set map permissions
 
@@ -147,6 +199,17 @@ void CPE::AfterMapActions(const std::shared_ptr<IMinecraftClient>& client) {
             effectPacket.collideFlags = p.collideFlags;
             effectPacket.fullBright = p.fullBright;
             client->SendPacket(effectPacket);
+        }
+    }
+
+    if (GetClientExtVersion(client, TEXT_COLORS_EXT_NAME) == 1) {
+        for (const auto& cust : Configuration::textSettings.colors) {
+            D3PP::network::SetTextColorPacket p;
+            p.code = cust.character.at(0);
+            p.red = cust.redVal;
+            p.green = cust.greenVal;
+            p.blue = cust.blueVal;
+            client->SendPacket(p);
         }
     }
 

@@ -36,6 +36,7 @@ const struct luaL_Reg LuaSystemLib::lib[] = {
         {"addCmd", &LuaAddCommand},
         {"setSoftwareName", &LuaSetSoftwareName},
         {"setServerName", &LuaSetServerName},
+        {"addTextColor", &LuaAddTextColor},
         {NULL, NULL}
 };
 
@@ -310,6 +311,33 @@ int LuaSystemLib::LuaSetServerName(lua_State *L) {
     Configuration* cc = Configuration::GetInstance();
     cc->Save();
 
+
+    return 0;
+}
+
+int LuaSystemLib::LuaAddTextColor(lua_State* L)
+{
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 5) {
+        Logger::LogAdd("Lua", "LuaError: System.addTextColor called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    std::string character(luaL_checkstring(L, 1));
+    int redVal = luaL_checkinteger(L, 2);
+    int greenVal = luaL_checkinteger(L, 3);
+    int blueVal = luaL_checkinteger(L, 4);
+    int alphaVal = luaL_checkinteger(L, 5);
+
+    if (character.size() > 1) {
+        Logger::LogAdd("Lua", "LuaError: System.addTextColor, character invalid: may only be one character!", LogType::WARNING, GLF);
+        return 0;
+    }
+    
+    std::erase_if(Configuration::textSettings.colors, [&character](const CustomColor& c) { return c.character == character; });
+    
+    Configuration::textSettings.colors.push_back(CustomColor{ character, redVal, greenVal, blueVal, alphaVal });
 
     return 0;
 }

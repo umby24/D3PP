@@ -215,6 +215,8 @@ void LuaPlugin::TimerMain() {
 }
 
 void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, const std::string& function, const std::string& args) {
+    if (!m_loaded)
+        return;
     std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(m_luaState->GetState(), function.c_str());
     if (lua_isfunction(m_luaState->GetState(), -1)) {
@@ -233,6 +235,8 @@ void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, const
 }
 
 void LuaPlugin::TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, const std::string& function) {
+    if (!m_loaded)
+        return;
     std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(m_luaState->GetState(), function.c_str());
     if (lua_isfunction(m_luaState->GetState(), -1)) {
@@ -252,6 +256,8 @@ void LuaPlugin::TriggerPhysics(int mapId, unsigned short X, unsigned short Y, un
 void LuaPlugin::TriggerCommand(const std::string& function, int clientId, const std::string& parsedCmd, const std::string& text0,
                                const std::string& text1, const std::string& op1, const std::string& op2, const std::string& op3, const std::string& op4,
                                const std::string& op5) {
+    if (!m_loaded)
+        return;
     std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(m_luaState->GetState(), function.c_str());
     if (lua_isfunction(m_luaState->GetState(), -1)) {
@@ -275,6 +281,8 @@ void LuaPlugin::TriggerCommand(const std::string& function, int clientId, const 
 
 void LuaPlugin::TriggerBuildMode(const std::string& function, int clientId, int mapId, unsigned short X, unsigned short Y,
                                  unsigned short Z, unsigned char mode, unsigned char block) {
+    if (!m_loaded)
+        return;
     std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(m_luaState->GetState(), function.c_str());
     if (lua_isfunction(m_luaState->GetState(), -1)) {
@@ -287,6 +295,47 @@ void LuaPlugin::TriggerBuildMode(const std::string& function, int clientId, int 
         lua_pushinteger(m_luaState->GetState(), block);
         if (lua_pcall(m_luaState->GetState(), 7, 0, 0)) {
             bail(m_luaState->GetState(), "Failed to run command.");
+        }
+    }
+    else {
+        lua_pop(m_luaState->GetState(), 1);
+    }
+}
+
+void LuaPlugin::TriggerBlockCreate(const std::string& function, int mapId, unsigned short X, unsigned short Y, unsigned short Z)
+{
+    if (!m_loaded)
+        return;
+    std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
+    lua_getglobal(m_luaState->GetState(), function.c_str());
+    if (lua_isfunction(m_luaState->GetState(), -1)) {
+        lua_pushinteger(m_luaState->GetState(), mapId);
+        lua_pushinteger(m_luaState->GetState(), X);
+        lua_pushinteger(m_luaState->GetState(), Y);
+        lua_pushinteger(m_luaState->GetState(), Z);
+        if (lua_pcall(m_luaState->GetState(), 4, 0, 0)) {
+            bail(m_luaState->GetState(), "Failed to run Block Create.");
+        }
+    }
+    else {
+        lua_pop(m_luaState->GetState(), 1);
+    }
+}
+
+void LuaPlugin::TriggerBlockDelete(const std::string& function, int mapId, unsigned short X, unsigned short Y, unsigned short Z)
+{
+    if (!m_loaded)
+        return;
+
+    std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
+    lua_getglobal(m_luaState->GetState(), function.c_str());
+    if (lua_isfunction(m_luaState->GetState(), -1)) {
+        lua_pushinteger(m_luaState->GetState(), mapId);
+        lua_pushinteger(m_luaState->GetState(), X);
+        lua_pushinteger(m_luaState->GetState(), Y);
+        lua_pushinteger(m_luaState->GetState(), Z);
+        if (lua_pcall(m_luaState->GetState(), 4, 0, 0)) {
+            bail(m_luaState->GetState(), "Failed to run Block Delete.");
         }
     }
     else {
@@ -344,6 +393,13 @@ void LuaPlugin::Load() {
 
     m_status = "Loaded";
     m_loaded = true;
+}
+
+void LuaPlugin::Unload()
+{
+    m_status = "Unloaded";
+    m_loaded = false;
+    m_luaState->Close();
 }
 
 std::string LuaPlugin::GetFolderName() {

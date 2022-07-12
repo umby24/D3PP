@@ -120,6 +120,7 @@ void Map::Load(const std::string& directory) {
     Particles = m_mapProvider->getParticles();
     Portals = m_mapProvider->getPortals();
     loading = false;
+    loaded = true;
 }
 
 void Map::Reload() {
@@ -146,10 +147,10 @@ void Map::Unload() {
     if (!loaded)
         return;
 
-    m_mapProvider->Unload();
     BlockchangeStopped = true;
     PhysicsStopped = true;
     loaded = false;
+    m_mapProvider->Unload();
     Logger::LogAdd(MODULE_NAME, "Map unloaded (" + m_mapProvider->MapName + ")", LogType::NORMAL, GLF);
 }
 
@@ -323,8 +324,18 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
     }
 
     BlockChange(clientEntity->playerList->Number, X, Y, Z, rawNewType, true, true, true, 250);
+    D3PP::plugins::PluginManager* pm = D3PP::plugins::PluginManager::GetInstance();
     //QueueBlockChange(Vector3S(X, Y, Z), 250, -1);
-    // -- PluginEventBlockCreate (one for delete, one for create.)
+    if (!oldType.DeletePlugin.empty() && oldType.DeletePlugin.starts_with("Lua:")) {
+        std::string myPlug(oldType.DeletePlugin);
+        Utils::replaceAll(myPlug, "Lua:", "");
+        pm->TriggerBlockDelete(myPlug, ID, X, Y, Z);
+    }
+    if (!newType.CreatePlugin.empty() && newType.CreatePlugin.starts_with("Lua:")) {
+        std::string myPlug(newType.CreatePlugin);
+        Utils::replaceAll(myPlug, "Lua:", "");
+        pm->TriggerBlockDelete(myPlug, ID, X, Y, Z);
+    }
 
 }
 

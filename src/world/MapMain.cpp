@@ -389,8 +389,10 @@ int D3PP::world::MapMain::Add(int id, short x, short y, short z, const std::stri
     newMap->m_mapProvider = std::make_unique<D3MapProvider>();
     newMap->filePath = Files::GetFolder("Maps") + name + "/";
     
-    if (createNew)
+    if (createNew) {
         newMap->m_mapProvider->CreateNew(sizeVector, newMap->filePath, name);
+        newMap->loaded = true;
+    }
 
     newMap->bcQueue = std::make_unique<BlockChangeQueue>(sizeVector);
     newMap->pQueue = std::make_unique<PhysicsQueue>(sizeVector);
@@ -398,7 +400,7 @@ int D3PP::world::MapMain::Add(int id, short x, short y, short z, const std::stri
 
     _maps.insert(std::make_pair(id, newMap));
     SaveFile = true;
-    newMap->loaded = true;
+    
 
     EventMapAdd ema;
     ema.mapId = id;

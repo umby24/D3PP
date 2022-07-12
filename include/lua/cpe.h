@@ -32,6 +32,9 @@ protected:
 
     static int LuaCreateBlockClient(lua_State* L);
     static int LuaDeleteBlockClient(lua_State* L);
+
+    static int LuaSetClientHotbar(lua_State* L);
+    static int LuaSetClientInventoryOrder(lua_State* L);
 private:
 };
 

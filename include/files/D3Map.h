@@ -80,6 +80,7 @@ namespace D3PP::files {
             short SideLevel{};
             int SkyColor{}, CloudColor{}, FogColor{}, alight{}, dlight{};
             bool Flying{}, NoClip{}, Speeding{}, SpawnControl{}, ThirdPerson{}, Weather{};
+			int cloudHeight{}, maxFogDistance{}, cloudSpeed{}, weatherSpeed{}, weatherFade{}, expoFog{}, mapSideOffset{};
 
 			D3OverviewType OverviewType;
 			std::vector<unsigned char> MapData;

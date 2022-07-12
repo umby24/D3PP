@@ -66,8 +66,10 @@ int LuaClientLib::LuaClientGetMapId(lua_State* L) {
     int clientId = static_cast<int>(luaL_checkinteger(L, 1));
     int result = -1;
     std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
-    if (client != nullptr) {
-        result = client->GetPlayerInstance()->GetEntity()->MapID;
+    if (client != nullptr && client->GetLoggedIn()) {
+        if (client->GetPlayerInstance())
+            if (client->GetPlayerInstance()->GetEntity())
+                result = client->GetPlayerInstance()->GetEntity()->MapID;
     }
 
     lua_pushinteger(L, result);
@@ -146,7 +148,7 @@ int LuaClientLib::LuaClientGetEntity(lua_State* L) {
     int result = -1;
     std::shared_ptr<IMinecraftClient> client = Network::GetClient(clientId);
 
-    if (client != nullptr) {
+    if (client != nullptr && client->GetLoggedIn()) {
         std::shared_ptr<Entity> clientEntity = Entity::GetPointer(clientId, true);
 
         if (clientEntity != nullptr)

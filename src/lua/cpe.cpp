@@ -5,6 +5,8 @@
 #include "common/Logger.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "network/packets/SetHotbarPacket.h"
+#include "network/packets/SetInventoryOrderPacket.h"
 #include "common/MinecraftLocation.h"
 #include "world/Entity.h"
 #include "world/Player.h"
@@ -39,6 +41,8 @@ const struct luaL_Reg LuaCPELib::lib[] = {
         {"deleteclientblockdef", &LuaDeleteBlockClient},
         {"setblockext", &LuaSetBlockExt},
         {"setblockextclient", &LuaSetBlockExtClient},
+        {"setClientHotbar", &LuaSetClientHotbar},
+        {"setClientInventoryOrder", &LuaSetClientInventoryOrder},
        {NULL, NULL}
 };
 
@@ -727,6 +731,80 @@ int LuaCPELib::LuaDeleteBlockClient(lua_State* L) {
 
     if (client != nullptr) {
         client->SendDeleteBlock(blockId);
+    }
+
+    return 0;
+}
+
+int LuaCPELib::LuaSetClientHotbar(lua_State* L)
+{
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 3) {
+        Logger::LogAdd("Lua", "LuaError: CPE.setClientHotbar called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    int clientId = luaL_checkinteger(L, 1);
+    int hotbarIndex = luaL_checkinteger(L, 2);
+    int blockId = luaL_checkinteger(L, 3);
+
+    Network* n = Network::GetInstance();
+    std::shared_ptr<IMinecraftClient> client = n->GetClient(clientId);
+    if (hotbarIndex > 8 || hotbarIndex < 0) {
+        Logger::LogAdd("Lua", "LuaError: CPE.setClientHotbar called with invalid range for hotbarIndex: must be between 0 and 8, inclusive.", WARNING, GLF);
+        return 0;
+    }
+
+    if (client != nullptr && client->GetLoggedIn()) {
+        bool isExtended = false;// (CPE::GetClientExtVersion(client, EXTENDED) > 0);
+        bool supportsSetHotBar = CPE::GetClientExtVersion(client, SET_HOTBAR_EXT_NAME) > 0;
+        
+        if (!supportsSetHotBar) {
+            Logger::LogAdd("Lua", "LuaError: The requested client does not support this extension.", WARNING, GLF);
+            return 0;
+        }
+
+        D3PP::network::SetHotbarPacket packet(isExtended);
+        packet.blockId = blockId;
+        packet.hotbarIndex = hotbarIndex;
+
+        client->SendPacket(packet);
+    }
+
+    return 0;
+}
+
+int LuaCPELib::LuaSetClientInventoryOrder(lua_State* L)
+{
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 3) {
+        Logger::LogAdd("Lua", "LuaError: CPE.setClientInventoryOrder called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    int clientId = luaL_checkinteger(L, 1);
+    int order = luaL_checkinteger(L, 2);
+    int blockId = luaL_checkinteger(L, 3);
+
+    Network* n = Network::GetInstance();
+    std::shared_ptr<IMinecraftClient> client = n->GetClient(clientId);
+
+    if (client != nullptr && client->GetLoggedIn()) {
+        bool isExtended = false;// (CPE::GetClientExtVersion(client, EXTENDED) > 0);
+        bool supportsSetInventoryOrder = CPE::GetClientExtVersion(client, INVENTORY_ORDER_EXT_NAME) > 0;
+
+        if (!supportsSetInventoryOrder) {
+            Logger::LogAdd("Lua", "LuaError: The requested client does not support this extension.", WARNING, GLF);
+            return 0;
+        }
+
+        D3PP::network::SetInventoryOrderPacket packet;
+        packet.order = order;
+        packet.blockId = blockId;
+
+        client->SendPacket(packet);
     }
 
     return 0;

@@ -79,7 +79,7 @@ namespace D3PP::world {
 
         Map();
         std::string Name() { return m_mapProvider->MapName; }
-        Common::Vector3S GetSize() { return Common::Vector3S{m_mapProvider->GetSize()}; }
+        Common::Vector3S GetSize() { if (loaded) return Common::Vector3S{ m_mapProvider->GetSize() }; else return Common::Vector3S(); }
         MinecraftLocation GetSpawn() { return m_mapProvider->GetSpawn(); }
 
         void SetSpawn(MinecraftLocation location);

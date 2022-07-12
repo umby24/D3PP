@@ -60,6 +60,7 @@ const struct luaL_Reg LuaMapLib::lib[] = {
         {"createParticle", &LuaCreateParticle},
         {"deleteParticle", &LuaDeleteParticle},
         {"spawnParticle", &LuaSpawnParticle},
+        {"setProperty", &LuaSetProperty},
         {NULL, NULL}
 };
 
@@ -1071,5 +1072,64 @@ int LuaMapLib::LuaSpawnParticle(lua_State *L) {
     spp.positionZ = positionZ;
     NetworkFunctions::PacketToMap(mapId, spp, CUSTOM_PARTICLES_EXT_NAME, 1);
 
+    return 0;
+}
+
+int LuaMapLib::LuaSetProperty(lua_State* L)
+{
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 3) {
+        Logger::LogAdd("Lua", "LuaError: Map.setProperty called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    int mapId = static_cast<int>(luaL_checkinteger(L, 1));
+    int propertyId = luaL_checkinteger(L, 2);
+    int value = luaL_checkinteger(L, 3);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map != nullptr) {
+        auto env = map->GetMapEnvironment();
+        switch (propertyId) {
+        case 0:
+            env.SideBlock = value;
+            break;
+        case 1:
+            env.EdgeBlock = value;
+            break;
+        case 2:
+            env.SideLevel = value;
+            break;
+        case 3:
+            env.cloudHeight = value;
+            break;
+        case 4:
+            env.maxFogDistance = value;
+            break;
+        case 5:
+            env.cloudSpeed = value;
+            break;
+        case 6:
+            env.weatherSpeed = value;
+            break;
+        case 7:
+            env.weatherFade = value;
+            break;
+        case 8:
+            env.expoFog = value;
+            break;
+        case 9:
+            env.mapSideOffset = value;
+            break;
+        default:
+            Logger::LogAdd("Lua", "LuaError: Map.setProperty called with invalid property id. Must be between 0 and 9.", WARNING, GLF);
+            break;
+        }
+
+        map->SetMapEnvironment(env);
+    }
     return 0;
 }

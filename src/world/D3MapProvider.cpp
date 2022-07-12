@@ -51,6 +51,9 @@ bool D3PP::world::D3MapProvider::Load(const std::string &filePath) {
 }
 
 D3PP::Common::Vector3S D3PP::world::D3MapProvider::GetSize() const {
+    if (m_d3map == nullptr)
+        return Common::Vector3S();
+
     return Common::Vector3S(m_d3map->MapSize);
 }
 
@@ -128,7 +131,13 @@ D3PP::world::MapEnvironment D3PP::world::D3MapProvider::GetEnvironment() {
     currentEnv.SideBlock = m_d3map->SideBlock;
     currentEnv.EdgeBlock = m_d3map->EdgeBlock;
     currentEnv.TextureUrl = m_d3map->TextureUrl;
-
+    currentEnv.cloudHeight = m_d3map->cloudHeight;
+    currentEnv.maxFogDistance = m_d3map->maxFogDistance;
+    currentEnv.cloudSpeed = m_d3map->cloudSpeed;
+    currentEnv.weatherSpeed = m_d3map->weatherSpeed;
+    currentEnv.weatherFade = m_d3map->weatherFade;
+    currentEnv.expoFog = m_d3map->expoFog;
+    currentEnv.mapSideOffset = -m_d3map->mapSideOffset;
     return currentEnv;
 }
 
@@ -149,6 +158,13 @@ void D3PP::world::D3MapProvider::SetEnvironment(const D3PP::world::MapEnvironmen
     m_d3map->SideBlock =  env.SideBlock;
     m_d3map->EdgeBlock =  env.EdgeBlock;
     m_d3map->TextureUrl =  env.TextureUrl;
+    m_d3map->cloudHeight = env.cloudHeight;
+    m_d3map->maxFogDistance = env.maxFogDistance;
+    m_d3map->cloudSpeed = env.cloudSpeed;
+    m_d3map->weatherSpeed = env.weatherSpeed;
+    m_d3map->weatherFade = env.weatherFade;
+    m_d3map->expoFog = env.expoFog;
+    m_d3map->mapSideOffset = env.mapSideOffset;
 }
 
 void D3PP::world::D3MapProvider::SetPortals(const std::vector<D3PP::world::Teleporter> portals) {

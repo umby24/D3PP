@@ -13,7 +13,7 @@ namespace D3PP::world {
         int offset = GetOffset(loc);
         int offsetTop = std::ceil(offset / 8);
 
-        if (offsetTop > m_queueData.size())
+        if (offsetTop > m_queueData.size() || m_queueData.size() == 0)
             return false;
 
         return (m_queueData.at(offsetTop) & (1 << (offset % 8))) > 0;
@@ -22,7 +22,7 @@ namespace D3PP::world {
     void IUniqueQueue::Queue(const Common::Vector3S& loc) {
         int offset = GetOffset(loc);
         int offsetTop = std::ceil(offset / 8);
-        if (offsetTop > m_queueData.size())
+        if (offsetTop > m_queueData.size() || m_queueData.size() == 0)
             return;
         m_queueData.at(offsetTop) |= (1 << (offset % 8));
     }
@@ -35,7 +35,7 @@ namespace D3PP::world {
         int offset = GetOffset(loc);
         int offsetTop = std::ceil(offset / 8);
 
-        if (offsetTop > m_queueData.size())
+        if (offsetTop > m_queueData.size() || m_queueData.size() == 0)
             return;
 
         m_queueData.at(offsetTop) &= ~(1 << (offset % 8));

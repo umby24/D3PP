@@ -2,6 +2,8 @@
 #define D3PP_CONFIGURATION_H
 
 #include <string>
+#include <vector>
+
 constexpr std::string_view CONFIGURATION_FILENAME = "configuration";
 
 #include "TaskScheduler.h"
@@ -11,17 +13,38 @@ constexpr std::string_view CONFIGURATION_FILENAME = "configuration";
 
 using json = nlohmann::json;
 using namespace D3PP::Common;
+struct CustomColor {
+    std::string character;
+    int redVal;
+    int greenVal;
+    int blueVal;
+    int alpha;
+};
 
 struct TextSettings {
     std::string error;
     std::string system;
     std::string divider;
+    std::vector<CustomColor> colors;
 
     void LoadFromJson(json &j) {
         if (j.is_object() && !j["Text"].is_null()) {
             error = j["Text"]["Error"];
             system = j["Text"]["System"];
             divider = j["Text"]["Divider"];
+            if (j["Text"]["colors"].is_array()) {
+                for (auto const& jval : j["Text"]["colors"]) {
+                    struct CustomColor col {};
+                    if (jval["character"].is_string()) {
+                        col.character = jval["character"];
+                        col.redVal = jval["red"];
+                        col.greenVal = jval["green"];
+                        col.blueVal = jval["blue"];
+                        col.alpha = jval["alpha"];
+                        colors.push_back(col);
+                    }
+                }
+            }
         }
     }
 
@@ -30,6 +53,16 @@ struct TextSettings {
         j["Text"]["Error"] = error;
         j["Text"]["System"] = system;
         j["Text"]["Divider"] = divider;
+        for (int i = 0; i < colors.size(); i++) {
+            j["Text"]["colors"][i] = nullptr;
+            j["Text"]["colors"][i] = {
+                {"character", colors.at(i).character},
+                {"red", colors.at(i).redVal},
+                {"green", colors.at(i).greenVal},
+                {"blue", colors.at(i).blueVal},
+                {"alpha", colors.at(i).alpha}
+            };
+        }
     }
 };
 

@@ -23,6 +23,12 @@
 #define FULL_CODEPAGE_EXT_NAME "FullCP437"
 #define CUSTOM_PARTICLES_EXT_NAME "CustomParticles"
 #define CUSTOM_MODELS_EXT_NAME "CustomModels"
+#define TEXT_COLORS_EXT_NAME "TextColors"
+#define MAP_ASPECT_EXT_NAME "EnvMapAspect"
+#define ENTITY_PROPERTIES_EXT_NAME "EntityProperty"
+#define INVENTORY_ORDER_EXT_NAME "InventoryOrder"
+#define SET_HOTBAR_EXT_NAME "SetHotbar"
+
 
 #include <memory>
 #include <string>

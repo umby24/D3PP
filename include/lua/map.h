@@ -55,6 +55,7 @@ protected:
     static int LuaCreateParticle(lua_State* L);
     static int LuaDeleteParticle(lua_State *L);
     static int LuaSpawnParticle(lua_State *L);
+    static int LuaSetProperty(lua_State* L);
 private:
 };
 
