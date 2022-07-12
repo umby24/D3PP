@@ -19,6 +19,7 @@ public:
     void SetAsPlayerCoords(D3PP::Common::Vector3S playerCoords);
     void SetAsPlayerCoords(D3PP::Common::Vector3F playerCoords);
     [[nodiscard]] D3PP::Common::Vector3S GetAsBlockCoords() const;
+    D3PP::Common::Vector3F GetAsFloatCoords() const;
 
     bool operator==(const MinecraftLocation &other) const {
         return Location.isEqual(other.Location) && other.Rotation == Rotation && other.Look == Look;

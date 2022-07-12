@@ -22,6 +22,17 @@ Vector3S MinecraftLocation::GetAsBlockCoords() const {
     return result;
 }
 
+D3PP::Common::Vector3F MinecraftLocation::GetAsFloatCoords() const
+{
+    Vector3F result{
+        Location.X / 32.0,
+        Location.Y / 32.0,
+        (Location.Z - 51) / 32.0
+    };
+
+    return result;
+}
+
 void MinecraftLocation::SetAsPlayerCoords(Vector3F inCoords) {
     Location.X = static_cast<short>(inCoords.X * 32);
     Location.Y = static_cast<short>(inCoords.Y * 32);

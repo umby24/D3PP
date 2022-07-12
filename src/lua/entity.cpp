@@ -161,9 +161,10 @@ int LuaEntityLib::LuaEntityGetPosition(lua_State* L) {
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
 
     if (foundEntity != nullptr) {
-        resultX = foundEntity->Location.GetAsBlockCoords().X;
-        resultY = foundEntity->Location.GetAsBlockCoords().Y;
-        resultZ = foundEntity->Location.GetAsBlockCoords().Z;
+        auto floatCoords = foundEntity->Location.GetAsFloatCoords();
+        resultX = floatCoords.X;
+        resultY = floatCoords.Y;
+        resultZ = floatCoords.Z;
     }
 
     lua_pushnumber(L, resultX);
