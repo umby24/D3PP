@@ -75,6 +75,9 @@ int CPE::GetClientExtVersion(const std::shared_ptr<IMinecraftClient>& client, co
 }
 
 void CPE::AfterMapActions(const std::shared_ptr<IMinecraftClient>& client) {
+    if (!client->GetLoggedIn())
+        return;
+
     MapMain* mm = MapMain::GetInstance();
     auto concrete = std::static_pointer_cast<NetworkClient>(client);
     std::shared_ptr<Map> clientMap = mm->GetPointer(concrete->GetPlayerInstance()->GetEntity()->MapID);

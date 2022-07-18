@@ -151,8 +151,9 @@ void LuaPlugin::MainFunc() {
 
     for (auto const &f : files) {
         auto i = _files.find(f);
+        time_t lastMod = Utils::FileModTime(f);
         if (i != _files.end()) {
-            time_t lastMod = Utils::FileModTime(f);
+
             // -- Note only accurate within +/- 1 second. shouldn't matter.
             if (i->second.LastLoaded != lastMod) {
                 m_luaState->LoadFile(f, true);
@@ -163,7 +164,7 @@ void LuaPlugin::MainFunc() {
         }
         LuaFile newFile;
         newFile.FilePath = f;
-        newFile.LastLoaded = 0;
+        newFile.LastLoaded = lastMod;
         _files.insert(std::make_pair(f, newFile));
     }
   
@@ -357,6 +358,7 @@ LuaPlugin::LuaPlugin(std::string folder) {
 void LuaPlugin::Load() {
     m_luaState->Create();
     m_luaState->RegisterApiLibs(m_luaState);
+    RegisterEventListener();
 
     std::vector<std::string> pluginFiles = EnumerateDirectory(m_folder);
     if (pluginFiles.empty()) {
@@ -366,8 +368,8 @@ void LuaPlugin::Load() {
 
     for (auto const& file : pluginFiles) {
         auto i = _files.find(file);
+        time_t lastMod = Utils::FileModTime(file);
         if (i != _files.end()) {
-            time_t lastMod = Utils::FileModTime(file);
             // -- Note only accurate within +/- 1 second. shouldn't matter.
             if (i->second.LastLoaded != lastMod) {
                 m_luaState->LoadFile(file, true);
@@ -379,12 +381,12 @@ void LuaPlugin::Load() {
 
         LuaFile newFile;
         newFile.FilePath = file;
-        newFile.LastLoaded = 0;
+        newFile.LastLoaded = lastMod;
         _files.insert(std::make_pair(file, newFile));
         m_luaState->LoadFile(file, true);
     }
 
-    RegisterEventListener();
+
 
     TaskItem newTi;
     newTi.Interval = std::chrono::milliseconds(10);

@@ -1092,6 +1092,10 @@ int LuaMapLib::LuaSetProperty(lua_State* L)
     std::shared_ptr<Map> map = mm->GetPointer(mapId);
 
     if (map != nullptr) {
+        if (!map->loaded) {
+            return 0;
+        }
+
         auto env = map->GetMapEnvironment();
         switch (propertyId) {
         case 0:
