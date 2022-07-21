@@ -1,24 +1,15 @@
-#include <string>
-#include <iostream>
 #include <fstream>
 #include <gtest/gtest.h>
-#include "nbt-cpp/include/nbt.hpp"
+#include "Nbt/cppNbt.h"
+#include <variant>
 
 using namespace nbt;
 
 TEST(NBTTest, LoadFile) {
-    std::ifstream is("TestFolder/default.cwd");
-    tags::compound_tag root;
-    is >> contexts::java >> root;
-
-    std::ofstream output("mojangson.txt");
-    output << contexts::mojangson << root;
-    is.close();
-    output.close();
-// Optionally, use the constructor
-// nbt::NBT root {ifs};
-
-//    std::stringstream ss;
-//    ss << root;
-//    printf("%s", ss.str().c_str());
+    Nbt::Tag result = Nbt::NbtFile::Load("TestFolder/default.cw");
+    Nbt::TagCompound actual = std::get<Nbt::TagCompound>(result);
+    ASSERT_EQ(actual.name, "ClassicWorld");
+    Nbt::Tag name = actual["Name"];
+    Nbt::TagString rn = std::get<Nbt::TagString>(name);
+    ASSERT_EQ(rn,"default");
 }

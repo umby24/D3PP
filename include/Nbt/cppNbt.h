@@ -13,6 +13,7 @@
 #include <iostream>
 #include <filesystem>
 #include <vector>
+#include <variant>
 #include "compression.h"
 #include "Utils.h"
 
@@ -105,7 +106,7 @@ namespace Nbt {
 
     class NbtFile {
     public:
-        static bool Load(const std::string &file, CompressionMode compression = CompressionMode::DETECT) {
+        static Tag Load(const std::string &file, CompressionMode compression = CompressionMode::DETECT) {
             if (!std::filesystem::exists(file)) {
                 throw std::invalid_argument("Invalid argument 'file', file does not exist.");
             }
@@ -115,7 +116,6 @@ namespace Nbt {
             if (!is.is_open()) {
                 throw std::runtime_error("Failed to open NBT file");
             }
-
             int fileSize = Utils::FileSize(file);
 
             std::vector<unsigned char> data;
@@ -129,37 +129,118 @@ namespace Nbt {
             }
 
             if (compression == CompressionMode::ZLib || compression == CompressionMode::GZip) {
-                int allocSize = 67108864;
-                data.reserve(allocSize);
-                int decompSize = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.data()), allocSize, file);
+                data.clear();
+                data.resize(67108864);
+                int decompSize = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char*>(data.data()), 67108864, file);
                 data.resize(decompSize);
             }
 
             Tag result = Decode(data);
-            Serialize(result);
+
+            std::string whatever = Serialize( std::get<TagCompound>(result));
+            std::cout << whatever;
+            return result;
         }
 
         static bool Save(Tag t, const std::string &filename) {
 
         }
 
+        static std::string Serialize(Tag t, std::string name) {
+            if (std::holds_alternative<TagByte>(t))
+                return Serialize(std::get<TagByte>(t), name);
+            if (std::holds_alternative<TagShort>(t))
+                return Serialize(std::get<TagShort>(t), name);
+            if (std::holds_alternative<TagInt>(t))
+                return Serialize(std::get<TagInt>(t), name);
+            if (std::holds_alternative<TagLong>(t))
+                return Serialize(std::get<TagLong>(t), name);
+            if (std::holds_alternative<TagString>(t))
+                return Serialize(std::get<TagString>(t), name);
+            if (std::holds_alternative<TagByteArray>(t))
+                return Serialize(std::get<TagByteArray>(t), name);
+            if (std::holds_alternative<TagCompound>(t))
+                return Serialize(std::get<TagCompound>(t), name);
+
+            return "";
+        }
+
         static std::string Serialize(TagByte t, std::string name) {
             std::stringstream output;
-            output << "TAG_Byte(";
+            output << "TAG_Byte('";
             output << name;
-            output << "): ";
+            output << "'): ";
+            output << (int)t << std::endl;
+            return output.str();
+        }
+        static std::string Serialize(TagShort t, std::string name) {
+            std::stringstream output;
+            output << "TAG_Short('";
+            output << name;
+            output << "'): ";
+            output << (int)t << std::endl;
+            return output.str();
+        }
+        static std::string Serialize(TagInt t, std::string name) {
+            std::stringstream output;
+            output << "TAG_Int('";
+            output << name;
+            output << "'): ";
             output << t << std::endl;
             return output.str();
         }
+        static std::string Serialize(TagLong t, std::string name) {
+            std::stringstream output;
+            output << "TAG_Long('";
+            output << name;
+            output << "'): ";
+            output << (int)t << std::endl;
+            return output.str();
+        }
 
+        static std::string Serialize(TagString t, std::string name) {
+            std::stringstream output;
+            output << "TAG_String('";
+            output << name;
+            output << "'): ";
+            output << t << std::endl;
+            return output.str();
+        }
+        static std::string Serialize(TagByteArray t, std::string name) {
+            std::stringstream output;
+            output << "TAG_Byte_Array('";
+            output << name;
+            output << "'): Elements: ";
+            output << t.size() << std::endl;
+            return output.str();
+        }
+        static std::string Serialize(TagCompound t, std::string name) {
+            std::stringstream output;
+            output << "TAG_Compound(";
+            output << "'" << name << "'";
+            output << "): Elements: ";
+            output << t.data.size();
+            output << " {" << std::endl;
+
+            for(auto const &p: t.data) {
+                std::string sOut = Serialize(p.second, p.first);
+                Utils::replaceAll(sOut, "\n", "\n\t");
+                output << sOut;
+            }
+
+            output << "}" << std::endl;
+            return output.str();
+        }
         static std::string Serialize(TagCompound t) {
             std::stringstream output;
             output << "TAG_Compound(";
             t.name == "" ? output << "None" : output << "'" << t.name << "'";
-            output << "): {" << std::endl;
-                for(auto const &p: t.data) {
-                    output << "\t" << Serialize(p.second, p.first);
-                }
+            output << "): Elements: ";
+            output << t.data.size();
+            output << " {" << std::endl;
+            for(auto const &p: t.data) {
+                output << "\t" << Serialize(p.second, p.first);
+            }
             output << "}";
             return output.str();
         }
@@ -171,22 +252,24 @@ namespace Nbt {
             }
 
             TagCompound base;
-            int offset = 0;
+            int offset = 1;
             base.name = ReadString(data, offset);
+            base.data = ReadCompound(data, offset).data;
 
-            ReadCompound(data, offset);
+            return base;
         }
 
-        static TagCompound ReadCompound(std::vector<unsigned char> data, int offset) {
+        static TagCompound ReadCompound(std::vector<unsigned char> data, int& offset) {
             TagType nextType = TAG_END;
             TagCompound baseTag;
             std::string nextName = "";
             do {
                 nextType = static_cast<TagType>(data.at(offset++));
-                nextName = ReadString(data, offset);
-                Tag nextTag = ReadOnType(data, offset, nextType);
-
-                baseTag.data.insert(std::make_pair(nextName, nextTag));
+                if (nextType != TAG_END) {
+                    nextName = ReadString(data, offset);
+                    Tag nextTag = ReadOnType(data, offset, nextType);
+                    baseTag.data.insert(std::make_pair(nextName, nextTag));
+                }
             } while (nextType != TAG_END);
 
             return baseTag;
@@ -407,7 +490,7 @@ namespace Nbt {
         static TagByteArray ReadByteArray(std::vector<unsigned char> data, int& offset) {
             TagInt arraySize = ReadInt(data, offset);
             TagByteArray result;
-            result.reserve(arraySize);
+            result.resize(arraySize);
             for (auto& el : result) {
                 el = data.at(offset++);
             }
