@@ -73,6 +73,7 @@ namespace Nbt {
 
     struct TagList {
         int size;
+
         std::variant<std::vector<TagEnd>, std::vector<TagByte>,
                 std::vector<TagShort>, std::vector<TagInt>, std::vector<TagLong>,
                 std::vector<TagFloat>, std::vector<TagDouble>, std::vector<TagByteArray>,
@@ -142,8 +143,22 @@ namespace Nbt {
             return result;
         }
 
-        static bool Save(Tag t, const std::string &filename) {
+        static bool Save(Tag t, const std::string &filename, CompressionMode compression = CompressionMode::ZLib) {
+            if (!std::holds_alternative<TagCompound>(t)) {
+                throw std::runtime_error("TAG_COMPOUND is not the base");
+            }
+            TagCompound baseTag = std::get<TagCompound>(t);
+            std::vector<unsigned char> encoded = Encode(baseTag);
 
+            if (compression == CompressionMode::ZLib || compression == CompressionMode::GZip) {
+                GZIP::GZip_CompressToFile(encoded.data(), encoded.size(), filename);
+            } else {
+                std::ofstream is(filename, std::ios::binary | std::ios::trunc);
+                is.write((char *) &encoded[0], encoded.size());
+                is.close();
+            }
+
+            return true;
         }
 
         static std::string Serialize(Tag t, std::string name) {
@@ -164,7 +179,6 @@ namespace Nbt {
 
             return "";
         }
-
         static std::string Serialize(TagByte t, std::string name) {
             std::stringstream output;
             output << "TAG_Byte('";
@@ -259,6 +273,14 @@ namespace Nbt {
             return base;
         }
 
+        static std::vector<unsigned char> Encode(TagCompound base) {
+            std::vector<unsigned char> result;
+            result.push_back(static_cast<unsigned char>(TAG_COMPOUND));
+            WriteString(base.name, result);
+            WriteCompound(base, result);
+            return result;
+        }
+
         static TagCompound ReadCompound(std::vector<unsigned char> data, int& offset) {
             TagType nextType = TAG_END;
             TagCompound baseTag;
@@ -273,6 +295,41 @@ namespace Nbt {
             } while (nextType != TAG_END);
 
             return baseTag;
+        }
+        static void WriteCompound(TagCompound tag, std::vector<unsigned char>& data) {
+            for(const auto &t : tag.data) {
+                WriteTagType(t.second, data);
+                WriteString(t.first, data);
+                WriteOnType(t.second, data);
+            }
+
+            data.push_back(static_cast<unsigned char>(TAG_END));
+        }
+        static void WriteTagType(const Tag& t, std::vector<unsigned char>& data) {
+            if (std::holds_alternative<TagByte>(t))
+                data.push_back(static_cast<unsigned char>(TAG_BYTE));
+            if (std::holds_alternative<TagShort>(t))
+                data.push_back(static_cast<unsigned char>(TAG_SHORT));
+            if (std::holds_alternative<TagInt>(t))
+                data.push_back(static_cast<unsigned char>(TAG_INT));
+            if (std::holds_alternative<TagLong>(t))
+               data.push_back(static_cast<unsigned char>(TAG_LONG));
+            if (std::holds_alternative<TagFloat>(t))
+                data.push_back(static_cast<unsigned char>(TAG_FLOAT));
+            if (std::holds_alternative<TagDouble>(t))
+                data.push_back(static_cast<unsigned char>(TAG_DOUBLE));
+            if (std::holds_alternative<TagString>(t))
+                data.push_back(static_cast<unsigned char>(TAG_STRING));
+            if (std::holds_alternative<TagList>(t))
+                data.push_back(static_cast<unsigned char>(TAG_LIST));
+            if (std::holds_alternative<TagByteArray>(t))
+                data.push_back(static_cast<unsigned char>(TAG_BYTE_ARRAY));
+            if (std::holds_alternative<TagIntArray>(t))
+                data.push_back(static_cast<unsigned char>(TAG_INT_ARRAY));
+            if (std::holds_alternative<TagLongArray>(t))
+                data.push_back(static_cast<unsigned char>(TAG_LONG_ARRAY));
+            if (std::holds_alternative<TagCompound>(t))
+                data.push_back(static_cast<unsigned char>(TAG_COMPOUND));
         }
 
         static Tag ReadOnType(std::vector<unsigned char> data, int& offset, TagType nextType) {
@@ -342,9 +399,34 @@ namespace Nbt {
 
             return nextTag;
         }
-
+        static void WriteOnType(Tag t, std::vector<unsigned char>& data) {
+            if (std::holds_alternative<TagByte>(t))
+                WriteByte(std::get<TagByte>(t), data);
+            if (std::holds_alternative<TagShort>(t))
+                WriteShort(std::get<TagShort>(t), data);
+            if (std::holds_alternative<TagInt>(t))
+                WriteInt(std::get<TagInt>(t), data);
+            if (std::holds_alternative<TagLong>(t))
+                WriteLong(std::get<TagLong>(t), data);
+            if (std::holds_alternative<TagFloat>(t))
+                WriteFloat(std::get<TagFloat>(t), data);
+            if (std::holds_alternative<TagDouble>(t))
+                WriteDouble(std::get<TagDouble>(t), data);
+            if (std::holds_alternative<TagString>(t))
+                WriteString(std::get<TagString>(t), data);
+            if (std::holds_alternative<TagList>(t))
+                WriteList(std::get<TagList>(t), data);
+            if (std::holds_alternative<TagByteArray>(t))
+                WriteByteArray(std::get<TagByteArray>(t), data);
+            if (std::holds_alternative<TagIntArray>(t))
+                WriteIntArray(std::get<TagIntArray>(t), data);
+            if (std::holds_alternative<TagLongArray>(t))
+                WriteLongArray(std::get<TagLongArray>(t), data);
+            if (std::holds_alternative<TagCompound>(t))
+                WriteCompound(std::get<TagCompound>(t), data);
+        }
         static TagList ReadList(std::vector<unsigned char> data, int& offset) {
-            TagType listType = static_cast<TagType>(data.at(offset++));
+            auto listType = static_cast<TagType>(data.at(offset++));
             TagInt listLength = ReadInt(data, offset);
             TagList result;
             if (listLength <= 0)
@@ -431,17 +513,29 @@ namespace Nbt {
 
             return result;
         }
+        static void WriteList(TagList tag, std::vector<unsigned char>& data) {
+            throw std::runtime_error("Not implementing at this time :)");
+//            std::get(tag.base)
+//            WriteTagType(tag.base, data);
+//            WriteInt(tag.size, data);
+
+        }
         static TagByte ReadByte(std::vector<unsigned char> data, int& offset) {
             return data.at(offset++);
         }
-
+        static void WriteByte(TagByte tag, std::vector<unsigned char>& data) {
+            data.push_back(static_cast<unsigned char>(tag));
+        }
         static TagShort ReadShort(std::vector<unsigned char> data, int& offset) {
             short val = 0;
             val |= data.at(offset++) << 8;
             val |= data.at(offset++);
             return val;
         }
-
+        static void WriteShort(TagShort tag, std::vector<unsigned char>& data) {
+            data.push_back(static_cast<unsigned char>(tag >> 8));
+            data.push_back(static_cast<unsigned char>(tag));
+        }
         static TagInt ReadInt(std::vector<unsigned char> data, int& offset) {
             int result = 0;
             result |= data.at(offset++) << 24;
@@ -450,7 +544,12 @@ namespace Nbt {
             result |= data.at(offset++);
             return result;
         }
-
+        static void WriteInt(TagInt tag, std::vector<unsigned char>& data) {
+            data.push_back(static_cast<unsigned char>(tag >> 24));
+            data.push_back(static_cast<unsigned char>(tag >> 16));
+            data.push_back(static_cast<unsigned char>(tag >> 8));
+            data.push_back(static_cast<unsigned char>(tag));
+        }
         static TagLong ReadLong(std::vector<unsigned char> data, int& offset) {
             TagLong result = 0;
             result |= data.at(offset++) << 56;
@@ -463,7 +562,16 @@ namespace Nbt {
             result |= data.at(offset++);
             return result;
         }
-
+        static void WriteLong(TagLong tag, std::vector<unsigned char>& data) {
+            data.push_back(static_cast<unsigned char>(tag >> 56));
+            data.push_back(static_cast<unsigned char>(tag >> 48));
+            data.push_back(static_cast<unsigned char>(tag >> 40));
+            data.push_back(static_cast<unsigned char>(tag >> 32));
+            data.push_back(static_cast<unsigned char>(tag >> 24));
+            data.push_back(static_cast<unsigned char>(tag >> 16));
+            data.push_back(static_cast<unsigned char>(tag >> 8));
+            data.push_back(static_cast<unsigned char>(tag));
+        }
         static TagFloat ReadFloat(std::vector<unsigned char> data, int& offset) {
             int result = 0;
             result |= data.at(offset++) << 24;
@@ -473,7 +581,13 @@ namespace Nbt {
 
             return static_cast<TagFloat>(result);
         }
-
+        static void WriteFloat(TagFloat tag, std::vector<unsigned char>& data) {
+            int val = static_cast<int>(tag);
+            data.push_back(static_cast<unsigned char>(val >> 24));
+            data.push_back(static_cast<unsigned char>(val >> 16));
+            data.push_back(static_cast<unsigned char>(val >> 8));
+            data.push_back(static_cast<unsigned char>(val));
+        }
         static TagDouble ReadDouble(std::vector<unsigned char> data, int& offset) {
             long result = 0;
             result |= (long)data.at(offset++) << 56;
@@ -486,7 +600,17 @@ namespace Nbt {
             result |= (long)data.at(offset++);
             return static_cast<TagDouble>(result);
         }
-
+        static void WriteDouble(TagDouble tag, std::vector<unsigned char>& data) {
+            long val = static_cast<long>(tag);
+            data.push_back(static_cast<unsigned char>(val >> 56));
+            data.push_back(static_cast<unsigned char>(val >> 48));
+            data.push_back(static_cast<unsigned char>(val >> 40));
+            data.push_back(static_cast<unsigned char>(val >> 32));
+            data.push_back(static_cast<unsigned char>(val >> 24));
+            data.push_back(static_cast<unsigned char>(val >> 16));
+            data.push_back(static_cast<unsigned char>(val >> 8));
+            data.push_back(static_cast<unsigned char>(val));
+        }
         static TagByteArray ReadByteArray(std::vector<unsigned char> data, int& offset) {
             TagInt arraySize = ReadInt(data, offset);
             TagByteArray result;
@@ -496,7 +620,13 @@ namespace Nbt {
             }
             return result;
         }
-
+        static void WriteByteArray(TagByteArray tag, std::vector<unsigned char>& data) {
+            auto longSize = static_cast<TagInt>(tag.size());
+            WriteInt(longSize, data);
+            for(const auto &i : tag) {
+                WriteByte(i, data);
+            }
+        }
         static TagString ReadString(std::vector<unsigned char> data, int& offset) {
             short strLen = 0;
             strLen |= data.at(offset++) << 8;
@@ -505,7 +635,14 @@ namespace Nbt {
             offset += strLen;
             return str;
         }
-
+        static void WriteString(TagString tag, std::vector<unsigned char>& data) {
+            short strLen = tag.size();
+            data.push_back(static_cast<unsigned char>(strLen >> 8));
+            data.push_back(static_cast<unsigned char>(strLen));
+            for(auto i = 0; i < strLen; i++) {
+                data.push_back(tag.at(i));
+            }
+        }
         static TagIntArray ReadIntArray(std::vector<unsigned char> data, int& offset) {
             TagInt arraySize = ReadInt(data, offset);
             TagIntArray result;
@@ -514,7 +651,13 @@ namespace Nbt {
             }
             return result;
         }
-
+        static void WriteIntArray(TagIntArray tag, std::vector<unsigned char>& data) {
+            auto longSize = static_cast<TagInt>(tag.size());
+            WriteInt(longSize, data);
+            for(const auto &i : tag) {
+                WriteInt(i, data);
+            }
+        }
         static TagLongArray ReadLongArray(std::vector<unsigned char> data, int& offset) {
             TagInt arraySize = ReadInt(data, offset);
             TagLongArray result;
@@ -523,7 +666,13 @@ namespace Nbt {
             }
             return result;
         }
-
+        static void WriteLongArray(TagLongArray tag, std::vector<unsigned char>& data) {
+            auto longSize = static_cast<TagInt>(tag.size());
+            WriteInt(longSize, data);
+            for(const auto &i : tag) {
+                WriteLong(i, data);
+            }
+        }
         static CompressionMode DetectCompression(std::vector<unsigned char> buf) {
             if (buf.size() < 2) {
                 throw std::runtime_error("File is too small to determine compression");
