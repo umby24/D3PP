@@ -573,43 +573,47 @@ namespace Nbt {
             data.push_back(static_cast<unsigned char>(tag));
         }
         static TagFloat ReadFloat(std::vector<unsigned char> data, int& offset) {
-            int result = 0;
-            result |= data.at(offset++) << 24;
-            result |= data.at(offset++) << 16;
-            result |= data.at(offset++) << 8;
-            result |= data.at(offset++);
+            TagFloat result = 0;
+            char* resultD = (char*)&result;
+            resultD[3] = data.at(offset++);
+            resultD[2] = data.at(offset++);
+            resultD[1] = data.at(offset++);
+            resultD[0] = data.at(offset++);
 
-            return static_cast<TagFloat>(result);
+            return result;
         }
+
         static void WriteFloat(TagFloat tag, std::vector<unsigned char>& data) {
-            int val = static_cast<int>(tag);
-            data.push_back(static_cast<unsigned char>(val >> 24));
-            data.push_back(static_cast<unsigned char>(val >> 16));
-            data.push_back(static_cast<unsigned char>(val >> 8));
-            data.push_back(static_cast<unsigned char>(val));
+            char* tagD = (char*)(&tag);
+            data.push_back(static_cast<unsigned char>(tagD[3]));
+            data.push_back(static_cast<unsigned char>(tagD[2]));
+            data.push_back(static_cast<unsigned char>(tagD[1]));
+            data.push_back(static_cast<unsigned char>(tagD[0]));
         }
         static TagDouble ReadDouble(std::vector<unsigned char> data, int& offset) {
-            long result = 0;
-            result |= (long)data.at(offset++) << 56;
-            result |= (long)data.at(offset++) << 48;
-            result |= (long)data.at(offset++) << 40;
-            result |= (long)data.at(offset++) << 32;
-            result |= (long)data.at(offset++) << 24;
-            result |= (long)data.at(offset++) << 16;
-            result |= (long)data.at(offset++) << 8;
-            result |= (long)data.at(offset++);
-            return static_cast<TagDouble>(result);
+            TagDouble result = 0;
+            char* resultD = (char*)&result;
+            resultD[7] = data.at(offset++);
+            resultD[6] = data.at(offset++);
+            resultD[5] = data.at(offset++);
+            resultD[4] = data.at(offset++);
+            resultD[3] = data.at(offset++);
+            resultD[2] = data.at(offset++);
+            resultD[1] = data.at(offset++);
+            resultD[0] = data.at(offset++);
+            return result;
         }
         static void WriteDouble(TagDouble tag, std::vector<unsigned char>& data) {
-            long val = static_cast<long>(tag);
-            data.push_back(static_cast<unsigned char>(val >> 56));
-            data.push_back(static_cast<unsigned char>(val >> 48));
-            data.push_back(static_cast<unsigned char>(val >> 40));
-            data.push_back(static_cast<unsigned char>(val >> 32));
-            data.push_back(static_cast<unsigned char>(val >> 24));
-            data.push_back(static_cast<unsigned char>(val >> 16));
-            data.push_back(static_cast<unsigned char>(val >> 8));
-            data.push_back(static_cast<unsigned char>(val));
+            char* tagD = (char*)(&tag);
+
+            data.push_back(static_cast<unsigned char>(tagD[7]));
+            data.push_back(static_cast<unsigned char>(tagD[6]));
+            data.push_back(static_cast<unsigned char>(tagD[5]));
+            data.push_back(static_cast<unsigned char>(tagD[4]));
+            data.push_back(static_cast<unsigned char>(tagD[3]));
+            data.push_back(static_cast<unsigned char>(tagD[2]));
+            data.push_back(static_cast<unsigned char>(tagD[1]));
+            data.push_back(static_cast<unsigned char>(tagD[0]));
         }
         static TagByteArray ReadByteArray(std::vector<unsigned char> data, int& offset) {
             TagInt arraySize = ReadInt(data, offset);

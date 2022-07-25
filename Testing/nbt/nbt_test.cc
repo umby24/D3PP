@@ -45,9 +45,12 @@ TEST(NBTTest, WriteFileCompressed) {
     secondCompound.data.insert(std::make_pair<std::string, Nbt::TagString>("UnitTestStr", "My test string"));
     secondCompound.data.insert(std::make_pair<std::string, Nbt::TagByte>("UnitTestByte", 0x01));
     secondCompound.data.insert(std::make_pair<std::string, Nbt::TagByte>("", 0x05));
+    secondCompound.data.insert(std::make_pair<std::string, Nbt::TagLong>("long test", 3000000000));
+    secondCompound.data.insert(std::make_pair<std::string, Nbt::TagDouble>("double test", 3000000000.5));
     myNewTag.data.insert({"compoundTest", {secondCompound}});
-
-    Nbt::NbtFile::Save(myNewTag, "TestFolder/compressed.nbt", Nbt::CompressionMode::NONE);
+    // -- 2147483647
+    // -- 3000000000
+    Nbt::NbtFile::Save(myNewTag, "TestFolder/compressed.nbt");
 }
 
 TEST(NBTTest, RewriteCw) {
