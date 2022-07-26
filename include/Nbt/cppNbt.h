@@ -137,9 +137,6 @@ namespace Nbt {
             }
 
             Tag result = Decode(data);
-
-            std::string whatever = Serialize( std::get<TagCompound>(result));
-            std::cout << whatever;
             return result;
         }
 
