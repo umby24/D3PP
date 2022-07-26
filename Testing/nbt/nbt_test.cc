@@ -15,6 +15,11 @@ TEST(NBTTest, LoadFile) {
     ASSERT_EQ(rn,"default");
 }
 
+TEST(NBTTest, LoadFileBigTest) {
+    Nbt::Tag result = Nbt::NbtFile::Load("TestFolder/bigtest.nbt");
+    Nbt::TagCompound actual = std::get<Nbt::TagCompound>(result);
+}
+
 TEST(NBTTest, WriteFile) {
     Nbt::TagCompound myNewTag;
     myNewTag.name = "UnitTest";

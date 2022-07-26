@@ -170,10 +170,20 @@ namespace Nbt {
                 return Serialize(std::get<TagInt>(t), name);
             if (std::holds_alternative<TagLong>(t))
                 return Serialize(std::get<TagLong>(t), name);
+            if (std::holds_alternative<TagFloat>(t))
+                return Serialize(std::get<TagFloat>(t), name);
+            if (std::holds_alternative<TagDouble>(t))
+                return Serialize(std::get<TagDouble>(t), name);
             if (std::holds_alternative<TagString>(t))
                 return Serialize(std::get<TagString>(t), name);
             if (std::holds_alternative<TagByteArray>(t))
                 return Serialize(std::get<TagByteArray>(t), name);
+//            if (std::holds_alternative<TagList>(t))
+//                return Serialize(std::get<TagList>(t), name);
+//            if (std::holds_alternative<TagIntArray>(t))
+//                return Serialize(std::get<TagIntArray>(t), name);
+//            if (std::holds_alternative<TagLongArray>(t))
+//                return Serialize(std::get<TagLongArray>(t), name);
             if (std::holds_alternative<TagCompound>(t))
                 return Serialize(std::get<TagCompound>(t), name);
 
@@ -208,7 +218,25 @@ namespace Nbt {
             output << "TAG_Long('";
             output << name;
             output << "'): ";
-            output << (int)t << std::endl;
+            output << t << std::endl;
+            return output.str();
+        }
+        static std::string Serialize(TagFloat t, std::string name) {
+            std::stringstream output;
+            output << std::setprecision(20);
+            output << "TAG_Float('";
+            output << name;
+            output << "'): ";
+            output << t << std::endl;
+            return output.str();
+        }
+        static std::string Serialize(TagDouble t, std::string name) {
+            std::stringstream output;
+            output << std::setprecision(20);
+            output << "TAG_Double('";
+            output << name;
+            output << "'): ";
+            output << t << std::endl;
             return output.str();
         }
 
@@ -239,7 +267,12 @@ namespace Nbt {
             for(auto const &p: t.data) {
                 std::string sOut = Serialize(p.second, p.first);
                 Utils::replaceAll(sOut, "\n", "\n\t");
-                output << sOut;
+                if (!sOut.empty()) {
+                    if (sOut.at(sOut.size() - 1) == '\t')
+                        sOut = sOut.substr(0, sOut.size() - 1);
+                }
+
+                output << "\t" << sOut;
             }
 
             output << "}" << std::endl;
@@ -253,7 +286,14 @@ namespace Nbt {
             output << t.data.size();
             output << " {" << std::endl;
             for(auto const &p: t.data) {
-                output << "\t" << Serialize(p.second, p.first);
+                std::string sOut = Serialize(p.second, p.first);
+                Utils::replaceAll(sOut, "\n", "\n\t");
+                if (!sOut.empty()) {
+                    if (sOut.at(sOut.size() - 1) == '\t')
+                        sOut = sOut.substr(0, sOut.size() - 1);
+                }
+
+                output << "\t" << sOut;
             }
             output << "}";
             return output.str();
@@ -552,14 +592,15 @@ namespace Nbt {
         }
         static TagLong ReadLong(std::vector<unsigned char> data, int& offset) {
             TagLong result = 0;
-            result |= data.at(offset++) << 56;
-            result |= data.at(offset++) << 48;
-            result |= data.at(offset++) << 40;
-            result |= data.at(offset++) << 32;
-            result |= data.at(offset++) << 24;
-            result |= data.at(offset++) << 16;
-            result |= data.at(offset++) << 8;
-            result |= data.at(offset++);
+            char* resultD = (char*)&result;
+            resultD[7] = data.at(offset++);
+            resultD[6] = data.at(offset++);
+            resultD[5] = data.at(offset++);
+            resultD[4] = data.at(offset++);
+            resultD[3] = data.at(offset++);
+            resultD[2] = data.at(offset++);
+            resultD[1] = data.at(offset++);
+            resultD[0] = data.at(offset++);
             return result;
         }
         static void WriteLong(TagLong tag, std::vector<unsigned char>& data) {
