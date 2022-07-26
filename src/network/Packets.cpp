@@ -79,7 +79,7 @@ void Packets::SendBlockChange(int clientId, short x, short y, short z, unsigned 
 void Packets::SendSpawnEntity(int clientId, char playerId, std::string name, short x, short y, short z, char rotation,
                               char look) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
-    if (c->canSend && c->SendBuffer != nullptr) {
+    if (c !=nullptr && c->canSend && c->SendBuffer != nullptr) {
         const std::scoped_lock sLock(c->sendLock);
         c->SendBuffer->Write(static_cast<unsigned char>(7));
         c->SendBuffer->Write(static_cast<unsigned char>(playerId));
@@ -96,7 +96,7 @@ void Packets::SendSpawnEntity(int clientId, char playerId, std::string name, sho
 
 void Packets::SendPlayerTeleport(int clientId, char playerId, short x, short y, short z, char rotation, char look) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
-    if (c->canSend && c->SendBuffer != nullptr) {
+    if (c !=nullptr && c->canSend && c->SendBuffer != nullptr) {
         const std::scoped_lock sLock(c->sendLock);
         c->SendBuffer->Write(static_cast<unsigned char>(8));
         c->SendBuffer->Write(static_cast<unsigned char>(playerId));
@@ -447,4 +447,14 @@ void Packets::SendDefineBlockExt(const std::shared_ptr<NetworkClient>& client, B
         client->SendBuffer->Write(static_cast<unsigned char>(def.fogB));
         client->SendBuffer->Purge();
     }
+}
+
+void Packets::SendChangeModel(std::shared_ptr<IMinecraftClient> client, unsigned char entityId, std::string modelName) {
+    auto concrete = std::static_pointer_cast<NetworkClient>(client);
+    const std::scoped_lock sLock(concrete->sendLock);
+    concrete->SendBuffer->Write(static_cast<unsigned char>(29));
+    concrete->SendBuffer->Write(entityId);
+    if (modelName.size() != 64) Utils::padTo(modelName, 64);
+    concrete->SendBuffer->Write(modelName);
+    concrete->SendBuffer->Purge();
 }

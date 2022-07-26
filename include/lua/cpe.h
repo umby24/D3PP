@@ -10,8 +10,6 @@ public:
     const static struct luaL_Reg lib[];
     static int openLib(lua_State* L);
 protected:
-    static int LuaServerGetExtensions(lua_State* L);
-    static int LuaServerGetExtension(lua_State* L);
     static int LuaClientGetExtensions(lua_State* L);
     static int LuaClientGetExtension(lua_State* L);
     static int LuaSelectionCuboidAdd(lua_State* L);
@@ -34,6 +32,9 @@ protected:
 
     static int LuaCreateBlockClient(lua_State* L);
     static int LuaDeleteBlockClient(lua_State* L);
+
+    static int LuaSetClientHotbar(lua_State* L);
+    static int LuaSetClientInventoryOrder(lua_State* L);
 private:
 };
 

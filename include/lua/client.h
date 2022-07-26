@@ -8,7 +8,7 @@ class LuaClientLib
 {
 public:
 	const static struct luaL_Reg d3ClientLib[];
-	int openLib(lua_State* L);
+	static int openLib(lua_State* L);
 protected:
     static int LuaClientGetTable(lua_State* L);
 	static int LuaClientGetMapId(lua_State* L);
@@ -16,6 +16,7 @@ protected:
 	static int LuaClientGetLoginName(lua_State* L);
 	static int LuaClientGetLoggedIn(lua_State* L);
 	static int LuaClientGetEntity(lua_State* L);
+    static int LuaClientKick(lua_State* L);
 private:
 };
 

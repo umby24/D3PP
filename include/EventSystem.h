@@ -13,9 +13,12 @@
 
 class Event
 {
+  protected:
+  bool _isCancelled = false;
 public:
     virtual~ Event();
-
+    inline const bool isCancelled() const { return _isCancelled; }
+    inline const void setCancelled() { _isCancelled = true; }
     using DescriptorType = const char*;
 
     /** @returns The descriptor type of this event */
@@ -32,7 +35,7 @@ public:
       events that are posted.
     */
 
-    using SlotType = std::function< void( const Event& ) >;
+    using SlotType = std::function< void( Event& ) >;
 
     /**
       Subscribes a given slot to a certain event descriptor. The slot will be
@@ -61,7 +64,7 @@ public:
       @param event Event
     */
 
-    static void post( const Event& event );
+    static void post( Event& event );
 
     static bool hasDescriptor(const std::string& descriptor);
 

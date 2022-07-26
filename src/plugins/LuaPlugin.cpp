@@ -9,8 +9,6 @@
 #include "world/Map.h"
 #include "common/Logger.h"
 #include "Utils.h"
-#include "network/NetworkClient.h"
-#include "Rank.h"
 #include "EventSystem.h"
 #include "Block.h"
 // -- Events..
@@ -38,7 +36,7 @@
 
 // This template wraps a member function into a C-style "free" function compatible with lua.
 
-void bail(lua_State* l, std::string errMsg) {
+void bail(lua_State* l, const std::string& errMsg) {
     Logger::LogAdd("LuaState", errMsg + ", Error: " + lua_tostring(l, -1), LogType::L_ERROR, GLF);
     lua_pop(l, 1);
 }
@@ -73,7 +71,7 @@ void LuaPlugin::RegisterEventListener() {
     Dispatcher::subscribe(PlayerClickEventArgs::clickDescriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
 }
 
-void LuaPlugin::HandleEvent(const Event& event) {
+void LuaPlugin::HandleEvent(Event& event) {
     if (!event.PushLua)
         return;
     
@@ -89,7 +87,7 @@ void LuaPlugin::HandleEvent(const Event& event) {
 
     for( auto&& observer : observers ) {
         executionMutex.lock();
-        lua_getglobal(m_luaState->GetState(), observer.functionName.c_str()); // -- Get the function to be called
+        lua_getglobal(m_luaState->GetState(), observer.second.functionName.c_str()); // -- Get the function to be called
         if (!lua_isfunction(m_luaState->GetState(), -1)) {
             lua_pop(m_luaState->GetState(), 1);
             executionMutex.unlock();
@@ -97,11 +95,17 @@ void LuaPlugin::HandleEvent(const Event& event) {
         }
         int argCount = event.PushLua(m_luaState->GetState()); // -- Have the event push its args and return how many were pushed..
         try {
-            if (lua_pcall(m_luaState->GetState(), argCount, 0, 0) != 0) { // -- Call the function.
+            if (lua_pcall(m_luaState->GetState(), argCount, 1, 0) != 0) { // -- Call the function.
                 bail(m_luaState->GetState(), "[Event Handler]"); // -- catch errors
                 executionMutex.unlock();
                 return;
             }
+            int result = luaL_optinteger(m_luaState->GetState(), -1, 1);
+            
+            if (result == 0) {
+                event.setCancelled();
+            }
+
         } catch (const int exception) {
             bail(m_luaState->GetState(), "[Error Handler]"); // -- catch errors
             executionMutex.unlock();
@@ -143,26 +147,7 @@ void LuaPlugin::MainFunc() {
     if (!m_loaded)
         return;
 
-    std::vector<std::string> files = EnumerateDirectory(m_folder);
-
-    for (auto const &f : files) {
-        auto i = _files.find(f);
-        if (i != _files.end()) {
-            time_t lastMod = Utils::FileModTime(f);
-            // -- Note only accurate within +/- 1 second. shouldn't matter.
-            if (i->second.LastLoaded != lastMod) {
-                m_luaState->LoadFile(f, true);
-                i->second.LastLoaded = lastMod;
-            }
-
-            continue;
-        }
-        LuaFile newFile;
-        newFile.FilePath = f;
-        newFile.LastLoaded = 0;
-        _files.insert(std::make_pair(f, newFile));
-    }
-  
+    LoadNewOrChanged();
 }
 
 void LuaPlugin::TimerMain() {
@@ -172,10 +157,10 @@ void LuaPlugin::TimerMain() {
 
     auto &eventsAt = m_luaState->events[timerDescriptor];
     for(auto &e : eventsAt) {
-        if (clock() >= (e.lastRun + e.duration)) {
-            e.lastRun = clock();
+        if (clock() >= (e.second.lastRun + e.second.duration)) {
+            e.second.lastRun = clock();
             executionMutex.lock();
-            lua_getglobal(m_luaState->GetState(), e.functionName.c_str()); // -- Get the function to be called
+            lua_getglobal(m_luaState->GetState(), e.second.functionName.c_str()); // -- Get the function to be called
             if (!lua_isfunction(m_luaState->GetState(), -1)) {
                 lua_pop(m_luaState->GetState(), 1);
                 executionMutex.unlock();
@@ -184,20 +169,20 @@ void LuaPlugin::TimerMain() {
             if (!lua_checkstack(m_luaState->GetState(), 1)) {
 
             }
-            lua_pushinteger(m_luaState->GetState(), e.mapId);
+            lua_pushinteger(m_luaState->GetState(), e.second.mapId);
             int result = lua_pcall(m_luaState->GetState(), 1, 0, 0);
             if (result == LUA_ERRRUN) {
-                bail(m_luaState->GetState(), "[Timer Event Handler]" + e.functionName); // -- catch errors
+                bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
                 executionMutex.unlock();
                 return;
             }
             else if (result == LUA_ERRMEM) {
-                bail(m_luaState->GetState(), "[Timer Event Handler]" + e.functionName); // -- catch errors
+                bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
                 executionMutex.unlock();
                 return;
             }
             else if (result == LUA_ERRERR) {
-               bail(m_luaState->GetState(), "[Timer Event Handler]" + e.functionName); // -- catch errors
+               bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
                 executionMutex.unlock();
                 return;
             }
@@ -211,6 +196,8 @@ void LuaPlugin::TimerMain() {
 }
 
 void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, const std::string& function, const std::string& args) {
+    if (!m_loaded)
+        return;
     std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(m_luaState->GetState(), function.c_str());
     if (lua_isfunction(m_luaState->GetState(), -1)) {
@@ -229,6 +216,8 @@ void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, const
 }
 
 void LuaPlugin::TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z, const std::string& function) {
+    if (!m_loaded)
+        return;
     std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(m_luaState->GetState(), function.c_str());
     if (lua_isfunction(m_luaState->GetState(), -1)) {
@@ -248,6 +237,8 @@ void LuaPlugin::TriggerPhysics(int mapId, unsigned short X, unsigned short Y, un
 void LuaPlugin::TriggerCommand(const std::string& function, int clientId, const std::string& parsedCmd, const std::string& text0,
                                const std::string& text1, const std::string& op1, const std::string& op2, const std::string& op3, const std::string& op4,
                                const std::string& op5) {
+    if (!m_loaded)
+        return;
     std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(m_luaState->GetState(), function.c_str());
     if (lua_isfunction(m_luaState->GetState(), -1)) {
@@ -271,6 +262,8 @@ void LuaPlugin::TriggerCommand(const std::string& function, int clientId, const 
 
 void LuaPlugin::TriggerBuildMode(const std::string& function, int clientId, int mapId, unsigned short X, unsigned short Y,
                                  unsigned short Z, unsigned char mode, unsigned char block) {
+    if (!m_loaded)
+        return;
     std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
     lua_getglobal(m_luaState->GetState(), function.c_str());
     if (lua_isfunction(m_luaState->GetState(), -1)) {
@@ -290,7 +283,48 @@ void LuaPlugin::TriggerBuildMode(const std::string& function, int clientId, int 
     }
 }
 
-LuaPlugin::LuaPlugin(std::string folder) {
+void LuaPlugin::TriggerBlockCreate(const std::string& function, int mapId, unsigned short X, unsigned short Y, unsigned short Z)
+{
+    if (!m_loaded)
+        return;
+    std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
+    lua_getglobal(m_luaState->GetState(), function.c_str());
+    if (lua_isfunction(m_luaState->GetState(), -1)) {
+        lua_pushinteger(m_luaState->GetState(), mapId);
+        lua_pushinteger(m_luaState->GetState(), X);
+        lua_pushinteger(m_luaState->GetState(), Y);
+        lua_pushinteger(m_luaState->GetState(), Z);
+        if (lua_pcall(m_luaState->GetState(), 4, 0, 0)) {
+            bail(m_luaState->GetState(), "Failed to run Block Create.");
+        }
+    }
+    else {
+        lua_pop(m_luaState->GetState(), 1);
+    }
+}
+
+void LuaPlugin::TriggerBlockDelete(const std::string& function, int mapId, unsigned short X, unsigned short Y, unsigned short Z)
+{
+    if (!m_loaded)
+        return;
+
+    std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
+    lua_getglobal(m_luaState->GetState(), function.c_str());
+    if (lua_isfunction(m_luaState->GetState(), -1)) {
+        lua_pushinteger(m_luaState->GetState(), mapId);
+        lua_pushinteger(m_luaState->GetState(), X);
+        lua_pushinteger(m_luaState->GetState(), Y);
+        lua_pushinteger(m_luaState->GetState(), Z);
+        if (lua_pcall(m_luaState->GetState(), 4, 0, 0)) {
+            bail(m_luaState->GetState(), "Failed to run Block Delete.");
+        }
+    }
+    else {
+        lua_pop(m_luaState->GetState(), 1);
+    }
+}
+
+LuaPlugin::LuaPlugin(const std::string& folder) {
     m_folder = folder;
     m_luaState = std::make_shared<D3PP::plugins::LuaState>("Plugin " + folder);
     m_loaded = false;
@@ -304,17 +338,45 @@ LuaPlugin::LuaPlugin(std::string folder) {
 void LuaPlugin::Load() {
     m_luaState->Create();
     m_luaState->RegisterApiLibs(m_luaState);
+    RegisterEventListener();
 
-    std::vector<std::string> pluginFiles = EnumerateDirectory(m_folder);
-    if (pluginFiles.empty()) {
+    LoadNewOrChanged();
+    if (_files.empty()) {
         Logger::LogAdd("LuaPlugin", "No lua files found, plugin is probably missing.", LogType::WARNING, GLF);
         return;
     }
 
+    TaskItem newTi;
+    newTi.Interval = std::chrono::milliseconds(10);
+    newTi.Main = [this] { TimerMain(); };
+    TaskScheduler::RegisterTask("LuaTimer", newTi);
+
+    m_status = "Loaded";
+    m_loaded = true;
+}
+
+void LuaPlugin::Unload()
+{
+    m_status = "Unloaded";
+    m_loaded = false;
+    m_luaState->Close();
+}
+
+std::string LuaPlugin::GetFolderName() {
+    return m_folder;
+}
+
+bool LuaPlugin::IsLoaded() {
+    return m_status == "Loaded";
+}
+
+void LuaPlugin::LoadNewOrChanged() {
+    std::vector<std::string> pluginFiles = EnumerateDirectory(m_folder);
+
     for (auto const& file : pluginFiles) {
         auto i = _files.find(file);
+        time_t lastMod = Utils::FileModTime(file);
         if (i != _files.end()) {
-            time_t lastMod = Utils::FileModTime(file);
             // -- Note only accurate within +/- 1 second. shouldn't matter.
             if (i->second.LastLoaded != lastMod) {
                 m_luaState->LoadFile(file, true);
@@ -326,27 +388,9 @@ void LuaPlugin::Load() {
 
         LuaFile newFile;
         newFile.FilePath = file;
-        newFile.LastLoaded = 0;
+        newFile.LastLoaded = lastMod;
         _files.insert(std::make_pair(file, newFile));
         m_luaState->LoadFile(file, true);
     }
-
-    RegisterEventListener();
-
-    TaskItem newTi;
-    newTi.Interval = std::chrono::milliseconds(10);
-    newTi.Main = [this] { TimerMain(); };
-    TaskScheduler::RegisterTask("LuaTimer", newTi);
-
-    m_status = "Loaded";
-    m_loaded = true;
-}
-
-std::string LuaPlugin::GetFolderName() {
-    return m_folder;
-}
-
-bool LuaPlugin::IsLoaded() {
-    return m_status == "Loaded";
 }
 

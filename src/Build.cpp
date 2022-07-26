@@ -7,6 +7,7 @@
 #include <Utils.h>
 #include <common/Logger.h>
 #include "world/Map.h"
+#include "world/MapMain.h"
 
 using namespace D3PP::world;
 

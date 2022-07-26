@@ -13,7 +13,7 @@
 
 class ByteBuffer : public TaskItem {
 public:
-    ByteBuffer(std::function<void()> callback);
+    ByteBuffer(const std::function<void()>& callback);
     ~ByteBuffer();
     void MainFunc();
     int Size() const;

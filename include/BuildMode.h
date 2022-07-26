@@ -10,7 +10,7 @@
 #include <map>
 
 #include "common/TaskScheduler.h"
-
+#include "common/Vectors.h"
 
 const std::string BUILD_MODE_FILE_NAME = "Build_Mode";
 const int BUILD_MODE_BLOCKS_TO_RESEND_SIZE_MAX = 1000;
@@ -18,9 +18,7 @@ const int BUILD_MODE_BLOCKS_TO_RESEND_SIZE_MAX = 1000;
 struct BlockResend {
     int clientId;
     int mapId;
-    unsigned short X;
-    unsigned short Y;
-    unsigned short Z;
+    D3PP::Common::Vector3S Location;
 };
 
 class BuildMode {
@@ -39,7 +37,7 @@ public:
 
      void SetState(int clientId, char state);
      char GetState(int clientId);
-     void SetCoordinate(int clientId, int index, float X, float Y, float Z);
+     void SetCoordinate(int clientId, int index, D3PP::Common::Vector3F position);
      unsigned short GetCoordinateX(int clientId, int index);
      unsigned short GetCoordinateY(int clientId, int index);
      unsigned short GetCoordinateZ(int clientId, int index);
@@ -63,7 +61,6 @@ private:
 
     void MainFunc();
     bool SaveFile;
-    bool hasLoaded{};
     time_t LastFileDate;
 };
 #endif

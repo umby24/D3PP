@@ -126,8 +126,7 @@ void watchdog::HtmlStats(time_t time_) {
     Utils::replaceAll(result, genTimeStr, durationStr);
     Utils::replaceAll(result, genTSStr, meh);
 
-    Files* files = Files::GetInstance();
-    std::string memFile = files->GetFile(WATCHDOG_HTML_NAME);
+    std::string memFile = Files::GetFile(WATCHDOG_HTML_NAME);
 
     if (std::ofstream oStream(memFile, std::ios::out | std::ios::trunc); oStream.is_open()) {
         oStream << result;

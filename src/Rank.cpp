@@ -24,8 +24,7 @@ Rank::Rank() {
 }
 
 void Rank::Save() {
-    Files* f = Files::GetInstance();
-    std::string rankFile = f->GetFile(RANK_FILE_NAME);
+    std::string rankFile = Files::GetFile(RANK_FILE_NAME);
 
 
     std::ofstream oStream(rankFile, std::ios::trunc);
@@ -45,8 +44,7 @@ void Rank::MainFunc() {
         SaveFile = false;
     }
 
-    Files* f = Files::GetInstance();
-    const std::string blockFile = f->GetFile(RANK_FILE_NAME);
+    const std::string blockFile = Files::GetFile(RANK_FILE_NAME);
     const time_t modTime = Utils::FileModTime(blockFile);
 
     if (modTime != LastFileDate) {
@@ -56,8 +54,7 @@ void Rank::MainFunc() {
 }
 
 void Rank::Load() {
-    Files* f = Files::GetInstance();
-    std::string filePath = f->GetFile(RANK_FILE_NAME);
+    std::string filePath = Files::GetFile(RANK_FILE_NAME);
     json j;
 
     std::ifstream iStream(filePath);
@@ -68,7 +65,14 @@ void Rank::Load() {
         return;
     }
 
-    iStream >> j;
+    try {
+        iStream >> j;
+    } catch (std::exception e) {
+        Logger::LogAdd(MODULE_NAME, "Failed to load ranks file! Json parse error", LogType::L_ERROR, GLF);
+        iStream.close();
+        return;
+    }
+
     iStream.close();
 
     SetJson(j);
@@ -78,13 +82,14 @@ void Rank::Load() {
     time_t modTime = Utils::FileModTime(filePath);
     LastFileDate = modTime;
 
-    if (_ranks.empty()) {
+    if (m_ranks.empty()) {
         DefaultRanks();
     }
 }
 
-void Rank::Add(RankItem item) {
-    _ranks[item.Rank] = item;
+void Rank::Add(const RankItem& item) {
+    std::scoped_lock<std::mutex> _pqLock(m_rankLock);
+    m_ranks[item.Rank] = item;
     Logger::LogAdd(MODULE_NAME, "Rank added [" + stringulate(item.Rank) + "]", LogType::NORMAL, GLF );
     SaveFile = true;
 }
@@ -94,19 +99,21 @@ RankItem Rank::GetRank(const int rank, bool exact) {
     bool found = false;
 
     if (exact) {
-        if (_ranks.find(rank) != _ranks.end()) {
+        std::scoped_lock<std::mutex> _pqLock(m_rankLock);
+        if (m_ranks.find(rank) != m_ranks.end()) {
             found = true;
-            result = _ranks[rank];
+            result = m_ranks[rank];
         }
     } else {
         int currentRank = -32769;
-        for(const auto& x : _ranks) {
+        std::scoped_lock<std::mutex> _pqLock(m_rankLock);
+        for(const auto& x : m_ranks) {
             if (rank >= x.first && currentRank < x.first) {
                 currentRank = x.first;
                 found = true;
             }
         }
-        result = _ranks[currentRank];
+        result = m_ranks[currentRank];
     }
 
     if (found)
@@ -119,10 +126,11 @@ RankItem Rank::GetRank(const int rank, bool exact) {
 void Rank::Delete(int id, bool isExact) {
     RankItem current = GetRank(id, isExact);
 
-    if (_ranks.find(current.Rank) == _ranks.end())
+    std::scoped_lock<std::mutex> _pqLock(m_rankLock);
+    if (m_ranks.find(current.Rank) == m_ranks.end())
         return;
 
-    _ranks.erase(current.Rank);
+    m_ranks.erase(current.Rank);
     SaveFile = true;
 }
 
@@ -149,18 +157,21 @@ Rank *Rank::GetInstance() {
 
 std::string Rank::GetJson() {
     json j;
+    {
+        std::scoped_lock<std::mutex> _pqLock(m_rankLock);
+        for(const auto& x : m_ranks) {
+            struct RankItem item = x.second;
+            std::string key = stringulate(item.Rank);
 
-    for(const auto& x : _ranks) {
-        struct RankItem item = x.second;
-        std::string key = stringulate(item.Rank);
-
-        j[key] = nullptr;
-        j[key]["Rank"] = item.Rank;
-        j[key]["Name"] = item.Name;
-        j[key]["Prefix"] = item.Prefix;
-        j[key]["Suffix"] = item.Suffix;
-        j[key]["OnClient"] = item.OnClient;
+            j[key] = nullptr;
+            j[key]["Rank"] = item.Rank;
+            j[key]["Name"] = item.Name;
+            j[key]["Prefix"] = item.Prefix;
+            j[key]["Suffix"] = item.Suffix;
+            j[key]["OnClient"] = item.OnClient;
+        }
     }
+
 
     std::ostringstream oss;
     oss << std::setw(4) << j;
@@ -168,6 +179,7 @@ std::string Rank::GetJson() {
 }
 
 void Rank::SetJson(json j) {
+    std::scoped_lock<std::mutex> _pqLock(m_rankLock);
      for(auto &item : j) {
         struct RankItem loadedItem;
         loadedItem.Rank = item["Rank"];
@@ -175,6 +187,18 @@ void Rank::SetJson(json j) {
         loadedItem.Prefix = item["Prefix"];
         loadedItem.Suffix = item["Suffix"];
         loadedItem.OnClient = item["OnClient"];
-        _ranks[loadedItem.Rank] = loadedItem;
+        m_ranks[loadedItem.Rank] = loadedItem;
     }
+}
+
+std::vector<RankItem> Rank::GetAllRanks() {
+    std::vector<RankItem> result;
+    {
+        std::scoped_lock<std::mutex> _pqLock(m_rankLock);
+        for (auto const &r: m_ranks) {
+            result.push_back(r.second);
+        }
+    }
+
+    return result;
 }

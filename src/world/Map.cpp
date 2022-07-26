@@ -7,9 +7,9 @@
 #include <utility>
 #include <world/D3MapProvider.h>
 
-#include "common/Files.h"
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "network/Server.h"
 #include "System.h"
 #include "common/ByteBuffer.h"
 #include "common/Logger.h"
@@ -17,7 +17,6 @@
 #include "compression.h"
 #include "Utils.h"
 #include "Block.h"
-#include "watchdog.h"
 #include "network/Network_Functions.h"
 #include "network/Packets.h"
 #include "world/Entity.h"
@@ -27,470 +26,17 @@
 #include "world/Physics.h"
 #include "CPE.h"
 #include "EventSystem.h"
-#include "events/EventMapActionDelete.h"
-#include "events/EventMapActionFill.h"
-#include "events/EventMapActionSave.h"
-#include "events/EventMapActionLoad.h"
 #include "events/EventMapBlockChange.h"
 #include "events/EventMapBlockChangeClient.h"
-#include "events/EventMapAdd.h"
 #include "world/Teleporter.h"
+#include "world/MapMain.h"
+#include "world/CustomParticle.h"
 
 using namespace D3PP::world;
 using namespace D3PP::Common;
 using namespace D3PP::files;
 
 const std::string MODULE_NAME = "Map";
-MapMain* MapMain::Instance = nullptr;
-
-MapMain::MapMain() {
-    this->Main = [this] { MainFunc(); };
-    this->Interval = std::chrono::seconds(1);
-    TaskScheduler::RegisterTask(MODULE_NAME, *this);
-    LastWriteTime = 0;
-    SaveFile = false;
-    SaveFileTimer = 0;
-    mapSettingsLastWriteTime = 0;
-    mapSettingsMaxChangesSec = 1100;
-    mapSettingsTimerFileCheck = 0;
-
-    phStarted = false;
-    mbcStarted = false;
-    TempId = 0;
-}
-
-void MapMain::MainFunc() {
-    Files* f = Files::GetInstance();
-    std::string mapListFile = f->GetFile(MAP_LIST_FILE);
-    long fileTime = Utils::FileModTime(mapListFile);
-    
-    if (System::IsRunning && !mbcStarted) {
-        std::thread mbcThread([this]() { this->MapBlockChange(); });
-        std::swap(BlockchangeThread, mbcThread);
-        mbcStarted = true;
-    }
-
-    if (System::IsRunning && !phStarted) {
-        std::thread physThread([this]() {this->MapBlockPhysics();});
-        std::swap(PhysicsThread, physThread);
-        phStarted = true;
-    }
-
-    if (LastWriteTime != fileTime) {
-        MapListLoad();
-    }
-    if (SaveFile && SaveFileTimer < time(nullptr)) {
-        SaveFileTimer = time(nullptr) + 5;
-        SaveFile = false;
-        MapListSave();
-    }
-    for(auto const &m : _maps) {
-        // -- Auto save maps every 5 minutes
-        if (m.second->SaveTime + 5*60 < time(nullptr) && m.second->loaded) {
-            m.second->SaveTime = time(nullptr);
-            AddSaveAction(0, m.first, "");
-        }
-        if (m.second->Clients > 0) {
-            m.second->LastClient = time(nullptr);
-            if (!m.second->loaded) {
-                m.second->Reload();
-            }
-        }
-        if (m.second->loaded && (time(nullptr) - m.second->LastClient) > 200) { // -- Unload unused maps after 3 minutes
-            m.second->Unload();
-        }
-    }
-    fileTime = Utils::FileModTime(f->GetFile(MAP_SETTINGS_FILE));
-    if (fileTime != mapSettingsLastWriteTime) {
-        MapSettingsLoad();
-    }
-}
-
-MapMain* MapMain::GetInstance() {
-    if (Instance == nullptr)
-        Instance = new MapMain();
-
-    return Instance;
-}
-
-void MapMain::AddSaveAction(int clientId, int mapId, const std::string& directory) {
-    std::shared_ptr<Map> thisMap = GetPointer(mapId);
-
-    if (thisMap == nullptr)
-        return;
-
-    std::function<void()> saveAction = [thisMap, clientId](){
-        thisMap->Save("");
-        if (clientId > 0) {
-            NetworkFunctions::SystemMessageNetworkSend(clientId, "&eMap Saved.");
-        }
-        EventMapActionSave mas{};
-        mas.actionId = -1;
-        mas.mapId = thisMap->ID;
-        Dispatcher::post(mas);
-    };
-
-    thisMap->m_actions.AddTask(saveAction);
-}
-
-void MapMain::AddLoadAction(int clientId, int mapId, const std::string& directory) {
-    std::shared_ptr<Map> thisMap = GetPointer(mapId);
-
-    if (thisMap == nullptr)
-        return;
-
-    std::function<void()> loadAction = [thisMap, clientId, directory](){
-        thisMap->Load(directory);
-        thisMap->filePath = directory;
-
-        if (clientId > 0) {
-            NetworkFunctions::SystemMessageNetworkSend(clientId, "&eMap Loaded.");
-        }
-        EventMapActionLoad mal{};
-        mal.actionId = -1;
-        mal.mapId = thisMap->ID;
-        Dispatcher::post(mal);
-    };
-
-    thisMap->m_actions.AddTask(loadAction);
-}
-
-void MapMain::AddResizeAction(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z) {
-    std::shared_ptr<Map> thisMap = GetPointer(mapId);
-
-    if (thisMap == nullptr)
-        return;
-
-    Vector3S newSize(X, Y, Z);
-
-    std::function<void()> resizeAction = [thisMap, clientId, newSize](){
-        thisMap->Resize(newSize.X, newSize.Y, newSize.Z);
-        if (clientId > 0) {
-            NetworkFunctions::SystemMessageNetworkSend(clientId, "&eMap Resized.");
-        }
-        EventMapActionFill maf{};
-        maf.actionId = -1;
-        maf.mapId = thisMap->ID;
-        Dispatcher::post(maf);
-    };
-
-    thisMap->m_actions.AddTask(resizeAction);
-    
-}
-
-void MapMain::AddFillAction(int clientId, int mapId, std::string functionName, std::string argString) {
-    std::shared_ptr<Map> thisMap = GetPointer(mapId);
-
-    if (thisMap == nullptr)
-        return;
-
-    std::function<void()> fillAction = [thisMap, clientId, functionName, argString](){
-        thisMap->Fill(functionName, argString);
-        if (clientId > 0) {
-            NetworkFunctions::SystemMessageNetworkSend(clientId, "&eMap Filled.");
-        }
-        EventMapActionFill mas{};
-        mas.actionId = -1;
-        mas.mapId = thisMap->ID;
-        Dispatcher::post(mas);
-    };
-
-    thisMap->m_actions.AddTask(fillAction);
-}
-
-void MapMain::AddDeleteAction(int clientId, int mapId) {
-    EventMapActionDelete delAct{};
-    delAct.actionId = -1;
-    delAct.mapId = mapId;
-    Dispatcher::post(delAct);
-
-    Delete(mapId);
-    if (clientId > 0) {
-        NetworkFunctions::SystemMessageNetworkSend(clientId, "&eMap Deleted.");
-    }
-}
-
-void MapMain::MapBlockChange() {
-    while (System::IsRunning) {
-            watchdog::Watch("Map_Blockchanging", "Begin thread-slope", 0);
-
-            for(auto const &m : _maps) {
-                if (m.second->BlockchangeStopped || !m.second->loaded)
-                    continue;
-
-                int maxChangedSec = 1100 / 10;
-                ChangeQueueItem i{};
-
-                while (maxChangedSec > 0) {
-                    if (m.second->bcQueue == nullptr) {
-                        continue;
-                    }
-                    if (m.second->bcQueue->TryDequeue(i)) {
-                        unsigned char currentMat = m.second->GetBlockType(i.Location.X, i.Location.Y, i.Location.Z);
-
-                        if (currentMat != i.OldMaterial) {
-                            NetworkFunctions::NetworkOutBlockSet2Map(m.first, i.Location.X, i.Location.Y, i.Location.Z,
-                                                                     currentMat);
-                        }
-                    }
-                    maxChangedSec--;
-                }
-            }
-
-            watchdog::Watch("Map_Blockchanging", "End thread-slope", 2);
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-}
-
-//bool comparePhysicsTime(const TimeQueueItem& first, const TimeQueueItem& second) {
-//    return (first.Time < second.Time);
-//}
-
-void MapMain::MapBlockPhysics() {
-    while (System::IsRunning) {
-        watchdog::Watch("Map_Physic", "Begin Thread-Slope", 0);
-
-        for(auto const &map : _maps) {
-            if (map.second->PhysicsStopped)
-                continue;
-//            {
-//                std::scoped_lock<std::mutex> myLock(map.second->physicsQueueMutex);
-//                std::sort(map.second->PhysicsQueue.begin(), map.second->PhysicsQueue.end(), comparePhysicsTime);
-//            }
-
-            int counter = 0;
-            TimeQueueItem physItem;
-
-            while (counter < 1000) { // -- TODO: May need adjustment.
-                if (map.second->pQueue == nullptr) { // -- Avoid edge cases while the map is still loading
-                    continue;
-                }
-                if (map.second->pQueue != nullptr && map.second->pQueue->TryDequeue(physItem)) {
-                    if (physItem.Time < std::chrono::steady_clock::now()) {
-                        map.second->ProcessPhysics(physItem.Location.X, physItem.Location.Y, physItem.Location.Z);
-                        counter++;
-                    } else {
-                        // -- Not ready yet, push it back to the end.
-                        map.second->pQueue->TryQueue(physItem);
-                    }
-                }
-                counter++;
-            }
-
-        }
-        watchdog::Watch("Map_Physic", "End Thread-Slope", 2);
-        std::this_thread::sleep_for(std::chrono::milliseconds(3));
-    }
-}
-
-std::shared_ptr<Map> MapMain::GetPointer(int id) {
-    if (_maps.find(id) != _maps.end())
-        return _maps[id];
-
-    return nullptr;
-}
-
-std::shared_ptr<Map> MapMain::GetPointer(const std::string& name) {
-    std::shared_ptr<Map> result = nullptr;
-    for (auto const &mi : _maps) {
-        if (Utils::InsensitiveCompare(mi.second->m_mapProvider->MapName, name)) {
-            result = mi.second;
-            break;
-        }
-    }
-    
-    return result;
-}
-
-int MapMain::GetMapId() {
-    int result = 0;
-
-    while (true) {
-        if (GetPointer(result) != nullptr) {
-            result++;
-            continue;
-        }
-
-        return result;
-    }
-}
-
-std::string MapMain::GetMapMOTDOverride(int mapId) {
-    MapMain* mmInstance = GetInstance();
-    std::string result;
-    std::shared_ptr<Map> mapPtr = mmInstance->GetPointer(mapId);
-
-    if (mapPtr == nullptr)
-        return result;
-    
-    //result = mapPtr->MotdOverride;
-    return result;
-}
-
-void MapMain::MapListSave() {
-    Files* f = Files::GetInstance();
-    std::string fName = f->GetFile(MAP_LIST_FILE);
-    PreferenceLoader pl(fName, "");
-
-    for(auto const &m : _maps) {
-        pl.SelectGroup(stringulate(m.first));
-        if (!m.second->m_mapProvider)
-            continue;
-        pl.Write("Name", m.second->m_mapProvider->MapName);
-        pl.Write("Directory", m.second->filePath);
-        pl.Write("Delete", 0);
-        pl.Write("Reload", 0);
-    }
-    pl.SaveFile();
-
-    LastWriteTime = Utils::FileModTime(fName);
-    Logger::LogAdd(MODULE_NAME, "File saved. [" + fName + "]", LogType::NORMAL, GLF);
-}
-
-void MapMain::MapListLoad() {
-    Files* f = Files::GetInstance();
-    std::string fName = f->GetFile(MAP_LIST_FILE);
-    PreferenceLoader pl(fName, "");
-    pl.LoadFile();
-
-    for(auto const &m : pl.SettingsDictionary) {
-        if (m.first.empty())
-            continue;
-        int mapId = stoi(m.first);
-
-        pl.SelectGroup(m.first);
-        std::string mapName = pl.Read("Name", m.first);
-        std::string directory = pl.Read("Directory", f->GetFolder("Maps") + m.first + "/");
-        bool mapDelete = (pl.Read("Delete", 0) == 1);
-        bool mapReload = (pl.Read("Reload", 0) == 1);
-        if (mapDelete) {
-            AddDeleteAction(0, mapId);
-        } else {
-            std::shared_ptr<Map> mapPtr = GetPointer(mapId);
-            if (mapPtr == nullptr) {
-                Add(mapId, 64, 64, 64, mapName);
-                mapReload = true;
-                mapPtr = GetPointer(mapId);
-                mapPtr->filePath = directory;
-            }
-            if ((mapReload)) {
-                AddLoadAction(0, mapId, directory);
-            }
-        }
-    }
-    SaveFile = false;
-
-    LastWriteTime = Utils::FileModTime(fName);
-    Logger::LogAdd(MODULE_NAME, "File loaded. [" + fName + "]", LogType::NORMAL, GLF);
-}
-
-int MapMain::Add(int id, short x, short y, short z, const std::string& name) {
-    bool createNew = false;
-    if (id == -1) {
-        id = GetMapId();
-        createNew = true;
-    }
-
-    if (name.empty())
-        return -1;
-
-    if (GetPointer(id) != nullptr)
-        return -1;
-
-
-    Files *f = Files::GetInstance();
-
-    std::shared_ptr<Map> newMap = std::make_shared<Map>();
-    int mapSize = GetMapSize(x, y, z, MAP_BLOCK_ELEMENT_SIZE);
-    newMap->ID = id;
-    newMap->SaveTime = time(nullptr);
-    newMap->loading = false;
-    newMap->BlockchangeStopped = false;
-    newMap->Clients = 0;
-    newMap->LastClient = time(nullptr);
-    Vector3S sizeVector {x, y, z};
-    newMap->m_mapProvider = std::make_unique<D3MapProvider>();
-    newMap->filePath = f->GetFolder("Maps") + name + "/";
-    
-    if (createNew)
-        newMap->m_mapProvider->CreateNew(sizeVector, newMap->filePath, name);
-
-    newMap->bcQueue = std::make_unique<BlockChangeQueue>(sizeVector);
-    newMap->pQueue = std::make_unique<PhysicsQueue>(sizeVector);
-
-
-    _maps.insert(std::make_pair(id, newMap));
-    SaveFile = true;
-    newMap->loaded = true;
-
-    EventMapAdd ema;
-    ema.mapId = id;
-    Dispatcher::post(ema);
-
-    return id;
-}
-
-void MapMain::Delete(int id) {
-    std::shared_ptr<Map> mp = GetPointer(id);
-
-    if (mp == nullptr)
-        return;
-
-    Network* nm = Network::GetInstance();
-
-    if (mp->Clients > 0) {
-        for(auto const &nc : nm->roClients) {
-            if (nc->LoggedIn && nc->player->tEntity != nullptr&& nc->player->tEntity->MapID == id) {
-                MinecraftLocation somewhere {0, 0, Vector3S{(short)0, (short)0, (short)0}};
-                nc->player->tEntity->PositionSet(0, somewhere, 4, true);
-            }
-        }
-    }
-
-    mp->Unload();
-    _maps.erase(mp->ID);
-    SaveFile = true;
-}
-
-void MapMain::MapSettingsLoad() {
-    Files* fm = Files::GetInstance();
-    std::string mapSettingsFile = fm->GetFile("Map_Settings");
-    json j;
-    std::ifstream iStream(mapSettingsFile);
-    if (!iStream.is_open()) {
-        Logger::LogAdd(MODULE_NAME, "Failed to load Map settings, generating...", LogType::WARNING, GLF);
-        MapSettingsSave();
-        return;
-    }
-
-    try {
-        iStream >> j;
-    } catch (int exception) {
-        return;
-    }
-    iStream.close();
-
-    mapSettingsMaxChangesSec = j["Max_Changes_s"];
-    mapSettingsLastWriteTime = Utils::FileModTime(mapSettingsFile);
-
-    Logger::LogAdd(MODULE_NAME, "File Loaded [" + mapSettingsFile + "]", LogType::NORMAL, GLF);
-}
-
-void MapMain::MapSettingsSave() {
-    Files* fm = Files::GetInstance();
-    std::string hbSettingsFile = fm->GetFile("Map_Settings");
-    json j;
-    j["Max_Changes_s"] = mapSettingsMaxChangesSec;
-
-    std::ofstream ofstream(hbSettingsFile);
-
-    ofstream << std::setw(4) << j;
-    ofstream.flush();
-    ofstream.close();
-
-    mapSettingsLastWriteTime = Utils::FileModTime(hbSettingsFile);
-    Logger::LogAdd(MODULE_NAME, "File Saved [" + hbSettingsFile + "]", LogType::NORMAL, GLF);
-}
 
 bool Map::Resize(short x, short y, short z) {
     if (!loaded) {
@@ -520,7 +66,7 @@ void Map::Fill(const std::string& functionName, const std::string& paramString) 
     }
 
     //UniqueID = MapMain::GetUniqueId();
-    //RankBoxes.clear();
+    RankBoxes.clear();
     Portals.clear();
     bcQueue->Clear();
     pQueue->Clear();
@@ -533,11 +79,7 @@ void Map::Fill(const std::string& functionName, const std::string& paramString) 
     m_mapProvider->SetBlocks(blankMap);
 
     D3PP::plugins::PluginManager *pm = D3PP::plugins::PluginManager::GetInstance();
-    clock_t stop = clock();
-    start = clock();
     pm->TriggerMapFill(ID, mapSize.X, mapSize.Y, mapSize.Z, "Mapfill_" + functionName, std::move(paramString));
-    stop = clock();
-    Logger::LogAdd("Debug", "Time to fill.." + stringulate(stop - start), DEBUG, GLF);
     Resend();
     Logger::LogAdd(MODULE_NAME, "Map '" + m_mapProvider->MapName + "' filled.", LogType::NORMAL, GLF);
 }
@@ -575,8 +117,10 @@ void Map::Load(const std::string& directory) {
 
     pQueue = std::make_unique<PhysicsQueue>(GetSize());
     bcQueue = std::make_unique<BlockChangeQueue>(GetSize());
-
+    Particles = m_mapProvider->getParticles();
+    Portals = m_mapProvider->getPortals();
     loading = false;
+    loaded = true;
 }
 
 void Map::Reload() {
@@ -603,10 +147,10 @@ void Map::Unload() {
     if (!loaded)
         return;
 
-    m_mapProvider->Unload();
     BlockchangeStopped = true;
     PhysicsStopped = true;
     loaded = false;
+    m_mapProvider->Unload();
     Logger::LogAdd(MODULE_NAME, "Map unloaded (" + m_mapProvider->MapName + ")", LogType::NORMAL, GLF);
 }
 
@@ -703,24 +247,20 @@ void Map::Send(int clientId) {
 }
 
 void Map::Resend() {
-    Network* nMain = Network::GetInstance();
-
-    for(auto const &nc : nMain->roClients) {
-        if (nc->player == nullptr)
+    std::shared_lock lock(D3PP::network::Server::roMutex);
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (nc->GetPlayerInstance() == nullptr)
             continue;
+        auto concret = std::static_pointer_cast<D3PP::world::Player>(nc->GetPlayerInstance());
 
-        if (nc->player->MapId == ID) {
-            nc->player->SendMap();
+        if (nc->GetMapId() == ID) {
+            concret->SendMap();
         }
     }
-
-    Vector3S mapSize= m_mapProvider->GetSize();
 
     for (auto const &me : Entity::AllEntities) {
         if (me.second->MapID == ID) {
             me.second->Resend(me.second->Id);
-            //Vector3S newLocation{static_cast<short>(mapSize.X+16), static_cast<short>(mapSize.Y+16), static_cast<short>(mapSize.Z+16)};
-            //me.second->Location.SetAsPlayerCoords(newLocation);
         }
     }
 
@@ -741,7 +281,6 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
         NetworkFunctions::NetworkOutBlockSet(client->GetId(), X, Y, Z, rawBlock);
         return;
     }
-
 
     unsigned char rawNewType;
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(client->GetId(), true);
@@ -778,21 +317,35 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
     mbc.bType = type;
     mbc.mode = mode;
     Dispatcher::post(mbc);
+    
+    if (mbc.isCancelled()) {
+        NetworkFunctions::NetworkOutBlockSet(client->GetId(), X, Y, Z, oldType.OnClient);
+        return;
+    }
 
     BlockChange(clientEntity->playerList->Number, X, Y, Z, rawNewType, true, true, true, 250);
-    QueueBlockChange(Vector3S(X, Y, Z), 250, -1);
-    // -- PluginEventBlockCreate (one for delete, one for create.)
+    D3PP::plugins::PluginManager* pm = D3PP::plugins::PluginManager::GetInstance();
+    //QueueBlockChange(Vector3S(X, Y, Z), 250, -1);
+    if (!oldType.DeletePlugin.empty() && oldType.DeletePlugin.starts_with("Lua:")) {
+        std::string myPlug(oldType.DeletePlugin);
+        Utils::replaceAll(myPlug, "Lua:", "");
+        pm->TriggerBlockDelete(myPlug, ID, X, Y, Z);
+    }
+    if (!newType.CreatePlugin.empty() && newType.CreatePlugin.starts_with("Lua:")) {
+        std::string myPlug(newType.CreatePlugin);
+        Utils::replaceAll(myPlug, "Lua:", "");
+        pm->TriggerBlockDelete(myPlug, ID, X, Y, Z);
+    }
 
 }
 
 void AddUndoByPlayerId(short playerId, const UndoItem& item) {
     if (playerId == -1) return;
 
-    Network* nMain = Network::GetInstance();
-
-    for(auto const& nc : nMain->roClients) {
-        if (nc->LoggedIn && nc->player && nc->player->tEntity && nc->player->tEntity->playerList) {
-            if (nc->player->tEntity->playerList->Number == playerId) {
+    std::shared_lock lock(D3PP::network::Server::roMutex);
+    for(auto const& nc : D3PP::network::Server::roClients) {
+        if (nc->GetLoggedIn() && nc->GetPlayerInstance() && nc->GetPlayerInstance()->GetEntity() && nc->GetPlayerInstance()->GetEntity()->playerList) {
+            if (nc->GetPlayerInstance()->GetEntity()->playerList->Number == playerId) {
                 nc->AddUndoItem(item);
                 break;
             }
@@ -828,6 +381,10 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
     event.send = send;
     Dispatcher::post(event); // -- Post this event out!
 
+    if (event.isCancelled()) {
+        return;
+    }
+    
     MapBlock oldType = bm->GetBlock(roData);
     short roLastPlayer = m_mapProvider->GetLastPlayer(locationVector);
     MapBlock newType = bm->GetBlock(type);
@@ -886,7 +443,7 @@ void Map::QueueBlockChange(Common::Vector3S location, unsigned char priority, un
     bcQueue->TryQueue(newQueueItem);
 }
 
-Map::Map() {
+Map::Map() : IActions(), RankBoxes(), Particles() {
     //ID = -1;
     loaded = false;
     loading = false;
@@ -994,72 +551,47 @@ void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
         }
 }
 
-Vector3S MapMain::GetMapExportSize(const std::string& filename) {
-    std::vector<unsigned char> tempData(10);
-    int outputLen = GZIP::GZip_DecompressFromFile(tempData.data(), 10, filename);
-    if (outputLen != 10) {
-        Logger::LogAdd(MODULE_NAME, "Map not imported: Error unzipping.", LogType::L_ERROR, GLF);
-        return Vector3S{};
-    }
-    // -- Read version and size info
-    int versionNumber = 0;
-    versionNumber = tempData[0];
-    versionNumber |= tempData[1] << 8;
-    versionNumber |= tempData[2] << 16;
-    versionNumber |= tempData[3] << 24;
-    if (versionNumber != 1000) {
-        Logger::LogAdd(MODULE_NAME, "Map not imported, unknown version [" + filename + "]", LogType::L_ERROR, GLF);
-        return Vector3S{};
-    }
-    Vector3S result;
-    result.X = tempData[4];
-    result.X |= tempData[5] << 8;
-    result.Y = tempData[6];
-    result.Y |= tempData[7] << 8;
-    result.Z = tempData[8];
-    result.Z |= tempData[9] << 8;
-    return result;
-}
-
 int Map::BlockGetRank(unsigned short X, unsigned short Y, unsigned short Z) {
-//    int result = RankBuild;
-//
-//    for(auto const &r : RankBoxes) {
-//        bool matches = (X >= r.X0 && X < r.X1 && Y >= r.Y0 && Y < r.Y1 && Z >= r.Z0 && Z < r.Z1);
-//
-//        if (r.Rank > result && matches) {
-//            result = r.Rank;
-//        }
-//    }
-//
-//    return result;
-    return -1;
+    MapPermissions perms = m_mapProvider->GetPermissions();
+
+    int result = perms.RankBuild;
+
+    for(auto const &r : RankBoxes) {
+        bool matches = (X >= r.X0 && X < r.X1 && Y >= r.Y0 && Y < r.Y1 && Z >= r.Z0 && Z < r.Z1);
+
+        if (r.Rank > result && matches) {
+            result = r.Rank;
+        }
+    }
+
+    return result;
 }
 
 void Map::SetRankBox(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1,
                      unsigned short Z1, short rank) {
-//
-//    for(auto i = 0; i < RankBoxes.size(); i++) {
-//        auto item = RankBoxes.at(i);
-//        if (item.X0 >= X0 && item.X1 <= X1 && item.Y0 >= Y0 && item.Y1 <= Y1 && item.Z0 >= Z0 && item.Z1 <= Z1) {
-//            RankBoxes.erase(RankBoxes.begin() + i);
-//            i--;
-//        }
-//    }
-//
-//    MapRankElement mre{};
-//    mre.Rank = rank;
-//    mre.X0 = X0;
-//    mre.Y0 = Y0;
-//    mre.Z0 = Z0;
-//
-//    mre.Z1 = Z1;
-//    mre.Y1 = Y1;
-//    mre.X1 = X1;
-//    RankBoxes.push_back(mre);
+
+    for(auto i = 0; i < RankBoxes.size(); i++) {
+        auto item = RankBoxes.at(i);
+        if (item.X0 >= X0 && item.X1 <= X1 && item.Y0 >= Y0 && item.Y1 <= Y1 && item.Z0 >= Z0 && item.Z1 <= Z1) {
+            RankBoxes.erase(RankBoxes.begin() + i);
+            i--;
+        }
+    }
+
+    MapRankElement mre{};
+    mre.Rank = rank;
+    mre.X0 = X0;
+    mre.Y0 = Y0;
+    mre.Z0 = Z0;
+
+    mre.Z1 = Z1;
+    mre.Y1 = Y1;
+    mre.X1 = X1;
+    RankBoxes.push_back(mre);
+
 }
 
-void Map::AddTeleporter(std::string id, MinecraftLocation start, MinecraftLocation end, MinecraftLocation destination, std::string destMapUniqueId, int destMapId) {
+void Map::AddTeleporter(std::string id, MinecraftLocation start, MinecraftLocation end, MinecraftLocation destination, std::string destMapName) {
     MapTeleporterElement mte;
     Vector3S startVec = start.GetAsBlockCoords();
     Vector3S endVec = end.GetAsBlockCoords();
@@ -1080,9 +612,13 @@ void Map::AddTeleporter(std::string id, MinecraftLocation start, MinecraftLocati
         startVec.Z = endVec.Z;
         endVec.Z = tmp;
     }
-
-    Teleporter newTp(start, end, destination, id, destMapUniqueId);
+    start.SetAsBlockCoords(startVec);
+    end.SetAsBlockCoords(endVec);
+    
+    Teleporter newTp(start, end, destination, id, destMapName);
     Portals.push_back(newTp);
+
+    m_mapProvider->SetPortals(Portals);
 }
 
 void Map::DeleteTeleporter(std::string id) {
@@ -1097,6 +633,8 @@ void Map::DeleteTeleporter(std::string id) {
     if (index != -1) {
         Portals.erase(Portals.begin() + index);
     }
+
+    m_mapProvider->SetPortals(Portals);
 }
 
 void Map::MapExport(MinecraftLocation start, MinecraftLocation end, std::string filename) {
@@ -1248,10 +786,20 @@ Teleporter Map::GetTeleporter(std::string id) {
 
 void Map::SetMapEnvironment(const MapEnvironment &env) {
     m_mapProvider->SetEnvironment(env);
-    Network* nm = Network::GetInstance();
-
-    for(auto const &nc : nm->roClients) {
+    std::shared_lock lock(D3PP::network::Server::roMutex);
+    for(auto const &nc : D3PP::network::Server::roClients) {
         CPE::AfterMapActions(nc);
     }
+}
+
+void Map::AddParticle(CustomParticle p) {
+    Particles.push_back(p);
+    m_mapProvider->SetParticles(Particles);
+}
+
+void Map::DeleteParticle(int effectId) {
+    // std::erase_if(cm->Commands, [&commandName](const Command &c){ return c.Id == commandName; });
+    erase_if(Particles, [&effectId](const CustomParticle &p){ return p.effectId == effectId; });
+    m_mapProvider->SetParticles(Particles);
 }
 

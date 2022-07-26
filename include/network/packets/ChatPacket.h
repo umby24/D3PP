@@ -10,8 +10,9 @@
 #include "network/IPacket.h"
 
 namespace D3PP::network {
-    class ChatPacket : IPacket {
+    class ChatPacket : public IPacket {
     public:
+        ChatPacket(const char &playerId, const std::string &message) { m_playerId = playerId; m_message = message; };
         int GetLength() override;
         void Read(std::shared_ptr<ByteBuffer> buf) override;
         void Write(std::shared_ptr<ByteBuffer> buf) override;

@@ -1,6 +1,7 @@
 #include "common/Logger.h"
 #include <iostream>
 #include <iomanip>
+#include <utility>
 #include <common/Configuration.h>
 
 #include "Utils.h"
@@ -8,9 +9,9 @@
 
 Logger* Logger::singleton_ = nullptr;
 
-Logger::Logger()
+Logger::Logger() : m_logLock()
 {
-    GuiOutput = false;
+    SaveFile = false;
     //ctor
 }
 
@@ -57,7 +58,7 @@ void Logger::FileWrite() {
     fileStream << last.Message << std::endl;
 }
 
-LogType StringToLogLevel(std::string message) {
+LogType StringToLogLevel(const std::string& message) {
     if (Utils::InsensitiveCompare("info", message))
         return LogType::NORMAL;
     if (Utils::InsensitiveCompare("chat", message))
@@ -77,6 +78,8 @@ LogType StringToLogLevel(std::string message) {
 }
 
 void Logger::Add(struct LogMessage message) {
+    std::scoped_lock<std::mutex> _logLock(m_logLock);
+
     Messages.push_back(message);
     FileWrite();
 
@@ -88,78 +91,72 @@ void Logger::Add(struct LogMessage message) {
         return;
     }
 
-    if (GuiOutput) {
-        std::cout << message.File << "|";
-        std::cout << message.Line << "|";
-        std::cout << message.Module << "|";
-        std::cout << message.Message << std::endl;
-    } else {
-        if (message.File.size() > 15)
-            message.File = message.File.substr(0, 15);
-        else
-            Utils::padTo(message.File, 15);
+    if (message.File.size() > 15)
+        message.File = message.File.substr(0, 15);
+    else
+        Utils::padTo(message.File, 15);
 
-        char buffer[255];
-        std::tm bt {};
+    char buffer[255];
+    std::tm bt {};
 #if defined(__unix__)
-        localtime_r(&message.Time, &bt);
+    localtime_r(&message.Time, &bt);
 #elif defined(_MSC_VER)
-        localtime_s(&bt, (const time_t*)&message.Time);
+    localtime_s(&bt, (const time_t*)&message.Time);
 #else
-        static std::mutex mtx;
-        std::lock_guard<std::mutex> lock(mtx);
-        bt = *std::localtime((const time_t*)(&message.Time));
+    static std::mutex mtx;
+    std::lock_guard<std::mutex> lock(mtx);
+    bt = *std::localtime((const time_t*)(&message.Time));
 #endif
 
-        strftime(buffer, sizeof(buffer), "%H:%M:%S", &bt);
-        std::cout << "[" << buffer << "] ";
+    strftime(buffer, sizeof(buffer), "%H:%M:%S", &bt);
+    std::cout << "[" << buffer << "] ";
 
-        switch(message.Type) {
-            case LogType::VERBOSE:
-                std::cout << "\x1B[30m[Verbose] ";
-                std::cout << "\x1B[37m" << message.File << "| ";
-                std::cout << "\x1B[33m" << message.Module << ": ";
-                break;
-            case LogType::DEBUG:
-                std::cout << "\x1B[30m[Debug] ";
-                std::cout << "\x1B[37m" << message.File << "| ";
-                std::cout << message.Module << ": ";
-                break;
-            case LogType::WARNING:
-                std::cout << "\x1B[93m[Warning] ";
-                std::cout << "\x1B[37m" << message.File << "| ";
-                std::cout << message.Module << ": ";
-                break;
-            case LogType::L_ERROR:
-                std::cout << "\x1B[91m[Error]\x1B[37m ";
-                std::cout << message.File << "| ";
-                std::cout << message.Module << ": ";
-                break;
-            case LogType::CHAT:
-                std::cout << "\x1B[36m[Chat]\x1B[97m ";
-                break;
-            case LogType::COMMAND:
-                std::cout << "\x1B[32m[Command]\x1B[97m ";
-                break;
-            case LogType::NORMAL:
-                std::cout << "\x1B[92m[Info]\x1B[97m ";
-                break;
-        }
-
-        SubColorCodes(message.Message);
-        std::cout << message.Message << std::endl;
+    switch(message.Type) {
+        case LogType::VERBOSE:
+            std::cout << "\x1B[30m[Verbose] ";
+            std::cout << "\x1B[37m" << message.File << "| ";
+            std::cout << "\x1B[33m" << message.Module << ": ";
+            break;
+        case LogType::DEBUG:
+            std::cout << "\x1B[30m[Debug] ";
+            std::cout << "\x1B[37m" << message.File << "| ";
+            std::cout << message.Module << ": ";
+            break;
+        case LogType::WARNING:
+            std::cout << "\x1B[93m[Warning] ";
+            std::cout << "\x1B[37m" << message.File << "| ";
+            std::cout << message.Module << ": ";
+            break;
+        case LogType::L_ERROR:
+            std::cout << "\x1B[91m[Error]\x1B[37m ";
+            std::cout << message.File << "| ";
+            std::cout << message.Module << ": ";
+            break;
+        case LogType::CHAT:
+            std::cout << "\x1B[36m[Chat]\x1B[97m ";
+            break;
+        case LogType::COMMAND:
+            std::cout << "\x1B[32m[Command]\x1B[97m ";
+            break;
+        case LogType::NORMAL:
+            std::cout << "\x1B[92m[Info]\x1B[97m ";
+            break;
     }
+
+    SubColorCodes(message.Message);
+    std::cout << message.Message << std::endl;
+
 }
 
-void Logger::LogAdd(std::string moadule, std::string message, LogType type, std::string file, int line, std::string procedure) {
+void Logger::LogAdd(std::string mod, std::string message, LogType type, std::string file, int line, std::string procedure) {
     struct LogMessage newMessage;
-    newMessage.Module = moadule;
-    newMessage.Message = message;
-    newMessage.File = Utils::TrimPathString(file);
+    newMessage.Module = std::move(mod);
+    newMessage.Message = std::move(message);
+    newMessage.File = Utils::TrimPathString(std::move(file));
     newMessage.Line = line;
-    newMessage.Procedure = procedure;
+    newMessage.Procedure = std::move(procedure);
     newMessage.Type = type;
-    newMessage.Time = time(0);
+    newMessage.Time = time(nullptr);
 
     Logger* coreLogger = GetInstance();
     coreLogger->Add(newMessage);
@@ -171,8 +168,7 @@ void Logger::SizeCheck() {
         int number = 0;
 
         std::string tempName;
-        Files* fi = Files::GetInstance();
-        std::string logFile = fi->GetFile("Log");
+        std::string logFile = Files::GetFile("Log");
 
         if (logFile.empty())
             logFile = "Log[i].txt";

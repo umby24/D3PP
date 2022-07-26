@@ -3,11 +3,13 @@
 #include "common/PreferenceLoader.h"
 #include "network/NetworkClient.h"
 #include "network/Network.h"
+#include "network/Server.h"
 #include "world/Player.h"
 #include "common/Player_List.h"
 #include "world/Entity.h"
 #include "Block.h"
 #include "world/Map.h"
+#include "world/MapMain.h"
 #include "Rank.h"
 #include "common/Logger.h"
 #include "common/Files.h"
@@ -544,10 +546,42 @@ void CommandMain::Init() {
     Commands.push_back(placeCmd);
 
 }
+void CommandMain::RefreshGroups() {
+    // -- Build list of groups.
+    CommandGroups.clear();
+    for(auto &cmd : Commands) {
+        if (!cmd.Group.empty()) {
+            bool found = false;
+            for(auto &grp : CommandGroups) {
+                if (Utils::InsensitiveCompare(grp.Name, cmd.Group)) {
+                    found = true;
+                    if (grp.RankShow > cmd.Rank && cmd.Rank >= cmd.RankShow) {
+                        grp.RankShow = cmd.Rank;
+                    }
+                    if (grp.RankShow > cmd.RankShow && cmd.RankShow >= cmd.Rank) {
+                        grp.RankShow = cmd.RankShow;
+                    }
+                    break;
+                }
+            }
+            if (!found) {
+                CommandGroup newCg;
+                newCg.RankShow = 32757;
+                if (newCg.RankShow > cmd.Rank && cmd.Rank >= cmd.RankShow) {
+                    newCg.RankShow = cmd.Rank;
+                }
+                if (newCg.RankShow > cmd.RankShow && cmd.RankShow >= cmd.Rank) {
+                    newCg.RankShow = cmd.RankShow;
+                }
+                newCg.Name = cmd.Group;
+                CommandGroups.push_back(newCg);
+            }
+        }
+    }
+}
 
 void CommandMain::Load() {
-    Files* f = Files::GetInstance();
-    std::string cmdFilename = f->GetFile(COMMAND_FILENAME);
+    std::string cmdFilename = Files::GetFile(COMMAND_FILENAME);
 
     if (Utils::FileSize(cmdFilename) == -1) {
         Logger::LogAdd(MODULE_NAME, "Commands file does not exist.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
@@ -596,37 +630,7 @@ void CommandMain::Load() {
         }
     }
 
-    // -- Build list of groups.
-    CommandGroups.clear();
-    for(auto &cmd : Commands) {
-        if (!cmd.Group.empty()) {
-            bool found = false;
-            for(auto &grp : CommandGroups) {
-                if (Utils::InsensitiveCompare(grp.Name, cmd.Group)) {
-                    found = true;
-                    if (grp.RankShow > cmd.Rank && cmd.Rank >= cmd.RankShow) {
-                        grp.RankShow = cmd.Rank;
-                    }
-                    if (grp.RankShow > cmd.RankShow && cmd.RankShow >= cmd.Rank) {
-                        grp.RankShow = cmd.RankShow;
-                    }
-                    break;
-                }
-            }
-            if (!found) {
-                CommandGroup newCg;
-                newCg.RankShow = 32757;
-                if (newCg.RankShow > cmd.Rank && cmd.Rank >= cmd.RankShow) {
-                    newCg.RankShow = cmd.Rank;
-                }
-                if (newCg.RankShow > cmd.RankShow && cmd.RankShow >= cmd.Rank) {
-                    newCg.RankShow = cmd.RankShow;
-                }
-                newCg.Name = cmd.Group;
-                CommandGroups.push_back(newCg);
-            }
-        }
-    }
+    RefreshGroups();
 
     Logger::LogAdd(MODULE_NAME, "File loaded [" + cmdFilename + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
     time_t modTime = Utils::FileModTime(cmdFilename);
@@ -634,8 +638,7 @@ void CommandMain::Load() {
 }
 
 void CommandMain::MainFunc() {
-    Files* f = Files::GetInstance();
-    std::string blockFile = f->GetFile(COMMAND_FILENAME);
+    std::string blockFile = Files::GetFile(COMMAND_FILENAME);
     time_t modTime = Utils::FileModTime(blockFile);
 
     if (modTime != FileDateLast) {
@@ -688,7 +691,7 @@ void CommandMain::CommandDo(const std::shared_ptr<IMinecraftClient>& client, con
         if (client->GetId() == -200 && !cmd.CanConsole) {
             Logger::LogAdd(MODULE_NAME, "&cThis command is not accessible via console!", LogType::L_ERROR, GLF);
             found = true;
-        }else if (client->GetRank() < cmd.Rank) {
+        } else if (client->GetRank() < cmd.Rank) {
             client->SendChat("§EYou are not allowed to use this command.");
             found = true;
         } else {
@@ -714,8 +717,7 @@ void CommandMain::CommandDo(const std::shared_ptr<IMinecraftClient>& client, con
 }
 
 void CommandMain::CommandCommands() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
 
     if (c == nullptr)
         return;
@@ -767,8 +769,8 @@ void CommandMain::CommandCommands() {
 }
 
 void CommandMain::CommandHelp() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
 
     bool found = false;
     for(const auto& cmd : Commands) {
@@ -787,14 +789,13 @@ void CommandMain::CommandHelp() {
 }
 
 void CommandMain::CommandPlayers() {
-     Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
      c->SendChat("§SPlayers:");
     std::string textToSend;
-
-     for(auto const &nc : nm->roClients) {
-         if (nc != nullptr && nc->player != nullptr && nc->player->tEntity->playerList != nullptr) {
-             std::string playerName = Entity::GetDisplayname(nc->player->tEntity->Id);
+    std::shared_lock lock(D3PP::network::Server::roMutex);
+     for(auto const &nc : D3PP::network::Server::roClients) {
+         if (nc != nullptr && nc->GetPlayerInstance() != nullptr && nc->GetPlayerInstance()->GetEntity()->playerList != nullptr) {
+             std::string playerName = Entity::GetDisplayname(nc->GetPlayerInstance()->GetEntity()->Id);
 
             std::string toAdd = playerName + " &c| ";
             if (64 - textToSend.size() >= toAdd.size()) {
@@ -811,12 +812,12 @@ void CommandMain::CommandPlayers() {
 }
 
 void CommandMain::CommandPlayerInfo() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
 
-    PlayerListEntry* ple = pll->GetPointer(ParsedOperator.at(0));
+    auto ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
         c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
         return;
@@ -844,8 +845,8 @@ void CommandMain::CommandPlayerInfo() {
 }
 
 void CommandMain::CommandChangeRank() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
 
@@ -860,7 +861,7 @@ void CommandMain::CommandChangeRank() {
     std::string reason = ParsedText2;
 
     if (rankVal >= -32768 && rankVal <= 32767) {
-        PlayerListEntry* ple = pll->GetPointer(ParsedOperator.at(0));
+        auto ple = pll->GetPointer(ParsedOperator.at(0));
         if (ple == nullptr) {
             c->SendChat("§ECan't find a player named '" + ParsedOperator.at(0) + "'");
             return;
@@ -879,8 +880,8 @@ void CommandMain::CommandChangeRank() {
 }
 
 void CommandMain::CommandGlobal() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
 
     if (c == nullptr)
         return;
@@ -904,8 +905,8 @@ void CommandMain::CommandGlobal() {
 }
 
 void CommandMain::CommandPing() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
 
     if (c == nullptr)
         return;
@@ -914,8 +915,8 @@ void CommandMain::CommandPing() {
 }
 
 void CommandMain::CommandChangeMap() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
 
     if (c == nullptr)
         return;
@@ -930,8 +931,10 @@ void CommandMain::CommandChangeMap() {
             Entity::MessageToClients(clientEntity->Id, "§EYou are not allowed to join map '" + mi->Name() + "'");
             return;
         }
-        auto concrete = std::static_pointer_cast<NetworkClient>(c);
-        concrete->player->ChangeMap(mi);
+
+        auto concrete = std::static_pointer_cast<D3PP::world::Player>(c->GetPlayerInstance());
+        concrete->ChangeMap(mi);
+
         clientEntity->PositionSet(mi->ID, mi->GetSpawn(), 255, true);
 
     } else {
@@ -940,19 +943,18 @@ void CommandMain::CommandChangeMap() {
 }
 
 void CommandMain::CommandSaveMap() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
 
     if (e == nullptr)
         return;
 
     MapMain* mm = MapMain::GetInstance();
-    Files* fm = Files::GetInstance();
     std::string mapDirectory;
 
     if (!ParsedText0.empty()) {
-        mapDirectory = fm->GetFolder("Maps") + ParsedText0;
+        mapDirectory = Files::GetFolder("Maps") + ParsedText0;
         if (mapDirectory.substr(mapDirectory.size()-2, 1) != "/") {
             mapDirectory += "/";
         }
@@ -963,12 +965,12 @@ void CommandMain::CommandSaveMap() {
 }
 
 void CommandMain::CommandGetRank() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
     
     if (ParsedOperator.at(0).empty()) {
         ple = clientEntity->playerList;
@@ -988,8 +990,8 @@ void CommandMain::CommandGetRank() {
 }
 
 void CommandMain::CommandSetMaterial() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     Block* bm = Block::GetInstance();
 
@@ -1009,10 +1011,10 @@ void CommandMain::CommandSetMaterial() {
 }
 
 void CommandMain::CommandKick() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
@@ -1030,10 +1032,10 @@ void CommandMain::CommandKick() {
 }
 
 void CommandMain::CommandBan() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
@@ -1050,10 +1052,10 @@ void CommandMain::CommandBan() {
 }
 
 void CommandMain::CommandUnban() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
@@ -1069,10 +1071,10 @@ void CommandMain::CommandUnban() {
 }
 
 void CommandMain::CommandStop() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
@@ -1089,10 +1091,10 @@ void CommandMain::CommandStop() {
 }
 
 void CommandMain::CommandUnStop() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
@@ -1108,10 +1110,10 @@ void CommandMain::CommandUnStop() {
 }
 
 void CommandMain::CommandMute() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
@@ -1131,11 +1133,11 @@ void CommandMain::CommandMute() {
 }
 
 void CommandMain::CommandUnmute() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
-    PlayerListEntry* ple;
+    std::shared_ptr<PlayerListEntry> ple;
 
     ple = pll->GetPointer(ParsedOperator.at(0));
     if (ple == nullptr) {
@@ -1151,8 +1153,8 @@ void CommandMain::CommandUnmute() {
 }
 
 void CommandMain::CommandMaterials() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     c->SendChat("§SMaterials:");
     Block* bm = Block::GetInstance();
     std::string toSend;
@@ -1176,10 +1178,10 @@ void CommandMain::CommandMaterials() {
 }
 
 void CommandMain::CommandListMaps() const {
-    Network* nm = Network::GetInstance();
+    
     MapMain* mapMain = MapMain::GetInstance();
 
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     c->SendChat("§SMaps:");
     std::string toSend;
     for(auto const &map : mapMain->_maps) {
@@ -1202,8 +1204,8 @@ void CommandMain::CommandListMaps() const {
 }
 
 void CommandMain::CommandServerInfo() const {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     std::string serverRunTime = stringulate(time(nullptr) - System::startTime / 120.0);
 
     c->SendChat("§SServer Info:");
@@ -1220,8 +1222,8 @@ void CommandMain::CommandServerInfo() const {
 }
 
 void CommandMain::CommandLogLast() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
 
     int numLines = 10;
 
@@ -1242,11 +1244,11 @@ void CommandMain::CommandLogLast() {
 
 
 void CommandMain::CommandUndoPlayer() {
-    Network* nm = Network::GetInstance();
+    
     Player_List* playerList= Player_List::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
-    PlayerListEntry* entry= playerList->GetPointer(ParsedOperator.at(0));
+    auto entry= playerList->GetPointer(ParsedOperator.at(0));
     
     if (entry == nullptr) {
         c->SendChat("§EUnable to find a player named '" + ParsedOperator.at(0) + "'.");
@@ -1263,8 +1265,8 @@ void CommandMain::CommandUndoPlayer() {
 }
 
 void CommandMain::CommandUndo() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     int timeAmount = 30000;
 
     if (!ParsedOperator.at(0).empty()) {
@@ -1276,8 +1278,8 @@ void CommandMain::CommandUndo() {
 }
 
 void CommandMain::CommandRedo() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     int timeAmount = 30000;
 
     if (!ParsedOperator.at(0).empty()) {
@@ -1289,8 +1291,8 @@ void CommandMain::CommandRedo() {
 }
 
 void CommandMain::CommandTeleport() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator.at(0));
 
@@ -1303,8 +1305,8 @@ void CommandMain::CommandTeleport() {
 }
 
 void CommandMain::CommandBring() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Entity> entry = Entity::GetPointer(ParsedOperator.at(0));
 
@@ -1317,8 +1319,8 @@ void CommandMain::CommandBring() {
 }
 
 void CommandMain::CommandMapFill() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
     if (!ParsedOperator.at(0).empty()) {
         MapMain* mapMain = MapMain::GetInstance();
@@ -1329,14 +1331,13 @@ void CommandMain::CommandMapFill() {
 }
 
 void CommandMain::CommandLoadMap() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
-    Files* fm = Files::GetInstance();
     std::string mapDirectory;
 
     if (!ParsedText0.empty()) {
-        mapDirectory = fm->GetFolder("Maps") + ParsedText0;
+        mapDirectory = Files::GetFolder("Maps") + ParsedText0;
     }
 
     MapMain* mapMain = MapMain::GetInstance();
@@ -1345,8 +1346,8 @@ void CommandMain::CommandLoadMap() {
 }
 
 void CommandMain::CommandResizeMap() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
     if (ParsedOperator.at(0).empty() || ParsedOperator.at(1).empty() || ParsedOperator[2].empty()) {
         c->SendChat("§EPlease provide an X, Y, and Z value.");
@@ -1374,8 +1375,8 @@ void CommandMain::CommandResizeMap() {
 }
 
 void CommandMain::CommandRenameMap() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
 
     if (ParsedText0.empty()) {
         c->SendChat("§EPlease provide a new name.");
@@ -1390,8 +1391,8 @@ void CommandMain::CommandRenameMap() {
 }
 
 void CommandMain::CommandDeleteMap() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     std::shared_ptr<Entity> e = Entity::GetPointer(CommandClientId, true);
     MapMain* mapMain = MapMain::GetInstance();
     mapMain->AddDeleteAction(CommandClientId, e->MapID);
@@ -1399,8 +1400,8 @@ void CommandMain::CommandDeleteMap() {
 }
 
 void CommandMain::CommandAddMap() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
 
     if (ParsedText0.empty()) {
         c->SendChat("§EPlease provide a name for the map.");
@@ -1412,8 +1413,8 @@ void CommandMain::CommandAddMap() {
 }
 
 void CommandMain::CommandMapRankBuildSet() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
 
     if (ParsedOperator.at(0).empty()) {
         c->SendChat("§EPlease provide a rank value.");
@@ -1442,8 +1443,8 @@ void CommandMain::CommandMapRankBuildSet() {
 }
 
 void CommandMain::CommandMapRankJoinSet() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
 
     if (ParsedOperator.at(0).empty()) {
         c->SendChat("§EPlease provide a rank value.");
@@ -1472,8 +1473,8 @@ void CommandMain::CommandMapRankJoinSet() {
 }
 
 void CommandMain::CommandMapRankShowSet() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
 
     if (ParsedOperator.at(0).empty()) {
         c->SendChat("§EPlease provide a rank value.");
@@ -1502,8 +1503,8 @@ void CommandMain::CommandMapRankShowSet() {
 }
 
 void CommandMain::CommandStopPhysics() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
@@ -1512,8 +1513,8 @@ void CommandMain::CommandStopPhysics() {
 }
 
 void CommandMain::CommandStartPhysics() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
@@ -1522,8 +1523,8 @@ void CommandMain::CommandStartPhysics() {
 }
 
 void CommandMain::CommandSetSpawn() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
@@ -1532,9 +1533,9 @@ void CommandMain::CommandSetSpawn() {
 }
 
 void CommandMain::CommandSetKilLSpawn() {
-    Network* nm = Network::GetInstance();
+    
 
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
@@ -1543,8 +1544,8 @@ void CommandMain::CommandSetKilLSpawn() {
 }
 
 void CommandMain::CommandTeleporters() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
@@ -1566,8 +1567,8 @@ void CommandMain::CommandTeleporters() {
 }
 
 void CommandMain::CommandDeleteTeleporter() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
 
     if (ParsedText0.empty()) {
         c->SendChat("§EPlease provide a name for the teleporter to delete.");
@@ -1586,8 +1587,8 @@ void CommandMain::CommandDeleteTeleporter() {
 }
 
 void CommandMain::CommandMapInfo() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
@@ -1617,8 +1618,8 @@ void CommandMain::CommandMapInfo() {
 }
 
 void CommandMain::CommandPlace() {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
+    
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
@@ -1654,10 +1655,8 @@ void CommandMain::CommandPlace() {
 }
 
 void CommandMain::CommandUserMaps() {
-    Files* fm = Files::GetInstance();
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(CommandClientId);
-    std::string usermapDirectory = fm->GetFolder("Usermaps");
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
+    std::string usermapDirectory = Files::GetFolder("Usermaps");
 
     c->SendChat("§SUsermaps:");
     std::string textToSend;

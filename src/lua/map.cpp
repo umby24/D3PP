@@ -1,13 +1,18 @@
 #include "lua/map.h"
 
 #include <lua.hpp>
+#include <network/Network_Functions.h>
 #include "world/Map.h"
+#include "world/MapMain.h"
 #include "Utils.h"
 #include "common/Logger.h"
 #include "common/Player_List.h"
 #include "network/NetworkClient.h"
 #include "network/Network.h"
 #include "generation/flatgrass.cpp"
+#include "world/CustomParticle.h"
+#include "network/packets/SpawnEffectPacket.h"
+#include "CPE.h"
 
 using namespace D3PP::world;
 using namespace D3PP::Common;
@@ -52,6 +57,10 @@ const struct luaL_Reg LuaMapLib::lib[] = {
         {"setfillblock", &LuaSetFillBlock},
         {"endfill", &LuaEndFill},
         {"fillflat", &LuaFillFlat},
+        {"createParticle", &LuaCreateParticle},
+        {"deleteParticle", &LuaDeleteParticle},
+        {"spawnParticle", &LuaSpawnParticle},
+        {"setProperty", &LuaSetProperty},
         {NULL, NULL}
 };
 
@@ -203,7 +212,7 @@ int LuaMapLib::LuaMapBlockChangePlayer(lua_State* L) {
     unsigned char priority = luaL_checkinteger(L, 10);
 
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* pEntry = pll->GetPointer(playerId);
+    auto pEntry = pll->GetPointer(playerId);
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> map = mm->GetPointer(mapId);
@@ -970,4 +979,161 @@ int LuaMapLib::LuaGetFillBlock(lua_State *L) {
 
     lua_pushinteger(L, result);
     return 1;
+}
+
+int LuaMapLib::LuaCreateParticle(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 20) {
+        Logger::LogAdd("Lua", "LuaError: Map.createParticle called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+    CustomParticle cp{};
+
+    int mapId = static_cast<int>(luaL_checkinteger(L, 1));
+    cp.effectId = luaL_checkinteger(L, 2);
+    cp.U1 = luaL_checkinteger(L, 3);
+    cp.V1 = luaL_checkinteger(L, 4);
+    cp.U2 = luaL_checkinteger(L, 5);
+    cp.V2 = luaL_checkinteger(L, 6);
+    cp.redTint = luaL_checkinteger(L, 7);
+    cp.blueTint = luaL_checkinteger(L, 8);
+    cp.greenTint = luaL_checkinteger(L, 9);
+    cp.frameCount = luaL_checkinteger(L, 10);
+    cp.particleCount = luaL_checkinteger(L, 11);
+    cp.size = luaL_checkinteger(L, 12);
+    cp.sizeVariation = luaL_checkinteger(L, 13);
+    cp.spread = luaL_checkinteger(L, 14);
+    cp.speed = luaL_checkinteger(L, 15);
+    cp.gravity = luaL_checkinteger(L, 16);
+    cp.baseLifetime = luaL_checkinteger(L, 17);
+    cp.lifetimeVariation = luaL_checkinteger(L, 18);
+    cp.collideFlags = luaL_checkinteger(L, 19);
+    cp.fullBright = luaL_checkinteger(L, 20);
+
+    bool result = false;
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map != nullptr) {
+        map->AddParticle(cp);
+        result = true;
+    }
+
+    lua_pushboolean(L, result);
+    return 1;
+}
+
+int LuaMapLib::LuaDeleteParticle(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: Map.deleteParticle called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    int mapId = static_cast<int>(luaL_checkinteger(L, 1));
+    int particleId = luaL_checkinteger(L, 2);
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map != nullptr) {
+        map->DeleteParticle(particleId);
+    }
+
+    return 0;
+}
+
+int LuaMapLib::LuaSpawnParticle(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 8) {
+        Logger::LogAdd("Lua", "LuaError: Map.spawnParticle called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    int mapId = static_cast<int>(luaL_checkinteger(L, 1));
+    int particleId = luaL_checkinteger(L, 2);
+    int originX = luaL_checkinteger(L, 3);
+    int originY = luaL_checkinteger(L, 4);
+    int originZ = luaL_checkinteger(L, 5);
+
+    int positionX = luaL_checkinteger(L, 6);
+    int positionY = luaL_checkinteger(L, 7);
+    int positionZ = luaL_checkinteger(L, 8);
+
+    D3PP::network::SpawnEffectPacket spp;
+    spp.effectId = particleId;
+    spp.originX = originX;
+    spp.originY = originY;
+    spp.originZ = originZ;
+    spp.positionX = positionX;
+    spp.positionY = positionY;
+    spp.positionZ = positionZ;
+    NetworkFunctions::PacketToMap(mapId, spp, CUSTOM_PARTICLES_EXT_NAME, 1);
+
+    return 0;
+}
+
+int LuaMapLib::LuaSetProperty(lua_State* L)
+{
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 3) {
+        Logger::LogAdd("Lua", "LuaError: Map.setProperty called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    int mapId = static_cast<int>(luaL_checkinteger(L, 1));
+    int propertyId = luaL_checkinteger(L, 2);
+    int value = luaL_checkinteger(L, 3);
+
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> map = mm->GetPointer(mapId);
+
+    if (map != nullptr) {
+        if (!map->loaded) {
+            return 0;
+        }
+
+        auto env = map->GetMapEnvironment();
+        switch (propertyId) {
+        case 0:
+            env.SideBlock = value;
+            break;
+        case 1:
+            env.EdgeBlock = value;
+            break;
+        case 2:
+            env.SideLevel = value;
+            break;
+        case 3:
+            env.cloudHeight = value;
+            break;
+        case 4:
+            env.maxFogDistance = value;
+            break;
+        case 5:
+            env.cloudSpeed = value;
+            break;
+        case 6:
+            env.weatherSpeed = value;
+            break;
+        case 7:
+            env.weatherFade = value;
+            break;
+        case 8:
+            env.expoFog = value;
+            break;
+        case 9:
+            env.mapSideOffset = value;
+            break;
+        default:
+            Logger::LogAdd("Lua", "LuaError: Map.setProperty called with invalid property id. Must be between 0 and 9.", WARNING, GLF);
+            break;
+        }
+
+        map->SetMapEnvironment(env);
+    }
+    return 0;
 }

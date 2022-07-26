@@ -37,8 +37,7 @@ std::vector<std::string> GetDirectories(const std::string &dir) {
 }
 
 void D3PP::plugins::PluginManager::RefreshPluginList() {
-    Files* fm = Files::GetInstance();
-    std::string pluginBaseDirectory = fm->GetFolder("Plugins");
+    std::string pluginBaseDirectory = Files::GetFolder("Plugins");
     std::vector<std::string> pluginDirectories = GetDirectories(pluginBaseDirectory);
 
     for (auto &plugin : m_plugins) { // -- Mark unfound plugins for removal.
@@ -72,6 +71,10 @@ void D3PP::plugins::PluginManager::LoadPlugins() {
 
     for(auto & plugin : m_plugins) {
         if (!plugin->IsLoaded()) {
+            plugin->Load();
+        }
+        else {
+            plugin->Unload();
             plugin->Load();
         }
     }
@@ -122,6 +125,24 @@ void PluginManager::TriggerBuildMode(const std::string &function, int clientId, 
     for(auto & plugin : m_plugins) {
         if (plugin->IsLoaded()) {
             plugin->TriggerBuildMode(function, clientId, mapId, X, Y, Z, mode, block);
+        }
+    }
+}
+
+void D3PP::plugins::PluginManager::TriggerBlockCreate(const std::string& function, int mapId, unsigned short X, unsigned short Y, unsigned short Z)
+{
+    for (auto& plugin : m_plugins) {
+        if (plugin->IsLoaded()) {
+            plugin->TriggerBlockCreate(function, mapId, X, Y, Z);
+        }
+    }
+}
+
+void D3PP::plugins::PluginManager::TriggerBlockDelete(const std::string& function, int mapId, unsigned short X, unsigned short Y, unsigned short Z)
+{
+    for (auto& plugin : m_plugins) {
+        if (plugin->IsLoaded()) {
+            plugin->TriggerBlockDelete(function, mapId, X, Y, Z);
         }
     }
 }

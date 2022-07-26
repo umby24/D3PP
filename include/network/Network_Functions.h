@@ -7,6 +7,7 @@
 #include <string>
 
 #include "common/MinecraftLocation.h"
+#include "network/IPacket.h"
 
 class NetworkFunctions {
 public:
@@ -21,5 +22,6 @@ public:
     static void NetworkOutEntityAdd(const int& clientId, const char& playerId, const std::string& name, const MinecraftLocation& location);
     static void NetworkOutEntityDelete(const int& clientId, const char& playerId);
     static void NetworkOutEntityPosition(const int& clientId, const char& playerId, const MinecraftLocation& location);
+    static void PacketToMap(const int& mapId, D3PP::network::IPacket& p, std::string reqExt = "", int reqVer = 0);
 };
 #endif //D3PP_NETWORK_FUNCTIONS_H

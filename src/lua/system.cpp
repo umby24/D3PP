@@ -5,11 +5,13 @@
 #include "common/Logger.h"
 #include "Utils.h"
 #include "common/Files.h"
+#include "common/Configuration.h"
 #include "network/Network_Functions.h"
 #include "EventSystem.h"
 #include "plugins/PluginManager.h"
 #include "plugins/LuaPlugin.h"
 #include "plugins/LuaState.h"
+#include "System.h"
 #include "Command.h"
 
 int eAdd(lua_State* L) {
@@ -32,6 +34,9 @@ const struct luaL_Reg LuaSystemLib::lib[] = {
         {"log", &LuaSystemLog},
         {"getplatform", &LuaGetPlatform},
         {"addCmd", &LuaAddCommand},
+        {"setSoftwareName", &LuaSetSoftwareName},
+        {"setServerName", &LuaSetServerName},
+        {"addTextColor", &LuaAddTextColor},
         {NULL, NULL}
 };
 
@@ -59,9 +64,8 @@ int LuaSystemLib::LuaFileGet(lua_State* L) {
         return 0;
     }
 
-    std::string fileName(lua_tostring(L, 1));
-    Files* f = Files::GetInstance();
-    lua_pushstring(L, f->GetFile(fileName).c_str());
+    std::string fileName(luaL_checkstring(L, 1));
+    lua_pushstring(L, Files::GetFile(fileName).c_str());
     return 1;
 }
 
@@ -74,9 +78,8 @@ int LuaSystemLib::LuaFolderGet(lua_State* L) {
         return 0;
     }
 
-    std::string fileName(lua_tostring(L, 1));
-    Files* f = Files::GetInstance();
-    lua_pushstring(L, f->GetFolder(fileName).c_str());
+    std::string fileName(luaL_checkstring(L, 1));
+    lua_pushstring(L, Files::GetFolder(fileName).c_str());
     return 1;
 }
 
@@ -138,9 +141,9 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
         return 0;
     }
 
-    std::string eventId(lua_tostring(L, 1));
-    std::string function(lua_tostring(L, 2));
-    std::string type(lua_tostring(L, 3));
+    std::string eventId(luaL_checkstring(L, 1));
+    std::string function(luaL_checkstring(L, 2));
+    std::string type(luaL_checkstring(L, 3));
     int setOrCheck = luaL_checkinteger(L, 4);
     int timed = luaL_checkinteger(L, 5);
     int mapId = luaL_checkinteger(L, 6);
@@ -161,12 +164,13 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
     };
 
     if (setOrCheck == 1) {
-        if (m_thisPlugin->events.find(typeAsEvent) != m_thisPlugin->events.end()) {
-            m_thisPlugin->events[typeAsEvent].push_back(newEvent);
-        }
-        else {
-            m_thisPlugin->events.insert(std::make_pair(typeAsEvent, std::vector<LuaEvent>()));
-            m_thisPlugin->events[typeAsEvent].push_back(newEvent);
+        if (m_thisPlugin->events.find(typeAsEvent) == m_thisPlugin->events.end())
+            m_thisPlugin->events.insert(std::make_pair(typeAsEvent, std::map<std::string, LuaEvent>()));
+
+        if (m_thisPlugin->events[typeAsEvent].find(eventId) != m_thisPlugin->events[typeAsEvent].end()) {
+            m_thisPlugin->events[typeAsEvent][eventId] = newEvent;
+        } else {
+            m_thisPlugin->events[typeAsEvent].insert(std::make_pair(eventId, newEvent));
         }
     }
     else {
@@ -174,7 +178,7 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
 
         if (m_thisPlugin->events.find(typeAsEvent) != m_thisPlugin->events.end()) {
             for (const auto& i : m_thisPlugin->events[typeAsEvent]) {
-                if (i.type == typeAsEvent && i.functionName == function) {
+                if (i.second.type == typeAsEvent && i.second.functionName == function && i.first == eventId) {
                     eventExists = true;
                     break;
                 }
@@ -192,15 +196,19 @@ int LuaSystemLib::LuaEventDelete(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Event_Delete called with invalid number of arguments.", LogType::WARNING,GLF);
+        Logger::LogAdd("Lua", "LuaError: System.deleteEvent called with invalid number of arguments.", LogType::WARNING,GLF);
         return 0;
     }
 
-    std::string eventId(lua_tostring(L, 1));
-    // -- TODO:
+    std::string eventId(luaL_checkstring(L, 1));
+
+    for(const auto& i : m_thisPlugin->events) {
+        if (m_thisPlugin->events[i.first].contains(eventId))
+            m_thisPlugin->events[i.first].erase(eventId);
+    }
+
     return 0;
 }
-
 
 int LuaSystemLib::LuaMessageToAll(lua_State* L) {
     int nArgs = lua_gettop(L);
@@ -233,12 +241,7 @@ int LuaSystemLib::LuaMessage(lua_State* L) {
 
     int clientId = luaL_checkinteger(L, 1);
     std::string message = luaL_checkstring(L, 2);
-
-    int messageType = 0;
-
-    if (nArgs == 3 && lua_isnumber(L, 3)) {
-        messageType = luaL_checkinteger(L, 3);
-    }
+    int messageType = luaL_optinteger(L, 3, 0);
 
     if (clientId != -200) {
         // -- Verify this is a valid client id.
@@ -263,19 +266,83 @@ int LuaSystemLib::LuaAddCommand(lua_State* L) {
     std::string handleFunction(luaL_checkstring(L, 4));
     std::string description(luaL_checkstring(L, 5));
 
+    if (!handleFunction.starts_with("Lua:"))
+        handleFunction = "Lua:" + handleFunction;
+
     CommandMain* cm = CommandMain::GetInstance();
+    std::erase_if(cm->Commands, [&commandName](const Command &c){ return c.Id == commandName; });
 
     Command newCmd;
     newCmd.Id = commandName;
     newCmd.Name = commandName;
     newCmd.Rank = minRank;
     newCmd.RankShow = minRank;
-    newCmd.Plugin = "Lua:" + handleFunction;
+    newCmd.Plugin = handleFunction;
     newCmd.Group = commandGroup;
     newCmd.Description = description;
     newCmd.Hidden = false;
     newCmd.Internal = false;
+    newCmd.CanConsole = true;
     cm->Commands.push_back(newCmd);
+    cm->RefreshGroups();
+
+    return 0;
+}
+
+int LuaSystemLib::LuaSetSoftwareName(lua_State* L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs < 1) {
+        Logger::LogAdd("Lua", "LuaError: System.setSoftwareName called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    std::string softwareName(luaL_checkstring(L, 1));
+    System::ServerName = softwareName;
+
+    return 0;
+}
+
+int LuaSystemLib::LuaSetServerName(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs < 1) {
+        Logger::LogAdd("Lua", "LuaError: System.setServerName called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    std::string softwareName(luaL_checkstring(L, 1));
+    Configuration::GenSettings.name = softwareName;
+    Configuration* cc = Configuration::GetInstance();
+    cc->Save();
+
+
+    return 0;
+}
+
+int LuaSystemLib::LuaAddTextColor(lua_State* L)
+{
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 5) {
+        Logger::LogAdd("Lua", "LuaError: System.addTextColor called with invalid number of arguments.", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    std::string character(luaL_checkstring(L, 1));
+    int redVal = luaL_checkinteger(L, 2);
+    int greenVal = luaL_checkinteger(L, 3);
+    int blueVal = luaL_checkinteger(L, 4);
+    int alphaVal = luaL_checkinteger(L, 5);
+
+    if (character.size() > 1) {
+        Logger::LogAdd("Lua", "LuaError: System.addTextColor, character invalid: may only be one character!", LogType::WARNING, GLF);
+        return 0;
+    }
+
+    std::erase_if(Configuration::textSettings.colors, [&character](const CustomColor& c) { return c.character == character; });
+
+    Configuration::textSettings.colors.push_back(CustomColor{ character, redVal, greenVal, blueVal, alphaVal });
 
     return 0;
 }

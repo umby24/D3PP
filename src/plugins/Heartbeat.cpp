@@ -4,16 +4,17 @@
 
 #include "plugins/Heartbeat.h"
 
-
+#include <algorithm>
 #include "System.h"
-#include "common/TaskScheduler.h"
 #include "network/Network.h"
+#include "network/Server.h"
 #include "world/Player.h"
 #include "network/httplib.h"
 #include "digestpp/digestpp.hpp"
 #include "Utils.h"
 #include "common/Logger.h"
 #include "common/Configuration.h"
+#include "network/NetworkClient.h"
 #include "json.hpp"
 using json = nlohmann::json;
 
@@ -21,21 +22,17 @@ const std::string MODULE_NAME = "Heartbeat";
 Heartbeat* Heartbeat::Instance = nullptr;
 
 void Heartbeat::Beat() {
-    System* sMain = System::GetInstance();
-    Network* nMain = Network::GetInstance();
-    PlayerMain* pMain = PlayerMain::GetInstance();
-
     httplib::Client cli(CLASSICUBE_NET_URL);
 
     httplib::Params params;
     params.emplace("name", Configuration::GenSettings.name);
     params.emplace("port", stringulate(Configuration::NetSettings.ListenPort));
-    params.emplace("users", stringulate(nMain->roClients.size()));
+    params.emplace("users", stringulate(GetUniqueOnlinePlayers()));
     params.emplace("max", stringulate(Configuration::NetSettings.MaxPlayers));
     params.emplace("public", Configuration::NetSettings.Public ? "true" : "false");
     params.emplace("version", "7");
     params.emplace("salt", salt);
-    params.emplace("software", "&eD3PP Beta");
+    params.emplace("software", "&e" + System::ServerName);
 
     auto res = cli.Post(CLASSICUBE_HEARTBEAT_PATH, params);
     if (!res) {
@@ -60,7 +57,7 @@ void Heartbeat::Beat() {
 Heartbeat::Heartbeat() {
     salt = "";
     isPublic = false;
-    lastBeat = time(nullptr);
+    lastBeat = time(nullptr)-25;
     isFirstBeat = true;
     
     this->Setup = [this] { Init(); };
@@ -80,7 +77,12 @@ std::string Heartbeat::CreateSalt() {
 }
 
 void Heartbeat::Init() {
-    salt = CreateSalt();
+    salt = Configuration::NetSettings.Salt;
+    if (salt.empty()) {
+        salt = CreateSalt();
+        Configuration::NetSettings.Salt = salt;
+        Configuration::GetInstance()->Save();
+    }
 }
 
 void Heartbeat::MainFunc() {
@@ -102,4 +104,23 @@ bool Heartbeat::VerifyName(std::string name, std::string pass) {
     std::string valid = digestpp::md5().absorb(toHash).hexdigest();
 
     return Utils::InsensitiveCompare(valid, pass);
+}
+
+int Heartbeat::GetUniqueOnlinePlayers() {
+    int result = 0;
+    std::vector<std::string> uniqueNames;
+    std::shared_lock sharedLock(D3PP::network::Server::roMutex);
+    for (auto const &nc: D3PP::network::Server::roClients) {
+        if (!nc->GetLoggedIn())
+            continue;
+
+        if (std::find(uniqueNames.begin(), uniqueNames.end(), nc->GetLoginName()) != uniqueNames.end()) {
+            continue;
+        }
+
+        uniqueNames.push_back(nc->GetLoginName());
+        result++;
+    }
+
+    return result;
 }

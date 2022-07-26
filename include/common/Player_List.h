@@ -38,7 +38,7 @@ public:
     int MuteTime;
     std::string MuteMessage;
     std::string Attributes[5];
-    int NumAttributes[5];
+    std::vector<int> NumAttributes;
     std::string StrAttributes[5];
     bool GlobalChat;
     PlayerListEntry();
@@ -67,13 +67,13 @@ public:
     void CreateDatabase();
     void CloseDatabase();
     void OpenDatabase();
-    PlayerListEntry* GetPointer(int playerId);
-    PlayerListEntry* GetPointer(std::string playerName);
+    std::shared_ptr<PlayerListEntry> GetPointer(int playerId);
+    std::shared_ptr<PlayerListEntry> GetPointer(std::string playerName);
     void Load();
     void Save();
     void Add(std::string name);
     void MainFunc();
-    std::vector<PlayerListEntry> _pList;
+    std::vector<std::shared_ptr<PlayerListEntry>> _pList;
     static Player_List* GetInstance();
     bool SaveFile;
 protected:

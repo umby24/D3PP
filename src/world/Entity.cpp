@@ -9,11 +9,13 @@
 
 #include "network/Network.h"
 #include "network/NetworkClient.h"
+#include "network/Server.h"
 #include "world/Player.h"
 #include "common/Player_List.h"
 
 #include "world/Teleporter.h"
 #include "world/Map.h"
+#include "world/MapMain.h"
 #include "network/Network_Functions.h"
 #include "common/Logger.h"
 #include "common/Vectors.h"
@@ -161,10 +163,9 @@ std::shared_ptr<Entity> Entity::GetPointer(int id, bool isClientId) {
 }
 
 void Entity::MessageToClients(int id, const std::string& message) {
-    Network* n = Network::GetInstance();
-
-    for(auto const &nc : n->roClients) {
-        if (nc->player->tEntity->Id == id) {
+    std::shared_lock lock(D3PP::network::Server::roMutex);
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (nc->GetPlayerInstance()->GetEntity()->Id == id) {
             NetworkFunctions::SystemMessageNetworkSend(nc->GetId(), message);
         }
     }
@@ -195,12 +196,12 @@ void Entity::Delete(int id) {
         return;
     Network* n = Network::GetInstance();
 
-    for(auto const &nc : n->roClients) {
-        if (nc->player == nullptr || nc->player->tEntity == nullptr)
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (nc->GetPlayerInstance() == nullptr || nc->GetPlayerInstance()->GetEntity() == nullptr)
             continue;
             
-        if (nc->player->tEntity == e) {
-            nc->player->tEntity = nullptr;
+        if (nc->GetPlayerInstance()->GetEntity() == e) {
+            nc->GetPlayerInstance()->GetEntity() = nullptr;
         }
     }
 
@@ -213,14 +214,14 @@ void Entity::Delete(int id) {
 
 void Entity::Spawn() {
     // -- Entity::Add(); should be called..
-    Network* n = Network::GetInstance();
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     std::shared_ptr<Entity> selfPointer = GetPointer(Id);
 
-    for(auto const &nc : n->roClients) {
-        if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (!nc->GetLoggedIn() || nc->GetPlayerInstance() == nullptr || nc->GetPlayerInstance()->GetEntity() == nullptr)
             continue;
 
-        if (nc->player->MapId != MapID)
+        if (nc->GetMapId() != MapID)
             continue;
 
         nc->SpawnEntity(selfPointer);
@@ -228,14 +229,14 @@ void Entity::Spawn() {
 }
 
 void Entity::Despawn() {
-    Network* n = Network::GetInstance();
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     std::shared_ptr<Entity> selfPointer = GetPointer(Id);
 
-    for(auto const &nc : n->roClients) {
-        if (!nc->LoggedIn || nc->player == nullptr || nc->player->tEntity == nullptr)
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (!nc->GetLoggedIn() || nc->GetPlayerInstance() == nullptr || nc->GetPlayerInstance()->GetEntity() == nullptr)
             continue;
 
-        if (nc->player->MapId != MapID)
+        if (nc->GetMapId() != MapID)
             continue;
 
         nc->DespawnEntity(selfPointer);
@@ -247,11 +248,14 @@ void Entity::Kill() {
     std::shared_ptr<Map> cm = mm->GetPointer(MapID);
 
     if (timeMessageDeath < time(nullptr)) {
-        timeMessageDeath = time(nullptr) + 2;
-        
         EventEntityDie ed;
         ed.entityId = this->Id;
         Dispatcher::post(ed);
+        if (ed.isCancelled())
+            return;
+
+        timeMessageDeath = time(nullptr) + 2;
+        
 
         NetworkFunctions::SystemMessageNetworkSend2All(MapID, "&c" + Name + " died.");
 
@@ -278,27 +282,32 @@ void Entity::PositionSet(int mapId, MinecraftLocation location, unsigned char pr
     MapMain* mm = MapMain::GetInstance();
     
     if (mapId != MapID && associatedClient != nullptr) {
-        associatedClient->player->ChangeMap(mm->GetPointer(mapId));
+        auto concrete = std::static_pointer_cast<D3PP::world::Player>(associatedClient->GetPlayerInstance());
+        concrete->ChangeMap(mm->GetPointer(mapId));
         return;
     }
-
-    Location = location;
-
 
     std::shared_ptr<Map> currentMap = mm->GetPointer(MapID);
 
     EventEntityPositionSet eps;
     eps.entityId = Id;
     eps.mapId = mapId;
-    eps.x = Location.X() / 32.0f;
-    eps.y = Location.Y() / 32.0f;
-    eps.z = (Location.Z() -51.0f) / 32.0f;
-    eps.rotation = Location.Rotation;
-    eps.look = Location.Look;
+    eps.x = location.X() / 32.0f;
+    eps.y = location.Y() / 32.0f;
+    eps.z = (location.Z() -51.0f) / 32.0f;
+    eps.rotation = location.Rotation;
+    eps.look = location.Look;
     eps.priority = priority;
     eps.sendOwnClient = sendOwn;
     Dispatcher::post(eps);
 
+    if (eps.isCancelled()) {
+        SendPosOwn = true;
+        HandleMove();
+        return;
+    }
+
+    Location = location;
     PositionCheck();
 
     if (currentMap != nullptr) {
@@ -323,26 +332,24 @@ void Entity::PositionCheck() {
         return;
     }
     // -- do a teleporter check..
-//    for(auto const &tp : theMap->Portals) {
-//        D3PP::Common::Vector3S startLoc = tp.OriginStart.GetAsBlockCoords();
-//        D3PP::Common::Vector3S endLoc = tp.OriginEnd.GetAsBlockCoords();
-//
-//        if (blockLocation.X >= startLoc.X && blockLocation.X <= endLoc.X && blockLocation.Y >= startLoc.Y && blockLocation.Y<= endLoc.Y && blockLocation.Z>= startLoc.Z && blockLocation.Z <= endLoc.Z) {
-//            int destMapId = MapID;
-//
-//            if (!tp.DestinationMap.empty()) {
-//                std::shared_ptr<Map> mapInstance = mm->GetPointerUniqueId(tp.second.DestMapUniqueId);
-//                if (mapInstance != nullptr) {
-//                    destMapId = mapInstance->data.ID;
-//                }
-//            } else if (tp.second.DestMapId != -1) {
-//                destMapId = tp.second.DestMapId;
-//            }
-//
-//            PositionSet(destMapId, tp.Destination, 10, true);
-//            break;
-//        }
-//    }
+   for(auto const &tp : theMap->Portals) {
+       D3PP::Common::Vector3S startLoc = tp.OriginStart.GetAsBlockCoords();
+       D3PP::Common::Vector3S endLoc = tp.OriginEnd.GetAsBlockCoords();
+
+       if (blockLocation.X >= startLoc.X && blockLocation.X <= endLoc.X && blockLocation.Y >= startLoc.Y && blockLocation.Y<= endLoc.Y && blockLocation.Z>= startLoc.Z && blockLocation.Z <= endLoc.Z) {
+           int destMapId = MapID;
+
+           if (!tp.DestinationMap.empty()) {
+               std::shared_ptr<Map> mapInstance = mm->GetPointer(tp.DestinationMap);
+               if (mapInstance != nullptr) {
+                   destMapId = mapInstance->ID;
+               }
+           }
+
+           PositionSet(destMapId, tp.Destination, 10, true);
+           break;
+       }
+   }
 
     // -- check if the block we're touching is a killing block, if so call kill.
     for (int i = 0; i < 2; i++) {
@@ -368,18 +375,17 @@ void Entity::Add(const std::shared_ptr<Entity> &e) {
 }
 
 void Entity::SetModel(std::string modelName) {
-    Network* nm = Network::GetInstance();
-
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     model = std::move(modelName);
-    std::shared_ptr<NetworkClient> myClient = nullptr;
-    for(auto const &nc : nm->roClients) {
-        if (!nc->LoggedIn)
+    std::shared_ptr<IMinecraftClient> myClient = nullptr;
+    for(auto const &nc : D3PP::network::Server::roClients) {
+        if (!nc->GetLoggedIn())
             continue;
 
-        if (CPE::GetClientExtVersion(nc, CHANGE_MODEL_EXT_NAME) <= 0 || nc->player->MapId != MapID)
+        if (CPE::GetClientExtVersion(nc, CHANGE_MODEL_EXT_NAME) <= 0 || nc->GetMapId() != MapID)
             continue;
 
-        if (nc->player->tEntity->Id == Id) {
+        if (nc->GetPlayerInstance()->GetEntity()->Id == Id) {
             myClient = nc;
             continue;
         }

@@ -5,7 +5,9 @@
 #include "plugins/RestApi.h"
 
 #include "world/Map.h"
+#include "world/MapMain.h"
 #include "network/httplib.h"
+#include "network/Server.h"
 #include "common/Configuration.h"
 #include "common/Logger.h"
 #include "Rank.h"
@@ -230,11 +232,13 @@ void RestApi::Init() {
 
         json j;
         j["max"] = Configuration::NetSettings.MaxPlayers;
-        j["current"] = nMain->roClients.size();
+        j["current"] = D3PP::network::Server::roClients.size();
         auto jPlayers = json::array();
-
-        for (auto const &nc : nMain->roClients) {
-            jPlayers.push_back(nc->GetLoginName());
+        {
+            std::shared_lock lock(D3PP::network::Server::roMutex);
+            for (auto const &nc: D3PP::network::Server::roClients) {
+                jPlayers.push_back(nc->GetLoginName());
+            }
         }
 
         j["list"] = jPlayers;

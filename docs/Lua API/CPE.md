@@ -1,7 +1,7 @@
 # Lua CPE Module
 
-## CPE.getsrvexts()
-Returns Lua Table of supported extensions, in [Extension] = Version format.
+## CPE.getextversion(Client_ID, ExtensionName)
+Returns the version of the given extension this client supports. 0 for no support.
 ## CPE.getexts(Client_ID)
 Returns a lua table of the client's supported extensions, in [Extension] = Version format.
 ## CPE.addselection(Client_ID, Selection_ID, Label, Start_X, Start_Y, Start_Z, End_X, End_Y, End_Z, Red, Green, Blue, Opacity)

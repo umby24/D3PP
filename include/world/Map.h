@@ -21,7 +21,9 @@
 
 #include "world/IMapProvider.h"
 #include "world/MapActions.h"
+#include "world/MapIntensiveActions.h"
 #include "world/FillState.h"
+#include "world/CustomParticle.h"
 
 #include "BlockChangeQueue.h"
 #include "PhysicsQueue.h"
@@ -29,25 +31,12 @@
 class IMinecraftClient;
 class Entity;
 
+namespace D3PP::files {
+    struct MapRankElement;
+}
+
 namespace D3PP::world {
     class Teleporter;
-    enum MapAction {
-        SAVE = 0,
-        LOAD = 2,
-        RESIZE = 5,
-        FILL = 7,
-        DELETE = 10,
-    };
-    struct MapActionItem {
-        int ID;
-        int ClientID;
-        int MapID;
-        MapAction Action;
-        std::string FunctionName;
-        std::string Directory;
-        Common::Vector3S Location;
-        std::string ArgumentString;
-    };
 
     struct MapBlockChanged {
 
@@ -65,7 +54,6 @@ namespace D3PP::world {
 
     const std::string MAP_LIST_FILE = "Map_List";
     const std::string MAP_SETTINGS_FILE = "Map_Settings";
-    const std::string MAP_HTML_FILE = "Map_HTML";
 
     const int MAP_BLOCK_ELEMENT_SIZE = 4;
 
@@ -81,6 +69,8 @@ namespace D3PP::world {
 
         std::vector<UndoStep> UndoCache;
         std::vector<Teleporter> Portals;
+        std::vector<CustomParticle> Particles;
+        std::vector<D3PP::files::MapRankElement> RankBoxes;
 
         bool BlockchangeStopped, PhysicsStopped, loading, loaded;
         std::string filePath;
@@ -89,7 +79,7 @@ namespace D3PP::world {
 
         Map();
         std::string Name() { return m_mapProvider->MapName; }
-        Common::Vector3S GetSize() { return Common::Vector3S{m_mapProvider->GetSize()}; }
+        Common::Vector3S GetSize() { if (loaded) return Common::Vector3S{ m_mapProvider->GetSize() }; else return Common::Vector3S(); }
         MinecraftLocation GetSpawn() { return m_mapProvider->GetSpawn(); }
 
         void SetSpawn(MinecraftLocation location);
@@ -121,10 +111,14 @@ namespace D3PP::world {
 
         void
         AddTeleporter(std::string id, MinecraftLocation start, MinecraftLocation end, MinecraftLocation destination,
-                      std::string destMapUniqueId, int destMapId);
+                      std::string destMapName);
 
         void DeleteTeleporter(std::string id);
         Teleporter GetTeleporter(std::string id);
+
+        void AddParticle(CustomParticle p);
+        void DeleteParticle(int effectId);
+
         void MapExport(MinecraftLocation start, MinecraftLocation end, std::string filename);
         void MapImport(std::string filename, MinecraftLocation location, short scaleX, short scaleY, short scaleZ);
 
@@ -139,6 +133,7 @@ namespace D3PP::world {
         void SetBlocks(const std::vector<unsigned char>& blocks) { m_mapProvider->SetBlocks(blocks); }
         std::mutex BlockChangeMutex;
         std::unique_ptr<FillState> CurrentFillState;
+        MapIntensiveActions IActions;
     protected:
         std::unique_ptr<IMapProvider> m_mapProvider;
     private:
@@ -149,59 +144,6 @@ namespace D3PP::world {
                               unsigned char oldType) const;
 
         void  QueuePhysicsAround(const Common::Vector3S& loc);
-    };
-
-    class MapMain : TaskItem {
-    public:
-        MapMain();
-
-        std::shared_ptr<Map> GetPointer(int id);
-        std::shared_ptr<Map> GetPointer(const std::string& name);
-        
-        int Add(int id, short x, short y, short z, const std::string &name);
-        void Delete(int id);
-        static MapMain *GetInstance();
-        static std::string GetMapMOTDOverride(int mapId);
-        static int GetMapSize(int x, int y, int z, int blockSize) { return (x * y * z) * blockSize; }
-        static int GetMapOffset(int x, int y, int z, int sizeX, int sizeY, int sizeZ, int blockSize) {
-            return (x + y * sizeX + z * sizeX * sizeY) * blockSize;
-        }
-        static Common::Vector3S GetMapExportSize(const std::string &filename);
-        void MainFunc();
-        void AddSaveAction(int clientId, int mapId, const std::string &directory);
-        void AddLoadAction(int clientId, int mapId, const std::string &directory);
-        void AddResizeAction(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z);
-        void AddFillAction(int clientId, int mapId, std::string functionName, std::string argString);
-        void AddDeleteAction(int clientId, int mapId);
-        bool SaveFile;
-        std::map<int, std::shared_ptr<Map>> _maps;
-    private:
-        static MapMain *Instance;
-        std::thread BlockchangeThread;
-        std::thread PhysicsThread;
-        bool mbcStarted;
-        bool phStarted;
-
-        time_t SaveFileTimer;
-        std::string TempFilename;
-        int TempId;
-        std::string TempOverviewFilename;
-        long LastWriteTime;
-
-        std::vector<MapActionItem> _mapActions;
-
-        // --
-        long mapSettingsLastWriteTime;
-        int mapSettingsTimerFileCheck;
-        int mapSettingsMaxChangesSec;
-        
-        int GetMapId();
-        void MapListSave();
-        void MapListLoad();
-        void MapSettingsSave();
-        void MapSettingsLoad();
-        void MapBlockChange();
-        void MapBlockPhysics();
     };
 }
 

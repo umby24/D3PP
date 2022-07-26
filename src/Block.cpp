@@ -8,7 +8,7 @@
 #include "Utils.h"
 #include "common/Files.h"
 #include "common/Logger.h"
-
+#include "Utils.h"
 
 Block* Block::Instance = nullptr;
 const std::string Block::MODULE_NAME = "Block";
@@ -43,7 +43,7 @@ MapBlock Block::GetBlock(int id) {
     return result;
 }
 
-MapBlock Block::GetBlock(std::string name) {
+MapBlock Block::GetBlock(const std::string& name) {
     if (!hasLoaded)
         Load();
 
@@ -63,7 +63,7 @@ void Block::LoadOld() {
     if (Utils::FileSize("Data/Block.txt") == -1)
         return;
     
-    Logger::LogAdd(MODULE_NAME, "Importing old block file, Blocks.json will be overwritten.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Importing old block file, Blocks.json will be overwritten.", LogType::NORMAL, GLF);
     Blocks.clear();
     for (auto i = 0; i < 255; i++) { // -- Pre-pop..
         struct MapBlock shell { i };
@@ -106,7 +106,7 @@ void Block::LoadOld() {
             Blocks[newItem.Id] = newItem;
     }
 
-    Logger::LogAdd(MODULE_NAME, stringulate(Blocks.size()) + " blocks imported.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, stringulate(Blocks.size()) + " blocks imported.", LogType::NORMAL, GLF);
     Save();
     std::filesystem::remove("Data/Block.txt");
 }
@@ -120,36 +120,34 @@ void Block::Load() {
         LoadOld();
         return;
     }
-    
-    Files* f = Files::GetInstance();
-    std::string filePath = f->GetFile(BLOCK_FILE_NAME);
+
+    std::string filePath = Files::GetFile(BLOCK_FILE_NAME);
     json j;
 
     std::ifstream iStream(filePath);
 
     if (!iStream.is_open()) {
-        Logger::LogAdd(MODULE_NAME, "Failed to load blocks!!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Failed to load blocks!!", LogType::L_ERROR, GLF);
         return;
     }
     try {
         iStream >> j;
-    } catch (int exception) {
-        Logger::LogAdd(MODULE_NAME, "Failed to load blocks! [" + stringulate(exception) + "]", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+    } catch (std::exception e) {
+        Logger::LogAdd(MODULE_NAME, "Failed to load blocks! [" + stringulate(e.what()) + "]", LogType::L_ERROR, GLF);
         return;
     }
     iStream.close();
 
     SetJson(j);
 
-    Logger::LogAdd(MODULE_NAME, "File loaded [" + filePath + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__ );
+    Logger::LogAdd(MODULE_NAME, "File loaded [" + filePath + "]", LogType::NORMAL, GLF );
     hasLoaded = true;
     time_t modTime = Utils::FileModTime(filePath);
     LastFileDate = modTime;
 }
 
 void Block::Save() {
-    Files* f = Files::GetInstance();
-    std::string blockFile = f->GetFile(BLOCK_FILE_NAME);
+    std::string blockFile = Files::GetFile(BLOCK_FILE_NAME);
 
     std::ofstream oStream(blockFile, std::ios::trunc);
     oStream << GetJson();
@@ -159,7 +157,7 @@ void Block::Save() {
     time_t modTime = Utils::FileModTime(blockFile);
     LastFileDate = modTime;
 
-    Logger::LogAdd(MODULE_NAME, "File saved [" + blockFile + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File saved [" + blockFile + "]", LogType::NORMAL, GLF);
 }
 
 void Block::MainFunc() {
@@ -168,8 +166,7 @@ void Block::MainFunc() {
         Save();
     }
 
-    Files* f = Files::GetInstance();
-    std::string blockFile = f->GetFile(BLOCK_FILE_NAME);
+    std::string blockFile = Files::GetFile(BLOCK_FILE_NAME);
     time_t modTime = Utils::FileModTime(blockFile);
 
     if (modTime != LastFileDate) {

@@ -16,6 +16,9 @@ namespace D3PP::world {
         short SideLevel;
         unsigned char SideBlock, EdgeBlock;
         std::string TextureUrl;
+        // -- EnvMapAspect
+        int cloudHeight, maxFogDistance, cloudSpeed, weatherSpeed, weatherFade, expoFog, mapSideOffset;
+
         MapEnvironment() {
             SkyColor = -1;
             CloudColor = -1;
@@ -32,6 +35,13 @@ namespace D3PP::world {
             SideLevel = -1;
             SideBlock = 7;
             EdgeBlock = 8;
+            cloudHeight = 128;
+            maxFogDistance = 0;
+            cloudSpeed = 256;
+            weatherSpeed = 256;
+            weatherFade = 128;
+            expoFog = 0;
+            mapSideOffset = -2;
         }
     };
 }

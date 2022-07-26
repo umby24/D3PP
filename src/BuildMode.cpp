@@ -6,6 +6,7 @@
 #include "world/Player.h"
 #include "world/Entity.h"
 #include "world/Map.h"
+#include "world/MapMain.h"
 #include "common/Logger.h"
 #include "Utils.h"
 #include "network/Network_Functions.h"
@@ -37,8 +38,7 @@ BuildModeMain* BuildModeMain::GetInstance() {
 }
 
 void BuildModeMain::Load() {
-    Files* f = Files::GetInstance();
-    std::string filePath = f->GetFile(BUILD_MODE_FILE_NAME);
+    std::string filePath = Files::GetFile(BUILD_MODE_FILE_NAME);
     
     PreferenceLoader pl(filePath, "");
     pl.LoadFile();
@@ -65,8 +65,7 @@ void BuildModeMain::Load() {
 }
 
 void BuildModeMain::Save() {
-    Files* f = Files::GetInstance();
-    std::string filePath = f->GetFile(BUILD_MODE_FILE_NAME);
+    std::string filePath = Files::GetFile(BUILD_MODE_FILE_NAME);
     
     PreferenceLoader pl(filePath, "");
     
@@ -87,8 +86,7 @@ void BuildModeMain::MainFunc() {
         Save();
     }
 
-    Files* f = Files::GetInstance();
-    std::string bmFile = f->GetFile(BUILD_MODE_FILE_NAME);
+    std::string bmFile = Files::GetFile(BUILD_MODE_FILE_NAME);
     time_t modTime = Utils::FileModTime(bmFile);
 
     if (modTime != LastFileDate) {
@@ -102,9 +100,8 @@ void BuildModeMain::MainFunc() {
 }
 
 void BuildModeMain::Distribute(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z, bool mode, unsigned char blockType) {
-    Network* n = Network::GetInstance();
     MapMain* mm = MapMain::GetInstance();
-    std::shared_ptr<IMinecraftClient> nc = n->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> nc = Network::GetClient(clientId);
     std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
 
     if (ne == nullptr)
@@ -130,9 +127,7 @@ void BuildModeMain::Distribute(int clientId, int mapId, unsigned short X, unsign
         playerMap->BlockChange(nc, X, Y, Z, mode, blockType);
     } else {
         BlockResend queuedItem{};
-        queuedItem.X = X;
-        queuedItem.Y = Y;
-        queuedItem.Z = Z;
+        queuedItem.Location = D3PP::Common::Vector3S(X, Y, Z);
         queuedItem.clientId = clientId;
         queuedItem.mapId = mapId;
         _resendBlocks.insert(_resendBlocks.begin(), queuedItem);
@@ -153,8 +148,8 @@ void BuildModeMain::Resend(int clientId) {
 
         std::shared_ptr<Map> thisMap = mapMain->GetPointer(toResend.mapId);
         if (thisMap != nullptr) {
-            int blockType = thisMap->GetBlockType(toResend.X, toResend.Y, toResend.Z);
-            NetworkFunctions::NetworkOutBlockSet(clientId, toResend.X, toResend.Y, toResend.Z, blockType);
+            int blockType = thisMap->GetBlockType(toResend.Location.X, toResend.Location.Y, toResend.Location.Z);
+            NetworkFunctions::NetworkOutBlockSet(clientId, toResend.Location.X, toResend.Location.Y, toResend.Location.Z, blockType);
         }
         _resendBlocks.erase(_resendBlocks.begin());
     }
@@ -191,7 +186,7 @@ char BuildModeMain::GetState(int clientId) {
     return result;
 }
 
-void BuildModeMain::SetCoordinate(int clientId, int index, float X, float Y, float Z) {
+void BuildModeMain::SetCoordinate(int clientId, int index, D3PP::Common::Vector3F location) {
     std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
 
     if (ne == nullptr)
@@ -200,9 +195,9 @@ void BuildModeMain::SetCoordinate(int clientId, int index, float X, float Y, flo
     if (index > Client_Player_Buildmode_Variables)
         return;
 
-    ne->variables[index].X = X;
-    ne->variables[index].Y = Y;
-    ne->variables[index].Z = Z;
+    ne->variables[index].X = location.X;
+    ne->variables[index].Y = location.Y;
+    ne->variables[index].Z = location.Z;
 }
 
 unsigned short BuildModeMain::GetCoordinateX(int clientId, int index) {

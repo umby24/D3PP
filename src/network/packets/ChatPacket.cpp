@@ -14,9 +14,9 @@ namespace D3PP::network {
     }
 
     void ChatPacket::Write(std::shared_ptr<ByteBuffer> buf) {
-        buf->Write(static_cast<unsigned char>(0x03));
-        buf->Write(m_playerId);
-        Utils::padTo(m_message, 64);
+        buf->Write(static_cast<unsigned char>(13));
+        buf->Write(static_cast<unsigned char>(m_playerId));
+        if (m_message.size() != 64) Utils::padTo(m_message, 64);
         buf->Write(m_message);
         buf->Purge();
     }
@@ -24,5 +24,9 @@ namespace D3PP::network {
     void ChatPacket::Handle(const std::shared_ptr<IMinecraftClient>& client) {
         std::shared_ptr<NetworkClient> concrete = std::static_pointer_cast<NetworkClient>(client);
         Chat::HandleIncomingChat(concrete, m_message, m_playerId);
+    }
+
+    int ChatPacket::GetLength() {
+        return 66;
     }
 }

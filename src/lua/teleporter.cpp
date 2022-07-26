@@ -4,6 +4,7 @@
 #include "common/Logger.h"
 #include "common/MinecraftLocation.h"
 #include "world/Map.h"
+#include "world/MapMain.h"
 #include "world/Teleporter.h"
 #include "network/NetworkClient.h"
 
@@ -134,7 +135,7 @@ int LuaTeleporterLib::LuaTeleporterGetDestination(lua_State* L) {
 int LuaTeleporterLib::LuaTeleporterAdd(lua_State* L) {
     int nArgs = lua_gettop(L);
 
-    if (nArgs != 15) {
+    if (nArgs != 14) {
         Logger::LogAdd("Lua", "LuaError: Teleporter_Add called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
@@ -150,13 +151,12 @@ int LuaTeleporterLib::LuaTeleporterAdd(lua_State* L) {
     end.Y = luaL_checkinteger(L, 7);
     end.Z = luaL_checkinteger(L, 8);
 
-    std::string destMapUniqueId(luaL_checkstring(L, 9));
-    int destMapId = luaL_checkinteger(L, 10);
-    float DestX = luaL_checknumber(L, 11);
-    float DestY = luaL_checknumber(L, 12);
-    float DestZ = luaL_checknumber(L, 13);
-    float DestRot = luaL_checknumber(L, 14);
-    float DestLook = luaL_checknumber(L, 15);
+    std::string destMapName(luaL_checkstring(L, 9));
+    float DestX = luaL_checknumber(L, 10);
+    float DestY = luaL_checknumber(L, 11);
+    float DestZ = luaL_checknumber(L, 12);
+    float DestRot = luaL_checknumber(L, 13);
+    float DestLook = luaL_checknumber(L, 14);
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> chosenMap = mm->GetPointer(mapId);
@@ -173,7 +173,7 @@ int LuaTeleporterLib::LuaTeleporterAdd(lua_State* L) {
     Vector3F destFloats {DestX, DestY, DestZ};
     destLocation.SetAsPlayerCoords(destFloats);
 
-    chosenMap->AddTeleporter(tpId, oStart, oEnd, destLocation, destMapUniqueId, destMapId);
+    chosenMap->AddTeleporter(tpId, oStart, oEnd, destLocation, destMapName);
     return 0;
 }
 

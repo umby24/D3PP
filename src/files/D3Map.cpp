@@ -3,23 +3,33 @@
 #include "common/Logger.h"
 #include "Utils.h"
 #include "compression.h"
+#include "world/CustomParticle.h"
 #include <climits>
 
 namespace D3PP::files {
 		D3Map::D3Map(const std::string& folder) :
         MapSize{},
         MapSpawn{},
-        m_configFile(D3_MAP_CONFIG_NAME, folder)
+        m_configFile(D3_MAP_CONFIG_NAME, folder),
+        Particles(),
+        Teleporter()
 		{
             mapPath = folder;
             BuildRank = 0;
             JoinRank = 0;
             ShowRank = 0;
             OverviewType = D3OverviewType::Iso;
+            dataChanged = true;
+            portalsChanged = true;
+            configChanged = true;
+            particleChanged = true;
+            rboxChanged = true;
 		}
 
 		D3Map::D3Map(const std::string& folder, const std::string& name, const Common::Vector3S& mapSize) :
-        m_configFile(D3_MAP_CONFIG_NAME, folder)
+        m_configFile(D3_MAP_CONFIG_NAME, folder),
+        Particles(),
+        Teleporter()
 		{
             mapPath = folder;
             SaveInterval = 10;
@@ -27,7 +37,11 @@ namespace D3PP::files {
             OverviewType = D3OverviewType::Iso;
             Name= name;
             MapSize = mapSize;
-
+            dataChanged = true;
+            portalsChanged = true;
+            configChanged = true;
+            particleChanged = true;
+            rboxChanged = true;
             Common::Vector3S defaultSpawn {
                 static_cast<short>(MapSize.X/2),
                 static_cast<short>(MapSize.Y/2),
@@ -50,7 +64,7 @@ namespace D3PP::files {
             bool loadResult = ReadConfig() && ReadMapData();
             ReadRankBoxes();
             ReadPortals();
-           
+            ReadParticles();
             return loadResult;
 		}
         bool D3Map::Load(std::string path)
@@ -67,6 +81,7 @@ namespace D3PP::files {
             bool loadResult = ReadConfig() && ReadMapData();
             ReadRankBoxes();
             ReadPortals();
+            ReadParticles();
             mapPath = ogMapPath;
             return loadResult;
         }
@@ -85,6 +100,9 @@ namespace D3PP::files {
             if (result)
                 result = SaveMapData();
 
+            if (result)
+                result = SaveParticles();
+
 			return result;
 		}
         bool D3Map::Save(std::string filePath)
@@ -92,7 +110,7 @@ namespace D3PP::files {
             std::filesystem::create_directory(filePath);
             std::string oldPath = mapPath;
             mapPath = filePath;
-            
+
             bool result = false;
             result = SaveConfig();
 
@@ -104,6 +122,9 @@ namespace D3PP::files {
 
             if (result)
                 result = SaveMapData();
+
+            if (result)
+                result = SaveParticles();
 
             mapPath = oldPath;
             return result;
@@ -123,6 +144,7 @@ namespace D3PP::files {
 
             MapSize = newSize;
             MapData.resize(newMapSize);
+            dataChanged = true;
         }
 
         unsigned char D3Map::GetBlock(Common::Vector3S blockLocation) {
@@ -158,6 +180,7 @@ namespace D3PP::files {
 
             int index = GetBlockIndex(blockLocation);
             MapData[(index*4)] = type;
+            dataChanged = true;
         }
 
         void D3Map::SetBlockMetadata(Common::Vector3S blockLocation, unsigned char metadata) {
@@ -166,6 +189,7 @@ namespace D3PP::files {
 
             int index = GetBlockIndex(blockLocation);
             MapData[(index*4)+1] = metadata;
+            dataChanged = true;
         }
 
         void D3Map::SetBlockLastPlayer(Common::Vector3S blockLocation, short playerNumber) {
@@ -175,6 +199,8 @@ namespace D3PP::files {
             int index = GetBlockIndex(blockLocation);
             MapData[(index*4)+2] = (playerNumber & 0xFF00) >> 8;
             MapData[(index*4)+3] = (playerNumber&0xFF);
+            dataChanged = true;
+
         }
 
         std::string D3Map::GenerateUuid() {
@@ -187,6 +213,9 @@ namespace D3PP::files {
         }
 
         bool D3Map::SaveConfig() {
+            if (!configChanged)
+                return true;
+
             std::string configName = mapPath + D3_MAP_CONFIG_NAME;
             std::ofstream oStream(configName);
 
@@ -233,14 +262,25 @@ namespace D3PP::files {
                 oStream << "Allow_Thirdperson = " << ThirdPerson << "\n";
                 oStream << "Allow_Weatherchange = " << Weather << "\n";
                 oStream << "Jumpheight = " << JumpHeight << "\n";
+                oStream << "cloudHeight = " << cloudHeight << "\n";
+                oStream << "maxFogDistance = " << maxFogDistance << "\n";
+                oStream << "cloudSpeed = " << cloudSpeed << "\n";
+                oStream << "weatherSpeed = " << weatherSpeed << "\n";
+                oStream << "weatherFade = " << weatherFade << "\n";
+                oStream << "expoFog = " << expoFog << "\n";
+                oStream << "mapSideOffset = " << mapSideOffset << "\n";
+
                 oStream.close();
                 Logger::LogAdd("D3Map", "File saved [" + mapPath + D3_MAP_CONFIG_NAME + "]", LogType::NORMAL, GLF);
+                configChanged = false;
                 return true;
             }
             return false;
         }
 
         bool D3Map::SavePortals() {
+            if (!portalsChanged)
+                return true;
             PreferenceLoader pLoader(D3_MAP_PORTALS_NAME, mapPath, true);
             for (auto const &tp : Teleporter) {
                 pLoader.SelectGroup(tp.first);
@@ -260,10 +300,14 @@ namespace D3PP::files {
             }
             pLoader.SaveFile();
             Logger::LogAdd("D3Map", "File saved [" + mapPath + D3_MAP_PORTALS_NAME + "]", LogType::NORMAL, GLF);
+            portalsChanged = false;
             return true;
         }
 
         bool D3Map::SaveRankBoxes() {
+            if (!rboxChanged)
+                return true;
+
             PreferenceLoader pLoader(D3_MAP_RBOX_NAME, mapPath, true);
             int rBoxNumber = 0;
             for(auto const &rb : RankBoxes) {
@@ -278,10 +322,13 @@ namespace D3PP::files {
             }
             pLoader.SaveFile();
             Logger::LogAdd("D3Map", "File saved [" + mapPath + D3_MAP_RBOX_NAME + "]", LogType::NORMAL, GLF);
+            rboxChanged = false;
             return true;
         }
 
         bool D3Map::SaveMapData() {
+            if (!dataChanged)
+                return true;
             int mapDataSize = MapSize.X * MapSize.Y * MapSize.Z * 4;
 
             if (!GZIP::GZip_CompressToFile(MapData.data(), mapDataSize, "temp.gz"))
@@ -298,6 +345,7 @@ namespace D3PP::files {
             }
 
             Logger::LogAdd("D3Map", "File saved [" + mapPath + D3_MAP_BLOCKS_NAME + "]", LogType::NORMAL, GLF);
+            dataChanged = false;
             return true;
         }
 
@@ -353,6 +401,15 @@ namespace D3PP::files {
             ThirdPerson = (pLoader.Read("Allow_Thirdperson", 1) > 0);
             Weather = (pLoader.Read("Allow_Weatherchange", 1) > 0);
             JumpHeight = pLoader.Read("Jumpheight", -1);
+
+            cloudHeight = pLoader.Read("cloudHeight", sizeZ+2);
+            maxFogDistance = pLoader.Read("maxFogDistance", 0);
+            cloudSpeed = pLoader.Read("cloudSpeed", 256);
+            weatherSpeed = pLoader.Read("weatherSpeed", 256);
+            weatherFade = pLoader.Read("weatherFade", 128);
+            expoFog = pLoader.Read("expoFog", 0);
+            mapSideOffset = pLoader.Read("mapSideOffset", -2);
+
             // -- Sanity checks
             if (JumpHeight > 1000 || JumpHeight < -1)
                 JumpHeight = -1;
@@ -383,6 +440,9 @@ namespace D3PP::files {
 
             if (dlight < -1)
                 dlight = -1;
+            
+            if (expoFog > 1)
+                expoFog = 1;
 
             return true;
         }
@@ -455,4 +515,91 @@ namespace D3PP::files {
         int D3Map::GetBlockIndex(Common::Vector3S loc, int sizeX, int sizeY) {
             return (loc.X + loc.Y * sizeX + loc.Z * sizeX * sizeY) * 1;
         }
+
+    std::vector<MapTeleporterElement> D3Map::getPortals() {
+        std::vector<MapTeleporterElement> result;
+
+        for(const auto &kvp : Teleporter) {
+            result.push_back(kvp.second);
+        }
+
+        return result;
     }
+
+    void D3Map::SetPortals(std::vector<MapTeleporterElement> portals) {
+        Teleporter.clear();
+
+        for (const auto item : portals) {
+            Teleporter.insert(std::make_pair(item.Id, item));
+        }
+    }
+
+    bool D3Map::SaveParticles() {
+        if (!particleChanged)
+            return true;
+        PreferenceLoader pLoader(D3_MAP_PARTICLES_NAME, mapPath, true);
+        int rBoxNumber = 0;
+        for(auto const &rb : Particles) {
+            pLoader.SelectGroup(stringulate(rb.effectId));
+            pLoader.Write("U1", rb.U1);
+            pLoader.Write("V1", rb.V1);
+            pLoader.Write("U2", rb.U2);
+            pLoader.Write("V2", rb.V2);
+            pLoader.Write("Tint", Utils::Rgb(rb.redTint, rb.greenTint, rb.blueTint));
+            pLoader.Write("Frame_Count", rb.frameCount);
+            pLoader.Write("Particle_Count", rb.particleCount);
+            pLoader.Write("Size", rb.size);
+            pLoader.Write("Size_Variation", rb.sizeVariation);
+            pLoader.Write("Spread", rb.spread);
+            pLoader.Write("Speed", rb.speed);
+            pLoader.Write("Gravity", rb.gravity);
+            pLoader.Write("Base_Life_Time", rb.baseLifetime);
+            pLoader.Write("Lifetime_Variation", rb.lifetimeVariation);
+            pLoader.Write("Collide_Flags", rb.collideFlags);
+            pLoader.Write("Full_Bright", rb.fullBright);
+        }
+
+        pLoader.SaveFile();
+        Logger::LogAdd("D3Map", "File saved [" + mapPath + D3_MAP_PARTICLES_NAME + "]", LogType::NORMAL, GLF);
+        particleChanged = false;
+        return true;
+    }
+
+    void D3Map::ReadParticles() {
+        PreferenceLoader rBoxLoader(D3_MAP_PARTICLES_NAME, mapPath);
+        rBoxLoader.LoadFile();
+
+        for (auto const &fi : rBoxLoader.SettingsDictionary) {
+            rBoxLoader.SelectGroup(fi.first);
+            D3PP::world::CustomParticle particle;
+            particle.U1 = rBoxLoader.Read("U1", 0);
+            particle.V1 = rBoxLoader.Read("V1", 0);
+            particle.U2 = rBoxLoader.Read("U2", 0);
+            particle.V2 = rBoxLoader.Read("V2", 0);
+            particle.redTint = Utils::RedVal(rBoxLoader.Read("Tint", 0));
+            particle.greenTint = Utils::GreenVal(rBoxLoader.Read("Tint", 0));
+            particle.blueTint = Utils::BlueVal(rBoxLoader.Read("Tint", 0));
+            particle.frameCount = rBoxLoader.Read("Frame_Count", 0);
+            particle.particleCount = rBoxLoader.Read("Particle_Count", 0);
+            particle.size = rBoxLoader.Read("Size", 0);
+            particle.sizeVariation = rBoxLoader.Read("Size_Variation", 0);
+            particle.spread = rBoxLoader.Read("Spread", 0);
+            particle.speed = rBoxLoader.Read("Speed", 0);
+            particle.gravity = rBoxLoader.Read("Gravity", 0);
+            particle.baseLifetime = rBoxLoader.Read("Base_Life_Time", 0);
+            particle.lifetimeVariation = rBoxLoader.Read("Lifetime_Variation", 0);
+            particle.collideFlags = rBoxLoader.Read("Collide_Flags", 0);
+            particle.fullBright = rBoxLoader.Read("Full_Bright", 0);
+            Particles.push_back(particle);
+        }
+    }
+
+    std::vector<D3PP::world::CustomParticle> D3Map::GetParticles() {
+        return Particles;
+    }
+
+    void D3Map::SetParticles(std::vector<D3PP::world::CustomParticle> inParts) {
+        Particles = inParts;
+        particleChanged = true;
+    }
+}

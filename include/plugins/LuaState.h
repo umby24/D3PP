@@ -28,7 +28,7 @@ namespace D3PP::plugins {
 
         lua_State* GetState() { return m_state; }
 
-        std::map<Event::DescriptorType, std::vector<LuaEvent>> events;
+        std::map<Event::DescriptorType, std::map<std::string, LuaEvent>> events;
     private:
         std::string m_name;
         lua_State* m_state;

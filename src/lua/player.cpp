@@ -50,7 +50,7 @@ int LuaPlayerLib::LuaPlayerGetTable(lua_State* L) {
     if (numEntities > 0) {
         for (auto const& e : pll->_pList) {
             lua_pushinteger(L, index++);
-            lua_pushinteger(L, e.Number);
+            lua_pushinteger(L, e->Number);
             lua_settable(L, -3);
         }
     }
@@ -71,7 +71,7 @@ int LuaPlayerLib::LuaPlayerGetPrefix(lua_State* L) {
     int playerNumber = luaL_checkinteger(L, 1);
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    auto ple = pll->GetPointer(playerNumber);
     std::string result;
 
     if (ple != nullptr) {
@@ -94,7 +94,7 @@ int LuaPlayerLib::LuaPlayerGetName(lua_State* L) {
     int playerNumber = luaL_checkinteger(L, 1);
     Player_List* pll = Player_List::GetInstance();
 
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    auto ple = pll->GetPointer(playerNumber);
     std::string result;
 
     if (ple != nullptr) {
@@ -117,7 +117,7 @@ int LuaPlayerLib::LuaPlayerGetSuffix(lua_State* L) {
     int playerNumber = luaL_checkinteger(L, 1);
     Player_List* pll = Player_List::GetInstance();
     Rank* rm = Rank::GetInstance();
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    auto ple = pll->GetPointer(playerNumber);
     std::string result;
 
     if (ple != nullptr) {
@@ -139,7 +139,7 @@ int LuaPlayerLib::LuaPlayerGetIp(lua_State* L) {
     int playerNumber = luaL_checkinteger(L, 1);
     Player_List* pll = Player_List::GetInstance();
 
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    auto ple = pll->GetPointer(playerNumber);
     std::string result;
 
     if (ple != nullptr) {
@@ -161,7 +161,7 @@ int LuaPlayerLib::LuaPlayerGetOntime(lua_State* L) {
     int playerNumber = luaL_checkinteger(L, 1);
     Player_List* pll = Player_List::GetInstance();
 
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    auto ple = pll->GetPointer(playerNumber);
     double result = -1;
 
     if (ple != nullptr) {
@@ -183,7 +183,7 @@ int LuaPlayerLib::LuaPlayerGetRank(lua_State* L) {
     int playerNumber = luaL_checkinteger(L, 1);
     Player_List* pll = Player_List::GetInstance();
 
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    auto ple = pll->GetPointer(playerNumber);
     int result = -1;
 
     if (ple != nullptr) {
@@ -205,7 +205,7 @@ int LuaPlayerLib::LuaPlayerGetOnline(lua_State* L) {
     int playerNumber = luaL_checkinteger(L, 1);
     Player_List* pll = Player_List::GetInstance();
 
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    auto ple = pll->GetPointer(playerNumber);
     int result = 0;
 
     if (ple != nullptr) {
@@ -227,7 +227,7 @@ int LuaPlayerLib::LuaPlayerGetMuteTime(lua_State* L) {
     int playerNumber = luaL_checkinteger(L, 1);
     Player_List* pll = Player_List::GetInstance();
 
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    auto ple = pll->GetPointer(playerNumber);
     int result = -1;
 
     if (ple != nullptr) {
@@ -251,7 +251,7 @@ int LuaPlayerLib::LuaPlayerSetRank(lua_State* L) {
     std::string reason(luaL_checkstring(L, 3));
 
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    auto ple = pll->GetPointer(playerNumber);
 
     if (ple != nullptr) {
         ple->SetRank(rankNumber, reason);
@@ -284,7 +284,7 @@ int LuaPlayerLib::LuaPlayerKick(lua_State* L) {
         show = (luaL_checknumber(L, 5) > 0);
 
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    std::shared_ptr<PlayerListEntry> ple = pll->GetPointer(playerNumber);
 
     if (ple != nullptr) {
         ple->Kick(reason, count, log, show);
@@ -305,7 +305,7 @@ int LuaPlayerLib::LuaPlayerBan(lua_State* L) {
     std::string reason(luaL_checkstring(L, 2));
 
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    std::shared_ptr<PlayerListEntry> ple = pll->GetPointer(playerNumber);
 
     if (ple != nullptr) {
         ple->Ban(reason);
@@ -325,7 +325,7 @@ int LuaPlayerLib::LuaPlayerUnban(lua_State* L) {
     int playerNumber = luaL_checkinteger(L, 1);
 
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    std::shared_ptr<PlayerListEntry> ple = pll->GetPointer(playerNumber);
 
     if (ple != nullptr) {
         ple->Unban();
@@ -346,7 +346,7 @@ int LuaPlayerLib::LuaPlayerStop(lua_State* L) {
     std::string reason(luaL_checkstring(L, 2));
 
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    std::shared_ptr<PlayerListEntry> ple = pll->GetPointer(playerNumber);
 
     if (ple != nullptr) {
         ple->Stop(reason);
@@ -366,7 +366,7 @@ int LuaPlayerLib::LuaPlayerUnstop(lua_State* L) {
     int playerNumber = luaL_checkinteger(L, 1);
 
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    std::shared_ptr<PlayerListEntry> ple = pll->GetPointer(playerNumber);
 
     if (ple != nullptr) {
         ple->Unstop();
@@ -388,7 +388,7 @@ int LuaPlayerLib::LuaPlayerMute(lua_State* L) {
     std::string reason(luaL_checkstring(L, 3));
 
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    std::shared_ptr<PlayerListEntry> ple = pll->GetPointer(playerNumber);
 
     if (ple != nullptr) {
         ple->Mute(minutes, reason);
@@ -408,7 +408,7 @@ int LuaPlayerLib::LuaPlayerUnmute(lua_State* L) {
     int playerNumber = luaL_checkinteger(L, 1);
 
     Player_List* pll = Player_List::GetInstance();
-    PlayerListEntry* ple = pll->GetPointer(playerNumber);
+    std::shared_ptr<PlayerListEntry> ple = pll->GetPointer(playerNumber);
 
     if (ple != nullptr) {
         ple->Unmute();

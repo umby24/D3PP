@@ -3,12 +3,14 @@
 //
 #include "common/ByteBuffer.h"
 #include <cmath>
+#include <utility>
 #include "Utils.h"
 
 
-ByteBuffer::ByteBuffer(std::function<void()> callback) : _buffer(initial_size), _bufLock() {
+ByteBuffer::ByteBuffer(const std::function<void()>& callback) : _buffer(initial_size), _bufLock() {
     this->_size = (unsigned int) ByteBuffer::initial_size;
-    this->cbfunc = callback;
+    if (callback != nullptr)
+        this->cbfunc = callback;
     this->Interval = std::chrono::seconds(10);
     this->LastRun = std::chrono::system_clock::now();
     this->Main = [this] { MainFunc(); };
@@ -144,10 +146,14 @@ void ByteBuffer::Write(std::string value) {
 }
 
 void ByteBuffer::Write(std::vector<unsigned char> memory, int length) {
+    int actualLen = length;
+    if (memory.size() != length) {
+        actualLen = memory.size();
+    }
     const std::scoped_lock<std::mutex> pqlock(_bufLock);
-    Resize(length);
-    _buffer.insert(_buffer.begin()+_writePos, memory.begin(), memory.begin()+length);
-    _writePos += length;
+    Resize(actualLen);
+    _buffer.insert(_buffer.begin()+_writePos, memory.begin(), memory.begin()+actualLen);
+    _writePos += actualLen;
 }
 
 void ByteBuffer::Shift(int size) {

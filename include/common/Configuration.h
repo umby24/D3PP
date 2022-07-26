@@ -2,6 +2,10 @@
 #define D3PP_CONFIGURATION_H
 
 #include <string>
+#include <vector>
+
+constexpr std::string_view CONFIGURATION_FILENAME = "configuration";
+
 #include "TaskScheduler.h"
 #include "json.hpp"
 #include "Vectors.h"
@@ -9,17 +13,38 @@
 
 using json = nlohmann::json;
 using namespace D3PP::Common;
+struct CustomColor {
+    std::string character;
+    int redVal;
+    int greenVal;
+    int blueVal;
+    int alpha;
+};
 
 struct TextSettings {
     std::string error;
     std::string system;
     std::string divider;
+    std::vector<CustomColor> colors;
 
     void LoadFromJson(json &j) {
         if (j.is_object() && !j["Text"].is_null()) {
             error = j["Text"]["Error"];
             system = j["Text"]["System"];
             divider = j["Text"]["Divider"];
+            if (j["Text"]["colors"].is_array()) {
+                for (auto const& jval : j["Text"]["colors"]) {
+                    struct CustomColor col {};
+                    if (jval["character"].is_string()) {
+                        col.character = jval["character"];
+                        col.redVal = jval["red"];
+                        col.greenVal = jval["green"];
+                        col.blueVal = jval["blue"];
+                        col.alpha = jval["alpha"];
+                        colors.push_back(col);
+                    }
+                }
+            }
         }
     }
 
@@ -28,6 +53,16 @@ struct TextSettings {
         j["Text"]["Error"] = error;
         j["Text"]["System"] = system;
         j["Text"]["Divider"] = divider;
+        for (int i = 0; i < colors.size(); i++) {
+            j["Text"]["colors"][i] = nullptr;
+            j["Text"]["colors"][i] = {
+                {"character", colors.at(i).character},
+                {"red", colors.at(i).redVal},
+                {"green", colors.at(i).greenVal},
+                {"blue", colors.at(i).blueVal},
+                {"alpha", colors.at(i).alpha}
+            };
+        }
     }
 };
 
@@ -72,6 +107,7 @@ struct NetworkSettings {
     int ListenPort;
     bool VerifyNames;
     bool Public;
+    std::string Salt;
 
     void LoadFromJson(json &j) {
         if (j.is_object() && !j["Network"].is_null()) {
@@ -79,6 +115,8 @@ struct NetworkSettings {
             ListenPort = j["Network"]["ListenPort"];
             VerifyNames = j["Network"]["VerifyName"];
             Public = j["Network"]["Public"];
+            if (!j["Network"]["Salt"].is_null())
+                Salt = j["Network"]["Salt"];
         }
     }
 
@@ -88,6 +126,7 @@ struct NetworkSettings {
         j["Network"]["ListenPort"] = ListenPort;
         j["Network"]["VerifyName"] = VerifyNames;
         j["Network"]["Public"] = Public;
+        j["Network"]["Salt"] = Salt;
     }
 };
 
@@ -132,6 +171,7 @@ public:
     void Save();
 private:
     static Configuration* _instance;
+    std::string filepath;
     time_t lastLoaded;
     bool saveFile;
 

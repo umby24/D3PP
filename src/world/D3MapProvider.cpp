@@ -3,6 +3,8 @@
 //
 
 #include "world/D3MapProvider.h"
+#include "world/Teleporter.h"
+#include "world/CustomParticle.h"
 
 D3PP::world::D3MapProvider::D3MapProvider() {
     CreatingService = "D3 Server";
@@ -49,6 +51,9 @@ bool D3PP::world::D3MapProvider::Load(const std::string &filePath) {
 }
 
 D3PP::Common::Vector3S D3PP::world::D3MapProvider::GetSize() const {
+    if (m_d3map == nullptr)
+        return Common::Vector3S();
+
     return Common::Vector3S(m_d3map->MapSize);
 }
 
@@ -126,7 +131,13 @@ D3PP::world::MapEnvironment D3PP::world::D3MapProvider::GetEnvironment() {
     currentEnv.SideBlock = m_d3map->SideBlock;
     currentEnv.EdgeBlock = m_d3map->EdgeBlock;
     currentEnv.TextureUrl = m_d3map->TextureUrl;
-
+    currentEnv.cloudHeight = m_d3map->cloudHeight;
+    currentEnv.maxFogDistance = m_d3map->maxFogDistance;
+    currentEnv.cloudSpeed = m_d3map->cloudSpeed;
+    currentEnv.weatherSpeed = m_d3map->weatherSpeed;
+    currentEnv.weatherFade = m_d3map->weatherFade;
+    currentEnv.expoFog = m_d3map->expoFog;
+    currentEnv.mapSideOffset = -m_d3map->mapSideOffset;
     return currentEnv;
 }
 
@@ -147,6 +158,76 @@ void D3PP::world::D3MapProvider::SetEnvironment(const D3PP::world::MapEnvironmen
     m_d3map->SideBlock =  env.SideBlock;
     m_d3map->EdgeBlock =  env.EdgeBlock;
     m_d3map->TextureUrl =  env.TextureUrl;
+    m_d3map->cloudHeight = env.cloudHeight;
+    m_d3map->maxFogDistance = env.maxFogDistance;
+    m_d3map->cloudSpeed = env.cloudSpeed;
+    m_d3map->weatherSpeed = env.weatherSpeed;
+    m_d3map->weatherFade = env.weatherFade;
+    m_d3map->expoFog = env.expoFog;
+    m_d3map->mapSideOffset = env.mapSideOffset;
+}
+
+void D3PP::world::D3MapProvider::SetPortals(const std::vector<D3PP::world::Teleporter> portals) {
+    std::vector<files::MapTeleporterElement> mtes;
+
+    for(const auto &item : portals) {
+        auto startBlockCoords = item.OriginStart.GetAsBlockCoords();
+        auto endBlockCoords = item.OriginEnd.GetAsBlockCoords();
+        auto destBlockCoords = item.Destination.GetAsBlockCoords();
+
+        files::MapTeleporterElement newMte;
+
+       newMte.Id = item.Name;
+       newMte.X0 = startBlockCoords.X;
+       newMte.Y0 = startBlockCoords.Y;
+       newMte.Z0 = startBlockCoords.Z;
+       newMte.X1 = endBlockCoords.X;
+       newMte.Y1 = endBlockCoords.Y;
+       newMte.Z1 = endBlockCoords.Z;
+       newMte.DestMapUniqueId = item.DestinationMap;
+       newMte.DestMapId = -1;
+       newMte.DestX = destBlockCoords.X;
+       newMte.DestY = destBlockCoords.Y;
+       newMte.DestZ = destBlockCoords.Z;
+       newMte.DestRot = item.Destination.Rotation;
+       newMte.DestLook = item.Destination.Look;
+
+        mtes.push_back(newMte);
+    }
+}
+
+std::vector<D3PP::world::Teleporter> D3PP::world::D3MapProvider::getPortals() {
+    std::vector<D3PP::world::Teleporter> result;
+    auto mapPortals = m_d3map->getPortals();
+    for(const auto &i : mapPortals) {
+        MinecraftLocation origin{};
+        origin.SetAsBlockCoords(Common::Vector3S(i.X0, i.Y0, i.Z0));
+        MinecraftLocation end{};
+        end.SetAsBlockCoords(Common::Vector3S(i.X1, i.Y1, i.Z1));
+        MinecraftLocation dest{};
+        dest.SetAsBlockCoords(Common::Vector3S(static_cast<short>(i.DestX), i.DestY, i.DestZ));
+        dest.Rotation = i.DestRot;
+        dest.Look = i.DestLook;
+
+        D3PP::world::Teleporter newTp;
+        newTp.Destination = dest;
+        newTp.OriginStart = origin;
+        newTp.OriginEnd = end;
+        newTp.Name = i.Id;
+        newTp.DestinationMap = i.DestMapUniqueId;
+        result.push_back(newTp);
+    }
+
+    return result;
+}
+
+std::vector<D3PP::world::CustomParticle> D3PP::world::D3MapProvider::getParticles() {
+    return m_d3map->GetParticles();
+}
+
+void D3PP::world::D3MapProvider::SetParticles(std::vector<D3PP::world::CustomParticle> particles) {
+    if (m_d3map != nullptr)
+        m_d3map->SetParticles(particles);
 }
 
 

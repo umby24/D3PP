@@ -1,12 +1,11 @@
 #include "common/Configuration.h"
-#include "json.hpp"
+
 #include "common/Files.h"
 #include "common/Logger.h"
 #include "Utils.h"
-#include <fstream>
+
 #define GLF __FILE__, __LINE__, __FUNCTION__
 
-using json = nlohmann::json;
 NetworkSettings Configuration::NetSettings { 32, 25565, true, false};
 GeneralSettings Configuration::GenSettings { "D3PP Server", "Welcome to D3PP!","&cWelcome to D3PP", "INFO", 1,160, 3, true };
 KillSettings Configuration::killSettings { 1, MinecraftLocation{ 0, 0, Vector3S((short)0, (short)0, (short)0)} };
@@ -26,20 +25,18 @@ Configuration::Configuration() {
     this->Setup = [this] { Load(); };
     this->Teardown = [this] { Save(); };
     saveFile = false;
-    
+    filepath = Files::GetFile("configuration");
+
     TaskScheduler::RegisterTask("Configuration", *this);
 }
 
 void Configuration::Load() {
-    Files* fm = Files::GetInstance();
-    std::string filePath = fm->GetFile("configuration");
-
-    if (Utils::FileSize(filePath) == -1) {
+    if (Utils::FileSize(filepath) == -1) {
         Save();
     }
 
     json j;
-    std::ifstream inFile(filePath);
+    std::ifstream inFile(filepath);
     
     if (!inFile.is_open()) {
         return;
@@ -51,19 +48,17 @@ void Configuration::Load() {
         Configuration::GenSettings.LoadFromJson(j);
         Configuration::killSettings.LoadFromJson(j);
         Configuration::textSettings.LoadFromJson(j);
-    } catch (int Exception) {
+    } catch (std::exception e) {
         Logger::LogAdd("Configuration", "Error loading config file! using defaults.", LogType::L_ERROR, GLF);
     }
 
     inFile.close();
     Logger::LogAdd("Configuration", "Configuration Loaded.", LogType::NORMAL, GLF);
 
-    lastLoaded = Utils::FileModTime(filePath);
+    lastLoaded = Utils::FileModTime(filepath);
 }
 
 void Configuration::Save() {
-    Files* fm = Files::GetInstance();
-    std::string filePath = fm->GetFile("configuration");
     json j;
 
     Configuration::NetSettings.SaveToJson(j);
@@ -71,13 +66,13 @@ void Configuration::Save() {
     Configuration::killSettings.SaveToJson(j);
     Configuration::textSettings.SaveToJson(j);
 
-    std::ofstream outFile(filePath);
+    std::ofstream outFile(filepath);
     outFile << std::setw(4) << j;
     outFile.flush();
     outFile.close();
 
     Logger::LogAdd("Configuration", "Configuration Saved.", LogType::NORMAL, GLF);
-    lastLoaded = Utils::FileModTime(filePath);
+    lastLoaded = Utils::FileModTime(filepath);
 }
 
 void Configuration::MainFunc() {
@@ -86,9 +81,7 @@ void Configuration::MainFunc() {
         saveFile = false;
     }
 
-    Files* fm = Files::GetInstance();
-    std::string filePath = fm->GetFile("configuration");
-    time_t modTime =  Utils::FileModTime(filePath);
+    time_t modTime =  Utils::FileModTime(filepath);
     
     if (modTime != lastLoaded) {
         Load();
