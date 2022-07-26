@@ -36,7 +36,7 @@
 
 // This template wraps a member function into a C-style "free" function compatible with lua.
 
-void bail(lua_State* l, std::string errMsg) {
+void bail(lua_State* l, const std::string& errMsg) {
     Logger::LogAdd("LuaState", errMsg + ", Error: " + lua_tostring(l, -1), LogType::L_ERROR, GLF);
     lua_pop(l, 1);
 }
@@ -147,26 +147,7 @@ void LuaPlugin::MainFunc() {
     if (!m_loaded)
         return;
 
-    std::vector<std::string> files = EnumerateDirectory(m_folder);
-
-    for (auto const &f : files) {
-        auto i = _files.find(f);
-        if (i != _files.end()) {
-            time_t lastMod = Utils::FileModTime(f);
-            // -- Note only accurate within +/- 1 second. shouldn't matter.
-            if (i->second.LastLoaded != lastMod) {
-                m_luaState->LoadFile(f, true);
-                i->second.LastLoaded = lastMod;
-            }
-
-            continue;
-        }
-        LuaFile newFile;
-        newFile.FilePath = f;
-        newFile.LastLoaded = 0;
-        _files.insert(std::make_pair(f, newFile));
-    }
-  
+    LoadNewOrChanged();
 }
 
 void LuaPlugin::TimerMain() {
@@ -343,7 +324,7 @@ void LuaPlugin::TriggerBlockDelete(const std::string& function, int mapId, unsig
     }
 }
 
-LuaPlugin::LuaPlugin(std::string folder) {
+LuaPlugin::LuaPlugin(const std::string& folder) {
     m_folder = folder;
     m_luaState = std::make_shared<D3PP::plugins::LuaState>("Plugin " + folder);
     m_loaded = false;
@@ -357,34 +338,13 @@ LuaPlugin::LuaPlugin(std::string folder) {
 void LuaPlugin::Load() {
     m_luaState->Create();
     m_luaState->RegisterApiLibs(m_luaState);
+    RegisterEventListener();
 
-    std::vector<std::string> pluginFiles = EnumerateDirectory(m_folder);
-    if (pluginFiles.empty()) {
+    LoadNewOrChanged();
+    if (_files.empty()) {
         Logger::LogAdd("LuaPlugin", "No lua files found, plugin is probably missing.", LogType::WARNING, GLF);
         return;
     }
-
-    for (auto const& file : pluginFiles) {
-        auto i = _files.find(file);
-        if (i != _files.end()) {
-            time_t lastMod = Utils::FileModTime(file);
-            // -- Note only accurate within +/- 1 second. shouldn't matter.
-            if (i->second.LastLoaded != lastMod) {
-                m_luaState->LoadFile(file, true);
-                i->second.LastLoaded = lastMod;
-            }
-
-            continue;
-        }
-
-        LuaFile newFile;
-        newFile.FilePath = file;
-        newFile.LastLoaded = 0;
-        _files.insert(std::make_pair(file, newFile));
-        m_luaState->LoadFile(file, true);
-    }
-
-    RegisterEventListener();
 
     TaskItem newTi;
     newTi.Interval = std::chrono::milliseconds(10);
@@ -408,5 +368,29 @@ std::string LuaPlugin::GetFolderName() {
 
 bool LuaPlugin::IsLoaded() {
     return m_status == "Loaded";
+}
+
+void LuaPlugin::LoadNewOrChanged() {
+    std::vector<std::string> pluginFiles = EnumerateDirectory(m_folder);
+
+    for (auto const& file : pluginFiles) {
+        auto i = _files.find(file);
+        time_t lastMod = Utils::FileModTime(file);
+        if (i != _files.end()) {
+            // -- Note only accurate within +/- 1 second. shouldn't matter.
+            if (i->second.LastLoaded != lastMod) {
+                m_luaState->LoadFile(file, true);
+                i->second.LastLoaded = lastMod;
+            }
+
+            continue;
+        }
+
+        LuaFile newFile;
+        newFile.FilePath = file;
+        newFile.LastLoaded = lastMod;
+        _files.insert(std::make_pair(file, newFile));
+        m_luaState->LoadFile(file, true);
+    }
 }
 

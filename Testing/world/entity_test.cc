@@ -2,8 +2,6 @@
 #include <gtest/gtest.h>
 #include "world/Entity.h"
 #include "EventSystem.h"
-#include "events/EventEntityAdd.h"
-#include "events/EventEntityDelete.h"
 
 TEST(EntityTest, EntityMapChange) {
     // bool hasDespawnHappened;
@@ -51,8 +49,8 @@ TEST(EntityTest, GetFreeIdTest) {
     auto newEPointer = std::make_shared<Entity>("testEntity", 0, 1, 2, 3, 4, 5);
     Entity::Add(newEPointer);
 
-    assert(newEPointer->Id == 0);
-    assert(Entity::GetFreeId() == 1);
+    ASSERT_EQ(newEPointer->Id, 0);
+    ASSERT_EQ(Entity::GetFreeId(), 1);
 }
 
 TEST(EntityTest, SetDisplayNameTest) {
@@ -62,7 +60,7 @@ TEST(EntityTest, SetDisplayNameTest) {
     Entity::Add(newEPointer);
 
     Entity::SetDisplayName(0, "givenPrefix", "givenName", "givenSuffix");
-    assert(newEPointer->Suffix == "givenSuffix");
-    assert(newEPointer->Name == "givenName");
-    assert(newEPointer->Prefix == "givenPrefix");
+    ASSERT_EQ(newEPointer->Suffix,"givenSuffix");
+    ASSERT_EQ(newEPointer->Name,"givenName");
+    ASSERT_EQ(newEPointer->Prefix, "givenPrefix");
 }

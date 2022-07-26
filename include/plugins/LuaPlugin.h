@@ -30,7 +30,7 @@ struct LuaEvent {
 
 class LuaPlugin : TaskItem {
 public:
-    explicit LuaPlugin(std::string folder);
+    explicit LuaPlugin(const std::string& folder);
     ~LuaPlugin();
 
     void Load();
@@ -58,6 +58,7 @@ private:
     static void Init();
     void TimerMain();
     void MainFunc();
+    void LoadNewOrChanged();
     // -- Lua interface functions :)
     
     // -- Event executors

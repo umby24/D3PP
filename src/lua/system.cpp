@@ -243,6 +243,11 @@ int LuaSystemLib::LuaMessage(lua_State* L) {
     std::string message = luaL_checkstring(L, 2);
     int messageType = luaL_optinteger(L, 3, 0);
 
+    if (clientId != -200) {
+        // -- Verify this is a valid client id.
+
+    }
+
     NetworkFunctions::SystemMessageNetworkSend(clientId, message, messageType);
     return 0;
 }
@@ -334,9 +339,9 @@ int LuaSystemLib::LuaAddTextColor(lua_State* L)
         Logger::LogAdd("Lua", "LuaError: System.addTextColor, character invalid: may only be one character!", LogType::WARNING, GLF);
         return 0;
     }
-    
+
     std::erase_if(Configuration::textSettings.colors, [&character](const CustomColor& c) { return c.character == character; });
-    
+
     Configuration::textSettings.colors.push_back(CustomColor{ character, redVal, greenVal, blueVal, alphaVal });
 
     return 0;

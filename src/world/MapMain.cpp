@@ -29,6 +29,7 @@ const std::string MODULE_NAME = "MapMain";
 D3PP::world::MapMain* D3PP::world::MapMain::Instance = nullptr;
 
 D3PP::world::MapMain::MapMain() {
+    this->Setup = [this] { Init(); };
     this->Main = [this] { MainFunc(); };
     this->Interval = std::chrono::seconds(1);
     TaskScheduler::RegisterTask(MODULE_NAME, *this);
@@ -42,6 +43,9 @@ D3PP::world::MapMain::MapMain() {
     phStarted = false;
     mbcStarted = false;
     TempId = 0;
+}
+void D3PP::world::MapMain::Init() {
+    MapListLoad();
 }
 
 void D3PP::world::MapMain::MainFunc() {
@@ -137,6 +141,16 @@ void D3PP::world::MapMain::AddLoadAction(int clientId, int mapId, const std::str
     };
 
     thisMap->m_actions.AddTask(loadAction);
+}
+
+void D3PP::world::MapMain::LoadImmediately(int mapId, const std::string& directory) {
+    std::shared_ptr<Map> thisMap = GetPointer(mapId);
+
+    if (thisMap == nullptr)
+        return;
+
+    thisMap->Load(directory);
+    thisMap->filePath = directory;
 }
 
 void D3PP::world::MapMain::AddResizeAction(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z) {
@@ -353,7 +367,7 @@ void D3PP::world::MapMain::MapListLoad() {
                 mapPtr->filePath = directory;
             }
             if ((mapReload)) {
-                AddLoadAction(0, mapId, directory);
+                LoadImmediately(mapId, directory);
             }
         }
     }
@@ -495,3 +509,5 @@ D3PP::Common::Vector3S D3PP::world::MapMain::GetMapExportSize(const std::string&
     result.Z |= tempData[9] << 8;
     return result;
 }
+
+

@@ -19,7 +19,7 @@ int GZIP::GZip_Decompress(unsigned char *output, int outputLen, unsigned char *i
     asdf.next_in = input;
     asdf.next_out = output;
 
-    int infResult = inflateInit2_(&asdf, 15+16, zlibVersion(), sizeof(z_stream));
+    int infResult = inflateInit2_(&asdf, 15+32, zlibVersion(), sizeof(z_stream));
 
     if (infResult != Z_OK) {
         return infResult;

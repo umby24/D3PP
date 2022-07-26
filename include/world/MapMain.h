@@ -46,9 +46,11 @@ namespace D3PP::world {
             return (x + y * sizeX + z * sizeX * sizeY) * blockSize;
         }
         static Common::Vector3S GetMapExportSize(const std::string &filename);
+        void Init();
         void MainFunc();
         void AddSaveAction(int clientId, int mapId, const std::string &directory);
         void AddLoadAction(int clientId, int mapId, const std::string &directory);
+        void LoadImmediately(int mapId, const std::string &directory);
         void AddResizeAction(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z);
         void AddFillAction(int clientId, int mapId, std::string functionName, std::string argString);
         void AddDeleteAction(int clientId, int mapId);
