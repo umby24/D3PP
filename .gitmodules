@@ -1,6 +1,3 @@
 [submodule "include/digestpp"]
 	path = include/digestpp
 	url = https://github.com/kerukuro/digestpp
-[submodule "include/nbt-cpp"]
-	path = include/nbt-cpp
-	url = https://github.com/handtruth/nbt-cpp
