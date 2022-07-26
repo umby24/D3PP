@@ -41,7 +41,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appicon.rc")
     add_executable(D3PP main.cpp ${D3PP_SOURCE_FILES} ${APP_ICON_RESOURCE_WINDOWS})
 else()
-    add_executable(D3PP main.cpp ${NBT_SOURCE_FILES} ${D3PP_SOURCE_FILES} ${APP_ICON_RESOURCE_WINDOWS})
+    add_executable(D3PP main.cpp ${D3PP_SOURCE_FILES} ${APP_ICON_RESOURCE_WINDOWS})
 endif()
 set_target_properties(D3PP PROPERTIES VERSION ${VERSION})
 
@@ -97,7 +97,6 @@ enable_testing()
 
 add_executable(
   hello_test
-        ${NBT_SOURCE_FILES}
   ${D3PP_SOURCE_FILES}
   Testing/hello_test.cc
   Testing/utils_test.cc
