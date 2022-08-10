@@ -4,7 +4,6 @@
 #include "Utils.h"
 #include <files/ClassicWorld.h>
 
-
 D3PP::files::ClassicWorld::ClassicWorld(Common::Vector3S size) {
     BlockData.resize(size.X * size.Y * size.Z);
     Size = size;
@@ -15,6 +14,10 @@ D3PP::files::ClassicWorld::ClassicWorld(Common::Vector3S size) {
     TimeCreated = Utils::CurrentUnixTime();
     LastAccessed = Utils::CurrentUnixTime();
     LastModified = Utils::CurrentUnixTime();
+
+    for(int i = 0; i < 16; i++) {
+        Uuid.push_back(char(Utils::RandomNumber(200)));
+    }
 
     metaParsers.insert(std::make_pair("CPE", std::make_unique<CPEMetadata>()));
 }
@@ -156,6 +159,8 @@ void D3PP::files::ClassicWorld::Save(std::string filepath) {
         creator.data.insert({"MapGeneratorName", { Nbt::TagString {GeneratorName} }});
         baseCompound.data.insert({"MapGenerator", {creator}});
     }
+
+    LastModified = Utils::CurrentUnixTime();
 
     baseCompound.data.insert({"TimeCreated", { Nbt::TagLong {TimeCreated} }});
     baseCompound.data.insert({"LastAccessed", { Nbt::TagLong {LastAccessed} }});
