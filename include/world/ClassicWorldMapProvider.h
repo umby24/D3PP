@@ -43,7 +43,7 @@ namespace D3PP::world {
         std::string m_currentPath;
         std::unique_ptr<files::ClassicWorld> m_cwMap;
         int GetBlockIndex(int x, int z, int y);
-    }
+    };
 }
 
 #endif //D3PP_CLASSICWORLDMAPPROVIDER_H

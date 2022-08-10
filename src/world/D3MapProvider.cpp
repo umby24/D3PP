@@ -84,7 +84,15 @@ void D3PP::world::D3MapProvider::SetBlocks(const std::vector<unsigned char> &blo
 }
 
 std::vector<unsigned char> D3PP::world::D3MapProvider::GetBlocks() {
-    return std::vector<unsigned char>(m_d3map->MapData);
+    std::vector<unsigned char> result;
+    int mapVolume = m_d3map->MapSize.X * m_d3map->MapSize.Y * m_d3map->MapSize.Z;
+
+    for(int i = 0; i < mapVolume; i++) {
+        int index = i * 4;
+        result.push_back(m_d3map->MapData.at(index));
+    }
+
+    return result;
 }
 
 MinecraftLocation D3PP::world::D3MapProvider::GetSpawn() {

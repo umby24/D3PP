@@ -1,6 +1,7 @@
 #include "world/MapMain.h"
 
 #include <string>
+#include <world/ClassicWorldMapProvider.h>
 #include "common/Files.h"
 #include "common/PreferenceLoader.h"
 #include "common/Logger.h"
@@ -372,6 +373,25 @@ void D3PP::world::MapMain::MapListLoad() {
         }
     }
     SaveFile = false;
+    // -- Load of CW Maps :)
+    if (std::filesystem::is_directory("CWMaps")) {
+        for (const auto &entry : std::filesystem::directory_iterator("CWMaps")) {
+            std::string fileName = entry.path().filename().string();
+
+            if (fileName.length() < 3) // -- exclude . and ..
+                continue;
+
+            if (entry.is_directory()) {
+                continue;
+            }
+
+            if (fileName.ends_with(".cw")) {
+                int newId = GetMapId();
+                Add(newId, 64, 64, 64, "CWMaps/" + fileName);
+                LoadImmediately(newId, "CWMaps/" + fileName);
+            }
+        }
+    }
 
     LastWriteTime = Utils::FileModTime(fName);
     Logger::LogAdd(MODULE_NAME, "File loaded. [" + fName + "]", LogType::NORMAL, GLF);
@@ -400,9 +420,14 @@ int D3PP::world::MapMain::Add(int id, short x, short y, short z, const std::stri
     newMap->Clients = 0;
     newMap->LastClient = time(nullptr);
     Common::Vector3S sizeVector {x, y, z};
-    newMap->m_mapProvider = std::make_unique<D3MapProvider>();
-    newMap->filePath = Files::GetFolder("Maps") + name + "/";
-    
+    if (!name.ends_with(".cw")) {
+        newMap->m_mapProvider = std::make_unique<D3MapProvider>();
+        newMap->filePath = Files::GetFolder("Maps") + name + "/";
+    } else {
+        newMap->m_mapProvider = std::make_unique<ClassicWorldMapProvider>();
+        newMap->filePath = name;
+    }
+
     if (createNew) {
         newMap->m_mapProvider->CreateNew(sizeVector, newMap->filePath, name);
         newMap->loaded = true;

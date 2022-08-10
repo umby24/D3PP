@@ -185,16 +185,9 @@ void Map::Send(int clientId) {
     int cbl = nc->GetCustomBlocksLevel();
     int dbl = CPE::GetClientExtVersion(nc, BLOCK_DEFS_EXT_NAME);
     std::vector<unsigned char> mapBlocks = m_mapProvider->GetBlocks();
-    
-    if (mapBlocks.size() != (mapVolume * 4)) {
-        Logger::LogAdd("Map", "Error during mapsend: Size mismatch!!", LogType::L_ERROR, GLF);
-        nc->SendChat("Error during mapsend!!");
-        return;
-    }
 
     for (int i = 0; i < mapVolume; i++) {
-        int index = i * MAP_BLOCK_ELEMENT_SIZE;
-        unsigned char blockAt = mapBlocks[index];
+        unsigned char blockAt = mapBlocks[i];
         if (blockAt < 49) { // -- If its an original block, Dont bother checking. Just speed past.
             tempBuf[tempBufferOffset++] = blockAt;
             continue;
