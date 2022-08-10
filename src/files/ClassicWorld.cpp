@@ -19,7 +19,7 @@ D3PP::files::ClassicWorld::ClassicWorld(Common::Vector3S size) {
         Uuid.push_back(char(Utils::RandomNumber(200)));
     }
 
-    metaParsers.insert(std::make_pair("CPE", std::make_unique<CPEMetadata>()));
+    metaParsers.insert(std::make_pair("CPE", std::make_shared<CPEMetadata>()));
 }
 
 D3PP::files::ClassicWorld::ClassicWorld(std::string filepath) {
@@ -30,7 +30,7 @@ D3PP::files::ClassicWorld::ClassicWorld(std::string filepath) {
         throw std::runtime_error("Not a valid ClassicWorld file; Basetag name is not 'classicworld'.");
     }
 
-    metaParsers.insert(std::make_pair("CPE", std::make_unique<CPEMetadata>()));
+    metaParsers.insert(std::make_pair("CPE", std::make_shared<CPEMetadata>()));
 }
 
 void D3PP::files::ClassicWorld::Load() {

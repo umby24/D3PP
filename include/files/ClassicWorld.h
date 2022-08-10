@@ -246,7 +246,7 @@ namespace D3PP::files {
         unsigned char SpawnRotation, SpawnLook;
         std::vector<unsigned char> BlockData;
         ForeignMeta foreignMeta;
-        std::map<std::string, std::unique_ptr<IMetadataStructure>> metaParsers;
+        std::map<std::string, std::shared_ptr<IMetadataStructure>> metaParsers;
 
         // -- Create a new map
         explicit ClassicWorld(Common::Vector3S size);
