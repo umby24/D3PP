@@ -2,7 +2,7 @@
 #include "common/Vectors.h"
 
 int GetIndex(int x, int y, int z, int mapX, int mapY) {
-    return (x + y * mapX + z * mapX * mapY) * 4;
+    return (x + y * mapX + z * mapX * mapY) * 1;
 }
 
 void FlatgrassGen(int mapId) {
@@ -15,7 +15,7 @@ void FlatgrassGen(int mapId) {
 
     D3PP::Common::Vector3S mapSize = thisMap->GetSize();
     std::vector<unsigned char> newBlocks;
-    newBlocks.reserve((mapSize.X * mapSize.Y * mapSize.Z) * 4);
+    newBlocks.reserve((mapSize.X * mapSize.Y * mapSize.Z));
 
     for(int x = 0; x < mapSize.X; x++) {
         for (int y = 0; y < mapSize.Y; y++) {

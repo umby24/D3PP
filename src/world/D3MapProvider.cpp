@@ -80,6 +80,15 @@ unsigned char D3PP::world::D3MapProvider::GetBlock(const D3PP::Common::Vector3S&
 
 void D3PP::world::D3MapProvider::SetBlocks(const std::vector<unsigned char> &blocks) {
     m_d3map->MapData.clear();
+    m_d3map->MapData.resize((m_d3map->MapSize.X * m_d3map->MapSize.Y * m_d3map->MapSize.Z)*4);
+
+    for(int i = 0; i < blocks.size(); i++) {
+        m_d3map->MapData[i*4] = blocks[i];
+        m_d3map->MapData[(i*4)+1] = 0; // -- Blank meta
+        m_d3map->MapData[(i*4)+2] = 255; // -- Last player = -1
+        m_d3map->MapData[(i*4)+3] = 255;
+    }
+
     std::copy(blocks.begin(), blocks.end(), std::back_inserter(m_d3map->MapData));
 }
 

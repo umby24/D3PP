@@ -83,11 +83,16 @@ bool D3PP::world::ClassicWorldMapProvider::Reload() {
 }
 
 void D3PP::world::ClassicWorldMapProvider::SetBlock(const D3PP::Common::Vector3S &location, const unsigned char &type) {
-    m_cwMap->BlockData[GetBlockIndex(location.X, location.Y, location.Z)] = type;
+    int blockIndex = GetBlockIndex(location.X, location.Y, location.Z);
+    if (blockIndex > m_cwMap->BlockData.size()) return;
+    m_cwMap->BlockData[blockIndex] = type;
 }
 
 unsigned char D3PP::world::ClassicWorldMapProvider::GetBlock(const D3PP::Common::Vector3S &location) {
-    return m_cwMap->BlockData[GetBlockIndex(location.X, location.Y, location.Z)];
+    int blockIndex = GetBlockIndex(location.X, location.Y, location.Z);
+    if (blockIndex > m_cwMap->BlockData.size()) return 255;
+
+    return m_cwMap->BlockData[blockIndex];
 }
 
 short D3PP::world::ClassicWorldMapProvider::GetLastPlayer(const D3PP::Common::Vector3S &location) {

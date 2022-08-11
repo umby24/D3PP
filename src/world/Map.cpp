@@ -71,8 +71,7 @@ void Map::Fill(const std::string& functionName, const std::string& paramString) 
     bcQueue->Clear();
     pQueue->Clear();
     Vector3S mapSize = m_mapProvider->GetSize();
-    int mapSizeInt = (mapSize.X * mapSize.Y * mapSize.Z)*4;
-    clock_t start = clock();
+    int mapSizeInt = (mapSize.X * mapSize.Y * mapSize.Z)*1;
     std::vector<unsigned char> blankMap;
     blankMap.resize(mapSizeInt);
 
@@ -121,6 +120,8 @@ void Map::Load(const std::string& directory) {
     Portals = m_mapProvider->getPortals();
     loading = false;
     loaded = true;
+
+    Logger::LogAdd(MODULE_NAME, "Loaded map " + m_mapProvider->MapName, NORMAL, GLF);
 }
 
 void Map::Reload() {
