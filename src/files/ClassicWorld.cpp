@@ -3,6 +3,7 @@
 //
 #include "Utils.h"
 #include <files/ClassicWorld.h>
+#include "common/Logger.h"
 
 D3PP::files::ClassicWorld::ClassicWorld(Common::Vector3S size) {
     BlockData.resize(size.X * size.Y * size.Z);
@@ -23,6 +24,9 @@ D3PP::files::ClassicWorld::ClassicWorld(Common::Vector3S size) {
 }
 
 D3PP::files::ClassicWorld::ClassicWorld(std::string filepath) {
+    m_filePath = filepath;
+    Logger::LogAdd("ClassicWorld", "Path set to " + m_filePath, DEBUG, GLF);
+
     auto baseTag = Nbt::NbtFile::Load(filepath);
     m_baseTag = std::get<Nbt::TagCompound>(baseTag);
 
@@ -34,6 +38,10 @@ D3PP::files::ClassicWorld::ClassicWorld(std::string filepath) {
 }
 
 void D3PP::files::ClassicWorld::Load() {
+    if (m_baseTag.data.empty()) {
+        m_baseTag = std::get<Nbt::TagCompound>(Nbt::NbtFile::Load(m_filePath));
+    }
+
     BlockData.clear();
     if (std::holds_alternative<Nbt::TagByte>(m_baseTag["FormatVersion"])) {
         FormatVersion = std::get<Nbt::TagByte>(m_baseTag["FormatVersion"]);
@@ -114,6 +122,8 @@ void D3PP::files::ClassicWorld::Load() {
 }
 
 void D3PP::files::ClassicWorld::Save(std::string filepath) {
+    m_filePath = filepath;
+    Logger::LogAdd("ClassicWorld", "[S] Path set to " + m_filePath, DEBUG, GLF);
     auto nbtMetadata = foreignMeta.Write();
 
     for (auto &p : metaParsers) {
@@ -167,5 +177,6 @@ void D3PP::files::ClassicWorld::Save(std::string filepath) {
     baseCompound.data.insert({"LastModified", { Nbt::TagLong {LastModified} }});
 
     Nbt::NbtFile::Save(baseCompound, filepath, Nbt::CompressionMode::GZip);
+    Logger::LogAdd("ClassicWorld", "File saved. [" + filepath + "]", NORMAL, GLF);
 }
 

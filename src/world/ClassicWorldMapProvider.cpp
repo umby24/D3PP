@@ -5,6 +5,7 @@
 #include <world/ClassicWorldMapProvider.h>
 #include "world/Teleporter.h"
 #include "world/CustomParticle.h"
+#include "common/D3PPMetadata.h"
 
 D3PP::world::ClassicWorldMapProvider::ClassicWorldMapProvider() {
     CreatingService = "D3PP Server";
@@ -27,8 +28,9 @@ void D3PP::world::ClassicWorldMapProvider::CreateNew(const Common::Vector3S &siz
 bool D3PP::world::ClassicWorldMapProvider::Save(const std::string &filePath) {
     if (filePath.empty())
         m_cwMap->Save(m_currentPath);
+    else
+        m_cwMap->Save(filePath);
 
-    m_cwMap->Save(filePath);
     return true;
 }
 
@@ -37,6 +39,8 @@ bool D3PP::world::ClassicWorldMapProvider::Load(const std::string &filePath) {
         m_cwMap = std::make_unique<files::ClassicWorld>(filePath);
         m_currentPath = filePath;
     }
+
+    m_currentPath = filePath;
 
     try {
         m_cwMap->Load();
@@ -128,10 +132,25 @@ void D3PP::world::ClassicWorldMapProvider::SetSpawn(const MinecraftLocation &loc
 
 D3PP::world::MapPermissions D3PP::world::ClassicWorldMapProvider::GetPermissions() {
     // -- TODO:
-    return D3PP::world::MapPermissions { 0, 0, 0 };
+    D3PP::world::MapPermissions currentPerms{0, 0, 0};
+    if (m_cwMap->metaParsers.contains("D3PP")) {
+        auto d3Settings = static_pointer_cast<Common::D3PPMetadata>(m_cwMap->metaParsers.at("D3PP"));
+        currentPerms.RankBuild = d3Settings->BuildRank;
+        currentPerms.RankJoin = d3Settings->JoinRank;
+        currentPerms.RankShow = d3Settings->ShowRank;
+    }
+
+    return currentPerms;
 }
 
 void D3PP::world::ClassicWorldMapProvider::SetPermissions(const D3PP::world::MapPermissions &perms) {
+    if (!m_cwMap->metaParsers.contains("D3PP")) {
+        m_cwMap->metaParsers.insert(std::make_pair("D3PP", std::make_shared<Common::D3PPMetadata>()));
+    }
+    auto d3Settings = static_pointer_cast<Common::D3PPMetadata>(m_cwMap->metaParsers.at("D3PP"));
+    d3Settings->BuildRank = perms.RankBuild;
+    d3Settings->JoinRank = perms.RankJoin;
+    d3Settings->ShowRank = perms.RankShow;
 
 }
 

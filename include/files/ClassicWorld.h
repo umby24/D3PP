@@ -257,6 +257,7 @@ namespace D3PP::files {
         void Save(std::string filepath);
     private:
         Nbt::TagCompound m_baseTag;
+        std::string m_filePath;
     };
 }
 #endif //D3PP_CLASSICWORLD_H
