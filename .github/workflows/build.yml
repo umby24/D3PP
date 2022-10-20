@@ -2,34 +2,34 @@ name: GitHub Actions Demo
 on: [push]
 
 jobs:
-  "Docker-Ubuntu":
-    strategy:
-      fail-fast: false
-      matrix:
-        version:
-          - "21.10"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - run: docker build --tag build:ubuntu-${{ matrix.version }} --build-arg version=${{ matrix.version }} docker/ubuntu
-        name: "docker build"
-      - run: docker run --detach --interactive --name build --volume $PWD:/D3PP build:ubuntu-${{ matrix.version }}
-        name: "Docker run"
-      - run: docker exec -t build /run_cmake.sh
-        name: "cmake"
-      - run: docker exec -t build /run_compile.sh
-        name: "make"
-      - run: docker exec -t build ls /
-        name: "debug"
-      - run: docker cp build:/tmp/D3PP/D3PP ${{ github.workspace }}/D3PP
-        name: "Copy Files"
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-            name: D3PP-docker ${{ matrix.version }}
-            path: ${{ github.workspace }}/D3PP
+#  "Docker-Ubuntu":
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        version:
+#          - "21.10"
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v2
+#        with:
+#          submodules: true
+#      - run: docker build --tag build:ubuntu-${{ matrix.version }} --build-arg version=${{ matrix.version }} docker/ubuntu
+#        name: "docker build"
+#      - run: docker run --detach --interactive --name build --volume $PWD:/D3PP build:ubuntu-${{ matrix.version }}
+#        name: "Docker run"
+#      - run: docker exec -t build /run_cmake.sh
+#        name: "cmake"
+#      - run: docker exec -t build /run_compile.sh
+#        name: "make"
+#      - run: docker exec -t build ls /
+#        name: "debug"
+#      - run: docker cp build:/tmp/D3PP/D3PP ${{ github.workspace }}/D3PP
+#        name: "Copy Files"
+#      - name: Upload artifacts
+#        uses: actions/upload-artifact@v3
+#        with:
+#            name: D3PP-docker ${{ matrix.version }}
+#            path: ${{ github.workspace }}/D3PP
 #  Windows-Build:
 #    runs-on: windows-latest
 #    steps:

@@ -34,11 +34,13 @@ TEST(PhysicsQueueTest, QueueDuplicate) {
     D3PP::world::PhysicsQueue testing(givenQueueSize);
 
     D3PP::world::TimeQueueItem givenQueueItem;
-    givenQueueItem.Time = std::chrono::steady_clock::now()--;
+    givenQueueItem.Time = std::chrono::steady_clock::now();
+    givenQueueItem.Time--;
     givenQueueItem.Location = D3PP::Common::Vector3S {(short)78,115,69};
 
     D3PP::world::TimeQueueItem givenDupeQueueItem;
-    givenDupeQueueItem.Time = std::chrono::steady_clock::now()++;
+    givenDupeQueueItem.Time = std::chrono::steady_clock::now();
+    givenDupeQueueItem.Time++;
     givenDupeQueueItem.Location = D3PP::Common::Vector3S {(short)78,115,69};
 
     testing.TryQueue(givenQueueItem);
