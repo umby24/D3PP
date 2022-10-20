@@ -63,40 +63,40 @@ jobs:
 #            path: ${{ github.workspace }}/artifacts
 #      - run: echo "🍏 This job's status is ${{ job.status }}."
 
-#  Linux-Build:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-#      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-#      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-#      - name: Check out repository code
-#        uses: actions/checkout@v2
-#        with:
-#          submodules: true
-#      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-#      - name: Install Deps
-#        run: sudo apt-get update && sudo apt-get -y install sqlite3 libc6 libstdc++6 cmake
-#      - name: Download Latest Lua
-#        run: curl https://www.lua.org/ftp/lua-5.4.4.tar.gz --output lua-5.4.4.tar.gz
-#      - name: Unpack Lua
-#        run: tar -zxf lua-5.4.4.tar.gz
-#      - name: Install Lua
-#        run: cd lua-5.4.4 && make all test && sudo make install
-#      - name: Create Symlinks
-#        run: sudo ln -s /lib/x86_64-linux-gnu/liblua5.4.so.0.0.0 /lib/x86_64-linux-gnu/liblua-5.4.so
-#      - name: Cmake Build
-#        run: |
-#          mkdir build && cd build && cmake ../ && make
-#      - name: Run Unit Tests
-#        continue-on-error: true
-#        run: |
-#          cd build && ./hello_test
-#      - name: Create Artifacts
-#        run: |
-#          mkdir artifacts && cp build/D3PP artifacts/D3PP
-#      - name: Upload artifacts
-#        uses: actions/upload-artifact@v3
-#        with:
-#            name: D3PP
-#            path: ${{ github.workspace }}/artifacts
-#      - run: echo "🍏 This job's status is ${{ job.status }}."
+  Linux-Build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      - name: Install Deps
+        run: sudo apt-get update && sudo apt-get -y install sqlite3 libc6 libstdc++6 cmake
+      - name: Download Latest Lua
+        run: curl https://www.lua.org/ftp/lua-5.4.4.tar.gz --output lua-5.4.4.tar.gz
+      - name: Unpack Lua
+        run: tar -zxf lua-5.4.4.tar.gz
+      - name: Install Lua
+        run: cd lua-5.4.4 && make all test && sudo make install
+      - name: Create Symlinks
+        run: sudo ln -s /lib/x86_64-linux-gnu/liblua5.4.so.0.0.0 /lib/x86_64-linux-gnu/liblua-5.4.so
+      - name: Cmake Build
+        run: |
+          mkdir build && cd build && cmake ../ && make
+      - name: Run Unit Tests
+        continue-on-error: true
+        run: |
+          cd build && ./hello_test
+      - name: Create Artifacts
+        run: |
+          mkdir artifacts && cp build/D3PP artifacts/D3PP
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+            name: D3PP
+            path: ${{ github.workspace }}/artifacts
+      - run: echo "🍏 This job's status is ${{ job.status }}."
