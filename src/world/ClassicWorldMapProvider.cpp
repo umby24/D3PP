@@ -57,7 +57,7 @@ D3PP::Common::Vector3S D3PP::world::ClassicWorldMapProvider::GetSize() const {
     if (m_cwMap == nullptr)
         return Common::Vector3S();
 
-    return m_cwMap->Size;
+    return Common::Vector3S{ m_cwMap->Size.X, m_cwMap->Size.Z, m_cwMap->Size.Y};
 }
 
 void D3PP::world::ClassicWorldMapProvider::SetSize(const D3PP::Common::Vector3S &newSize) {
@@ -72,7 +72,8 @@ void D3PP::world::ClassicWorldMapProvider::SetSize(const D3PP::Common::Vector3S 
 
     int totalSize = newSize.X * newSize.Y * newSize.Z;
     m_cwMap->BlockData.resize(totalSize);
-    m_cwMap->Size = newSize;
+
+    m_cwMap->Size = Common::Vector3S{newSize.X, newSize.Z, newSize.Y};
 
 }
 
@@ -118,14 +119,15 @@ std::vector<unsigned char> D3PP::world::ClassicWorldMapProvider::GetBlocks() {
 
 MinecraftLocation D3PP::world::ClassicWorldMapProvider::GetSpawn() {
     MinecraftLocation result;
-    result.SetAsBlockCoords(m_cwMap->Spawn);
+    result.SetAsBlockCoords(Common::Vector3S{m_cwMap->Spawn.X, m_cwMap->Spawn.Z, m_cwMap->Spawn.Y});
     result.Rotation = m_cwMap->SpawnRotation;
     result.Look = m_cwMap->SpawnLook;
     return result;
 }
 
 void D3PP::world::ClassicWorldMapProvider::SetSpawn(const MinecraftLocation &location) {
-    m_cwMap->Spawn = location.GetAsBlockCoords();
+    auto blockCoords = location.GetAsBlockCoords();
+    m_cwMap->Spawn = Common::Vector3S{blockCoords.X, blockCoords.Z, blockCoords.Y};
     m_cwMap->SpawnRotation = location.Rotation;
     m_cwMap->SpawnLook = location.Look;
 }
