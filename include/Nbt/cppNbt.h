@@ -329,17 +329,16 @@ namespace Nbt {
             TagCompound baseTag;
             std::string nextName = "";
             do {
-                std::cout << "Going to read nexttype\r\n";
+                
                 nextType = static_cast<TagType>(data.at(offset++));
-                std::cout << "Nexttype read \r\n" << data.at(offset - 1) << std::endl;
+                
                 if (nextType != TAG_END) {
-                    std::cout << "Going to get next name\r\n";
+                    
                     nextName = ReadString(data, offset);
-                    std::cout << "Got name " << nextName << "\r\n";
+                    
                     Tag nextTag = ReadOnType(data, offset, nextType);
-                    std::cout << "Read tag\r\n";
+                    
                     baseTag.data.insert(std::make_pair(nextName, nextTag));
-                    std::cout << "Inserted. Looping.\r\n";
                 }
             } while (nextType != TAG_END);
 
@@ -482,7 +481,7 @@ namespace Nbt {
             TagList result;
             if (listLength <= 0)
                 return result;
-            std::cout << "Reading list proper" << std::endl;
+            
             for(auto i = 0; i < listLength; i++) {
             switch (listType) {
                 case TAG_BYTE: {
