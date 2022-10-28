@@ -30,31 +30,34 @@ Nbt::TagCompound D3PP::Common::D3PPMetadata::Read(Nbt::TagCompound metadata) {
     if (cpeBase.data.contains("Particles")) {
         particles.clear();
         auto particlesBase = std::get<Nbt::TagList>(cpeBase["Particles"]);
-        auto partiList = std::get<std::vector<Nbt::TagCompound>>(particlesBase.base);
+        bool isCompound = std::holds_alternative<std::vector<Nbt::TagCompound>>(particlesBase.base);
+        if (isCompound) {
+            auto partiList = std::get<std::vector<Nbt::TagCompound>>(particlesBase.base);
 
-        for(Nbt::TagCompound i : partiList) {
-            world::CustomParticle newP;
-            newP.effectId = st_c(std::get<Nbt::TagByte>(i["effectId"]));
-            newP.U1 = st_c(std::get<Nbt::TagByte>(i["U1"]));
-            newP.V1 = st_c(std::get<Nbt::TagByte>(i["V1"]));
-            newP.U2 = st_c(std::get<Nbt::TagByte>(i["U2"]));
-            newP.V2 = st_c(std::get<Nbt::TagByte>(i["V2"]));
-            newP.redTint = st_c(std::get<Nbt::TagByte>(i["redTint"]));
-            newP.greenTint = st_c(std::get<Nbt::TagByte>(i["greenTint"]));
-            newP.blueTint = st_c(std::get<Nbt::TagByte>(i["blueTint"]));
-            newP.frameCount = st_c(std::get<Nbt::TagByte>(i["frameCount"]));
-            newP.particleCount = st_c(std::get<Nbt::TagByte>(i["particleCount"]));
-            newP.size = st_c(std::get<Nbt::TagByte>(i["size"]));
-            newP.sizeVariation = std::get<Nbt::TagInt>(i["sizeVariation"]);
-            newP.spread = std::get<Nbt::TagShort>(i["spread"]);
-            newP.speed = std::get<Nbt::TagInt>(i["speed"]);
-            newP.gravity = std::get<Nbt::TagInt>(i["gravity"]);
-            newP.baseLifetime = std::get<Nbt::TagInt>(i["baseLifetime"]);
-            newP.lifetimeVariation = std::get<Nbt::TagInt>(i["lifetimeVariation"]);
-            newP.collideFlags = st_c(std::get<Nbt::TagByte>(i["collideFlags"]));
-            newP.fullBright = std::get<Nbt::TagByte>(i["fullBright"]);
+            for (Nbt::TagCompound i : partiList) {
+                world::CustomParticle newP;
+                newP.effectId = st_c(std::get<Nbt::TagByte>(i["effectId"]));
+                newP.U1 = st_c(std::get<Nbt::TagByte>(i["U1"]));
+                newP.V1 = st_c(std::get<Nbt::TagByte>(i["V1"]));
+                newP.U2 = st_c(std::get<Nbt::TagByte>(i["U2"]));
+                newP.V2 = st_c(std::get<Nbt::TagByte>(i["V2"]));
+                newP.redTint = st_c(std::get<Nbt::TagByte>(i["redTint"]));
+                newP.greenTint = st_c(std::get<Nbt::TagByte>(i["greenTint"]));
+                newP.blueTint = st_c(std::get<Nbt::TagByte>(i["blueTint"]));
+                newP.frameCount = st_c(std::get<Nbt::TagByte>(i["frameCount"]));
+                newP.particleCount = st_c(std::get<Nbt::TagByte>(i["particleCount"]));
+                newP.size = st_c(std::get<Nbt::TagByte>(i["size"]));
+                newP.sizeVariation = std::get<Nbt::TagInt>(i["sizeVariation"]);
+                newP.spread = std::get<Nbt::TagShort>(i["spread"]);
+                newP.speed = std::get<Nbt::TagInt>(i["speed"]);
+                newP.gravity = std::get<Nbt::TagInt>(i["gravity"]);
+                newP.baseLifetime = std::get<Nbt::TagInt>(i["baseLifetime"]);
+                newP.lifetimeVariation = std::get<Nbt::TagInt>(i["lifetimeVariation"]);
+                newP.collideFlags = st_c(std::get<Nbt::TagByte>(i["collideFlags"]));
+                newP.fullBright = std::get<Nbt::TagByte>(i["fullBright"]);
 
-            particles.push_back(newP);
+                particles.push_back(newP);
+            }
         }
     }
 

@@ -3,7 +3,7 @@ include_directories(include/)
 # set the project name
 project(D3PP)
 set(CMAKE_COMPILER_)
-set (MALLOC_CHECK_ 3)
+set (MALLOC_CHECK_ 3) 
 # set project standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -11,7 +11,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
 set(VERSION_STRING 0.1.2)
 set(VERSION ${VERSION_STRING})
-
 
 include(FetchContent)
 FetchContent_Declare(
@@ -37,8 +36,8 @@ set(D3PP_SOURCE_FILES src/common/Files.cpp include/common/Files.h src/common/Log
 
 # add the executable
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    enable_language("RC")
-    set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appicon.rc")
+    # enable_language("RC")
+    # set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appicon.rc")
     add_executable(D3PP main.cpp ${D3PP_SOURCE_FILES} ${APP_ICON_RESOURCE_WINDOWS})
 else()
     add_executable(D3PP main.cpp ${D3PP_SOURCE_FILES} ${APP_ICON_RESOURCE_WINDOWS})
@@ -49,6 +48,7 @@ set_target_properties(D3PP PROPERTIES VERSION ${VERSION})
 # WINDOWS (MSVC) BUILD REQUIREMENTS
 #--------------------------------------------------------------
 if (MSVC)
+    message(STATUS "MSVC Build --")
     find_package(ZLIB REQUIRED)
     find_package(unofficial-sqlite3 CONFIG REQUIRED)
     target_link_libraries(D3PP unofficial::sqlite3::sqlite3)
@@ -60,11 +60,19 @@ endif ()
 #--------------------------------------------------------------
 find_package(Lua REQUIRED)
 if (Lua_FOUND)
+    MESSAGE(STATUS "Lua found at: " ${LUA_LIBRARIES})
+    target_include_directories(D3PP ${LUA_INCLUDE_DIR})
     include_directories(${Lua_INCLUDE_DIRS})
     target_link_libraries(D3PP ${LUA_LIBRARIES})
 
-    MESSAGE(STATUS "Lua found at: " ${LUA_LIBRARIES})
+    
 endif ()
+if (LUA_FOUND)
+    MESSAGE(STATUS "Found uppercase lua")
+    include_directories(${LUA_INCLUDE_DIRS})
+    target_link_libraries(D3PP ${LUA_LIBRARIES})
+endif ()
+
 #______________________________________________________________
 # *NIX BUILD REQUIREMENTS
 #--------------------------------------------------------------
