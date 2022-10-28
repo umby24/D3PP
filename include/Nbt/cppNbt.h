@@ -5,9 +5,14 @@
 #ifndef D3PP_CPPNBT_H
 #define D3PP_CPPNBT_H
 
-
-
-
+#define LIST_WRITE(tagType) if (std::holds_alternative<std::vector<tagType>>(tag.base)) { \
+                std::vector<tagType> baseResolved = std::get<std::vector<tagType>>(tag.base); \
+                WriteTagType(tagType{}, data); \
+                WriteInt(baseResolved.size(), data); \
+                for(auto const &t : baseResolved) { \
+                    WriteOnType(t, data); \
+                } \
+            }
 
 #include <string>
 #include <fstream>
@@ -326,7 +331,7 @@ namespace Nbt {
             do {
                 nextType = static_cast<TagType>(data.at(offset++));
                 if (nextType != TAG_END) {
-                    nextName = ReadString(data, offset);
+                    nextName = ReadString(data, offset)
                     Tag nextTag = ReadOnType(data, offset, nextType);
                     baseTag.data.insert(std::make_pair(nextName, nextTag));
                 }
@@ -379,7 +384,9 @@ namespace Nbt {
                     break;
                     }
                 case TAG_SHORT: {
+                    
                     auto val2 = ReadShort(data, offset);
+                    
                     nextTag = val2;
                     break;
                 }
@@ -469,7 +476,7 @@ namespace Nbt {
             TagList result;
             if (listLength <= 0)
                 return result;
-
+            std::cout << "Reading list proper" << std::endl;
             for(auto i = 0; i < listLength; i++) {
             switch (listType) {
                 case TAG_BYTE: {
@@ -552,12 +559,33 @@ namespace Nbt {
             return result;
         }
         static void WriteList(TagList tag, std::vector<unsigned char>& data) {
-            throw std::runtime_error("Not implementing at this time :)");
-//            std::get(tag.base)
-//            WriteTagType(tag.base, data);
-//            WriteInt(tag.size, data);
+            //WriteTagType(tag, data); // -- Write tag type: LIST
+            
+            // -- Macros, Determine if tag.base == the given type, resolve it, and write it.
 
+            LIST_WRITE(TagByte);
+            LIST_WRITE(TagShort);
+            LIST_WRITE(TagInt);
+            LIST_WRITE(TagLong);
+            LIST_WRITE(TagFloat);
+            LIST_WRITE(TagDouble);
+            LIST_WRITE(TagString);
+            LIST_WRITE(TagList);
+            LIST_WRITE(TagByteArray);
+            LIST_WRITE(TagIntArray);
+            LIST_WRITE(TagLongArray);
+            if (std::holds_alternative<std::vector<TagCompound>>(tag.base)) { 
+                std::vector<TagCompound> baseResolved = std::get<std::vector<TagCompound>>(tag.base); 
+
+                WriteTagType(TagCompound{}, data); 
+                WriteInt(baseResolved.size(), data);
+
+                for(auto const &t : baseResolved) { 
+                    WriteOnType(t, data); 
+                } 
+            }
         }
+
         static TagByte ReadByte(std::vector<unsigned char> data, int& offset) {
             return data.at(offset++);
         }

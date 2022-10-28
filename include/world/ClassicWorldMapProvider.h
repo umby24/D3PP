@@ -7,6 +7,10 @@
 #include "IMapProvider.h"
 #include "files/ClassicWorld.h"
 
+namespace D3PP::Common {
+    class D3PPMetadata;
+}
+
 namespace D3PP::world {
     class Teleporter;
     class CustomParticle;
@@ -42,6 +46,7 @@ namespace D3PP::world {
     private:
         std::string m_currentPath;
         std::unique_ptr<files::ClassicWorld> m_cwMap;
+        std::shared_ptr<Common::D3PPMetadata> m_d3meta;
         int GetBlockIndex(int x, int z, int y);
     };
 }

@@ -56,8 +56,9 @@ If you would like those reach out to let me know, and of course Pull Requests ar
 ## Compling on Linux
 These instructions used on Fedora
 
-1. install your distros build-essential files
-2. clone the repo and open it up in terminal
-3. mkdir build && cd build
-4. cmake ../
-5. make
+# install your distros build-essential files
+# Install lua
+# clone the repo and open it up in terminal
+# mkdir build && cd build
+# cmake ../
+# make

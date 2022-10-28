@@ -6,10 +6,12 @@
 #include "world/Teleporter.h"
 #include "world/CustomParticle.h"
 #include "common/D3PPMetadata.h"
+#include "common/Logger.h"
 
 D3PP::world::ClassicWorldMapProvider::ClassicWorldMapProvider() {
     CreatingService = "D3PP Server";
     CreatingUser = "D3";
+    m_d3meta = std::make_shared<Common::D3PPMetadata>();
     m_cwMap = nullptr;
 }
 
@@ -21,7 +23,7 @@ void D3PP::world::ClassicWorldMapProvider::CreateNew(const Common::Vector3S &siz
     m_cwMap->CreatingUsername = CreatingUser;
     m_currentPath = path;
     MapName = name;
-
+    m_cwMap->metaParsers.insert(std::make_pair("D3PP", m_d3meta));
     m_cwMap->Save(m_currentPath);
 }
 
@@ -38,6 +40,7 @@ bool D3PP::world::ClassicWorldMapProvider::Load(const std::string &filePath) {
     if (m_cwMap == nullptr) {
         m_cwMap = std::make_unique<files::ClassicWorld>(filePath);
         m_currentPath = filePath;
+        m_cwMap->metaParsers.insert(std::make_pair("D3PP", m_d3meta));
     }
 
     m_currentPath = filePath;
@@ -45,6 +48,7 @@ bool D3PP::world::ClassicWorldMapProvider::Load(const std::string &filePath) {
     try {
         m_cwMap->Load();
     } catch (std::exception& e) {
+        Logger::LogAdd("ClassicWorldProvider", "Error loading the map at [" + filePath + "]. [Message: " + e.what() + "]", L_ERROR, GLF);
         return false;
     }
 
@@ -133,27 +137,18 @@ void D3PP::world::ClassicWorldMapProvider::SetSpawn(const MinecraftLocation &loc
 }
 
 D3PP::world::MapPermissions D3PP::world::ClassicWorldMapProvider::GetPermissions() {
-    // -- TODO:
     D3PP::world::MapPermissions currentPerms{0, 0, 0};
-    if (m_cwMap->metaParsers.contains("D3PP")) {
-        auto d3Settings = static_pointer_cast<Common::D3PPMetadata>(m_cwMap->metaParsers.at("D3PP"));
-        currentPerms.RankBuild = d3Settings->BuildRank;
-        currentPerms.RankJoin = d3Settings->JoinRank;
-        currentPerms.RankShow = d3Settings->ShowRank;
-    }
+    currentPerms.RankBuild = m_d3meta->BuildRank;
+    currentPerms.RankJoin = m_d3meta->JoinRank;
+    currentPerms.RankShow = m_d3meta->ShowRank;
 
     return currentPerms;
 }
 
 void D3PP::world::ClassicWorldMapProvider::SetPermissions(const D3PP::world::MapPermissions &perms) {
-    if (!m_cwMap->metaParsers.contains("D3PP")) {
-        m_cwMap->metaParsers.insert(std::make_pair("D3PP", std::make_shared<Common::D3PPMetadata>()));
-    }
-    auto d3Settings = static_pointer_cast<Common::D3PPMetadata>(m_cwMap->metaParsers.at("D3PP"));
-    d3Settings->BuildRank = perms.RankBuild;
-    d3Settings->JoinRank = perms.RankJoin;
-    d3Settings->ShowRank = perms.RankShow;
-
+    m_d3meta->BuildRank = perms.RankBuild;
+    m_d3meta->JoinRank = perms.RankJoin;
+    m_d3meta->ShowRank = perms.RankShow;
 }
 
 D3PP::world::MapEnvironment D3PP::world::ClassicWorldMapProvider::GetEnvironment() {
@@ -210,23 +205,27 @@ void D3PP::world::ClassicWorldMapProvider::SetEnvironment(const D3PP::world::Map
         cpeSettings->SideBlock = env.SideBlock;
         cpeSettings->EdgeBlock = env.EdgeBlock;
         cpeSettings->TextureUrl = env.TextureUrl;
+        
+        
     }
 }
 
 std::vector<D3PP::world::Teleporter> D3PP::world::ClassicWorldMapProvider::getPortals() {
-    return std::vector<D3PP::world::Teleporter>();
+    return m_d3meta->portals;
 }
 
 void D3PP::world::ClassicWorldMapProvider::SetPortals(const std::vector<D3PP::world::Teleporter> portals) {
-
+    m_d3meta->portals.clear();
+    std::copy(portals.begin(), portals.end(), std::back_inserter(m_d3meta->portals));
 }
 
 std::vector<D3PP::world::CustomParticle> D3PP::world::ClassicWorldMapProvider::getParticles() {
-    return std::vector<D3PP::world::CustomParticle>();
+    return m_d3meta->particles;
 }
 
 void D3PP::world::ClassicWorldMapProvider::SetParticles(std::vector<D3PP::world::CustomParticle> particles) {
-
+    m_d3meta->particles.clear();
+    std::copy(particles.begin(), particles.end(), std::back_inserter(m_d3meta->particles));
 }
 
 int D3PP::world::ClassicWorldMapProvider::GetBlockIndex(int x, int z, int y) {
