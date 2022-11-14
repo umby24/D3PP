@@ -63,15 +63,18 @@ namespace D3PP::files {
     public:
         int ClickDistanceVersion;
         short ClickDistance;
+
         int CustomBlocksVersion;
         short CustomBlocksLevel;
         std::vector<unsigned char> CustomBlocksFallback;
+
         int EnvColorsVersion;
         Common::Vector3S SkyColor;
         Common::Vector3S CloudColor;
         Common::Vector3S FogColor;
         Common::Vector3S AmbientColor;
         Common::Vector3S SunlightColor;
+
         int EnvMapAppearanceVersion;
         std::string TextureUrl;
         unsigned char SideBlock;

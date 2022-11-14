@@ -61,7 +61,6 @@ endif ()
 find_package(Lua REQUIRED)
 if (Lua_FOUND)
     MESSAGE(STATUS "Lua found at: " ${LUA_LIBRARIES})
-    target_include_directories(D3PP ${LUA_INCLUDE_DIR})
     include_directories(${Lua_INCLUDE_DIRS})
     target_link_libraries(D3PP ${LUA_LIBRARIES})
 
