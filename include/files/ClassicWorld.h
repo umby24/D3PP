@@ -82,6 +82,13 @@ namespace D3PP::files {
         short SideLevel;
         unsigned char Weather;
 
+        int EnvMapAspectVersion;
+        std::map<unsigned char, int> MapEnvProperties;
+
+        int HackControlVersion;
+        bool CanFly, CanClip, CanSpeed, CanRespawn, CanThirdPerson, CanSetWeather;
+        short JumpHeight;
+
         Nbt::TagCompound Read(Nbt::TagCompound metadata) override {
             if (!metadata.data.contains("CPE"))
                 return metadata;
@@ -149,6 +156,45 @@ namespace D3PP::files {
                     auto extVersion = std::get<Nbt::TagInt>(cdBase["ExtensionVersion"]);
                     auto wType = std::get<Nbt::TagByte>(cdBase["WeatherType"]);
                     Weather = wType;
+                }
+            }
+            if (cpeBase.data.contains("EnvMapAspect")) {
+                auto cdBase = std::get<Nbt::TagCompound>(cpeBase["EnvMapAspect"]);
+                if (cdBase.data.contains("ExtensionVersion")) {
+                    auto extVersion = std::get<Nbt::TagInt>(cdBase["ExtensionVersion"]);
+                    auto propsList = std::get<Nbt::TagList>(cdBase["Properties"]);
+                    bool isIntList = std::holds_alternative<std::vector<Nbt::TagInt>>(propsList.base);
+                    if (isIntList) {
+                        EnvMapAspectVersion = extVersion;
+                        MapEnvProperties = std::map<unsigned char, int>();
+                        auto propInts = std::get<std::vector<Nbt::TagInt>>(propsList.base);
+
+                        for(unsigned char i = 0; i < propInts.size(); i++) {
+                            MapEnvProperties.insert(std::make_pair(i, propInts.at(i)));
+                        }
+                    }
+                }
+            }
+            if (cpeBase.data.contains("HackControl")) {
+                auto cdBase = std::get<Nbt::TagCompound>(cpeBase["HackControl"]);
+                if (cdBase.data.contains("ExtensionVersion")) {
+                    auto extVersion = std::get<Nbt::TagInt>(cdBase["ExtensionVersion"]);
+                    auto flying = std::get<Nbt::TagByte>(cdBase["CanFly"]);
+                    auto noclip = std::get<Nbt::TagByte>(cdBase["CanClip"]);
+                    auto speeding = std::get<Nbt::TagByte>(cdBase["CanSpeed"]);
+                    auto spawncontrol = std::get<Nbt::TagByte>(cdBase["CanRespawn"]);
+                    auto thirdperson = std::get<Nbt::TagByte>(cdBase["CanThirdPerson"]);
+                    auto weather = std::get<Nbt::TagByte>(cdBase["CanSetWeather"]);
+                    auto jumpheight = std::get<Nbt::TagShort>(cdBase["JumpHeight"]);
+
+                    HackControlVersion = extVersion;
+                    CanFly = flying;
+                    CanClip = noclip;
+                    CanSpeed = speeding;
+                    CanRespawn = spawncontrol;
+                    CanThirdPerson = thirdperson;
+                    CanSetWeather = weather;
+                    JumpHeight = jumpheight;
                 }
             }
 
@@ -232,6 +278,29 @@ namespace D3PP::files {
                 eBase.data.insert({"SideLevel", {Nbt::TagShort {SideLevel} }});
 
                 cpeBase.data.insert( { "EnvMapAppearance", { eBase }});
+            }
+
+            if (HackControlVersion > 0) {
+                Nbt::TagCompound eBase;
+                eBase.name = "HackControl";
+                eBase.data.insert({"ExtensionVersion", {Nbt::TagInt {HackControlVersion} }});
+                eBase.data.insert({"CanFly", {Nbt::TagByte {static_cast<char>(CanFly) }}});
+                eBase.data.insert({"CanClip", {Nbt::TagByte {static_cast<char>(CanClip) }}});
+                eBase.data.insert({"CanSpeed", {Nbt::TagByte {static_cast<char>(CanSpeed) }}});
+                eBase.data.insert({"CanRespawn", {Nbt::TagByte {static_cast<char>(CanRespawn) }}});
+                eBase.data.insert({"CanThirdPerson", {Nbt::TagByte {static_cast<char>(CanThirdPerson) }}});
+                eBase.data.insert({"CanSetWeather", {Nbt::TagByte {static_cast<char>(CanSetWeather) }}});
+                eBase.data.insert({"JumpHeight", {Nbt::TagShort {JumpHeight }}});
+
+                cpeBase.data.insert( { "HackControl", { eBase }});
+            }
+
+            if (EnvMapAspectVersion > 0) {
+                Nbt::TagCompound eBase;
+                eBase.name = "EnvMapAspect";
+                eBase.data.insert({"ExtensionVersion", {Nbt::TagInt {EnvMapAspectVersion} }});
+
+                cpeBase.data.insert( { "EnvMapAspect", { eBase }});
             }
 
             return cpeBase;

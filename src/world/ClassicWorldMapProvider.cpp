@@ -170,23 +170,41 @@ D3PP::world::MapEnvironment D3PP::world::ClassicWorldMapProvider::GetEnvironment
             currentEnv.EdgeBlock = cpeSettings->EdgeBlock;
             currentEnv.TextureUrl = cpeSettings->TextureUrl;
         }
+        if (cpeSettings->HackControlVersion > 0) {
+            currentEnv.CanFly = cpeSettings->CanFly;
+            currentEnv.CanClip = cpeSettings->CanClip;
+            currentEnv.CanSpeed = cpeSettings->CanSpeed;
+            currentEnv.CanRespawn = cpeSettings->CanRespawn;
+            currentEnv.CanThirdPerson = cpeSettings->CanThirdPerson;
+            currentEnv.CanSetWeather = cpeSettings->CanSetWeather;
+            currentEnv.JumpHeight = cpeSettings->JumpHeight;
+        }
+        if (cpeSettings->EnvMapAspectVersion > 0) {
+            if (cpeSettings->MapEnvProperties.size() > 0)
+                currentEnv.SideBlock = static_cast<unsigned char>(cpeSettings->MapEnvProperties.at(0));
+            if (cpeSettings->MapEnvProperties.size() > 1)
+                currentEnv.EdgeBlock = static_cast<unsigned char>(cpeSettings->MapEnvProperties.at(1));
+            if (cpeSettings->MapEnvProperties.size() > 2)
+                currentEnv.SideLevel = static_cast<short>(cpeSettings->MapEnvProperties.at(2));
+            if (cpeSettings->MapEnvProperties.size() > 3)
+                currentEnv.cloudHeight = cpeSettings->MapEnvProperties.at(3);
+            if (cpeSettings->MapEnvProperties.size() > 4)
+                currentEnv.maxFogDistance = cpeSettings->MapEnvProperties.at(4);
+            if (cpeSettings->MapEnvProperties.size() > 5)
+                currentEnv.cloudSpeed = cpeSettings->MapEnvProperties.at(5);
+            if (cpeSettings->MapEnvProperties.size() > 6)
+                currentEnv.weatherSpeed = cpeSettings->MapEnvProperties.at(6);
+            if (cpeSettings->MapEnvProperties.size() > 7)
+                currentEnv.weatherFade = cpeSettings->MapEnvProperties.at(7);
+            if (cpeSettings->MapEnvProperties.size() > 8)
+                currentEnv.expoFog = cpeSettings->MapEnvProperties.at(8);
+            if (cpeSettings->MapEnvProperties.size() > 9)
+                currentEnv.mapSideOffset = cpeSettings->MapEnvProperties.at(9);
+
+            currentEnv.TextureUrl = cpeSettings->TextureUrl;
+        }
     }
 
-//    currentEnv.CanFly = m_d3map->Flying;
-//    currentEnv.CanClip = m_d3map->NoClip;
-//    currentEnv.CanSpeed = m_d3map->Speeding;
-//    currentEnv.CanRespawn = m_d3map->SpawnControl;
-//    currentEnv.CanThirdPerson = m_d3map->ThirdPerson;
-//    currentEnv.CanSetWeather = m_d3map->Weather;
-//    currentEnv.JumpHeight = m_d3map->JumpHeight;
-//
-//    currentEnv.cloudHeight = m_d3map->cloudHeight;
-//    currentEnv.maxFogDistance = m_d3map->maxFogDistance;
-//    currentEnv.cloudSpeed = m_d3map->cloudSpeed;
-//    currentEnv.weatherSpeed = m_d3map->weatherSpeed;
-//    currentEnv.weatherFade = m_d3map->weatherFade;
-//    currentEnv.expoFog = m_d3map->expoFog;
-//    currentEnv.mapSideOffset = -m_d3map->mapSideOffset;
     return currentEnv;
 }
 
@@ -206,7 +224,27 @@ void D3PP::world::ClassicWorldMapProvider::SetEnvironment(const D3PP::world::Map
         cpeSettings->EdgeBlock = env.EdgeBlock;
         cpeSettings->TextureUrl = env.TextureUrl;
         
-        
+        cpeSettings->HackControlVersion = 1;
+        cpeSettings->CanFly = env.CanFly;
+        cpeSettings->CanClip = env.CanClip;
+        cpeSettings->CanSpeed = env.CanSpeed;
+        cpeSettings->CanRespawn = env.CanRespawn;
+        cpeSettings->CanThirdPerson = env.CanThirdPerson;
+        cpeSettings->CanSetWeather = env.CanSetWeather;
+        cpeSettings->JumpHeight = env.JumpHeight;
+
+        cpeSettings->EnvMapAspectVersion = 1;
+        cpeSettings->MapEnvProperties = std::map<unsigned char, int>();
+        cpeSettings->MapEnvProperties.insert(std::make_pair(0, env.SideBlock));
+        cpeSettings->MapEnvProperties.insert(std::make_pair(1, env.EdgeBlock));
+        cpeSettings->MapEnvProperties.insert(std::make_pair(2, env.SideLevel));
+        cpeSettings->MapEnvProperties.insert(std::make_pair(3, env.cloudHeight));
+        cpeSettings->MapEnvProperties.insert(std::make_pair(4, env.maxFogDistance));
+        cpeSettings->MapEnvProperties.insert(std::make_pair(5, env.cloudSpeed));
+        cpeSettings->MapEnvProperties.insert(std::make_pair(6, env.weatherSpeed));
+        cpeSettings->MapEnvProperties.insert(std::make_pair(7, env.weatherFade));
+        cpeSettings->MapEnvProperties.insert(std::make_pair(8, env.expoFog));
+        cpeSettings->MapEnvProperties.insert(std::make_pair(9, env.mapSideOffset));
     }
 }
 
