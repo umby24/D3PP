@@ -1,9 +1,11 @@
 #include "world/MapMain.h"
 
 #include <string>
+#include <world/ClassicWorldMapProvider.h>
 #include "common/Files.h"
 #include "common/PreferenceLoader.h"
 #include "common/Logger.h"
+#include "common/Configuration.h"
 
 #include "EventSystem.h"
 #include "events/EventMapActionDelete.h"
@@ -45,7 +47,8 @@ D3PP::world::MapMain::MapMain() {
     TempId = 0;
 }
 void D3PP::world::MapMain::Init() {
-    MapListLoad();
+    LoadD3Maps();
+    LoadMaps();
 }
 
 void D3PP::world::MapMain::MainFunc() {
@@ -64,14 +67,11 @@ void D3PP::world::MapMain::MainFunc() {
         phStarted = true;
     }
 
-    if (LastWriteTime != fileTime) {
-        MapListLoad();
+    if (_maps.empty()) {
+        LoadMaps();
+        LoadD3Maps();
     }
-    if (SaveFile && SaveFileTimer < time(nullptr)) {
-        SaveFileTimer = time(nullptr) + 5;
-        SaveFile = false;
-        MapListSave();
-    }
+
     for(auto const &m : _maps) {
         // -- Auto save maps every 5 minutes
         if (m.second->SaveTime + 5*60 < time(nullptr) && m.second->loaded) {
@@ -372,6 +372,8 @@ void D3PP::world::MapMain::MapListLoad() {
         }
     }
     SaveFile = false;
+    // -- Load of CW Maps :)
+
 
     LastWriteTime = Utils::FileModTime(fName);
     Logger::LogAdd(MODULE_NAME, "File loaded. [" + fName + "]", LogType::NORMAL, GLF);
@@ -392,7 +394,6 @@ int D3PP::world::MapMain::Add(int id, short x, short y, short z, const std::stri
 
 
     std::shared_ptr<Map> newMap = std::make_shared<Map>();
-    int mapSize = GetMapSize(x, y, z, MAP_BLOCK_ELEMENT_SIZE);
     newMap->ID = id;
     newMap->SaveTime = time(nullptr);
     newMap->loading = false;
@@ -400,9 +401,14 @@ int D3PP::world::MapMain::Add(int id, short x, short y, short z, const std::stri
     newMap->Clients = 0;
     newMap->LastClient = time(nullptr);
     Common::Vector3S sizeVector {x, y, z};
-    newMap->m_mapProvider = std::make_unique<D3MapProvider>();
-    newMap->filePath = Files::GetFolder("Maps") + name + "/";
-    
+    if (!name.ends_with(".cw")) {
+        newMap->m_mapProvider = std::make_unique<D3MapProvider>();
+        newMap->filePath = Files::GetFolder("Maps") + name + "/";
+    } else {
+        newMap->m_mapProvider = std::make_unique<ClassicWorldMapProvider>();
+        newMap->filePath = name;
+    }
+
     if (createNew) {
         newMap->m_mapProvider->CreateNew(sizeVector, newMap->filePath, name);
         newMap->loaded = true;
@@ -508,6 +514,68 @@ D3PP::Common::Vector3S D3PP::world::MapMain::GetMapExportSize(const std::string&
     result.Z = tempData[8];
     result.Z |= tempData[9] << 8;
     return result;
+}
+
+void D3PP::world::MapMain::LoadD3Maps() {
+    std::string mapDir = Files::GetFolder("Maps");
+    if (std::filesystem::is_directory(mapDir)) {
+        for (const auto &entry : std::filesystem::directory_iterator(mapDir)) {
+            std::string fileName = entry.path().filename().string();
+
+            if (fileName.length() < 3) // -- exclude . and ..
+                continue;
+
+            if (entry.is_directory()) {
+                int dataSize = Utils::FileSize(mapDir + fileName + "/Data-Layer.gz");
+                int configSize = Utils::FileSize(mapDir + fileName + "/Config.txt");
+
+                if (dataSize != -1 && configSize != -1) {
+                    int newMapId = GetMapId();
+                    Add(newMapId, 64, 64 ,64, mapDir + fileName);
+                    LoadImmediately(newMapId, mapDir + fileName);
+                }
+
+                continue;
+            }
+        }
+    }
+}
+
+void D3PP::world::MapMain::LoadMaps() {
+    std::string mapDir = Files::GetFolder("CWMaps");
+
+    if (mapDir.empty()) {
+        mapDir = "CWMaps";
+    }
+
+    if (Utils::FileSize(mapDir + Configuration::GenSettings.defaultMap) == -1 && Utils::FileSize(mapDir + Configuration::GenSettings.defaultMap + "u") == -1) {
+        files::ClassicWorld cwMap(Common::Vector3S{(short)64, 64, 64});
+        cwMap.MapName = "default";
+        cwMap.Save(mapDir + Configuration::GenSettings.defaultMap);
+        Logger::LogAdd(MODULE_NAME, "Default map created", NORMAL, GLF);
+    }
+    int defaultId = GetMapId();
+    Add(defaultId, 64, 64, 64, mapDir + Configuration::GenSettings.defaultMap);
+    LoadImmediately(defaultId, mapDir + Configuration::GenSettings.defaultMap);
+
+    if (std::filesystem::is_directory(mapDir)) {
+        for (const auto &entry : std::filesystem::directory_iterator(mapDir)) {
+            std::string fileName = entry.path().filename().string();
+
+            if (fileName.length() < 3) // -- exclude . and ..
+                continue;
+
+            if (entry.is_directory()) {
+                continue;
+            }
+
+            if (fileName.ends_with(".cw") && fileName != Configuration::GenSettings.defaultMap) {
+                int newId = GetMapId();
+                Add(newId, 64, 64, 64, mapDir + fileName);
+                LoadImmediately(newId, mapDir + fileName);
+            }
+        }
+    }
 }
 
 

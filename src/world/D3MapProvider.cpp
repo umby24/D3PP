@@ -80,11 +80,28 @@ unsigned char D3PP::world::D3MapProvider::GetBlock(const D3PP::Common::Vector3S&
 
 void D3PP::world::D3MapProvider::SetBlocks(const std::vector<unsigned char> &blocks) {
     m_d3map->MapData.clear();
+    m_d3map->MapData.resize((m_d3map->MapSize.X * m_d3map->MapSize.Y * m_d3map->MapSize.Z)*4);
+
+    for(int i = 0; i < blocks.size(); i++) {
+        m_d3map->MapData[i*4] = blocks[i];
+        m_d3map->MapData[(i*4)+1] = 0; // -- Blank meta
+        m_d3map->MapData[(i*4)+2] = 255; // -- Last player = -1
+        m_d3map->MapData[(i*4)+3] = 255;
+    }
+
     std::copy(blocks.begin(), blocks.end(), std::back_inserter(m_d3map->MapData));
 }
 
 std::vector<unsigned char> D3PP::world::D3MapProvider::GetBlocks() {
-    return std::vector<unsigned char>(m_d3map->MapData);
+    std::vector<unsigned char> result;
+    int mapVolume = m_d3map->MapSize.X * m_d3map->MapSize.Y * m_d3map->MapSize.Z;
+
+    for(int i = 0; i < mapVolume; i++) {
+        int index = i * 4;
+        result.push_back(m_d3map->MapData.at(index));
+    }
+
+    return result;
 }
 
 MinecraftLocation D3PP::world::D3MapProvider::GetSpawn() {

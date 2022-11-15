@@ -5,6 +5,7 @@
 #include <vector>
 #include <iomanip>
 #include <sstream>
+#include <chrono>
 
 template<typename ValueType>
 std::string stringulate(ValueType v)
@@ -61,6 +62,7 @@ class Utils
         static short GreenVal(int colorVal);
         static short BlueVal(int colorVal);
         static bool IsNumeric(std::string input);
+        static long long CurrentUnixTime() { return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count(); }
 protected:
 
     private:

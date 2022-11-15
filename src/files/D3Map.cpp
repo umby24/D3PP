@@ -15,6 +15,10 @@ namespace D3PP::files {
         Teleporter()
 		{
             mapPath = folder;
+
+            if (!mapPath.ends_with("/"))
+                mapPath += "/";
+
             BuildRank = 0;
             JoinRank = 0;
             ShowRank = 0;
@@ -32,6 +36,8 @@ namespace D3PP::files {
         Teleporter()
 		{
             mapPath = folder;
+            if (!mapPath.ends_with("/"))
+                mapPath += "/";
             SaveInterval = 10;
             ServerVersion = 1004;
             OverviewType = D3OverviewType::Iso;
@@ -57,8 +63,8 @@ namespace D3PP::files {
                 return false;
             }
 
-            if (mapPath[mapPath.size()-1] != '/') {
-                mapPath = mapPath + "/";
+            if (!mapPath.ends_with("/")) {
+                mapPath += "/";
             }
 
             bool loadResult = ReadConfig() && ReadMapData();
@@ -73,9 +79,10 @@ namespace D3PP::files {
                 return false;
             }
 
-            if (path[path.size() - 1] != '/') {
-                path = path + "/";
+            if (!path.ends_with("/")) {
+                path += "/";
             }
+
             std::string ogMapPath = mapPath;
             mapPath = path;
             bool loadResult = ReadConfig() && ReadMapData();

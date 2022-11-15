@@ -71,6 +71,7 @@ struct GeneralSettings {
     std::string motd;
     std::string WelcomeMessage;
     std::string logLevel;
+    std::string defaultMap;
     int SpawnMapId;
     int ClickDistance;
     int LogPrune;
@@ -86,6 +87,11 @@ struct GeneralSettings {
             LogArguments = j["General"]["LogArguments"];
             SpawnMapId = j["General"]["SpawnMapId"];
             WelcomeMessage = j["General"]["WelcomeMessage"];
+            if (!j["General"]["DefaultMap"].is_null()) {
+                defaultMap = j["General"]["DefaultMap"];
+            } else {
+                defaultMap = "default.cw";
+            }
         }
     }
 
@@ -99,6 +105,7 @@ struct GeneralSettings {
         j["General"]["LogArguments"] = LogArguments;
         j["General"]["SpawnMapId"] = SpawnMapId;
         j["General"]["WelcomeMessage"] = WelcomeMessage;
+        j["General"]["DefaultMap"] = defaultMap;
     }
 };
 

@@ -1,5 +1,4 @@
-ARG version
-FROM ubuntu:${version}
+FROM ubuntu:21.10
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC

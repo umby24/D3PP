@@ -30,7 +30,6 @@
 #include "events/EventMapBlockChangeClient.h"
 #include "world/Teleporter.h"
 #include "world/MapMain.h"
-#include "world/CustomParticle.h"
 
 using namespace D3PP::world;
 using namespace D3PP::Common;
@@ -71,8 +70,7 @@ void Map::Fill(const std::string& functionName, const std::string& paramString) 
     bcQueue->Clear();
     pQueue->Clear();
     Vector3S mapSize = m_mapProvider->GetSize();
-    int mapSizeInt = (mapSize.X * mapSize.Y * mapSize.Z)*4;
-    clock_t start = clock();
+    int mapSizeInt = (mapSize.X * mapSize.Y * mapSize.Z)*1;
     std::vector<unsigned char> blankMap;
     blankMap.resize(mapSizeInt);
 
@@ -121,6 +119,8 @@ void Map::Load(const std::string& directory) {
     Portals = m_mapProvider->getPortals();
     loading = false;
     loaded = true;
+
+    Logger::LogAdd(MODULE_NAME, "Loaded map " + m_mapProvider->MapName, NORMAL, GLF);
 }
 
 void Map::Reload() {
@@ -185,16 +185,9 @@ void Map::Send(int clientId) {
     int cbl = nc->GetCustomBlocksLevel();
     int dbl = CPE::GetClientExtVersion(nc, BLOCK_DEFS_EXT_NAME);
     std::vector<unsigned char> mapBlocks = m_mapProvider->GetBlocks();
-    
-    if (mapBlocks.size() != (mapVolume * 4)) {
-        Logger::LogAdd("Map", "Error during mapsend: Size mismatch!!", LogType::L_ERROR, GLF);
-        nc->SendChat("Error during mapsend!!");
-        return;
-    }
 
     for (int i = 0; i < mapVolume; i++) {
-        int index = i * MAP_BLOCK_ELEMENT_SIZE;
-        unsigned char blockAt = mapBlocks[index];
+        unsigned char blockAt = mapBlocks[i];
         if (blockAt < 49) { // -- If its an original block, Dont bother checking. Just speed past.
             tempBuf[tempBufferOffset++] = blockAt;
             continue;

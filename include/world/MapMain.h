@@ -77,6 +77,8 @@ namespace D3PP::world {
         int mapSettingsMaxChangesSec;
         
         int GetMapId();
+        void LoadD3Maps();
+        void LoadMaps();
         void MapListSave();
         void MapListLoad();
         void MapSettingsSave();
