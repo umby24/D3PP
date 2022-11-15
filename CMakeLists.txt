@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
-set(VERSION_STRING 0.1.2)
+set(VERSION_STRING 0.1.6)
 set(VERSION ${VERSION_STRING})
 
 include(FetchContent)
@@ -36,8 +36,8 @@ set(D3PP_SOURCE_FILES src/common/Files.cpp include/common/Files.h src/common/Log
 
 # add the executable
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    # enable_language("RC")
-    # set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appicon.rc")
+     enable_language("RC")
+     set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appicon.rc")
     add_executable(D3PP main.cpp ${D3PP_SOURCE_FILES} ${APP_ICON_RESOURCE_WINDOWS})
 else()
     add_executable(D3PP main.cpp ${D3PP_SOURCE_FILES} ${APP_ICON_RESOURCE_WINDOWS})
