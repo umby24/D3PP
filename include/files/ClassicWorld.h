@@ -299,7 +299,14 @@ namespace D3PP::files {
                 Nbt::TagCompound eBase;
                 eBase.name = "EnvMapAspect";
                 eBase.data.insert({"ExtensionVersion", {Nbt::TagInt {EnvMapAspectVersion} }});
+                auto propertyList = std::vector<Nbt::TagInt>();
 
+                for(int i = 0; i < MapEnvProperties.size(); i++) {
+                    propertyList.push_back(MapEnvProperties.at(static_cast<unsigned char>(i)));
+                }
+                Nbt::TagList properties;
+                properties.base = propertyList;
+                eBase.data.insert({"Properties", {properties}});
                 cpeBase.data.insert( { "EnvMapAspect", { eBase }});
             }
 

@@ -180,7 +180,7 @@ D3PP::world::MapEnvironment D3PP::world::ClassicWorldMapProvider::GetEnvironment
             currentEnv.JumpHeight = cpeSettings->JumpHeight;
         }
         if (cpeSettings->EnvMapAspectVersion > 0) {
-            if (cpeSettings->MapEnvProperties.size() > 0)
+            if (!cpeSettings->MapEnvProperties.empty())
                 currentEnv.SideBlock = static_cast<unsigned char>(cpeSettings->MapEnvProperties.at(0));
             if (cpeSettings->MapEnvProperties.size() > 1)
                 currentEnv.EdgeBlock = static_cast<unsigned char>(cpeSettings->MapEnvProperties.at(1));

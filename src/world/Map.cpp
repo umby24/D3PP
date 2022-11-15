@@ -30,7 +30,6 @@
 #include "events/EventMapBlockChangeClient.h"
 #include "world/Teleporter.h"
 #include "world/MapMain.h"
-#include "world/CustomParticle.h"
 
 using namespace D3PP::world;
 using namespace D3PP::Common;
