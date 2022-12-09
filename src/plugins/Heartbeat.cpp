@@ -40,18 +40,23 @@ void Heartbeat::Beat() {
     }
     else if (res->status != 200 || (res->body.find("http") == std::string::npos)) {
         Logger::LogAdd(MODULE_NAME, "Heartbeat failed.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
-        json j = json::parse(res->body);
-        std::string reasonStr;
-        for(auto const &f : j["errors"]) {
-            if (f.is_string())
-                reasonStr += f.get<std::string>() + ", ";
-            if (f.is_array()) {
-                for (auto const &q : f) {
-                    reasonStr += q.get<std::string>() + ", ";
+        try {
+            json j = json::parse(res->body);
+            std::string reasonStr;
+            for (auto const &f: j["errors"]) {
+                if (f.is_string())
+                    reasonStr += f.get<std::string>() + ", ";
+                if (f.is_array()) {
+                    for (auto const &q: f) {
+                        reasonStr += q.get<std::string>() + ", ";
+                    }
                 }
             }
+
+            Logger::LogAdd(MODULE_NAME, reasonStr, LogType::L_ERROR, GLF);
+        } catch(std::exception e) {
+            Logger::LogAdd(MODULE_NAME, "Error parsing Heartbeat. Response: " + res->body, LogType::L_ERROR, GLF);
         }
-        Logger::LogAdd(MODULE_NAME, reasonStr, LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
     } else {
         if (isFirstBeat) {
             Logger::LogAdd(MODULE_NAME, "Heartbeat sent.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
