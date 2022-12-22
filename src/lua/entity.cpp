@@ -309,8 +309,8 @@ int LuaEntityLib::LuaEntityPositionSet(lua_State* L) {
     std::shared_ptr<Entity> foundEntity = Entity::GetPointer(entityId);
     if (foundEntity != nullptr) {
         MinecraftLocation newLoc{ rotation, look };
-        Vector3S blockCoords{ static_cast<short>(X), static_cast<short>(Y), static_cast<short>(Z) };
-        newLoc.SetAsBlockCoords(blockCoords);
+        Vector3F blockCoords{ X, Y, Z };
+        newLoc.SetAsPlayerCoords(blockCoords);
         foundEntity->PositionSet(mapId, newLoc, 10, true);
     }
 
