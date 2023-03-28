@@ -45,14 +45,14 @@ void Files::LoadDefault() {
             {"Heartbeat", "Heartbeat/"},
             {"Logs", "Logs/"},
             {"HTML", "HTML/"},
-            {"Temp", "HTML/"},
-            {"Lua", "HTML/"},
+            {"Temp", "Temp/"},
             {"Maps", "HTML/"},
-            {"Usermaps", "HTML/"},
-            {"Plugins", "HTML/"},
+            {"CWMaps", "CWMaps/"},
+            {"Usermaps", "Usermaps/"},
+            {"Plugins", "Plugins/"},
     };
     files = {
-            {"Block", "[Main][Data]Block.txt"},
+            {"Block", "[Main][Data]Block.json"},
             {"Build_Mode", "[Main][Data]Buildmode.txt"},
             {"Command", "[Main][Data]Commands.json"},
             {"Log", "[Main][Logs]Log_[i].txt"},
@@ -77,6 +77,7 @@ void Files::Load() {
     if (Utils::FileSize("files.json") == -1) {
         LoadDefault();
         Save();
+        Load();
         return;
     }
 
