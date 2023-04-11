@@ -116,8 +116,8 @@ void NetworkClient::MainFunc() {
 
 void NetworkClient::SubEvents() {
     eventSubId = Dispatcher::subscribe(EntityEventArgs::moveDescriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    addSubId = Dispatcher::subscribe(EventEntityAdd::descriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    removeSubId = Dispatcher::subscribe(EventEntityDelete::descriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    addSubId = Dispatcher::subscribe(EventEntityAdd{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    removeSubId = Dispatcher::subscribe(EventEntityDelete{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
 }
 
 void NetworkClient::HandleEvent(const Event& e) {

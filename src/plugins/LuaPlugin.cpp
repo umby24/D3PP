@@ -68,7 +68,7 @@ void LuaPlugin::RegisterEventListener() {
     Dispatcher::subscribe(EventMapBlockChangeClient{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
     Dispatcher::subscribe(EventMapBlockChangePlayer{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
     Dispatcher::subscribe(EventTimer{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(PlayerClickEventArgs::clickDescriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(PlayerClickEventArgs{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
 }
 
 void LuaPlugin::HandleEvent(Event& event) {
@@ -149,6 +149,27 @@ void LuaPlugin::MainFunc() {
         return;
 
     LoadNewOrChanged();
+
+    std::unique_lock lock(m_luaState->eventMutex);
+    for(auto &e : m_luaState->modifyList) {
+        for (auto &i : m_luaState->events) {
+            if (e.first == "del" && m_luaState->events[i.first].contains(e.second.eventId)) {
+                m_luaState->events[i.first].erase(e.second.eventId);
+            }
+        }
+        if (e.first == "add") {
+            if (m_luaState->events.find(e.second.type) == m_luaState->events.end())
+                m_luaState->events.insert(std::make_pair(e.second.type, std::map<std::string, LuaEvent>()));
+
+            if (m_luaState->events[e.second.type].find(e.second.eventId) != m_luaState->events[e.second.type].end()) {
+                m_luaState->events[e.second.type][e.second.eventId] = e.second;
+            } else {
+                m_luaState->events[e.second.type].insert(std::make_pair(e.second.eventId, e.second));
+            }
+        }
+    }
+
+    m_luaState->modifyList.clear();
 }
 
 void LuaPlugin::TimerMain() {
@@ -179,15 +200,15 @@ void LuaPlugin::TimerMain() {
                 if (result == LUA_ERRRUN) {
                     bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
                     executionMutex.unlock();
-                    return;
+                    break;
                 } else if (result == LUA_ERRMEM) {
                     bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
                     executionMutex.unlock();
-                    return;
+                    break;
                 } else if (result == LUA_ERRERR) {
                     bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
                     executionMutex.unlock();
-                    return;
+                    break;
                 } else {
                     // -- success? maybe? who knows.
 
@@ -198,26 +219,6 @@ void LuaPlugin::TimerMain() {
     }
     // -- Make all modifications to the events list occur after events have been triggered.
     // -- This ensures no modification of in memory lists, and allows events to be created and destroyed from within other events.
-
-    std::unique_lock lock(m_luaState->eventMutex);
-    for(auto &e : m_luaState->modifyList) {
-        for (auto &i : m_luaState->events) {
-            if (e.first == "del" && m_luaState->events[i.first].contains(e.second.eventId)) {
-                m_luaState->events[i.first].erase(e.second.eventId);
-            }
-        }
-        if (e.first == "add") {
-            if (m_luaState->events.find(e.second.type) == m_luaState->events.end())
-                m_luaState->events.insert(std::make_pair(e.second.type, std::map<std::string, LuaEvent>()));
-
-            if (m_luaState->events[e.second.type].find(e.second.eventId) != m_luaState->events[e.second.type].end()) {
-                m_luaState->events[e.second.type][e.second.eventId] = e.second;
-            } else {
-                m_luaState->events[e.second.type].insert(std::make_pair(e.second.eventId, e.second));
-            }
-        }
-    }
-
 }
 
 void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, const std::string& function, const std::string& args) {
