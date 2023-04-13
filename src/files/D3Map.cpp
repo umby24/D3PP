@@ -159,6 +159,10 @@ namespace D3PP::files {
                 return 0;
 
             int index = GetBlockIndex(blockLocation);
+            if (index > MapData.size()) {
+                return -1;
+            }
+
             return MapData[(index*4)];
         }
 
@@ -167,6 +171,9 @@ namespace D3PP::files {
                 return 0;
 
             int index = GetBlockIndex(blockLocation);
+            if (index > MapData.size()) {
+                return -1;
+            }
             return MapData[(index*4)+1];
         }
 
@@ -174,6 +181,9 @@ namespace D3PP::files {
             if (!BlockInBounds(blockLocation))
                 return -1;
             int index = GetBlockIndex(blockLocation);
+            if (index > MapData.size()) {
+                return -1;
+            }
             short result = 0;
             result |= MapData[(index*4)+2] << 8;
             result |= MapData[(index*4)+3];
@@ -186,6 +196,9 @@ namespace D3PP::files {
                 return;
 
             int index = GetBlockIndex(blockLocation);
+            if (index > MapData.size()) {
+                return;
+            }
             MapData[(index*4)] = type;
             dataChanged = true;
         }
@@ -195,6 +208,9 @@ namespace D3PP::files {
                 return;
 
             int index = GetBlockIndex(blockLocation);
+            if (index > MapData.size()) {
+                return;
+            }
             MapData[(index*4)+1] = metadata;
             dataChanged = true;
         }
@@ -204,6 +220,9 @@ namespace D3PP::files {
                 return;
 
             int index = GetBlockIndex(blockLocation);
+            if (index > MapData.size()) {
+                return;
+            }
             MapData[(index*4)+2] = (playerNumber & 0xFF00) >> 8;
             MapData[(index*4)+3] = (playerNumber&0xFF);
             dataChanged = true;

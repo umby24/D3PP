@@ -7,7 +7,7 @@
 #include <string>
 #include <ctime>
 
-const float SYSTEM_VERSION_NUMBER = 0.17f;
+const float SYSTEM_VERSION_NUMBER = 0.18f;
 
 class System  {
 public:

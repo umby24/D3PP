@@ -152,18 +152,20 @@ void LuaPlugin::MainFunc() {
 
     std::unique_lock lock(m_luaState->eventMutex);
     for(auto &e : m_luaState->modifyList) {
-        for (auto &i : m_luaState->events) {
-            if (e.first == "del" && m_luaState->events[i.first].contains(e.second.eventId)) {
-                m_luaState->events[i.first].erase(e.second.eventId);
+        if (e.first.starts_with("del")) {
+            for (auto &i: m_luaState->events) {
+                if (m_luaState->events[i.first].contains(e.second.eventId)) {
+                    m_luaState->events[i.first].erase(e.second.eventId);
+                }
             }
         }
-        if (e.first == "add") {
-            if (m_luaState->events.find(e.second.type) == m_luaState->events.end())
-                m_luaState->events.insert(std::make_pair(e.second.type, std::map<std::string, LuaEvent>()));
+        if (e.first.starts_with("add")) {
+            if (m_luaState->events.find(e.second.type) == m_luaState->events.end()) // -- Does this type exist in our tracker yet? i.e. EVENT_ENTITY_ADD.
+                m_luaState->events.insert(std::make_pair(e.second.type, std::map<std::string, LuaEvent>())); // -- If not create a base list for it.
 
-            if (m_luaState->events[e.second.type].find(e.second.eventId) != m_luaState->events[e.second.type].end()) {
-                m_luaState->events[e.second.type][e.second.eventId] = e.second;
-            } else {
+            if (m_luaState->events[e.second.type].find(e.second.eventId) != m_luaState->events[e.second.type].end()) { // -- Does this event list have our event id in it?
+                m_luaState->events[e.second.type][e.second.eventId] = e.second; // -- if yes lets just reassign it.
+            } else { // -- Otherwise we need to insert it.
                 m_luaState->events[e.second.type].insert(std::make_pair(e.second.eventId, e.second));
             }
         }

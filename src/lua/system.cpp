@@ -163,7 +163,7 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
     };
 
     if (setOrCheck == 1) {
-        m_thisPlugin->modifyList.insert(std::make_pair("add", newEvent));
+        m_thisPlugin->modifyList.insert(std::make_pair("add"+eventId, newEvent));
     }
     else {
         bool eventExists = false;
@@ -198,7 +198,7 @@ int LuaSystemLib::LuaEventDelete(lua_State* L) {
         std::shared_lock lock(m_thisPlugin->eventMutex);
         for (const auto &i: m_thisPlugin->events) {
             if (m_thisPlugin->events[i.first].contains(eventId)) {
-                m_thisPlugin->modifyList.insert(std::make_pair("del",m_thisPlugin->events[i.first][eventId]));
+                m_thisPlugin->modifyList.insert(std::make_pair("del"+eventId,m_thisPlugin->events[i.first][eventId]));
             }
         }
     }
