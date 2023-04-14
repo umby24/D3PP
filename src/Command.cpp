@@ -792,7 +792,7 @@ void CommandMain::CommandPlayers() {
     std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
      c->SendChat("§SPlayers:");
     std::string textToSend;
-    std::shared_lock lock(D3PP::network::Server::roMutex);
+    std::shared_lock lock(D3PP::network::Server::roMutex, std::defer_lock);
      for(auto const &nc : D3PP::network::Server::roClients) {
          if (nc != nullptr && nc->GetPlayerInstance() != nullptr && nc->GetPlayerInstance()->GetEntity()->playerList != nullptr) {
              std::string playerName = Entity::GetDisplayname(nc->GetPlayerInstance()->GetEntity()->Id);
