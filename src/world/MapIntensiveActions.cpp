@@ -10,7 +10,7 @@ D3PP::world::MapIntensiveActions::MapIntensiveActions() : runner([this]() {this-
 }
 
 void D3PP::world::MapIntensiveActions::MainFunc() {
-    while (System::IsRunning && !m_finished) {
+    while (!m_finished) {
         if (!itemQueue.empty()) {
             std::function<void()> taskToComplete = itemQueue.front();
             taskToComplete();
