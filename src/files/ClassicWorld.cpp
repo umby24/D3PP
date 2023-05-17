@@ -38,7 +38,7 @@ D3PP::files::ClassicWorld::ClassicWorld(std::string filepath) {
 }
 
 void D3PP::files::ClassicWorld::Load() {
-    if (m_baseTag.data.empty()) {
+    if (m_baseTag.data.empty() || BlockData.empty()) {
         m_baseTag = std::get<Nbt::TagCompound>(Nbt::NbtFile::Load(m_filePath));
     }
 
@@ -108,7 +108,7 @@ void D3PP::files::ClassicWorld::Load() {
         BlockData.push_back(static_cast<unsigned char>(q));
     }
 
-    if (m_baseTag.data.contains("Metadata")) {
+    if (m_baseTag.data.contains("Metadata") && !std::holds_alternative<std::nullptr_t>(m_baseTag["Metadata"])) {
         auto metaBase = std::get<Nbt::TagCompound>(m_baseTag["Metadata"]);
 
         for(const auto& parser : metaParsers) {

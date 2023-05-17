@@ -360,6 +360,10 @@ void Map::QueuePhysicsAround(const Vector3S& loc) {
 void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, unsigned short Z, unsigned char type, bool undo, bool physic, bool send, unsigned char priority) {
     Vector3S locationVector(X,Y,Z);
 
+    if (!loaded && !loading) {
+        Reload();
+    }
+
     Block* bm = Block::GetInstance();
     auto roData = m_mapProvider->GetBlock(locationVector);
 

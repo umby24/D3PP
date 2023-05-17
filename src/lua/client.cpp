@@ -44,9 +44,8 @@ int LuaClientLib::LuaClientGetTable(lua_State* L) {
 
     if (numClients > 0) {
         for (auto const& nc : D3PP::network::Server::roClients) {
-            lua_pushinteger(L, index++);
             lua_pushinteger(L, nc->GetId());
-            lua_settable(L, -3);
+            lua_rawseti(L, -2, index++);
         }
     }
 

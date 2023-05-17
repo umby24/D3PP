@@ -52,9 +52,8 @@ int LuaEntityLib::LuaEntityGetTable(lua_State* L) {
 
     if (numEntities > 0) {
         for (auto const& e : Entity::AllEntities) {
-            lua_pushinteger(L, index++);
             lua_pushinteger(L, e.first);
-            lua_settable(L, -3);
+            lua_rawseti(L, -2, index++);
         }
     }
 

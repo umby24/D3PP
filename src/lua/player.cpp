@@ -49,9 +49,8 @@ int LuaPlayerLib::LuaPlayerGetTable(lua_State* L) {
 
     if (numEntities > 0) {
         for (auto const& e : pll->_pList) {
-            lua_pushinteger(L, index++);
             lua_pushinteger(L, e->Number);
-            lua_settable(L, -3);
+            lua_rawseti(L, -2, index++);
         }
     }
 
