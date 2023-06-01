@@ -62,6 +62,7 @@ class Utils
         static short GreenVal(int colorVal);
         static short BlueVal(int colorVal);
         static bool IsNumeric(std::string input);
+        static std::string FormatTimeDiff(const time_t& start, const time_t &end);
         static long long CurrentUnixTime() { return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count(); }
 protected:
 

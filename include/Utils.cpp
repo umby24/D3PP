@@ -50,6 +50,25 @@ long Utils::FileModTime(const std::string &filePath) {
     return -1;
 }
 
+std::string Utils::FormatTimeDiff(const time_t& start, const time_t &end) {
+    time_t duration = end - start;
+    char buffer[255];
+    struct tm *tme_info = new tm{};
+    #if defined(__unix__)
+        localtime_r(&end, tme_info);
+    #elif defined(_MSC_VER)
+        localtime_s(tme_info, &end);
+    #else
+        static std::mutex mtx;
+        std::lock_guard<std::mutex> lock(mtx);
+        tme_info = std::localtime((const time_t*)(&end));
+    #endif
+    
+    strftime(buffer, sizeof(buffer), "%H:%M:%S  %m-%d-%Y", tme_info);
+    std::string meh(buffer);
+    return meh;
+}
+
 bool Utils::DirectoryExists(const std::string &filePath, bool create) {
     if (filePath.empty())
         return true;

@@ -26,7 +26,6 @@ Rank::Rank() {
 void Rank::Save() {
     std::string rankFile = Files::GetFile(RANK_FILE_NAME);
 
-
     std::ofstream oStream(rankFile, std::ios::trunc);
     oStream << GetJson();
     oStream.flush();
