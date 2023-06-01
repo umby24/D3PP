@@ -45,13 +45,15 @@ bool Map::Resize(short x, short y, short z) {
         }
     }
 
-    loading = true;
-    m_mapProvider->SetSize(Vector3S{x, y, z});
-    bcQueue.reset();
-    pQueue.reset();
-    pQueue = std::make_unique<PhysicsQueue>(GetSize());
-    bcQueue = std::make_unique<BlockChangeQueue>(GetSize());
-    loading = false;
+    {
+        std::unique_lock lock(BlockMutex);
+
+        m_mapProvider->SetSize(Vector3S{x, y, z});
+        bcQueue.reset();
+        pQueue.reset();
+        pQueue = std::make_unique<PhysicsQueue>(GetSize());
+        bcQueue = std::make_unique<BlockChangeQueue>(GetSize());
+    }
     Resend();
     return true;
 }
@@ -63,18 +65,20 @@ void Map::Fill(const std::string& functionName, const std::string& paramString) 
             return;
         }
     }
-
-    //UniqueID = MapMain::GetUniqueId();
-    RankBoxes.clear();
-    Portals.clear();
-    bcQueue->Clear();
-    pQueue->Clear();
     Vector3S mapSize = m_mapProvider->GetSize();
-    int mapSizeInt = (mapSize.X * mapSize.Y * mapSize.Z)*1;
-    std::vector<unsigned char> blankMap;
-    blankMap.resize(mapSizeInt);
+    {
+        std::unique_lock lock(BlockMutex);
+        RankBoxes.clear();
+        Portals.clear();
+        bcQueue->Clear();
+        pQueue->Clear();
+        
+        int mapSizeInt = (mapSize.X * mapSize.Y * mapSize.Z)*1;
 
-    m_mapProvider->SetBlocks(blankMap);
+        std::vector<unsigned char> blankMap;
+        blankMap.resize(mapSizeInt);
+        m_mapProvider->SetBlocks(blankMap);
+    }
 
     D3PP::plugins::PluginManager *pm = D3PP::plugins::PluginManager::GetInstance();
     pm->TriggerMapFill(ID, mapSize.X, mapSize.Y, mapSize.Z, "Mapfill_" + functionName, std::move(paramString));
@@ -90,7 +94,7 @@ bool Map::Save(const std::string& directory) {
 }
 
 void Map::Load(const std::string& directory) {
-    loading = true;
+    std::unique_lock lock(BlockMutex);
 
     if (m_mapProvider == nullptr && !directory.empty()) {
         m_mapProvider = std::make_unique<D3MapProvider>();
@@ -102,7 +106,6 @@ void Map::Load(const std::string& directory) {
 
     if (!result) {
         Logger::LogAdd(MODULE_NAME, "Error loading map! [" + m_mapProvider->MapName + "]", L_ERROR, GLF);
-        loading = false;
         return;
     }
 
@@ -117,7 +120,6 @@ void Map::Load(const std::string& directory) {
     bcQueue = std::make_unique<BlockChangeQueue>(GetSize());
     Particles = m_mapProvider->getParticles();
     Portals = m_mapProvider->getPortals();
-    loading = false;
     loaded = true;
 
     Logger::LogAdd(MODULE_NAME, "Loaded map " + m_mapProvider->MapName, NORMAL, GLF);
@@ -127,16 +129,14 @@ void Map::Reload() {
     if (loaded)
         return;
 
-    loading = true;
+    std::unique_lock lock(BlockMutex);
     bool result = m_mapProvider->Reload();
     
     if (!result) {
         Logger::LogAdd(MODULE_NAME, "Failed to reload map! [" + m_mapProvider->MapName + "]", LogType::L_ERROR, GLF);
-        loading = false;
         return;
     }
 
-    loading = false;
     loaded = true;
     BlockchangeStopped = false;
     PhysicsStopped = false;
@@ -146,7 +146,8 @@ void Map::Reload() {
 void Map::Unload() {
     if (!loaded)
         return;
-
+    
+    std::unique_lock lock(BlockMutex);
     BlockchangeStopped = true;
     PhysicsStopped = true;
     loaded = false;
@@ -184,6 +185,7 @@ void Map::Send(int clientId) {
 
     int cbl = nc->GetCustomBlocksLevel();
     int dbl = CPE::GetClientExtVersion(nc, BLOCK_DEFS_EXT_NAME);
+    std::shared_lock lock(BlockMutex, std::defer_lock);
     std::vector<unsigned char> mapBlocks = m_mapProvider->GetBlocks();
 
     for (int i = 0; i < mapVolume; i++) {
@@ -264,9 +266,17 @@ void Map::Resend() {
 void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type) {
     if (client == nullptr)
         return;
+
     Vector3S blockLocation {(short)X, (short)Y, (short)Z};
 
     Block* bm = Block::GetInstance();
+
+    if (!loaded) {
+        LastClient = time(nullptr);
+        Reload();
+    }
+
+    std::shared_lock lock(BlockMutex, std::defer_lock);
     auto rawBlock = m_mapProvider->GetBlock(blockLocation);
 
     if (client->IsStopped()) {
@@ -360,9 +370,10 @@ void Map::QueuePhysicsAround(const Vector3S& loc) {
 void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, unsigned short Z, unsigned char type, bool undo, bool physic, bool send, unsigned char priority) {
     Vector3S locationVector(X,Y,Z);
 
-    if (!loaded && !loading) {
+    if (!loaded) {
         Reload();
     }
+    std::shared_lock lock(BlockMutex, std::defer_lock);
 
     Block* bm = Block::GetInstance();
     auto roData = m_mapProvider->GetBlock(locationVector);
@@ -405,7 +416,7 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
 }
 
 unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned short Z) {
-     if (!loaded && !loading) {
+     if (!loaded) {
          LastClient = time(nullptr);
          Reload();
          if (!loaded) {
@@ -413,11 +424,7 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
          }
      }
 
-     if (loading) {
-         while (loading) {
-             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-         }
-     }
+     std::shared_lock lock(BlockMutex, std::defer_lock);
      auto mapSize = m_mapProvider->GetSize();
 
      if (X > mapSize.X || Y > mapSize.Y || Z > mapSize.Z) {
@@ -427,10 +434,8 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
      return m_mapProvider->GetBlock(Vector3S(X, Y, Z));
 }
 
-void Map::QueueBlockChange(Common::Vector3S location, unsigned char priority, unsigned char oldType) const {
-    while (loading) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+void Map::QueueBlockChange(Common::Vector3S location, unsigned char priority, unsigned char oldType) {
+    std::shared_lock lock(BlockMutex, std::defer_lock);
 
     ChangeQueueItem newQueueItem { location,
                                     oldType,
@@ -440,15 +445,10 @@ void Map::QueueBlockChange(Common::Vector3S location, unsigned char priority, un
     bcQueue->TryQueue(newQueueItem);
 }
 
-Map::Map() : IActions(), RankBoxes(), Particles() {
-    //ID = -1;
+Map::Map() : IActions(), RankBoxes(), Particles(), BlockMutex() {
     loaded = false;
-    loading = false;
     BlockchangeStopped = false;
     PhysicsStopped = false;
-  //  SaveTime = 0;
-   // LastClient = 0;
-  //  Clients = 0;
 }
 
 void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1,
@@ -456,6 +456,13 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
 
     Vector3S location0(X0, Y0, Z0);
     Vector3S location1(X1, Y1, Z1);
+
+    if (!loaded) {
+        LastClient = time(nullptr);
+        Reload();
+    }
+
+    std::shared_lock lock(BlockMutex, std::defer_lock);
 
     auto oldBlockType0 = m_mapProvider->GetBlock(location0);
     auto oldBlockHistory0 = m_mapProvider->GetLastPlayer(location0);
@@ -499,11 +506,20 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
 }
 
 unsigned short Map::GetBlockPlayer(unsigned short X, unsigned short Y, unsigned short Z) {
+    if (!loaded) {
+        LastClient = time(nullptr);
+        Reload();
+    }
+
+    std::shared_lock lock(BlockMutex, std::defer_lock);
     return m_mapProvider->GetLastPlayer(Vector3S(X, Y, Z));
 }
 
 void Map::QueueBlockPhysics(Common::Vector3S location) {
     Block* bm = Block::GetInstance();
+
+    std::shared_lock lock(BlockMutex, std::defer_lock);
+
     MapBlock blockEntry = bm->GetBlock(m_mapProvider->GetBlock(location));
     unsigned char blockPhysics = blockEntry.Physics;
     std::string physPlugin = blockEntry.PhysicsPlugin;
@@ -519,6 +535,7 @@ void Map::QueueBlockPhysics(Common::Vector3S location) {
 void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
     Block* bm = Block::GetInstance();
     MapMain* mapMain= MapMain::GetInstance();
+        std::shared_lock lock(BlockMutex, std::defer_lock);
 
         MapBlock blockEntry = bm->GetBlock(m_mapProvider->GetBlock(Vector3S(X, Y, Z)));
         switch (blockEntry.Physics) {
@@ -671,6 +688,7 @@ void Map::MapExport(MinecraftLocation start, MinecraftLocation end, std::string 
     tempData[offset++] = (sizeY & 0xFF00) >> 8;
     tempData[offset++] = sizeZ & 0xFF;
     tempData[offset++] = (sizeZ & 0xFF00) >> 8;
+
     // -- now block 
     for (int iz = startVec.Z; iz <= endVec.Z; iz++) {
         for (int iy = startVec.Y; iy <= endVec.Y; iy++) {

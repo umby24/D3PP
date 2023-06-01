@@ -151,6 +151,7 @@ namespace D3PP::files {
             MapSize = newSize;
             MapData.resize(newMapSize);
             dataChanged = true;
+            configChanged = true;
         }
 
         unsigned char D3Map::GetBlock(Common::Vector3S blockLocation) {
@@ -557,6 +558,8 @@ namespace D3PP::files {
         for (const auto item : portals) {
             Teleporter.insert(std::make_pair(item.Id, item));
         }
+
+        portalsChanged = true;
     }
 
     bool D3Map::SaveParticles() {

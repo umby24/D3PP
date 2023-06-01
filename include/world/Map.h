@@ -14,6 +14,7 @@
 #include <thread>
 #include <memory>
 #include <filesystem>
+#include <shared_mutex>
 
 #include "common/TaskScheduler.h"
 #include "common/MinecraftLocation.h"
@@ -72,7 +73,9 @@ namespace D3PP::world {
         std::vector<CustomParticle> Particles;
         std::vector<D3PP::files::MapRankElement> RankBoxes;
 
-        bool BlockchangeStopped, PhysicsStopped, loading, loaded;
+        std::shared_mutex BlockMutex;
+
+        bool BlockchangeStopped, PhysicsStopped, loaded;
         std::string filePath;
         time_t LastClient;
         int Clients;
@@ -141,7 +144,7 @@ namespace D3PP::world {
         void QueueBlockPhysics(Common::Vector3S location);
 
         void QueueBlockChange(Common::Vector3S location, unsigned char priority,
-                              unsigned char oldType) const;
+                              unsigned char oldType);
 
         void  QueuePhysicsAround(const Common::Vector3S& loc);
     };

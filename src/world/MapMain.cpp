@@ -396,7 +396,6 @@ int D3PP::world::MapMain::Add(int id, short x, short y, short z, const std::stri
     std::shared_ptr<Map> newMap = std::make_shared<Map>();
     newMap->ID = id;
     newMap->SaveTime = time(nullptr);
-    newMap->loading = false;
     newMap->BlockchangeStopped = false;
     newMap->Clients = 0;
     newMap->LastClient = time(nullptr);
@@ -417,10 +416,8 @@ int D3PP::world::MapMain::Add(int id, short x, short y, short z, const std::stri
     newMap->bcQueue = std::make_unique<BlockChangeQueue>(sizeVector);
     newMap->pQueue = std::make_unique<PhysicsQueue>(sizeVector);
 
-
     _maps.insert(std::make_pair(id, newMap));
     SaveFile = true;
-    
 
     EventMapAdd ema;
     ema.mapId = id;

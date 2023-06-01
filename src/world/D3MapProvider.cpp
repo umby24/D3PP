@@ -110,6 +110,7 @@ MinecraftLocation D3PP::world::D3MapProvider::GetSpawn() {
 
 void D3PP::world::D3MapProvider::SetSpawn(const MinecraftLocation &location) {
     m_d3map->MapSpawn = location;
+    m_d3map->configChanged = true;
 }
 
 D3PP::world::MapPermissions D3PP::world::D3MapProvider::GetPermissions() {
@@ -120,6 +121,7 @@ void D3PP::world::D3MapProvider::SetPermissions(const D3PP::world::MapPermission
     m_d3map->BuildRank = perms.RankBuild;
     m_d3map->JoinRank = perms.RankJoin;
     m_d3map->ShowRank = perms.RankShow;
+    m_d3map->configChanged = true;
 }
 
 short D3PP::world::D3MapProvider::GetLastPlayer(const D3PP::Common::Vector3S &location) {
@@ -182,6 +184,7 @@ void D3PP::world::D3MapProvider::SetEnvironment(const D3PP::world::MapEnvironmen
     m_d3map->weatherFade = env.weatherFade;
     m_d3map->expoFog = env.expoFog;
     m_d3map->mapSideOffset = env.mapSideOffset;
+    m_d3map->configChanged = true;
 }
 
 void D3PP::world::D3MapProvider::SetPortals(const std::vector<D3PP::world::Teleporter> portals) {
@@ -211,6 +214,8 @@ void D3PP::world::D3MapProvider::SetPortals(const std::vector<D3PP::world::Telep
 
         mtes.push_back(newMte);
     }
+
+    m_d3map->SetPortals(mtes);
 }
 
 std::vector<D3PP::world::Teleporter> D3PP::world::D3MapProvider::getPortals() {

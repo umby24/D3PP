@@ -154,7 +154,8 @@ int LuaMapLib::LuaMapGetDimensions(lua_State* L) {
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> map = mm->GetPointer(mapId);
 
-    if (map != nullptr && map->loading == false && map->loaded) {
+    if (map != nullptr && map->loaded) {
+        std::shared_lock (map->BlockMutex, std::defer_lock);
         Vector3S mapSize = map->GetSize();
         lua_pushinteger(L, mapSize.X);
         lua_pushinteger(L, mapSize.Y);
