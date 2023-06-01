@@ -102,9 +102,8 @@ int LuaCPELib::LuaClientGetExtensions(lua_State* L) {
 
     if (number > 0) {
         for (auto const& nc : client->Extensions) {
-            lua_pushstring(L, nc.first.c_str());
             lua_pushinteger(L, nc.second);
-            lua_settable(L, -3);
+            lua_setfield(L, -2, nc.first.c_str());
         }
     }
 

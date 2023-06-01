@@ -36,7 +36,7 @@ int LuaClientLib::openLib(lua_State* L)
 }
 
 int LuaClientLib::LuaClientGetTable(lua_State* L) {
-    std::shared_lock lock(D3PP::network::Server::roMutex);
+    std::shared_lock lock(D3PP::network::Server::roMutex, std::defer_lock);
     int numClients = static_cast<int>(D3PP::network::Server::roClients.size());
     int index = 1;
 
@@ -44,9 +44,8 @@ int LuaClientLib::LuaClientGetTable(lua_State* L) {
 
     if (numClients > 0) {
         for (auto const& nc : D3PP::network::Server::roClients) {
-            lua_pushinteger(L, index++);
             lua_pushinteger(L, nc->GetId());
-            lua_settable(L, -3);
+            lua_rawseti(L, -2, index++);
         }
     }
 

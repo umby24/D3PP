@@ -168,7 +168,7 @@ void D3PP::network::Server::RebuildRoClients() {
 }
 
 void D3PP::network::Server::SendToAll(IPacket& packet, std::string extension, int extVersion) {
-    std::shared_lock lock(D3PP::network::Server::roMutex);
+    std::shared_lock lock(D3PP::network::Server::roMutex, std::defer_lock);
     for ( auto const & c : roClients ) {
         if (!extension.empty()) {
             int currentVer = CPE::GetClientExtVersion(c, extension);

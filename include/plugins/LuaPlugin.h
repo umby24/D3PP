@@ -21,6 +21,7 @@ struct LuaFile {
 };
 
 struct LuaEvent {
+    std::string eventId;
     std::string functionName;
     Event::DescriptorType type;
     clock_t lastRun;

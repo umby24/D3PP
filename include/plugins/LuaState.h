@@ -7,6 +7,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <shared_mutex>
 #include "EventSystem.h"
 #include "LuaPlugin.h"
 
@@ -27,8 +28,9 @@ namespace D3PP::plugins {
         void LoadFile(const std::string& filepath, bool logWarnings);
 
         lua_State* GetState() { return m_state; }
-
+        std::shared_mutex eventMutex;
         std::map<Event::DescriptorType, std::map<std::string, LuaEvent>> events;
+        std::map<std::string, LuaEvent> modifyList;
     private:
         std::string m_name;
         lua_State* m_state;

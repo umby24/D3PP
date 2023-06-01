@@ -68,7 +68,7 @@ void LuaPlugin::RegisterEventListener() {
     Dispatcher::subscribe(EventMapBlockChangeClient{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
     Dispatcher::subscribe(EventMapBlockChangePlayer{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
     Dispatcher::subscribe(EventTimer{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(PlayerClickEventArgs::clickDescriptor, [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(PlayerClickEventArgs{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
 }
 
 void LuaPlugin::HandleEvent(Event& event) {
@@ -80,6 +80,7 @@ void LuaPlugin::HandleEvent(Event& event) {
 
     auto type = event.type(); // -- get the type..
 
+    std::shared_lock lock (m_luaState->eventMutex);
     if(m_luaState->events.find( type ) == m_luaState->events.end() ) // -- find all functions that want to be called on this event
         return;
 
@@ -148,51 +149,78 @@ void LuaPlugin::MainFunc() {
         return;
 
     LoadNewOrChanged();
+
+    std::unique_lock lock(m_luaState->eventMutex);
+    for(auto &e : m_luaState->modifyList) {
+        if (e.first.starts_with("del")) {
+            for (auto &i: m_luaState->events) {
+                if (m_luaState->events[i.first].contains(e.second.eventId)) {
+                    m_luaState->events[i.first].erase(e.second.eventId);
+                }
+            }
+        }
+        if (e.first.starts_with("add")) {
+            if (m_luaState->events.find(e.second.type) == m_luaState->events.end()) // -- Does this type exist in our tracker yet? i.e. EVENT_ENTITY_ADD.
+                m_luaState->events.insert(std::make_pair(e.second.type, std::map<std::string, LuaEvent>())); // -- If not create a base list for it.
+
+            if (m_luaState->events[e.second.type].find(e.second.eventId) != m_luaState->events[e.second.type].end()) { // -- Does this event list have our event id in it?
+                m_luaState->events[e.second.type][e.second.eventId] = e.second; // -- if yes lets just reassign it.
+            } else { // -- Otherwise we need to insert it.
+                m_luaState->events[e.second.type].insert(std::make_pair(e.second.eventId, e.second));
+            }
+        }
+    }
+
+    m_luaState->modifyList.clear();
 }
 
 void LuaPlugin::TimerMain() {
     auto timerDescriptor = Dispatcher::getDescriptor("Timer");
-    if (m_luaState->events.find(timerDescriptor) == m_luaState->events.end())
-        return;
+    {
+        std::shared_lock lock(m_luaState->eventMutex);
 
-    auto &eventsAt = m_luaState->events[timerDescriptor];
-    for(auto &e : eventsAt) {
-        if (clock() >= (e.second.lastRun + e.second.duration)) {
-            e.second.lastRun = clock();
-            executionMutex.lock();
-            lua_getglobal(m_luaState->GetState(), e.second.functionName.c_str()); // -- Get the function to be called
-            if (!lua_isfunction(m_luaState->GetState(), -1)) {
-                lua_pop(m_luaState->GetState(), 1);
-                executionMutex.unlock();
-                continue;
-            }
-            if (!lua_checkstack(m_luaState->GetState(), 1)) {
+        if (m_luaState->events.find(timerDescriptor) == m_luaState->events.end())
+            return;
 
-            }
-            lua_pushinteger(m_luaState->GetState(), e.second.mapId);
-            int result = lua_pcall(m_luaState->GetState(), 1, 0, 0);
-            if (result == LUA_ERRRUN) {
-                bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
-                executionMutex.unlock();
-                return;
-            }
-            else if (result == LUA_ERRMEM) {
-                bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
-                executionMutex.unlock();
-                return;
-            }
-            else if (result == LUA_ERRERR) {
-               bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
-                executionMutex.unlock();
-                return;
-            }
-            else {
-                // -- success? maybe? who knows.
+        auto &eventsAt = m_luaState->events[timerDescriptor];
+        for (auto &e: eventsAt) {
+            if (clock() >= (e.second.lastRun + e.second.duration)) {
+                e.second.lastRun = clock();
+                executionMutex.lock();
+                lua_getglobal(m_luaState->GetState(),
+                              e.second.functionName.c_str()); // -- Get the function to be called
+                if (!lua_isfunction(m_luaState->GetState(), -1)) {
+                    lua_pop(m_luaState->GetState(), 1);
+                    executionMutex.unlock();
+                    continue;
+                }
+                if (!lua_checkstack(m_luaState->GetState(), 1)) {
 
+                }
+                lua_pushinteger(m_luaState->GetState(), e.second.mapId);
+                int result = lua_pcall(m_luaState->GetState(), 1, 0, 0);
+                if (result == LUA_ERRRUN) {
+                    bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
+                    executionMutex.unlock();
+                    break;
+                } else if (result == LUA_ERRMEM) {
+                    bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
+                    executionMutex.unlock();
+                    break;
+                } else if (result == LUA_ERRERR) {
+                    bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
+                    executionMutex.unlock();
+                    break;
+                } else {
+                    // -- success? maybe? who knows.
+
+                }
+                executionMutex.unlock();
             }
-            executionMutex.unlock();
         }
     }
+    // -- Make all modifications to the events list occur after events have been triggered.
+    // -- This ensures no modification of in memory lists, and allows events to be created and destroyed from within other events.
 }
 
 void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, const std::string& function, const std::string& args) {

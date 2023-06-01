@@ -181,9 +181,8 @@ int LuaMapLib::LuaMapGetTable(lua_State* L) {
 
     if (numEntities > 0) {
         for (auto const& e : mm->_maps) {
-            lua_pushinteger(L, index++);
             lua_pushinteger(L, e.second->ID);
-            lua_settable(L, -3);
+            lua_rawseti(L, -2, index++);
         }
     }
 

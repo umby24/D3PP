@@ -19,7 +19,7 @@ namespace D3PP::world {
     private:
         std::queue<std::function<void()>> itemQueue;
         std::thread runner;
-        bool m_finished;
+        bool m_finished = false;
     };
 }
 #endif //D3PP_MAPINTENSIVEACTIONS_H

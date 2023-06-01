@@ -48,9 +48,8 @@ int LuaBlockLib::LuaBlockGetTable(lua_State* L) {
 
     if (numEntities > 0) {
         for (auto const& e : bm->Blocks) {
-            lua_pushinteger(L, index++);
             lua_pushinteger(L, e.Id);
-            lua_settable(L, -3);
+            lua_rawseti(L, -2, index++);
         }
     }
 

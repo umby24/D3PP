@@ -1,14 +1,12 @@
 #include "lua/system.h"
 
 #include <lua.hpp>
-#include <utility>
 #include "common/Logger.h"
 #include "Utils.h"
 #include "common/Files.h"
 #include "common/Configuration.h"
 #include "network/Network_Functions.h"
 #include "EventSystem.h"
-#include "plugins/PluginManager.h"
 #include "plugins/LuaPlugin.h"
 #include "plugins/LuaState.h"
 #include "System.h"
@@ -156,6 +154,7 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
     auto typeAsEvent = Dispatcher::getDescriptor(type);
 
     LuaEvent newEvent{
+            eventId,
             function,
             typeAsEvent,
             clock(),
@@ -164,17 +163,11 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
     };
 
     if (setOrCheck == 1) {
-        if (m_thisPlugin->events.find(typeAsEvent) == m_thisPlugin->events.end())
-            m_thisPlugin->events.insert(std::make_pair(typeAsEvent, std::map<std::string, LuaEvent>()));
-
-        if (m_thisPlugin->events[typeAsEvent].find(eventId) != m_thisPlugin->events[typeAsEvent].end()) {
-            m_thisPlugin->events[typeAsEvent][eventId] = newEvent;
-        } else {
-            m_thisPlugin->events[typeAsEvent].insert(std::make_pair(eventId, newEvent));
-        }
+        m_thisPlugin->modifyList.insert(std::make_pair("add"+eventId, newEvent));
     }
     else {
         bool eventExists = false;
+        std::shared_lock lock(m_thisPlugin->eventMutex);
 
         if (m_thisPlugin->events.find(typeAsEvent) != m_thisPlugin->events.end()) {
             for (const auto& i : m_thisPlugin->events[typeAsEvent]) {
@@ -201,10 +194,13 @@ int LuaSystemLib::LuaEventDelete(lua_State* L) {
     }
 
     std::string eventId(luaL_checkstring(L, 1));
-
-    for(const auto& i : m_thisPlugin->events) {
-        if (m_thisPlugin->events[i.first].contains(eventId))
-            m_thisPlugin->events[i.first].erase(eventId);
+    {
+        std::shared_lock lock(m_thisPlugin->eventMutex);
+        for (const auto &i: m_thisPlugin->events) {
+            if (m_thisPlugin->events[i.first].contains(eventId)) {
+                m_thisPlugin->modifyList.insert(std::make_pair("del"+eventId,m_thisPlugin->events[i.first][eventId]));
+            }
+        }
     }
 
     return 0;
