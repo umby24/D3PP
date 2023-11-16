@@ -3,9 +3,7 @@
 //
 #include "common/ByteBuffer.h"
 #include <cmath>
-#include <utility>
 #include "Utils.h"
-
 
 ByteBuffer::ByteBuffer(const std::function<void()>& callback) : _buffer(initial_size), _bufLock() {
     this->_size = (unsigned int) ByteBuffer::initial_size;
@@ -157,10 +155,20 @@ void ByteBuffer::Write(std::vector<unsigned char> memory, int length) {
 }
 
 void ByteBuffer::Shift(int size) {
+    if (size <= 0) {
+        return;
+    }
+    if (size > _buffer.size()) {
+        size = _buffer.size();
+    }
     const std::scoped_lock<std::mutex> pqlock(_bufLock);
-    std::copy(_buffer.begin()+size, _buffer.end(), _buffer.begin());
-    _readPos -= size;
-    _writePos -= size;
+    _buffer.erase(_buffer.begin(), _buffer.begin()+size);
+
+    if (_readPos >= size)
+        _readPos -= size;
+
+    if (_writePos >= size)
+        _writePos -= size;
 }
 
 void ByteBuffer::Purge() {
