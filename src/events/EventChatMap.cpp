@@ -16,3 +16,8 @@ int EventChatMap::Push(lua_State* L) {
 Event::DescriptorType EventChatMap::type() const {
     return descriptor;
 }
+
+EventChatMap::EventChatMap(const EventChatMap &in) {
+    this->entityId = in.entityId;
+    this->message = in.message;
+}

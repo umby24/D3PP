@@ -55,9 +55,8 @@ int LuaTeleporterLib::LuaTeleporterGetTable(lua_State* L) {
 
     if (numPortals > 0) {
         for (auto const& nc : chosenMap->Portals) {
-            lua_pushinteger(L, index++);
             lua_pushstring(L, nc.Name.c_str());
-            lua_settable(L, -3);
+            lua_rawseti(L, -2, index++);
         }
     }
 

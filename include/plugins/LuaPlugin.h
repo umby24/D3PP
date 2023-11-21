@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <queue>
 #include <EventSystem.h>
 
 #include "common/TaskScheduler.h"
@@ -50,6 +51,8 @@ private:
     std::string m_status;
     std::string m_folder;
     std::shared_ptr<D3PP::plugins::LuaState> m_luaState;
+    std::queue<Event*> m_eventQueue;
+    std::vector<std::string> m_recentEvents;
     bool m_loaded;
     std::recursive_mutex executionMutex;
 
@@ -60,6 +63,7 @@ private:
     void TimerMain();
     void MainFunc();
     void LoadNewOrChanged();
+    void QueueEvent(const Event &event);
     // -- Lua interface functions :)
     
     // -- Event executors

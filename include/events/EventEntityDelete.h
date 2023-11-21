@@ -8,6 +8,7 @@
 class EventEntityDelete: public Event {
 public:
     EventEntityDelete();
+    EventEntityDelete* clone() const override { return new EventEntityDelete(*this); }
     static constexpr DescriptorType descriptor = "Entity_Delete";
     virtual DescriptorType type() const;
 

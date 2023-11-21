@@ -8,6 +8,7 @@
 class EventClientLogin : public Event {
 public:
     EventClientLogin();
+    EventClientLogin* clone() const override { return new EventClientLogin(*this); }
     static constexpr DescriptorType descriptor = "Client_Login";
     DescriptorType type() const override;// DescriptorType type() const;
 

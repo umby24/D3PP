@@ -8,6 +8,7 @@
 class EventClientLogout : public Event {
 public:
     EventClientLogout();
+    EventClientLogout* clone() const override { return new EventClientLogout(*this); }
     static constexpr DescriptorType descriptor = "Client_Logout";
     virtual DescriptorType type() const;
 

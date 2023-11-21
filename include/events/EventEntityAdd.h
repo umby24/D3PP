@@ -8,6 +8,7 @@
 class EventEntityAdd : public Event {
 public:
     EventEntityAdd();
+    EventEntityAdd* clone() const override { return new EventEntityAdd(*this); }
     static constexpr DescriptorType descriptor = "Entity_Add";
     virtual DescriptorType type() const;
 

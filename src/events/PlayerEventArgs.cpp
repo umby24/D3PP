@@ -10,6 +10,7 @@ PlayerEventArgs::PlayerEventArgs(const DescriptorType* inDescript) {
 
 int PlayerEventArgs::Push(lua_State *L) {
     // nop
+
     return 0;
 }
 
@@ -21,12 +22,15 @@ int PlayerClickEventArgs::Push(lua_State *L) {
     lua_pushinteger(L, playerId);
     lua_pushinteger(L, (int)button);
     lua_pushinteger(L, (int)action);
-    lua_pushinteger(L, yaw);
-    lua_pushinteger(L, pitch);
-    lua_pushinteger(L, targetEntity);
-    lua_pushinteger(L, targetBlock.X);
-    lua_pushinteger(L, targetBlock.Y);
-    lua_pushinteger(L, targetBlock.Z);
+
+    lua_pushinteger(L, (int)yaw);
+    lua_pushinteger(L, (int)pitch);
+    lua_pushinteger(L, static_cast<int>(targetEntity));
+
+    lua_pushinteger(L, static_cast<int>(targetBlock.X));
+    lua_pushinteger(L, static_cast<int>(targetBlock.Y));
+    lua_pushinteger(L, static_cast<int>(targetBlock.Z));
+
     lua_pushinteger(L, (int)blockFace);
 
     return 10;

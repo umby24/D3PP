@@ -8,6 +8,7 @@
 class EventEntityPositionSet : public Event {
 public:
     EventEntityPositionSet();
+    EventEntityPositionSet* clone() const override { return new EventEntityPositionSet(*this); }
     static constexpr DescriptorType descriptor = "Entity_Position_Set";
     [[nodiscard]] DescriptorType type() const override;
     

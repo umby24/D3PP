@@ -8,6 +8,7 @@
 class EventClientDelete : public Event {
 public:
     EventClientDelete();
+    EventClientDelete* clone() const override { return new EventClientDelete(*this); }
     static constexpr DescriptorType descriptor = "Client_Delete";
     virtual DescriptorType type() const;
     int clientId;

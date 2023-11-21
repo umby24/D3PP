@@ -39,9 +39,10 @@ int LuaRankLib::LuaRankGetTable(lua_State* L) {
 
     if (numRanks > 0) {
         for (auto const& nc : ranks) {
-            lua_pushinteger(L, index++);
+            //lua_pushinteger(L, index++);
             lua_pushinteger(L, nc.Rank);
-            lua_settable(L, -3);
+            lua_rawseti(L, -2, index++);
+            //lua_settable(L, -3);
         }
     }
 

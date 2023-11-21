@@ -15,9 +15,15 @@ int EventChatPrivate::Push(lua_State* L) {
     lua_pushinteger(L, toEntityId);
     lua_pushinteger(L, fromEntityId);
     lua_pushstring(L, message.c_str());
-    return 3;
+    return 4;
 }
 
 Event::DescriptorType EventChatPrivate::type() const {
     return descriptor;
+}
+
+EventChatPrivate::EventChatPrivate(const EventChatPrivate &in) {
+    this->toEntityId = in.toEntityId;
+    this->fromEntityId = in.fromEntityId;
+    this->message = in.message;
 }

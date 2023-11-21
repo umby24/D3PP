@@ -117,6 +117,8 @@ int LuaBuildModeLib::LuaBuildModeStateGet(lua_State* L) {
         std::shared_ptr<Entity> e = Entity::GetPointer(clientId, true);
         if (e != nullptr) {
             lua_pushinteger(L, e->BuildState);
+        } else {
+            lua_pushinteger(L, -1);
         }
     }
     else {

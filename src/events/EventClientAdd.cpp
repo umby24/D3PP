@@ -15,3 +15,7 @@ int EventClientAdd::Push(lua_State* L) {
 Event::DescriptorType EventClientAdd::type() const {
     return descriptor;
 }
+
+EventClientAdd::EventClientAdd(const EventClientAdd &in) {
+    this->clientId = in.clientId;
+}

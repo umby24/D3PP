@@ -8,6 +8,7 @@
 class EventMapBlockChangeClient : public Event {
 public:
     EventMapBlockChangeClient();
+    EventMapBlockChangeClient* clone() const override { return new EventMapBlockChangeClient(*this); }
     static constexpr DescriptorType descriptor = "Map_Block_Change_Client";
     virtual DescriptorType type() const;
 

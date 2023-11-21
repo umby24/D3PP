@@ -17,6 +17,7 @@ class Event
   bool _isCancelled = false;
 public:
     virtual~ Event();
+    virtual Event* clone() const = 0;
     inline const bool isCancelled() const { return _isCancelled; }
     inline const void setCancelled() { _isCancelled = true; }
     using DescriptorType = const char*;

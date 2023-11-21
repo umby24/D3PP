@@ -9,8 +9,10 @@
 class EventChatAll : public Event {
 public:
     EventChatAll();
+    EventChatAll(const EventChatAll &);
     static constexpr DescriptorType descriptor = "Chat_All";
     virtual DescriptorType type() const;
+    EventChatAll* clone() const override { return new EventChatAll(*this); }
 
     int entityId;
     std::string message;

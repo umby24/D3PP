@@ -30,7 +30,8 @@
 #include <windows.h>
 #endif
 using namespace std;
-
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
 void mainLoop();
 void MainConsole();
 int MainVersion = 1018;
@@ -103,9 +104,10 @@ int main()
     System::ServerName = "D3PP Beta v" + stringulate(SYSTEM_VERSION_NUMBER);
     
     D3PP::network::Server::Start();
-    
+
     std::thread mainThread(mainLoop);
     plugm->LoadPlugins();
+
     MainConsole();
 
     D3PP::network::Server::Stop();
@@ -142,4 +144,5 @@ void mainLoop() {
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
+    std::cout << "YO WTF WE EXITING WHY";
 }

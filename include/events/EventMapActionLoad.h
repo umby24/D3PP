@@ -8,6 +8,7 @@
 class EventMapActionLoad : public Event {
 public:
     EventMapActionLoad();
+    EventMapActionLoad* clone() const override { return new EventMapActionLoad(*this); }
     static constexpr DescriptorType descriptor = "Map_Action_Load";
     virtual DescriptorType type() const;
 

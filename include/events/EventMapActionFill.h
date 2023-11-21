@@ -8,6 +8,7 @@
 class EventMapActionFill : public Event {
 public:
     EventMapActionFill();
+    EventMapActionFill* clone() const override { return new EventMapActionFill(*this); }
     static constexpr DescriptorType descriptor = "Map_Action_Fill";
     virtual DescriptorType type() const;
 

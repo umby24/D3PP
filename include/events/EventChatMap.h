@@ -9,9 +9,11 @@
 class EventChatMap : public Event {
 public:
     EventChatMap();
+    EventChatMap(EventChatMap const &);
     static constexpr DescriptorType descriptor = "Chat_Map";
     virtual DescriptorType type() const;
-    
+    EventChatMap* clone() const override { return new EventChatMap(*this); }
+
     int entityId;
     std::string message;
 
