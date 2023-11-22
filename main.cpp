@@ -30,8 +30,6 @@
 #include <windows.h>
 #endif
 using namespace std;
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
 void mainLoop();
 void MainConsole();
 int MainVersion = 1018;
