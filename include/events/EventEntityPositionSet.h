@@ -8,6 +8,7 @@
 class EventEntityPositionSet : public Event {
 public:
     EventEntityPositionSet();
+    EventEntityPositionSet(EventEntityPositionSet const &);
     EventEntityPositionSet* clone() const override { return new EventEntityPositionSet(*this); }
     static constexpr DescriptorType descriptor = "Entity_Position_Set";
     [[nodiscard]] DescriptorType type() const override;
@@ -22,6 +23,6 @@ public:
     unsigned char priority;
     bool sendOwnClient;
 
-    int Push(lua_State *L);
+    int Push(lua_State *L) const;
 };
 #endif //D3PP_EVENTENTITYPOSITIONSET_H

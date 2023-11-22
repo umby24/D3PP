@@ -8,6 +8,7 @@
 class EventMapActionDelete : public Event {
 public:
     EventMapActionDelete();
+    EventMapActionDelete(EventMapActionDelete const &);
     EventMapActionDelete* clone() const override { return new EventMapActionDelete(*this); }
     static constexpr DescriptorType descriptor = "Map_Action_Delete";
     virtual DescriptorType type() const;

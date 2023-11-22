@@ -9,6 +9,7 @@
 class EventMapBlockChangePlayer : public Event {
 public:
     EventMapBlockChangePlayer();
+    EventMapBlockChangePlayer(EventMapBlockChangePlayer const &);
     EventMapBlockChangePlayer* clone() const override { return new EventMapBlockChangePlayer(*this); }
     static constexpr DescriptorType descriptor = "Map_Block_Change_Player";
     virtual DescriptorType type() const;

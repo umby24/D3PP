@@ -23,7 +23,7 @@ public:
 };
 
 class PlayerClickEventArgs : public PlayerEventArgs {
-    //PlayerClickEventArgs(PlayerClickEventArgs const &);
+    PlayerClickEventArgs(PlayerClickEventArgs const &);
     PlayerClickEventArgs* clone() const override { return new PlayerClickEventArgs(*this); }
     int Push(lua_State *L) override;
 public:

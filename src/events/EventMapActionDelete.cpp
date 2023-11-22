@@ -1,7 +1,5 @@
 #include "events/EventMapActionDelete.h"
 
-constexpr EventMapActionDelete::DescriptorType EventMapActionDelete::descriptor;
-
 EventMapActionDelete::EventMapActionDelete() {
     this->PushLua = std::bind(&EventMapActionDelete::Push, this, std::placeholders::_1);
 }
@@ -15,4 +13,10 @@ int EventMapActionDelete::Push(lua_State* L) {
 
 Event::DescriptorType EventMapActionDelete::type() const {
     return descriptor;
+}
+
+EventMapActionDelete::EventMapActionDelete(const EventMapActionDelete &in) : Event(in) {
+    this->actionId = in.actionId;
+    this->mapId = in.mapId;
+    this->PushLua = std::bind(&EventMapActionDelete::Push, this, std::placeholders::_1);
 }

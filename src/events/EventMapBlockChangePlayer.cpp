@@ -16,3 +16,8 @@ int EventMapBlockChangePlayer::Push(lua_State* L) {
 Event::DescriptorType EventMapBlockChangePlayer::type() const {
     return descriptor;
 }
+
+EventMapBlockChangePlayer::EventMapBlockChangePlayer(const EventMapBlockChangePlayer &in) : Event(in) {
+    this->playerNumber = in.playerNumber;
+    this->PushLua = std::bind(&EventMapBlockChangePlayer::Push, this, std::placeholders::_1);
+}

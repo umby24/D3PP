@@ -87,26 +87,29 @@ void LuaPlugin::HandleEvent(Event& event) {
 
     for( auto&& observer : observers ) {
         std::scoped_lock<std::recursive_mutex> rcLock(executionMutex);
-        lua_getglobal(m_luaState->GetState(), observer.second.functionName.c_str()); // -- Get the function to be called
+        lua_State* thisLuaState = m_luaState->GetState();
 
-        if (!lua_isfunction(m_luaState->GetState(), -1)) {
-            lua_pop(m_luaState->GetState(), 1);
+        lua_getglobal(thisLuaState, observer.second.functionName.c_str()); // -- Get the function to be called
+
+        if (!lua_isfunction(thisLuaState, -1)) {
+            lua_pop(thisLuaState, 1);
             continue;
         }
-        int argCount = event.PushLua(m_luaState->GetState()); // -- Have the event push its args and return how many were pushed..
+
+        int argCount = event.PushLua(thisLuaState); // -- Have the event push its args and return how many were pushed..
         try {
-            if (lua_pcall(m_luaState->GetState(), argCount, 1, 0) != 0) { // -- Call the function.
-                bail(m_luaState->GetState(), "[Event Handler]"); // -- catch errors
+            if (lua_pcall(thisLuaState, argCount, 1, 0) != 0) { // -- Call the function.
+                bail(thisLuaState, "[Event Handler]"); // -- catch errors
                 return;
             }
-            int result = luaL_optinteger(m_luaState->GetState(), -1, 1);
+            int result = luaL_optinteger(thisLuaState, -1, 1);
             
             if (result == 0) {
                 event.setCancelled();
             }
 
         } catch (const int exception) {
-            bail(m_luaState->GetState(), "[Error Handler]"); // -- catch errors
+            bail(thisLuaState, "[Error Handler]"); // -- catch errors
             return;
         }
         // -- done.
@@ -180,8 +183,13 @@ void LuaPlugin::MainFunc() {
     }
 
     // -- Handle pending events.
-    if (!m_eventQueue.empty()) {
+    while (!m_eventQueue.empty()) {
         Event *thisEvent = m_eventQueue.front(); // -- Pull
+        if (!thisEvent || reinterpret_cast<unsigned long long int>(thisEvent) == 0xcdcdcdcdcdcdcdcd || thisEvent ==
+                                                                                                               nullptr) {
+            m_eventQueue.pop();
+            continue;
+        };
         HandleEvent(*thisEvent); // -- Process
         m_eventQueue.pop(); // -- Pop!
         delete thisEvent; // -- Dtor our stuff.

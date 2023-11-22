@@ -8,12 +8,13 @@
 class EventEntityAdd : public Event {
 public:
     EventEntityAdd();
+    EventEntityAdd(EventEntityAdd const &);
     EventEntityAdd* clone() const override { return new EventEntityAdd(*this); }
     static constexpr DescriptorType descriptor = "Entity_Add";
     virtual DescriptorType type() const;
 
     int entityId;
     
-    int Push(lua_State *L);
+    int Push(lua_State *L) const;
 };
 #endif //D3PP_EVENTENTITYADD_H

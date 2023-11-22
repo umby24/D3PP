@@ -8,12 +8,13 @@
 class EventClientLogout : public Event {
 public:
     EventClientLogout();
+    EventClientLogout(EventClientLogout const &);
     EventClientLogout* clone() const override { return new EventClientLogout(*this); }
     static constexpr DescriptorType descriptor = "Client_Logout";
     virtual DescriptorType type() const;
 
     int clientId;
     
-    int Push(lua_State *L);
+    int Push(lua_State *L) const;
 };
 #endif //D3PP_EVENTCLIENTLOGOUT_H

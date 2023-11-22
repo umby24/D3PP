@@ -35,3 +35,15 @@ int PlayerClickEventArgs::Push(lua_State *L) {
 
     return 10;
 }
+
+PlayerClickEventArgs::PlayerClickEventArgs(PlayerClickEventArgs const &in) : PlayerEventArgs(in) {
+    this->playerId = in.playerId;
+    this->button = in.button;
+    this->action = in.action;
+    this->yaw = in.yaw;
+    this->pitch = in.pitch;
+    this->targetBlock = in.targetBlock;
+    this->targetEntity = in.targetEntity;
+    this->blockFace = in.blockFace;
+    this->PushLua = std::bind(&PlayerClickEventArgs::Push, this, std::placeholders::_1);
+}

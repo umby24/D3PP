@@ -8,6 +8,7 @@
 class EventMapBlockChange : public Event {
 public:
     EventMapBlockChange();
+    EventMapBlockChange(EventMapBlockChange const &);
     EventMapBlockChange* clone() const override { return new EventMapBlockChange(*this); }
     static constexpr DescriptorType descriptor = "Map_Block_Change";
     virtual DescriptorType type() const;
