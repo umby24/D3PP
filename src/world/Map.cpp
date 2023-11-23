@@ -140,6 +140,7 @@ void Map::Reload() {
     loaded = true;
     BlockchangeStopped = false;
     PhysicsStopped = false;
+    LastClient = time(nullptr);
     Logger::LogAdd(MODULE_NAME, "Map Reloaded [" + m_mapProvider->MapName + "]", LogType::NORMAL, GLF);
 }
 
