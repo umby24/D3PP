@@ -27,7 +27,6 @@
 #include "events/EventEntityDelete.h"
 #include "events/EventEntityDie.h"
 #include "events/EventEntityPositionSet.h"
-#include "events/EventEntityMapChange.h"
 #include "events/EntityEventArgs.h"
 
 const std::string MODULE_NAME = "Entity";
@@ -36,13 +35,6 @@ std::mutex Entity::entityMutex{};
 
 using namespace D3PP::Common;
 using namespace D3PP::world;
-
-EntityMain::EntityMain() {
-}
-
-void EntityMain::MainFunc() {
-
-}
 
 int Entity::GetFreeId() {
     int id = 0;
@@ -119,7 +111,7 @@ Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rot
 
 Entity::Entity(std::string name, int mapId, MinecraftLocation loc, std::shared_ptr<NetworkClient> c) : variables{}, Location(loc) {
     Prefix = "";
-    Name = name;
+    Name = std::move(name);
     Suffix = "";
     Id = GetFreeId();
     ClientId = GetFreeIdClient(mapId);
@@ -212,7 +204,7 @@ void Entity::Delete(int id) {
     AllEntities.erase(id);
 }
 
-void Entity::Spawn() {
+void Entity::Spawn() const {
     // -- Entity::Add(); should be called..
     std::shared_lock lock(D3PP::network::Server::roMutex);
     std::shared_ptr<Entity> selfPointer = GetPointer(Id);
@@ -228,7 +220,7 @@ void Entity::Spawn() {
     }
 }
 
-void Entity::Despawn() {
+void Entity::Despawn() const {
     std::shared_lock lock(D3PP::network::Server::roMutex);
     std::shared_ptr<Entity> selfPointer = GetPointer(Id);
 

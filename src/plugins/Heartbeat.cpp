@@ -78,6 +78,7 @@ Heartbeat::Heartbeat() {
     this->Setup = [this] { Init(); };
     this->Main = [this] { MainFunc(); };
     this->Interval = std::chrono::seconds(1);
+    this->LastRun = std::chrono::system_clock::now();
     TaskScheduler::RegisterTask(MODULE_NAME, *this);
 }
 

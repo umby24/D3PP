@@ -25,6 +25,7 @@ BuildModeMain::BuildModeMain()  {
     this->Interval = std::chrono::seconds(1);
     this->Setup = [this] { Load(); };
     this->Main = [this] { MainFunc(); };
+    this->LastRun = std::chrono::system_clock::now();
 
     TaskScheduler::RegisterTask(MODULE_NAME, *this);
 }

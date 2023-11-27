@@ -45,29 +45,29 @@ LuaPlugin::~LuaPlugin() {
 }
 
 void LuaPlugin::RegisterEventListener() {
-    Dispatcher::subscribe(EventChatAll{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventChatMap{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventChatAll{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventChatMap{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
    // Dispatcher::subscribe(EventChatPrivate{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventClientAdd{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventClientDelete{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventClientLogin{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventClientLogout{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventEntityAdd{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventEntityDelete{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventEntityDie{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventEntityMapChange{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventEntityPositionSet{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapActionDelete{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapActionFill{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapActionLoad{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapActionResize{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapActionSave{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapAdd{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapBlockChange{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapBlockChangeClient{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapBlockChangePlayer{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventTimer{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(PlayerClickEventArgs{}.type(), [this](auto && PH1) { QueueEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventClientAdd{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventClientDelete{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventClientLogin{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventClientLogout{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventEntityAdd{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventEntityDelete{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventEntityDie{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventEntityMapChange{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventEntityPositionSet{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapActionDelete{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapActionFill{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapActionLoad{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapActionResize{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapActionSave{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapAdd{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapBlockChange{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapBlockChangeClient{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventMapBlockChangePlayer{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventTimer{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(PlayerClickEventArgs{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
 }
 
 void LuaPlugin::HandleEvent(Event& event) {
@@ -102,7 +102,7 @@ void LuaPlugin::HandleEvent(Event& event) {
                 bail(thisLuaState, "[Event Handler]"); // -- catch errors
                 return;
             }
-            int result = luaL_optinteger(thisLuaState, -1, 1);
+            int result = static_cast<int>(luaL_optinteger(thisLuaState, -1, 1));
             
             if (result == 0) {
                 event.setCancelled();
@@ -180,19 +180,6 @@ void LuaPlugin::MainFunc() {
         }
 
         m_luaState->modifyList.clear(); // -- Clear our earmark list.
-    }
-
-    // -- Handle pending events.
-    while (!m_eventQueue.empty()) {
-        Event *thisEvent = m_eventQueue.front(); // -- Pull
-        if (!thisEvent || reinterpret_cast<unsigned long long int>(thisEvent) == 0xcdcdcdcdcdcdcdcd || thisEvent ==
-                                                                                                               nullptr) {
-            m_eventQueue.pop();
-            continue;
-        };
-        HandleEvent(*thisEvent); // -- Process
-        m_eventQueue.pop(); // -- Pop!
-        delete thisEvent; // -- Dtor our stuff.
     }
 }
 
@@ -374,13 +361,14 @@ void LuaPlugin::TriggerBlockDelete(const std::string& function, int mapId, unsig
     }
 }
 
-LuaPlugin::LuaPlugin(const std::string& folder) : m_eventQueue() {
+LuaPlugin::LuaPlugin(const std::string& folder) {
     m_folder = folder;
     m_luaState = std::make_shared<D3PP::plugins::LuaState>("Plugin " + folder);
     m_loaded = false;
 
     this->Interval = std::chrono::seconds(2);
     this->Main = [this] { MainFunc(); };
+    this->LastRun = std::chrono::system_clock::now();
 
     TaskScheduler::RegisterTask("Plugin " + m_folder, *this);
 }
@@ -446,9 +434,3 @@ void LuaPlugin::LoadNewOrChanged() {
         m_luaState->LoadFile(file, true);
     }
 }
-
-void LuaPlugin::QueueEvent(const Event &event) {
-    Event* cloned = event.clone();
-    m_eventQueue.push(cloned);
-}
-

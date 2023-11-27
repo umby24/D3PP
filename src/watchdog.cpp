@@ -154,6 +154,7 @@ watchdog::watchdog() {
 
     this->Teardown = [this] { isRunning = false; };
     this->Interval = std::chrono::seconds(100);
+    this->LastRun = std::chrono::system_clock::now();
     std::thread myThread(&watchdog::MainFunc, this);
     std::swap(myThread, mainThread);
     TaskScheduler::RegisterTask("Watchdog", *this);

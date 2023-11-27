@@ -21,6 +21,7 @@ PlayerMain* PlayerMain::Instance = nullptr;
 PlayerMain::PlayerMain() {
     this->Interval = std::chrono::seconds(1);
     this->Main= [this] { MainFunc(); };
+    this->LastRun = std::chrono::system_clock::now();
 
     OntimeCounter = 0;
     TaskScheduler::RegisterTask(MODULE_NAME, *this);

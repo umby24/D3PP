@@ -11,7 +11,6 @@
 #include "world/MapMain.h"
 #include "Block.h"
 #include "world/Player.h"
-#include "world/Entity.h"
 #include "BuildMode.h"
 #include "plugins/Heartbeat.h"
 #include "plugins/PluginManager.h"
@@ -85,7 +84,6 @@ int main()
     
     Player_List *l = Player_List::GetInstance();
     PlayerMain *pm = PlayerMain::GetInstance();
-    EntityMain em;
     CommandMain *cm = CommandMain::GetInstance();
     BuildModeMain *bmm = BuildModeMain::GetInstance();
     Heartbeat* hb = Heartbeat::GetInstance();
