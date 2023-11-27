@@ -435,6 +435,7 @@ void LuaPlugin::LoadNewOrChanged() {
         if (i != _files.end()) {
             // -- Note only accurate within +/- 1 second. shouldn't matter.
             if (i->second.LastLoaded != lastMod) {
+                std::scoped_lock<std::recursive_mutex> rcLock(executionMutex);
                 m_luaState->LoadFile(file, true);
                 i->second.LastLoaded = lastMod;
             }
@@ -445,6 +446,7 @@ void LuaPlugin::LoadNewOrChanged() {
         LuaFile newFile;
         newFile.FilePath = file;
         newFile.LastLoaded = lastMod;
+        std::scoped_lock<std::recursive_mutex> rcLock(executionMutex);
         _files.insert(std::make_pair(file, newFile));
         m_luaState->LoadFile(file, true);
     }
