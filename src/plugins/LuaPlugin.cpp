@@ -102,12 +102,15 @@ void LuaPlugin::HandleEvent(Event& event) {
                 bail(thisLuaState, "[Event Handler]"); // -- catch errors
                 return;
             }
-            int result = static_cast<int>(luaL_optinteger(thisLuaState, -1, 1));
-            
-            if (result == 0) {
-                event.setCancelled();
+            if (lua_isinteger(thisLuaState, -1)) {
+                int result = static_cast<int>(lua_tointeger(thisLuaState, -1));
+
+                if (result == 0) {
+                    event.setCancelled();
+                }
             }
 
+            lua_pop(thisLuaState, 1);
         } catch (const int exception) {
             bail(thisLuaState, "[Error Handler]"); // -- catch errors
             return;
@@ -222,7 +225,7 @@ void LuaPlugin::TimerMain() {
                     break;
                 } else {
                     // -- success? maybe? who knows.
-
+                    lua_pop(m_luaState->GetState(), lua_gettop(m_luaState->GetState()));
                 }
 //                executionMutex.unlock();
             }
@@ -245,6 +248,8 @@ void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, const
         lua_pushstring(m_luaState->GetState(), args.c_str());
         if (lua_pcall(m_luaState->GetState(), 5, 0, 0)) {
             bail(m_luaState->GetState(), "Failed to run mapfill");
+        } else {
+            lua_pop(m_luaState->GetState(), lua_gettop(m_luaState->GetState()));
         }
     }
     else {
@@ -264,6 +269,8 @@ void LuaPlugin::TriggerPhysics(int mapId, unsigned short X, unsigned short Y, un
         lua_pushinteger(m_luaState->GetState(), static_cast<lua_Integer>(Z));
         if (lua_pcall(m_luaState->GetState(), 4, 0, 0) != 0) {
             bail(m_luaState->GetState(), "Failed to trig physics;");
+        } else {
+            lua_pop(m_luaState->GetState(), lua_gettop(m_luaState->GetState()));
         }
     }
     else {
@@ -290,6 +297,8 @@ void LuaPlugin::TriggerCommand(const std::string& function, int clientId, const 
         lua_pushstring(m_luaState->GetState(), op5.c_str());
         if (lua_pcall(m_luaState->GetState(), 9, 0, 0)) {
             bail(m_luaState->GetState(), "Failed to run command.");
+        } else {
+            lua_pop(m_luaState->GetState(), lua_gettop(m_luaState->GetState()));
         }
     }
     else {
@@ -313,6 +322,8 @@ void LuaPlugin::TriggerBuildMode(const std::string& function, int clientId, int 
         lua_pushinteger(m_luaState->GetState(), block);
         if (lua_pcall(m_luaState->GetState(), 7, 0, 0)) {
             bail(m_luaState->GetState(), "Failed to run command.");
+        } else {
+            lua_pop(m_luaState->GetState(), lua_gettop(m_luaState->GetState()));
         }
     }
     else {
@@ -333,6 +344,8 @@ void LuaPlugin::TriggerBlockCreate(const std::string& function, int mapId, unsig
         lua_pushinteger(m_luaState->GetState(), Z);
         if (lua_pcall(m_luaState->GetState(), 4, 0, 0)) {
             bail(m_luaState->GetState(), "Failed to run Block Create.");
+        } else {
+
         }
     }
     else {
@@ -354,6 +367,8 @@ void LuaPlugin::TriggerBlockDelete(const std::string& function, int mapId, unsig
         lua_pushinteger(m_luaState->GetState(), Z);
         if (lua_pcall(m_luaState->GetState(), 4, 0, 0)) {
             bail(m_luaState->GetState(), "Failed to run Block Delete.");
+        } else {
+            lua_pop(m_luaState->GetState(), lua_gettop(m_luaState->GetState()));
         }
     }
     else {
