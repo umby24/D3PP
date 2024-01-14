@@ -8,6 +8,8 @@
 class EventEntityDie : public Event {
 public:
     EventEntityDie();
+    EventEntityDie(EventEntityDie const &);
+    EventEntityDie* clone() const override { return new EventEntityDie(*this); }
     static constexpr DescriptorType descriptor = "Entity_Die";
     virtual DescriptorType type() const;
 

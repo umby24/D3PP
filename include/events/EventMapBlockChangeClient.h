@@ -8,6 +8,8 @@
 class EventMapBlockChangeClient : public Event {
 public:
     EventMapBlockChangeClient();
+    EventMapBlockChangeClient(EventMapBlockChangeClient const &);
+    EventMapBlockChangeClient* clone() const override { return new EventMapBlockChangeClient(*this); }
     static constexpr DescriptorType descriptor = "Map_Block_Change_Client";
     virtual DescriptorType type() const;
 
@@ -19,6 +21,6 @@ public:
     unsigned char mode;
     unsigned char bType;
 
-    int Push(lua_State *L);
+    int Push(lua_State *L) const;
 };
 #endif //D3PP_EVENTMAPBLOCKCHANGECLIENT_H

@@ -8,6 +8,8 @@
 class EventMapActionResize : public Event {
 public:
     EventMapActionResize();
+    EventMapActionResize(EventMapActionResize const &);
+    EventMapActionResize* clone() const override { return new EventMapActionResize(*this); }
     static constexpr DescriptorType descriptor = "Map_Action_Resize";
     virtual DescriptorType type() const;
 

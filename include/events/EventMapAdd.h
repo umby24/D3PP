@@ -8,6 +8,8 @@
 class EventMapAdd : public Event {
 public:
     EventMapAdd();
+    EventMapAdd(EventMapAdd const &);
+    EventMapAdd* clone() const override { return new EventMapAdd(*this); }
     static constexpr DescriptorType descriptor = "Map_Add";
     virtual DescriptorType type() const;
 

@@ -8,7 +8,6 @@
 #include "Utils.h"
 #include "common/Files.h"
 #include "common/Logger.h"
-#include "Utils.h"
 
 Block* Block::Instance = nullptr;
 const std::string Block::MODULE_NAME = "Block";
@@ -27,6 +26,7 @@ Block::Block() {
     this->Setup = [this] { Load(); };
     this->Main = [this] { MainFunc(); };
     this->Teardown = [this] {Save(); };
+    this->LastRun = std::chrono::system_clock::now();
 
     TaskScheduler::RegisterTask(MODULE_NAME, *this);
 }
@@ -132,7 +132,7 @@ void Block::Load() {
     }
     try {
         iStream >> j;
-    } catch (std::exception e) {
+    } catch (std::exception &e) {
         Logger::LogAdd(MODULE_NAME, "Failed to load blocks! [" + stringulate(e.what()) + "]", LogType::L_ERROR, GLF);
         return;
     }
@@ -237,9 +237,8 @@ void Block::SetJson(json j) {
             loadedItem.PhysicsRandom = item["PhysicsRandom"];
             if (loadedItem.PhysicsRandom < 0 || loadedItem.PhysicsRandom > 10000)
                 loadedItem.PhysicsRandom = 0;
+
             loadedItem.PhysicsRepeat = item["PhysicsRepeat"];
-            if (loadedItem.PhysicsRepeat < 0 || loadedItem.PhysicsRepeat > 1)
-                loadedItem.PhysicsRepeat = 0;
 
             if (item["PhysicsOnLoad"].is_boolean())
                 loadedItem.PhysicsOnLoad = item["PhysicsOnLoad"];
@@ -275,14 +274,10 @@ void Block::SetJson(json j) {
 
             if (!item["Kills"].is_null()) {
                 loadedItem.Kills = item["Kills"];
-                if (loadedItem.Kills < 0 || loadedItem.Kills > 1)
-                    loadedItem.Kills = 0;
             }
 
             if (!item["Special"].is_null()) {
                 loadedItem.Special = item["Special"];
-                if (loadedItem.Special < 0 || loadedItem.Special > 1)
-                    loadedItem.Special = 0;
             }
 
             if (!item["OverviewColor"].is_null())

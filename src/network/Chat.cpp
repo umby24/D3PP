@@ -6,7 +6,6 @@
 #include <events/EventChatMap.h>
 #include <events/EventChatPrivate.h>
 #include "network/Chat.h"
-#include "network/Network.h"
 #include "network/NetworkClient.h"
 #include "network/Server.h"
 #include "common/Configuration.h"
@@ -20,23 +19,36 @@
 #include "Utils.h"
 #include "CPE.h"
 const int MaxStringLength = 65;
+const std::string MODULE_NAME = "CHAT";
 
-void Chat::HandleChatEscapes(std::string &input, const int& currentEntityId) {
-    Utils::replaceAll(input, "%%", "§");
+/**
+ * Escapes % -> & so users can use color codes.
+ * Escapes %% -> % , so users maintain usage of % sign.
+ * Inserts line breaks at <br>
+ * @param input
+ * @param currentEntityId
+ */
+void Chat::HandleChatEscapes(std::string &input) {
+    Utils::replaceAll(input, "%%", "§"); // -- Temporarily move an escaped % sign to something we wont remove.
     std::string percentString = "%";
     std::string andString = "&";
 
-    for (int i = 0; i < 9; i++) {
+    for (int i = 48; i < 57; i++) { // -- For numbers 0-9, replace %[n] with &[n]
         Utils::replaceAll(input, percentString + (char)i, andString + (char)i);
     }
-    for (int i = 97; i < 102; i++) {
+    for (int i = 97; i < 102; i++) { // -- characters a-f, same thing.
         Utils::replaceAll(input, percentString + (char)i, andString + (char)i);
     }
-    Utils::replaceAll(input, "§", percentString);
-    Utils::replaceAll(input, "<br>", "\n");
-    Utils::replaceAll(input, "\n", "\n" + Entity::GetDisplayname(currentEntityId) + "&f: ");
+    Utils::replaceAll(input, "§", percentString); // -- Replace the escaped percentages from before.
+    Utils::replaceAll(input, "<br>", "\n"); // -- Insert line breaks [Legacy D3 thing..]
 }
 
+/**
+ * Take a string and insert newlines where the text should break.
+ * Should break around words and attempt to preserve color codes.
+ * @param input String to be split out
+ * @return A string containing LF characters to delimit newlines.
+ */
 std::string Chat::StringMultiline(std::string input) {
     std::string result;
     int maxLength = MaxStringLength;
@@ -95,10 +107,18 @@ std::string Chat::StringMultiline(std::string input) {
     return result;
 }
 
+/**
+ * Determines if a given string contains invalid characters.
+ * @param input String to be tested
+ * @return True if invalid characters are detected.
+ */
 bool Chat::StringIV(const std::string& input) {
     return std::regex_match(input, AllowedRegexp);
 }
 
+/**
+ * Takes an input string, substitutes system level color codes, then strips out invalid chat characters.
+ */
 std::string Chat::StringGV(const std::string& input) {
     std::string working(input);
     Utils::replaceAll(working, "§E", Configuration::textSettings.error);
@@ -109,154 +129,175 @@ std::string Chat::StringGV(const std::string& input) {
 }
 
 void Chat::NetworkSend2Player(const int& entityId, const std::string& message, std::string playerName) {
-    std::shared_ptr<Entity> em = Entity::GetPointer(entityId);
-    if (em == nullptr)
+    std::shared_ptr<Entity> sendingEntity = Entity::GetPointer(entityId);
+    if (sendingEntity == nullptr)
         return;
     
     if (playerName.empty())
-        playerName = em->lastPrivateMessage;
+        playerName = sendingEntity->lastPrivateMessage;
 
     std::string output(message);
 
-    if (em->playerList != nullptr) {
-        if (em->playerList->MuteTime < time(nullptr)) {
-            HandleChatEscapes(output, entityId);
-            std::shared_lock lock(D3PP::network::Server::roMutex);
-            std::string message1 = "&cP " + Entity::GetDisplayname(entityId) + "&f: " + output;
-            bool found = false;
+    if (!(sendingEntity->playerList != nullptr)) return;
 
-            for (const auto &nc : D3PP::network::Server::roClients) {
-                if (nc->GetPlayerInstance() != nullptr && nc->GetPlayerInstance()->GetEntity() != nullptr) {
-                    if (Utils::InsensitiveCompare(nc->GetPlayerInstance()->GetEntity()->Name, playerName)) {
-                        em->lastPrivateMessage = playerName;
+    if (sendingEntity->playerList->MuteTime >= time(nullptr)) {
+        Entity::MessageToClients(entityId, "&eYou are muted.");
+        return;
+    }
+    HandleChatEscapes(output);
+    std::shared_lock lock(D3PP::network::Server::roMutex);
+    std::string message1 = "&cP " + Entity::GetDisplayname(entityId) + "&f: " + output;
+    // -- Prefix all new lines with the users name.
+    Utils::replaceAll(message1, "\n", "\n&cP " + Entity::GetDisplayname(entityId) + "&f: ");
+    bool found = false;
 
-                        EventChatPrivate ecp;
-                        ecp.toEntityId = nc->GetPlayerInstance()->GetEntity()->Id;
-                        ecp.fromEntityId = em->Id;
-                        ecp.message = output;
-                        Dispatcher::post(ecp);
+    for (const auto &nc: D3PP::network::Server::roClients) {
+        if (nc->GetPlayerInstance() == nullptr || nc->GetPlayerInstance()->GetEntity() == nullptr) continue;
+        if (!Utils::InsensitiveCompare(nc->GetPlayerInstance()->GetEntity()->Name, playerName)) continue;
 
-                        Logger::LogAdd("Chat", em->Name + " > " + nc->GetPlayerInstance()->GetEntity()->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
-                        NetworkFunctions::SystemMessageNetworkSend(nc->GetId(), message1);
+        sendingEntity->lastPrivateMessage = playerName;
 
-                        std::string message0 = "&c@ " + Entity::GetDisplayname(nc->GetPlayerInstance()->GetEntity()->Id) + "&f: " +output;
-                        Entity::MessageToClients(entityId, message0);
-                        found = true;
-                        break;
-                    }
-                }
-            }
-            if (!found) {
-                Entity::MessageToClients(entityId, "&eCan't find the Player '" + playerName + "'.");
-            }
-           
-        } else {
-            Entity::MessageToClients(entityId, "&eYou are muted.");
-        }
+        EventChatPrivate ecp;
+        ecp.toEntityId = nc->GetPlayerInstance()->GetEntity()->Id;
+        ecp.fromEntityId = sendingEntity->Id;
+        ecp.message = output;
+        Dispatcher::post(ecp);
+
+        Logger::LogAdd("Chat",
+                       sendingEntity->Name + " > " + nc->GetPlayerInstance()->GetEntity()->Name + ": " +
+                       output, LogType::CHAT, GLF);
+        NetworkFunctions::SystemMessageNetworkSend(nc->GetId(), message1);
+
+        std::string message0 =
+                "&c@ " + Entity::GetDisplayname(nc->GetPlayerInstance()->GetEntity()->Id) + "&f: " + output;
+        Utils::replaceAll(message0, "\n", "\n&c@ " + Entity::GetDisplayname(nc->GetPlayerInstance()->GetEntity()->Id) + "&f: ");
+        Entity::MessageToClients(entityId, message0);
+        found = true;
+        break;
+    }
+    if (!found) {
+        Entity::MessageToClients(entityId, "&eCan't find the Player '" + playerName + "'.");
     }
 }
 
 void Chat::NetworkSend2Map(const int& entityId, const std::string& message) {
-    std::shared_ptr<Entity> em = Entity::GetPointer(entityId);
-    if (em == nullptr)
+    std::shared_ptr<Entity> sendingEntity = Entity::GetPointer(entityId);
+
+    if (sendingEntity == nullptr)
         return;
+
     std::string output(message);
-    if (em->playerList != nullptr) {
-        if (em->playerList->MuteTime < time(nullptr)) {
-            int mapId = em->MapID;
-            HandleChatEscapes(output, entityId);
-            EventChatMap ecm;
-            ecm.entityId = entityId;
-            ecm.message = output;
-            Dispatcher::post(ecm);
 
-            if (ecm.isCancelled())
-                return;
-                
-            Logger::LogAdd("Chat", em->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
+    if (!(sendingEntity->playerList != nullptr)) return;
 
-
-
-            output = Entity::GetDisplayname(entityId) + "&f: " + output;
-            NetworkFunctions::SystemMessageNetworkSend2All(mapId, output);
-        } else {
-            Entity::MessageToClients(entityId, "&eYou are muted.");
-        }
+    if (sendingEntity->playerList->MuteTime >= time(nullptr)) {
+        Entity::MessageToClients(entityId, "&eYou are muted.");
+        return;
     }
+    int mapId = sendingEntity->MapID;
+    HandleChatEscapes(output);
+    EventChatMap ecm;
+    ecm.entityId = entityId;
+    ecm.message = output;
+    Dispatcher::post(ecm);
+
+    if (ecm.isCancelled())
+        return;
+
+    Logger::LogAdd("Chat", sendingEntity->Name + ": " + output, LogType::CHAT, GLF);
+
+    output = Entity::GetDisplayname(entityId) + "&f: " + output;
+    // -- Prefix all new lines with the users name.
+    Utils::replaceAll(output, "\n", "\n" + Entity::GetDisplayname(entityId) + "&f: ");
+    NetworkFunctions::SystemMessageNetworkSend2All(mapId, output);
 }
 
 void Chat::NetworkSend2All(const int& entityId, const std::string& message) {
-    std::shared_ptr<Entity> em = Entity::GetPointer(entityId);
-    if (em == nullptr)
+    std::shared_ptr<Entity> sendingEntity = Entity::GetPointer(entityId);
+    if (sendingEntity == nullptr)
         return;
 
     std::string output(message);
 
-    if (em->playerList != nullptr) {
-        if (em->playerList->MuteTime < time(nullptr)) {
-            HandleChatEscapes(output, entityId);
-            EventChatAll eca;
-            eca.message = output;
-            eca.entityId = entityId;
-            Dispatcher::post(eca);
+    if (!(sendingEntity->playerList != nullptr)) return;
 
-            if (eca.isCancelled())
-                return;
-            
-            Logger::LogAdd("Chat", "# " + em->Name + ": " + output, LogType::CHAT, __FILE__, __LINE__, __FUNCTION__);
-
-
-            output = "&c# " + Entity::GetDisplayname(entityId) + "&f: " + output;
-            NetworkFunctions::SystemMessageNetworkSend2All(-1, output);
-        } else {
-            Entity::MessageToClients(entityId, "&eYou are muted.");
-        }
+    if (sendingEntity->playerList->MuteTime >= time(nullptr)) {
+        Entity::MessageToClients(entityId, "&eYou are muted.");
+        return;
     }
+
+    HandleChatEscapes(output);
+    EventChatAll eca;
+    eca.message = output;
+    eca.entityId = entityId;
+    Dispatcher::post(eca);
+
+    if (eca.isCancelled())
+        return;
+
+    Logger::LogAdd("Chat", "# " + sendingEntity->Name + ": " + output, LogType::CHAT, GLF);
+
+    output = "&c# " + Entity::GetDisplayname(entityId) + "&f: " + output;
+    // -- Prefix all new lines with the users name.
+    Utils::replaceAll(output, "\n", "\n&c# " + Entity::GetDisplayname(entityId) + "&f: ");
+    NetworkFunctions::SystemMessageNetworkSend2All(-1, output);
 }
 
 void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, const std::string& input, const char& playerId) {
     std::string output(input);
+
+    // -- Ensure our client is in a proper state.
+    if (!client || !client->GetPlayerInstance() || !client->GetPlayerInstance()->GetEntity()) {
+        Logger::LogAdd(MODULE_NAME, "Invalid client tried to send a chat message.", LogType::VERBOSE, GLF);
+        return;
+    }
+
+    auto clientEntity = client->GetPlayerInstance()->GetEntity();
+
     if (CPE::GetClientExtVersion(client, LONG_MESSAGES_EXT_NAME) == 1){
-        if (playerId == 1) {
-            client->GetPlayerInstance()->GetEntity()->ChatBuffer += input;
+        if (playerId == 1) { // -- Extend this message, don't send yet.
+            clientEntity->ChatBuffer += input;
             return;
-        } else {
-            output = client->GetPlayerInstance()->GetEntity()->ChatBuffer + input;
-            client->GetPlayerInstance()->GetEntity()->ChatBuffer = "";
+        } else { // -- Message is ready to be sent along with buffer if any.
+            output = clientEntity->ChatBuffer + input;
+            clientEntity->ChatBuffer.clear();
         }
     }
 
-
     CommandMain* cm = CommandMain::GetInstance();
 
-    if (output[0] == '/') {
+    if (output[0] == '/') { // -- Incoming Command
         cm->CommandDo(client, output.substr(1));
-    } else if (output[0] == '#') {
+    } else if (output[0] == '#') { // -- User wants to temporarily send a message outside their default preference.
         if (client->GlobalChat)
-            NetworkSend2Map(client->GetPlayerInstance()->GetEntity()->Id, output.substr(1));
+            NetworkSend2Map(clientEntity->Id, output.substr(1));
         else
-            NetworkSend2All(client->GetPlayerInstance()->GetEntity()->Id, output.substr(1));
-        // -- do global chat
-    } else if (output[0] == '@') {
+            NetworkSend2All(clientEntity->Id, output.substr(1));
+    } else if (output[0] == '@') { // -- Private Message
         std::vector<std::string> splitString = Utils::splitString(output);
+
+        if (splitString.empty())
+            return;
+
         std::string pmName = splitString[0].substr(1); // -- Trim off the '@'.
         int pmNameOffset = 2+pmName.size();
-        if (pmName.empty() || output.size() < pmNameOffset) {
+
+        if (pmName.empty() || output.size() < pmNameOffset) { // -- If an invalid PM name was given, just send the message out; assuming they meant to prefix with '@'.
             if (client->GlobalChat)
-                NetworkSend2All(client->GetPlayerInstance()->GetEntity()->Id, output);
+                NetworkSend2All(clientEntity->Id, output);
             else
-                NetworkSend2Map(client->GetPlayerInstance()->GetEntity()->Id, output);
+                NetworkSend2Map(clientEntity->Id, output);
 
             return;
         }
-        NetworkSend2Player(client->GetPlayerInstance()->GetEntity()->Id, output.substr(pmNameOffset), pmName);
+        NetworkSend2Player(clientEntity->Id, output.substr(pmNameOffset), pmName);
     } 
     else
     {
         if (client->GlobalChat)
-            NetworkSend2All(client->GetPlayerInstance()->GetEntity()->Id, output);
+            NetworkSend2All(clientEntity->Id, output);
         else
-            NetworkSend2Map(client->GetPlayerInstance()->GetEntity()->Id, output);
+            NetworkSend2Map(clientEntity->Id, output);
     }
 }
 

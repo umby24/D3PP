@@ -115,7 +115,8 @@ add_executable(
   Testing/world/mapactions_test.cc
   Testing/world/PhysicsQueueTest.cc
         Testing/nbt/nbt_test.cc
- "src/files/D3Map.cpp" "include/files/D3Map.h" "include/common/Vectors.h" Testing/world/IUniqueQueueTest.cc "src/network/packets/SetTextColor.cpp" "include/network/packets/SetTextColor.h" "src/network/packets/SetMapEnvUrlPacket.cpp" "src/network/packets/SetMapEnvPropertyPacket.cpp" "src/network/packets/SetEntityPropertyPacket.cpp" "src/network/packets/SetInventoryOrderPacket.cpp" "src/network/packets/SetHotbarPacket.cpp" "include/network/packets/SetHotbarPacket.h" "include/network/packets/SetInventoryOrderPacket.h" "include/network/packets/SetEntityPropertyPacket.h" "include/network/packets/SetMapEnvPropertyPacket.h" "include/network/packets/SetMapEnvUrlPacket.h")
+ "src/files/D3Map.cpp" "include/files/D3Map.h" "include/common/Vectors.h" Testing/world/IUniqueQueueTest.cc "src/network/packets/SetTextColor.cpp" "include/network/packets/SetTextColor.h" "src/network/packets/SetMapEnvUrlPacket.cpp" "src/network/packets/SetMapEnvPropertyPacket.cpp" "src/network/packets/SetEntityPropertyPacket.cpp" "src/network/packets/SetInventoryOrderPacket.cpp" "src/network/packets/SetHotbarPacket.cpp" "include/network/packets/SetHotbarPacket.h" "include/network/packets/SetInventoryOrderPacket.h" "include/network/packets/SetEntityPropertyPacket.h" "include/network/packets/SetMapEnvPropertyPacket.h" "include/network/packets/SetMapEnvUrlPacket.h"
+        Testing/network/chat_tests.cc)
 
 target_link_libraries(
   hello_test

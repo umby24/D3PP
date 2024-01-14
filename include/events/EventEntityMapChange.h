@@ -8,6 +8,8 @@
 class EventEntityMapChange : public Event {
 public:
     EventEntityMapChange();
+    EventEntityMapChange(EventEntityMapChange const &);
+    EventEntityMapChange* clone() const override { return new EventEntityMapChange(*this); }
     static constexpr DescriptorType descriptor = "Entity_Map_Change";
     virtual DescriptorType type() const;
 

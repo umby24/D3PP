@@ -83,6 +83,7 @@ Player_List::Player_List() {
     this->Main = [this] { MainFunc(); };
     this->Teardown = [this] { Save(); };
     this->Interval = std::chrono::minutes(2);
+    this->LastRun = std::chrono::system_clock::now();
     SaveFile = false;
     db = nullptr;
     LastFileTime = 0;

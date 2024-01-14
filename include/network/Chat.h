@@ -13,7 +13,7 @@ class NetworkClient;
 
 class Chat {
 public:
-    static void HandleChatEscapes(std::string &input, const int& currentEntityId);
+    static void HandleChatEscapes(std::string &input);
     static std::string StringMultiline(std::string input);
     static bool StringIV(const std::string& input);
     static std::string StringGV(const std::string& input);

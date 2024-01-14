@@ -1,7 +1,5 @@
 #include "events/EventMapActionResize.h"
 
-constexpr EventMapActionResize::DescriptorType EventMapActionResize::descriptor;
-
 EventMapActionResize::EventMapActionResize() {
     this->PushLua = std::bind(&EventMapActionResize::Push, this, std::placeholders::_1);
 }
@@ -15,4 +13,10 @@ int EventMapActionResize::Push(lua_State* L) {
 
 Event::DescriptorType EventMapActionResize::type() const {
     return descriptor;
+}
+
+EventMapActionResize::EventMapActionResize(const EventMapActionResize &in) : Event(in) {
+    this->actionId = in.actionId;
+    this->mapId = in.mapId;
+    this->PushLua = std::bind(&EventMapActionResize::Push, this, std::placeholders::_1);
 }

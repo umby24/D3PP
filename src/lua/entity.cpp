@@ -254,9 +254,10 @@ int LuaEntityLib::LuaEntityDisplaynameGet(lua_State* L) {
         lua_pushstring(L, foundEntity->Prefix.c_str());
         lua_pushstring(L, foundEntity->Name.c_str());
         lua_pushstring(L, foundEntity->Suffix.c_str());
+        return 3;
     }
 
-    return 3;
+    return 0;
 }
 
 int LuaEntityLib::LuaEntityDisplaynameSet(lua_State* L) {

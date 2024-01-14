@@ -27,6 +27,8 @@ CommandMain::CommandMain() : ParsedOperator{} {
     this->Setup = [this] { Load(); };
     this->Main = [this] { MainFunc(); };
     this->Interval = std::chrono::seconds(1);
+    this->LastRun = std::chrono::system_clock::now();
+
     SaveFile = false;
     FileDateLast = 0;
     CommandClientId = -1;

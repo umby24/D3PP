@@ -1,7 +1,5 @@
 #include "events/EventMapBlockChange.h"
 
-constexpr EventMapBlockChange::DescriptorType EventMapBlockChange::descriptor;
-
 EventMapBlockChange::EventMapBlockChange() {
     this->PushLua = std::bind(&EventMapBlockChange::Push, this, std::placeholders::_1);
 }
@@ -24,4 +22,19 @@ int EventMapBlockChange::Push(lua_State* L) {
 
 Event::DescriptorType EventMapBlockChange::type() const {
     return descriptor;
+}
+
+EventMapBlockChange::EventMapBlockChange(const EventMapBlockChange &in) : Event(in) {
+    this->playerNumber = in.playerNumber;
+    this->mapId = in.mapId;
+    this->X = in.X;
+    this->Y = in.Y;
+    this->Z = in.Z;
+    this->bType = in.bType;
+    this->undo = in.undo;
+    this->physic = in.physic;
+    this->send = in.send;
+    this->priority = in.priority;
+
+    this->PushLua = std::bind(&EventMapBlockChange::Push, this, std::placeholders::_1);
 }

@@ -1,7 +1,5 @@
 #include "events/EventMapActionLoad.h"
 
-constexpr EventMapActionLoad::DescriptorType EventMapActionLoad::descriptor;
-
 EventMapActionLoad::EventMapActionLoad() {
     this->PushLua = std::bind(&EventMapActionLoad::Push, this, std::placeholders::_1);
 }
@@ -15,4 +13,10 @@ int EventMapActionLoad::Push(lua_State* L) {
 
 Event::DescriptorType EventMapActionLoad::type() const {
     return descriptor;
+}
+
+EventMapActionLoad::EventMapActionLoad(const EventMapActionLoad &in) : Event(in) {
+    this->actionId = in.actionId;
+    this->mapId = in.mapId;
+    this->PushLua = std::bind(&EventMapActionLoad::Push, this, std::placeholders::_1);
 }

@@ -127,7 +127,7 @@ void watchdog::HtmlStats(time_t time_) {
     Utils::replaceAll(result, genTSStr, meh);
 
     std::string memFile = Files::GetFile(WATCHDOG_HTML_NAME);
-
+    delete tme_info;
     if (std::ofstream oStream(memFile, std::ios::out | std::ios::trunc); oStream.is_open()) {
         oStream << result;
         oStream.close();
@@ -154,6 +154,7 @@ watchdog::watchdog() {
 
     this->Teardown = [this] { isRunning = false; };
     this->Interval = std::chrono::seconds(100);
+    this->LastRun = std::chrono::system_clock::now();
     std::thread myThread(&watchdog::MainFunc, this);
     std::swap(myThread, mainThread);
     TaskScheduler::RegisterTask("Watchdog", *this);

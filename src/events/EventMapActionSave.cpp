@@ -16,3 +16,9 @@ int EventMapActionSave::Push(lua_State* L) {
 Event::DescriptorType EventMapActionSave::type() const {
     return descriptor;
 }
+
+EventMapActionSave::EventMapActionSave(const EventMapActionSave &in) : Event(in) {
+    this->actionId = in.actionId;
+    this->mapId = in.mapId;
+    this->PushLua = std::bind(&EventMapActionSave::Push, this, std::placeholders::_1);
+}

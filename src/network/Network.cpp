@@ -7,26 +7,19 @@
 #include "world/Entity.h"
 #include "world/Player.h"
 #include "Client.h"
-#include "common/Logger.h"
-#include "Utils.h"
 #include "EventSystem.h"
 #include "common/ByteBuffer.h"
 #include "network/Packets.h"
 #include "network/Server.h"
-#include "common/Configuration.h"
 #include "ConsoleClient.h"
 
-const std::string MODULE_NAME = "Network";
 Network* Network::singleton_ = nullptr;
 
-Network::Network() {
-}
-
+Network::Network() = default;
 
 std::shared_ptr<IMinecraftClient> Network::GetClient(int id) {
-    if (id == -200) {
+    if (id == -200)
         return ConsoleClient::GetInstance();
-    }
 
     std::shared_ptr<IMinecraftClient> result = nullptr;
     std::shared_lock lock(D3PP::network::Server::roMutex);

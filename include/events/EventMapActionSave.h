@@ -8,6 +8,8 @@
 class EventMapActionSave : public Event {
 public:
     EventMapActionSave();
+    EventMapActionSave(EventMapActionSave const &);
+    EventMapActionSave* clone() const override { return new EventMapActionSave(*this); }
     static constexpr DescriptorType descriptor = "Map_Action_Save";
     virtual DescriptorType type() const;
 

@@ -16,4 +16,10 @@ int EventChatAll::Push(lua_State* L) {
 Event::DescriptorType EventChatAll::type() const {
     return descriptor;
 }
+
+EventChatAll::EventChatAll(const EventChatAll &in) {
+    this->entityId = in.entityId;
+    this->message = in.message;
+}
+
 #pragma GCC pop_options

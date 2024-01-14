@@ -17,6 +17,7 @@ Rank::Rank() {
     this->Setup = [this] { Load(); };
     this->Main= [this] { MainFunc(); };
     this->Teardown = [this] { Save(); };
+    this->LastRun = std::chrono::system_clock::now();
     SaveFile = false;
     LastFileDate = 0;
 

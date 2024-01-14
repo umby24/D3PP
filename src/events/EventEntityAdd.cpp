@@ -1,12 +1,11 @@
 #include "events/EventEntityAdd.h"
 
-constexpr EventEntityAdd::DescriptorType EventEntityAdd::descriptor;
-
 EventEntityAdd::EventEntityAdd() {
-    this->PushLua = std::bind(&EventEntityAdd::Push, this, std::placeholders::_1);
+    entityId = -1;
+    this->PushLua = [this](auto && PH1) { return Push(std::forward<decltype(PH1)>(PH1)); };
 }
 
-int EventEntityAdd::Push(lua_State* L) {
+int EventEntityAdd::Push(lua_State* L) const {
     lua_pushinteger(L, 1);
     lua_pushinteger(L, entityId);
     return 2;
@@ -14,4 +13,9 @@ int EventEntityAdd::Push(lua_State* L) {
 
 Event::DescriptorType EventEntityAdd::type() const {
     return descriptor;
+}
+
+EventEntityAdd::EventEntityAdd(const EventEntityAdd &in) : Event(in) {
+    this->entityId = in.entityId;
+    this->PushLua = [this](auto && PH1) { return Push(std::forward<decltype(PH1)>(PH1)); };
 }

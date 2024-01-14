@@ -11,7 +11,6 @@
 #include "world/MapMain.h"
 #include "Block.h"
 #include "world/Player.h"
-#include "world/Entity.h"
 #include "BuildMode.h"
 #include "plugins/Heartbeat.h"
 #include "plugins/PluginManager.h"
@@ -30,7 +29,6 @@
 #include <windows.h>
 #endif
 using namespace std;
-
 void mainLoop();
 void MainConsole();
 int MainVersion = 1018;
@@ -86,7 +84,6 @@ int main()
     
     Player_List *l = Player_List::GetInstance();
     PlayerMain *pm = PlayerMain::GetInstance();
-    EntityMain em;
     CommandMain *cm = CommandMain::GetInstance();
     BuildModeMain *bmm = BuildModeMain::GetInstance();
     Heartbeat* hb = Heartbeat::GetInstance();
@@ -103,9 +100,10 @@ int main()
     System::ServerName = "D3PP Beta v" + stringulate(SYSTEM_VERSION_NUMBER);
     
     D3PP::network::Server::Start();
-    
+
     std::thread mainThread(mainLoop);
     plugm->LoadPlugins();
+
     MainConsole();
 
     D3PP::network::Server::Stop();
@@ -142,4 +140,5 @@ void mainLoop() {
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
+    std::cout << "YO WTF WE EXITING WHY";
 }

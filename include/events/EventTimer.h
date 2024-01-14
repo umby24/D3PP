@@ -8,6 +8,8 @@
 class EventTimer : public Event {
 public:
     EventTimer();
+    EventTimer(EventTimer const &);
+    EventTimer* clone() const override { return new EventTimer(*this); }
     static constexpr DescriptorType descriptor = "Timer";
     virtual DescriptorType type() const;
 

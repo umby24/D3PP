@@ -9,8 +9,8 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <mutex>
 
-#include "common/TaskScheduler.h"
 #include "common/MinecraftLocation.h"
 
 class PlayerListEntry;
@@ -73,8 +73,8 @@ public:
     static void Add(const std::shared_ptr<Entity>& e);
     static void Delete(int id);
 
-    void Spawn();
-    void Despawn();
+    void Spawn() const;
+    void Despawn() const;
 
     void Kill();
     void PositionCheck();
@@ -90,12 +90,5 @@ public:
     std::shared_ptr<NetworkClient> associatedClient;
 private:
 
-};
-
-class EntityMain : TaskItem {
-    public:
-        EntityMain();
-        void MainFunc();
-    private:
 };
 #endif //D3PP_ENTITY_H

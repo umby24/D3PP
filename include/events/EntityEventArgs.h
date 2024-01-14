@@ -14,6 +14,10 @@
 class EntityEventArgs : public Event {
 public:
     EntityEventArgs(const DescriptorType* inDescript);
+    EntityEventArgs(EntityEventArgs const &);
+
+    EntityEventArgs* clone() const override { return new EntityEventArgs(*this); }
+
     const DescriptorType* descriptor;
     constexpr static DescriptorType moveDescriptor = ENTITY_EVENT_MOVED;
     constexpr static DescriptorType spawnDescriptor = ENTITY_EVENT_SPAWN;

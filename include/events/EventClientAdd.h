@@ -8,6 +8,9 @@
 class EventClientAdd : public Event {
 public:
     EventClientAdd();
+    EventClientAdd(EventClientAdd const &);
+    EventClientAdd* clone() const override { return new EventClientAdd(*this); }
+
     static constexpr DescriptorType descriptor = "Client_Add";
     virtual DescriptorType type() const;
     int clientId;

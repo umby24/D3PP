@@ -1,12 +1,11 @@
 #include "events/EventClientLogout.h"
 
-constexpr EventClientLogout::DescriptorType EventClientLogout::descriptor;
-
 EventClientLogout::EventClientLogout() {
-    this->PushLua = std::bind(&EventClientLogout::Push, this, std::placeholders::_1);
+    clientId = -1;
+    this->PushLua = [this](auto && PH1) { return Push(std::forward<decltype(PH1)>(PH1)); };
 }
 
-int EventClientLogout::Push(lua_State* L) {
+int EventClientLogout::Push(lua_State* L) const {
     lua_pushinteger(L, 1);
     lua_pushinteger(L, clientId);
     return 2;
@@ -14,4 +13,9 @@ int EventClientLogout::Push(lua_State* L) {
 
 Event::DescriptorType EventClientLogout::type() const {
     return descriptor;
+}
+
+EventClientLogout::EventClientLogout(const EventClientLogout &in) : Event(in) {
+    this->clientId = in.clientId;
+    this->PushLua = [this](auto && PH1) { return Push(std::forward<decltype(PH1)>(PH1)); };
 }

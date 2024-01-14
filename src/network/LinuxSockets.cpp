@@ -63,7 +63,7 @@ int Sockets::Read(char* buffer, int size) {
 
 int Sockets::Send(char* data, int size) {
     ssize_t bytesSent;
-    bytesSent = send(socketfd, data, (size_t)size, 0);
+    bytesSent = send(socketfd, data, (size_t)size, MSG_NOSIGNAL);
 
     if (bytesSent == -1)
         connected = false;
