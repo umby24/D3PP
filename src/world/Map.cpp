@@ -4,14 +4,13 @@
 
 #include "world/Map.h"
 
+#include <ranges>
 #include <utility>
 #include <world/D3MapProvider.h>
 
 #include "network/Network.h"
 #include "network/NetworkClient.h"
 #include "network/Server.h"
-#include "System.h"
-#include "common/ByteBuffer.h"
 #include "common/Logger.h"
 #include "common/UndoItem.h"
 #include "compression.h"
@@ -37,7 +36,7 @@ using namespace D3PP::files;
 
 const std::string MODULE_NAME = "Map";
 
-bool Map::Resize(short x, short y, short z) {
+bool Map::Resize(const short x, const short y, const short z) {
     if (!loaded) {
         Reload();
         if (!loaded) {
@@ -65,28 +64,29 @@ void Map::Fill(const std::string& functionName, const std::string& paramString) 
             return;
         }
     }
-    Vector3S mapSize = m_mapProvider->GetSize();
+    const Vector3S mapSize = m_mapProvider->GetSize();
     {
         std::unique_lock lock(BlockMutex);
         RankBoxes.clear();
         Portals.clear();
         bcQueue->Clear();
         pQueue->Clear();
-        
-        int mapSizeInt = (mapSize.X * mapSize.Y * mapSize.Z)*1;
+
+        const int mapSizeInt = (mapSize.X * mapSize.Y * mapSize.Z)*1;
 
         std::vector<unsigned char> blankMap;
         blankMap.resize(mapSizeInt);
         m_mapProvider->SetBlocks(blankMap);
     }
 
-    D3PP::plugins::PluginManager *pm = D3PP::plugins::PluginManager::GetInstance();
-    pm->TriggerMapFill(ID, mapSize.X, mapSize.Y, mapSize.Z, "Mapfill_" + functionName, std::move(paramString));
+    plugins::PluginManager *pm = plugins::PluginManager::GetInstance();
+    pm->TriggerMapFill(ID, mapSize.X, mapSize.Y, mapSize.Z, "Mapfill_" + functionName, paramString);
     Resend();
-    Logger::LogAdd(MODULE_NAME, "Map '" + m_mapProvider->MapName + "' filled.", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "Map '" + m_mapProvider->MapName + "' filled.", NORMAL, GLF);
 }
 
-bool Map::Save(const std::string& directory) {
+bool Map::Save(const std::string& directory) const
+{
     if (!this->loaded)
         return true;
 
@@ -99,12 +99,10 @@ void Map::Load(const std::string& directory) {
     if (m_mapProvider == nullptr && !directory.empty()) {
         m_mapProvider = std::make_unique<D3MapProvider>();
     } else if (m_mapProvider == nullptr) {
-        Logger::LogAdd(MODULE_NAME, "Map Reloaded [" + m_mapProvider->MapName + "]", LogType::NORMAL, GLF);
+        Logger::LogAdd(MODULE_NAME, "Map Reloaded [" + m_mapProvider->MapName + "]", NORMAL, GLF);
     }
 
-    bool result = m_mapProvider->Load(directory);
-
-    if (!result) {
+    if (const bool result = m_mapProvider->Load(directory); !result) {
         Logger::LogAdd(MODULE_NAME, "Error loading map! [" + m_mapProvider->MapName + "]", L_ERROR, GLF);
         return;
     }
@@ -130,10 +128,10 @@ void Map::Reload() {
         return;
 
     std::unique_lock lock(BlockMutex);
-    bool result = m_mapProvider->Reload();
+    const bool result = m_mapProvider->Reload();
     
     if (!result) {
-        Logger::LogAdd(MODULE_NAME, "Failed to reload map! [" + m_mapProvider->MapName + "]", LogType::L_ERROR, GLF);
+        Logger::LogAdd(MODULE_NAME, "Failed to reload map! [" + m_mapProvider->MapName + "]", L_ERROR, GLF);
         return;
     }
 
@@ -141,7 +139,7 @@ void Map::Reload() {
     BlockchangeStopped = false;
     PhysicsStopped = false;
     LastClient = time(nullptr);
-    Logger::LogAdd(MODULE_NAME, "Map Reloaded [" + m_mapProvider->MapName + "]", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "Map Reloaded [" + m_mapProvider->MapName + "]", NORMAL, GLF);
 }
 
 void Map::Unload() {
@@ -153,13 +151,12 @@ void Map::Unload() {
     PhysicsStopped = true;
     loaded = false;
     m_mapProvider->Unload();
-    Logger::LogAdd(MODULE_NAME, "Map unloaded (" + m_mapProvider->MapName + ")", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "Map unloaded (" + m_mapProvider->MapName + ")", NORMAL, GLF);
 }
 
 void Map::Send(int clientId) {
-    Network* nMain = Network::GetInstance();
     Block* bMain = Block::GetInstance();
-    std::shared_ptr<IMinecraftClient> nc = nMain->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> nc = Network::GetClient(clientId);
 
     if (nc == nullptr)
         return;
@@ -167,7 +164,7 @@ void Map::Send(int clientId) {
     if (!loaded) {
         Reload();
         if (!loaded) {
-            Logger::LogAdd(MODULE_NAME, "Can't send the map: Reload error", LogType::L_ERROR, GLF);
+            Logger::LogAdd(MODULE_NAME, "Can't send the map: Reload error", L_ERROR, GLF);
             nc->Kick("Mapsend error", false);
             return;
         }
@@ -216,7 +213,7 @@ void Map::Send(int clientId) {
     int compressedSize = GZIP::GZip_Compress(tempBuf2.data(), tempBuffer2Size, tempBuf.data(), tempBufferOffset);
 
     if (compressedSize == -1) {
-        Logger::LogAdd(MODULE_NAME, "Can't send the map: GZip Error", LogType::L_ERROR, GLF);
+        Logger::LogAdd(MODULE_NAME, "Can't send the map: GZip Error", L_ERROR, GLF);
         nc->Kick("Mapsend error", false);
         return;
     }
@@ -242,21 +239,22 @@ void Map::Send(int clientId) {
     CPE::AfterMapActions(nc);
 }
 
-void Map::Resend() {
-    std::shared_lock lock(D3PP::network::Server::roMutex);
-    for(auto const &nc : D3PP::network::Server::roClients) {
+void Map::Resend() const
+{
+    std::shared_lock lock(network::Server::roMutex);
+    for(auto const &nc : network::Server::roClients) {
         if (nc->GetPlayerInstance() == nullptr)
             continue;
-        auto concret = std::static_pointer_cast<D3PP::world::Player>(nc->GetPlayerInstance());
+        const auto concrete = std::static_pointer_cast<Player>(nc->GetPlayerInstance());
 
         if (nc->GetMapId() == ID) {
-            concret->SendMap();
+            concrete->SendMap();
         }
     }
 
-    for (auto const &me : Entity::AllEntities) {
-        if (me.second->MapID == ID) {
-            me.second->Resend(me.second->Id);
+    for (const auto& entity : Entity::AllEntities | std::views::values) {
+        if (entity->MapID == ID) {
+            entity->Resend(entity->Id);
         }
     }
 
@@ -268,7 +266,7 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
     if (client == nullptr)
         return;
 
-    Vector3S blockLocation {(short)X, (short)Y, (short)Z};
+    Vector3S blockLocation {static_cast<short>(X), static_cast<short>(Y), static_cast<short>(Z)};
 
     Block* bm = Block::GetInstance();
 
@@ -328,7 +326,7 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
     }
 
     BlockChange(clientEntity->playerList->Number, X, Y, Z, rawNewType, true, true, true, 250);
-    D3PP::plugins::PluginManager* pm = D3PP::plugins::PluginManager::GetInstance();
+    plugins::PluginManager* pm = plugins::PluginManager::GetInstance();
     //QueueBlockChange(Vector3S(X, Y, Z), 250, -1);
     if (!oldType.DeletePlugin.empty() && oldType.DeletePlugin.starts_with("Lua:")) {
         std::string myPlug(oldType.DeletePlugin);
@@ -362,7 +360,7 @@ void Map::QueuePhysicsAround(const Vector3S& loc) {
     for (int ix = -1; ix < 2; ix++) {
         for (int iy = -1; iy < 2; iy++) {
             for (int iz = -1; iz < 2; iz++) {
-                QueueBlockPhysics(Vector3S((short)(loc.X + ix), loc.Y + iy, loc.Z + iz));
+                QueueBlockPhysics(Vector3S(static_cast<short>(loc.X + ix), loc.Y + iy, loc.Z + iz));
             }
         }
     }
@@ -374,7 +372,6 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
     if (!loaded) {
         Reload();
     }
-    std::shared_lock lock(BlockMutex, std::defer_lock);
 
     Block* bm = Block::GetInstance();
     auto roData = m_mapProvider->GetBlock(locationVector);
@@ -400,7 +397,7 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
 
 
     if (type != roData && undo) {
-        Common::UndoItem newUndoItem {locationVector, roData, type};
+	    UndoItem newUndoItem {locationVector, roData, type};
         AddUndoByPlayerId(playerNumber, newUndoItem);
     }
 
@@ -408,8 +405,11 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
         QueueBlockChange(Vector3S(X, Y, Z), priority, roData);
     }
 
-    m_mapProvider->SetBlock(locationVector, type);
-    m_mapProvider->SetLastPlayer(locationVector, playerNumber);
+    {
+        std::shared_lock lock(BlockMutex);
+        m_mapProvider->SetBlock(locationVector, type);
+        m_mapProvider->SetLastPlayer(locationVector, playerNumber);
+    }
 
     if (physic) {
         QueuePhysicsAround(locationVector);
@@ -426,7 +426,7 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
      }
 
      std::shared_lock lock(BlockMutex, std::defer_lock);
-     auto mapSize = m_mapProvider->GetSize();
+     const auto mapSize = m_mapProvider->GetSize();
 
      if (X > mapSize.X || Y > mapSize.Y || Z > mapSize.Z) {
          return 255;
@@ -435,8 +435,7 @@ unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned sho
      return m_mapProvider->GetBlock(Vector3S(X, Y, Z));
 }
 
-void Map::QueueBlockChange(Common::Vector3S location, unsigned char priority, unsigned char oldType) {
-    std::shared_lock lock(BlockMutex, std::defer_lock);
+void Map::QueueBlockChange(Vector3S location, unsigned char priority, unsigned char oldType) {
 
     ChangeQueueItem newQueueItem { location,
                                     oldType,
@@ -446,40 +445,38 @@ void Map::QueueBlockChange(Common::Vector3S location, unsigned char priority, un
     bcQueue->TryQueue(newQueueItem);
 }
 
-Map::Map() : IActions(), RankBoxes(), Particles(), BlockMutex() {
-    loaded = false;
-    BlockchangeStopped = false;
-    PhysicsStopped = false;
+Map::Map() : ID(0), SaveTime(0), Particles(), RankBoxes(), BlockMutex(), LastClient(0), Clients(0), IActions()
+{
+	loaded = false;
+	BlockchangeStopped = false;
+	PhysicsStopped = false;
 }
 
 void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1,
                     unsigned short Z1, bool undo, bool physic, unsigned char priority) {
-
-    Vector3S location0(X0, Y0, Z0);
-    Vector3S location1(X1, Y1, Z1);
+	const Vector3S location0(X0, Y0, Z0);
+	const Vector3S location1(X1, Y1, Z1);
 
     if (!loaded) {
         LastClient = time(nullptr);
         Reload();
     }
 
-    std::shared_lock lock(BlockMutex, std::defer_lock);
-
     auto oldBlockType0 = m_mapProvider->GetBlock(location0);
-    auto oldBlockHistory0 = m_mapProvider->GetLastPlayer(location0);
+	const auto oldBlockHistory0 = m_mapProvider->GetLastPlayer(location0);
 
     auto oldBlockType1 = m_mapProvider->GetBlock(location1);
     auto oldBlockHistory1 = m_mapProvider->GetLastPlayer(location1);
 
     if (undo) {
         if (oldBlockType0 != 0) {
-            Common::UndoItem newUndoItem {location0, oldBlockType0, 0};
+	        const UndoItem newUndoItem {location0, oldBlockType0, 0};
             AddUndoByPlayerId(oldBlockHistory0, newUndoItem);
         }
 
         if (oldBlockType0 != oldBlockType1) {
-            Common::UndoItem newUndoItem {location1, oldBlockType1, oldBlockType0};
-            AddUndoByPlayerId(oldBlockHistory0, newUndoItem);
+	        const UndoItem newUndoItem {location1, oldBlockType1, oldBlockType0};
+            AddUndoByPlayerId(oldBlockHistory1, newUndoItem);
         }
     }
 
@@ -494,10 +491,13 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
     oldBlockType1 = oldBlockType0;
     oldBlockType0 = 0;
 
-    m_mapProvider->SetBlock(location0, oldBlockType0);
-    m_mapProvider->SetBlock(location1, oldBlockType1);
-    m_mapProvider->SetLastPlayer(location0, -1);
-    m_mapProvider->SetLastPlayer(location1, oldBlockHistory0);
+    {
+        std::shared_lock lock(BlockMutex, std::defer_lock);
+        m_mapProvider->SetBlock(location0, oldBlockType0);
+        m_mapProvider->SetBlock(location1, oldBlockType1);
+        m_mapProvider->SetLastPlayer(location0, -1);
+        m_mapProvider->SetLastPlayer(location1, oldBlockHistory0);
+    }
 
     if (physic) {
         QueuePhysicsAround(location0);
@@ -516,7 +516,7 @@ unsigned short Map::GetBlockPlayer(unsigned short X, unsigned short Y, unsigned 
     return m_mapProvider->GetLastPlayer(Vector3S(X, Y, Z));
 }
 
-void Map::QueueBlockPhysics(Common::Vector3S location) {
+void Map::QueueBlockPhysics(Vector3S location) {
     Block* bm = Block::GetInstance();
 
     std::shared_lock lock(BlockMutex, std::defer_lock);
@@ -538,7 +538,7 @@ void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
     MapMain* mapMain= MapMain::GetInstance();
         std::shared_lock lock(BlockMutex, std::defer_lock);
 
-        MapBlock blockEntry = bm->GetBlock(m_mapProvider->GetBlock(Vector3S(X, Y, Z)));
+    const MapBlock blockEntry = bm->GetBlock(m_mapProvider->GetBlock(Vector3S(X, Y, Z)));
         switch (blockEntry.Physics) {
             case 10:
                 Physics::BlockPhysics10(mapMain->GetPointer(ID), X, Y, Z);
@@ -555,7 +555,7 @@ void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
         }
 
         if (!blockEntry.PhysicsPlugin.empty()) {
-            D3PP::plugins::PluginManager *pm = D3PP::plugins::PluginManager::GetInstance();
+	        plugins::PluginManager *pm = plugins::PluginManager::GetInstance();
             std::string pluginName = blockEntry.PhysicsPlugin;
             Utils::replaceAll(pluginName, "Lua:", "");
             pm->TriggerPhysics(ID, X, Y, Z, pluginName);
@@ -566,13 +566,14 @@ void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
         }
 }
 
-int Map::BlockGetRank(unsigned short X, unsigned short Y, unsigned short Z) {
+int Map::BlockGetRank(unsigned short X, unsigned short Y, unsigned short Z) const
+{
     MapPermissions perms = m_mapProvider->GetPermissions();
 
     int result = perms.RankBuild;
 
     for(auto const &r : RankBoxes) {
-        bool matches = (X >= r.X0 && X < r.X1 && Y >= r.Y0 && Y < r.Y1 && Z >= r.Z0 && Z < r.Z1);
+	    const bool matches = (X >= r.X0 && X < r.X1 && Y >= r.Y0 && Y < r.Y1 && Z >= r.Z0 && Z < r.Z1);
 
         if (r.Rank > result && matches) {
             result = r.Rank;
@@ -586,7 +587,7 @@ void Map::SetRankBox(unsigned short X0, unsigned short Y0, unsigned short Z0, un
                      unsigned short Z1, short rank) {
 
     for(auto i = 0; i < RankBoxes.size(); i++) {
-        auto item = RankBoxes.at(i);
+	    const auto item = RankBoxes.at(i);
         if (item.X0 >= X0 && item.X1 <= X1 && item.Y0 >= Y0 && item.Y1 <= Y1 && item.Z0 >= Z0 && item.Z1 <= Z1) {
             RankBoxes.erase(RankBoxes.begin() + i);
             i--;
@@ -702,36 +703,32 @@ void Map::MapExport(MinecraftLocation start, MinecraftLocation end, std::string 
     // -- compress it
     GZIP::GZip_CompressToFile(tempData.data(), mapSize+10, filename);
     tempData.clear();
-    Logger::LogAdd(MODULE_NAME, "Map exported (" + filename + ")", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "Map exported (" + filename + ")", NORMAL, GLF);
 }
 
 void Map::MapImport(std::string filename, MinecraftLocation location, short scaleX, short scaleY, short scaleZ) {
     // -- Decompress
     std::vector<unsigned char> tempData(10);
-    int outputLen = GZIP::GZip_DecompressFromFile(tempData.data(), 10, filename);
+    const int outputLen = GZIP::GZip_DecompressFromFile(tempData.data(), 10, filename);
     if (outputLen != 10) {
-        Logger::LogAdd(MODULE_NAME, "Map not imported: Error unzipping.", LogType::L_ERROR, GLF);
+        Logger::LogAdd(MODULE_NAME, "Map not imported: Error unzipping.", L_ERROR, GLF);
         return;
     }
     // -- Read version and size info
-    int versionNumber = 0;
-    versionNumber = tempData[0];
-    versionNumber |= tempData[1] << 8;
-    versionNumber |= tempData[2] << 16;
-    versionNumber |= tempData[3] << 24;
-    if (versionNumber != 1000) {
-        Logger::LogAdd(MODULE_NAME, "Map not imported, unknown version [" + filename + "]", LogType::L_ERROR, GLF);
+    int version_number = tempData[0];
+    version_number |= tempData[1] << 8;
+    version_number |= tempData[2] << 16;
+    version_number |= tempData[3] << 24;
+    if (version_number != 1000) {
+        Logger::LogAdd(MODULE_NAME, "Map not imported, unknown version [" + filename + "]", L_ERROR, GLF);
         return;
     }
     Vector3S startLoc = location.GetAsBlockCoords();
-    short sizeX = 0;
-    short sizeY = 0;
-    short sizeZ = 0;
-    sizeX = tempData[4];
+    short sizeX = tempData[4];
     sizeX |= tempData[5] << 8;
-    sizeY = tempData[6];
+    short sizeY = tempData[6];
     sizeY |= tempData[7] << 8;
-    sizeZ = tempData[8];
+    short sizeZ = tempData[8];
     sizeZ |= tempData[9] << 8;
 
     int mapSize = sizeX * sizeY * sizeZ;
@@ -752,12 +749,13 @@ void Map::MapImport(std::string filename, MinecraftLocation location, short scal
             }
         }
     }
-    Logger::LogAdd(MODULE_NAME, "Map imported. (" + filename + ").", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "Map imported. (" + filename + ").", NORMAL, GLF);
     // -- If correct version, iterate through, apply scale, and map_block_change.
 }
 
 
-std::vector<int> Map::GetEntities() {
+std::vector<int> Map::GetEntities() const
+{
     std::vector<int> result;
 
     for (auto const &e : Entity::AllEntities) {
@@ -802,8 +800,8 @@ Teleporter Map::GetTeleporter(std::string id) {
 
 void Map::SetMapEnvironment(const MapEnvironment &env) {
     m_mapProvider->SetEnvironment(env);
-    std::shared_lock lock(D3PP::network::Server::roMutex);
-    for(auto const &nc : D3PP::network::Server::roClients) {
+    std::shared_lock lock(network::Server::roMutex);
+    for(auto const &nc : network::Server::roClients) {
         CPE::AfterMapActions(nc);
     }
 }
@@ -814,7 +812,6 @@ void Map::AddParticle(CustomParticle p) {
 }
 
 void Map::DeleteParticle(int effectId) {
-    // std::erase_if(cm->Commands, [&commandName](const Command &c){ return c.Id == commandName; });
     erase_if(Particles, [&effectId](const CustomParticle &p){ return p.effectId == effectId; });
     m_mapProvider->SetParticles(Particles);
 }

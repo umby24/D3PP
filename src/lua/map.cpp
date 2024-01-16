@@ -106,6 +106,7 @@ int LuaMapLib::LuaMapBlockMove(lua_State* L) {
 }
 
 int LuaMapLib::LuaFillFlat(lua_State* L) {
+    Logger::LogAdd("Lua", "Called", LogType::DEBUG, GLF);
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
@@ -116,8 +117,9 @@ int LuaMapLib::LuaFillFlat(lua_State* L) {
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> map = mm->GetPointer(mapId);
-
+    Logger::LogAdd("Lua", "Got map", LogType::DEBUG, GLF);
     if (map != nullptr) {
+        Logger::LogAdd("Lua", "Calling gen", LogType::DEBUG, GLF);
         GenTools::FlatgrassGen(mapId);
     }
 

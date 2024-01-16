@@ -4,7 +4,6 @@
 
 #ifndef D3PP_RESTAPI_H
 #define D3PP_RESTAPI_H
-#include <vector>
 #include <thread>
 #include <memory>
 #include "common/TaskScheduler.h"

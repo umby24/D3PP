@@ -1,26 +1,16 @@
 #include <iostream>
 #include <string>
 #include <thread>
-#include <CustomBlocks.h>
 
-#include "network/Network.h"
 #include "network/Server.h"
 #include "Rank.h"
 #include "System.h"
 #include "common/Logger.h"
-#include "world/MapMain.h"
 #include "Block.h"
-#include "world/Player.h"
-#include "BuildMode.h"
-#include "plugins/Heartbeat.h"
 #include "plugins/PluginManager.h"
-#include "watchdog.h"
 #include "common/Files.h"
-#include "common/Player_List.h"
 #include "Command.h"
 #include "plugins/LuaPlugin.h"
-#include "plugins/RestApi.h"
-#include "common/Configuration.h"
 #include "ConsoleClient.h"
 #include "network/Network_Functions.h"
 #include "world/Map.h"
@@ -29,9 +19,10 @@
 #include <windows.h>
 #endif
 using namespace std;
-void mainLoop();
-void MainConsole();
-int MainVersion = 1018;
+
+void main_loop();
+void main_console();
+int main_version = 1018;
 
 void fixWindowsTerminal() {
 #if _WIN32
@@ -48,17 +39,16 @@ void fixWindowsTerminal() {
 
 int main()
 {
-    std::set_terminate([](){ 
-        std::exception_ptr eptr = std::current_exception();
-        if (eptr)
+    std::set_terminate([](){
+		    if (const std::exception_ptr exception_pointer = std::current_exception())
         {
             try
             {
-                std::rethrow_exception(eptr);
+                std::rethrow_exception(exception_pointer);
             }
             catch (const std::exception& e)
             {
-                std::cout << "An Exception occurred: " << e.what() << std::endl;
+                std::cout << "An Exception occurred: " << e.what() << '\n';
                 //DBG_FAIL(e.what());
             }
             catch (...)
@@ -76,22 +66,7 @@ int main()
     srand(time(nullptr));
 
     Files::Load();
-    Logger::LogAdd("Main", "====== Welcome to D3PP =====", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-    Configuration* config = Configuration::GetInstance();
-
-    Block *b = Block::GetInstance();
-    Rank *r = Rank::GetInstance();
-    
-    Player_List *l = Player_List::GetInstance();
-    PlayerMain *pm = PlayerMain::GetInstance();
-    CommandMain *cm = CommandMain::GetInstance();
-    BuildModeMain *bmm = BuildModeMain::GetInstance();
-    Heartbeat* hb = Heartbeat::GetInstance();
-    RestApi rapi;
-    D3PP::plugins::PluginManager *plugm = D3PP::plugins::PluginManager::GetInstance();
-    watchdog* wd = watchdog::GetInstance();
-    CustomBlocks* cb = CustomBlocks::GetInstance();
-    D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();
+    Logger::LogAdd("Main", "====== Welcome to D3PP =====", NORMAL, GLF);
 
     TaskScheduler::RunSetupTasks();
 
@@ -101,20 +76,20 @@ int main()
     
     D3PP::network::Server::Start();
 
-    std::thread mainThread(mainLoop);
-    plugm->LoadPlugins();
+    std::thread main_thread(main_loop);
+    plug_manager->LoadPlugins();
 
-    MainConsole();
+    main_console();
 
     D3PP::network::Server::Stop();
     TaskScheduler::RunTeardownTasks();
 
-    Logger::LogAdd("Module", "Server shutdown complete.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd("Module", "Server shutdown complete.", NORMAL, GLF);
     return 0;
 }
 
-void MainConsole() {
-    auto cc = ConsoleClient::GetInstance();
+void main_console() {
+	const auto cc = ConsoleClient::GetInstance();
     CommandMain* cm = CommandMain::GetInstance();
     std::string input;
 
@@ -134,7 +109,7 @@ void MainConsole() {
     }
 }
 
-void mainLoop() {
+void main_loop() {
     while (System::IsRunning) {
         TaskScheduler::RunMainTasks();
 

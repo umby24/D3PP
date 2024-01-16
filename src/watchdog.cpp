@@ -6,7 +6,7 @@
 #include "common/Files.h"
 #include "Utils.h"
 #include "common/Logger.h"
-#include <time.h>
+#include <ctime>
 
 watchdog* watchdog::singleton_ = nullptr;
 
@@ -132,7 +132,7 @@ void watchdog::HtmlStats(time_t time_) {
         oStream << result;
         oStream.close();
     } else {
-        Logger::LogAdd("Watchdog", "Couldn't open file :<" + memFile, LogType::WARNING, __FILE__, __LINE__, __FUNCTION__ );
+        Logger::LogAdd("Watchdog", "Couldn't open file :<" + memFile, WARNING, GLF);
     }
 }
 
