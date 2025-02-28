@@ -13,6 +13,7 @@
 #include "plugins/LuaPlugin.h"
 #include "ConsoleClient.h"
 #include "network/Network_Functions.h"
+#include "src/Root.h"
 #include "world/Map.h"
 
 #if _WIN32
@@ -66,19 +67,12 @@ int main()
     srand(time(nullptr));
 
     Files::Load();
+    Root serverRoot;
     Logger::LogAdd("Main", "====== Welcome to D3PP =====", NORMAL, GLF);
 
-    TaskScheduler::RunSetupTasks();
-
-    System::IsRunning = true;
-    System::startTime = time(nullptr);
-    System::ServerName = "D3PP Beta v" + stringulate(SYSTEM_VERSION_NUMBER);
-    
-    D3PP::network::Server::Start();
+    serverRoot.Start();
 
     std::thread main_thread(main_loop);
-    plug_manager->LoadPlugins();
-
     main_console();
 
     D3PP::network::Server::Stop();

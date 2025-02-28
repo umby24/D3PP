@@ -17,7 +17,7 @@ bool D3PP::world::PhysicsQueue::TryDequeue(TimeQueueItem &out) {
     return true;
 }
 
-void D3PP::world::PhysicsQueue::TryQueue(const D3PP::world::TimeQueueItem &in) {
+void D3PP::world::PhysicsQueue::TryQueue(const TimeQueueItem &in) {
     if (IsQueued(in.Location))
         return;
 
@@ -26,7 +26,7 @@ void D3PP::world::PhysicsQueue::TryQueue(const D3PP::world::TimeQueueItem &in) {
     Queue(in.Location);
 }
 
-D3PP::world::PhysicsQueue::PhysicsQueue(const D3PP::Common::Vector3S &size) : IUniqueQueue(size) {}
+D3PP::world::PhysicsQueue::PhysicsQueue(const Common::Vector3S &size) : IUniqueQueue(size) {}
 
 void D3PP::world::PhysicsQueue::Clear() {
     std::scoped_lock<std::mutex> pLock(m_accessLock);

@@ -25,15 +25,15 @@ void CustomBlocks::Load() {
     std::ifstream inFile (filePath);
 
     if (!inFile.is_open()) {
-        Logger::LogAdd("CustomBlocks", "Error loading custom blocks: Can't open blocks file!", LogType::L_ERROR, GLF);
+        Logger::LogAdd("CustomBlocks", "Error loading custom blocks: Can't open blocks file!", L_ERROR, GLF);
         return;
     }
 
     try {
         inFile >> j;
     } catch (std::exception e) {
-        Logger::LogAdd("CustomBlocks", "Error loading custom blocks: Can't parse file!", LogType::L_ERROR, GLF);
-        Logger::LogAdd("CustomBlocks", e.what(), LogType::DEBUG, GLF);
+        Logger::LogAdd("CustomBlocks", "Error loading custom blocks: Can't parse file!", L_ERROR, GLF);
+        Logger::LogAdd("CustomBlocks", e.what(), DEBUG, GLF);
         inFile.close();
         return;
     }
@@ -99,7 +99,7 @@ void CustomBlocks::Load() {
     }
     isModified = false;
     isModified = false;
-    Logger::LogAdd("CustomBlocks", "Loaded " + stringulate(_blockDefintiions.size()) + " custom blocks.", LogType::NORMAL, GLF);
+    Logger::LogAdd("CustomBlocks", "Loaded " + stringulate(_blockDefintiions.size()) + " custom blocks.", NORMAL, GLF);
 }
 
 void CustomBlocks::Add(BlockDefinition blockDef) {
@@ -152,7 +152,7 @@ void CustomBlocks::Save() {
     oStream << std::setw(4) << j;
     oStream.flush();
     oStream.close();
-    Logger::LogAdd("CustomBlocks", "Custom blocks file saved.", LogType::NORMAL, GLF);
+    Logger::LogAdd("CustomBlocks", "Custom blocks file saved.", NORMAL, GLF);
 }
 
 CustomBlocks::CustomBlocks() : _blockDefintiions() {

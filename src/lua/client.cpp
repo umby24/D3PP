@@ -30,7 +30,7 @@ int LuaClientLib::openLib(lua_State* L)
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    luaL_setfuncs(L, LuaClientLib::d3ClientLib, 0);
+    luaL_setfuncs(L, d3ClientLib, 0);
     lua_setglobal(L, "Client");
     return 1;
 }
@@ -58,7 +58,7 @@ int LuaClientLib::LuaClientGetMapId(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: client.getmapid called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("Lua", "LuaError: client.getmapid called with invalid number of arguments.", WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
 
@@ -79,7 +79,7 @@ int LuaClientLib::LuaClientGetIp(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: CLient_Get_IP called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("Lua", "LuaError: CLient_Get_IP called with invalid number of arguments.", WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
 
@@ -98,7 +98,7 @@ int LuaClientLib::LuaClientGetLoginName(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Client.getloginname called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("Lua", "LuaError: Client.getloginname called with invalid number of arguments.", WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
 
@@ -118,7 +118,7 @@ int LuaClientLib::LuaClientGetLoggedIn(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: client.getloggedin called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("Lua", "LuaError: client.getloggedin called with invalid number of arguments.", WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
 
@@ -139,7 +139,7 @@ int LuaClientLib::LuaClientGetEntity(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Client.getEntity called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("Lua", "LuaError: Client.getEntity called with invalid number of arguments.", WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
 
@@ -162,7 +162,7 @@ int LuaClientLib::LuaClientKick(lua_State *L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs < 1) {
-        Logger::LogAdd("Lua", "LuaError: Client.kick called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("Lua", "LuaError: Client.kick called with invalid number of arguments.", WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
 

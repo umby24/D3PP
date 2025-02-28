@@ -165,7 +165,7 @@ void Chat::NetworkSend2Player(const int& entityId, const std::string& message, s
 
         Logger::LogAdd("Chat",
                        sendingEntity->Name + " > " + nc->GetPlayerInstance()->GetEntity()->Name + ": " +
-                       output, LogType::CHAT, GLF);
+                       output, CHAT, GLF);
         NetworkFunctions::SystemMessageNetworkSend(nc->GetId(), message1);
 
         std::string message0 =
@@ -204,7 +204,7 @@ void Chat::NetworkSend2Map(const int& entityId, const std::string& message) {
     if (ecm.isCancelled())
         return;
 
-    Logger::LogAdd("Chat", sendingEntity->Name + ": " + output, LogType::CHAT, GLF);
+    Logger::LogAdd("Chat", sendingEntity->Name + ": " + output, CHAT, GLF);
 
     output = Entity::GetDisplayname(entityId) + "&f: " + output;
     // -- Prefix all new lines with the users name.
@@ -235,7 +235,7 @@ void Chat::NetworkSend2All(const int& entityId, const std::string& message) {
     if (eca.isCancelled())
         return;
 
-    Logger::LogAdd("Chat", "# " + sendingEntity->Name + ": " + output, LogType::CHAT, GLF);
+    Logger::LogAdd("Chat", "# " + sendingEntity->Name + ": " + output, CHAT, GLF);
 
     output = "&c# " + Entity::GetDisplayname(entityId) + "&f: " + output;
     // -- Prefix all new lines with the users name.
@@ -248,7 +248,7 @@ void Chat::HandleIncomingChat(const std::shared_ptr<NetworkClient>& client, cons
 
     // -- Ensure our client is in a proper state.
     if (!client || !client->GetPlayerInstance() || !client->GetPlayerInstance()->GetEntity()) {
-        Logger::LogAdd(MODULE_NAME, "Invalid client tried to send a chat message.", LogType::VERBOSE, GLF);
+        Logger::LogAdd(MODULE_NAME, "Invalid client tried to send a chat message.", VERBOSE, GLF);
         return;
     }
 

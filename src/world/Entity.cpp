@@ -80,7 +80,7 @@ int Entity::GetFreeIdClient(int mapId) {
         }
     }
 
-    Logger::LogAdd(MODULE_NAME, "No free map clientID", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__ );
+    Logger::LogAdd(MODULE_NAME, "No free map clientID", L_ERROR, __FILE__, __LINE__, __FUNCTION__ );
     return -1;
 }
 
@@ -325,8 +325,8 @@ void Entity::PositionCheck() {
     }
     // -- do a teleporter check..
    for(auto const &tp : theMap->Portals) {
-       D3PP::Common::Vector3S startLoc = tp.OriginStart.GetAsBlockCoords();
-       D3PP::Common::Vector3S endLoc = tp.OriginEnd.GetAsBlockCoords();
+       Vector3S startLoc = tp.OriginStart.GetAsBlockCoords();
+       Vector3S endLoc = tp.OriginEnd.GetAsBlockCoords();
 
        if (blockLocation.X >= startLoc.X && blockLocation.X <= endLoc.X && blockLocation.Y >= startLoc.Y && blockLocation.Y<= endLoc.Y && blockLocation.Z>= startLoc.Z && blockLocation.Z <= endLoc.Z) {
            int destMapId = MapID;

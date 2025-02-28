@@ -20,7 +20,7 @@ int LuaNetworkLib::openLib(lua_State* L)
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    luaL_setfuncs(L, LuaNetworkLib::lib, 0);
+    luaL_setfuncs(L, lib, 0);
     lua_setglobal(L, "Network");
     return 1;
 }
@@ -30,7 +30,7 @@ int LuaNetworkLib::LuaNetworkOutBlockSet(lua_State* L)
     int nArgs = lua_gettop(L);
 
     if (nArgs != 5) {
-        Logger::LogAdd("Lua", "LuaError: NetworkOutBlockSet called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: NetworkOutBlockSet called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 

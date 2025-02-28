@@ -44,16 +44,16 @@ void Configuration::Load() {
 
     try {
         inFile >> j;
-         Configuration::NetSettings.LoadFromJson(j);
-        Configuration::GenSettings.LoadFromJson(j);
-        Configuration::killSettings.LoadFromJson(j);
-        Configuration::textSettings.LoadFromJson(j);
+         NetSettings.LoadFromJson(j);
+        GenSettings.LoadFromJson(j);
+        killSettings.LoadFromJson(j);
+        textSettings.LoadFromJson(j);
     } catch (std::exception e) {
-        Logger::LogAdd("Configuration", "Error loading config file! using defaults.", LogType::L_ERROR, GLF);
+        Logger::LogAdd("Configuration", "Error loading config file! using defaults.", L_ERROR, GLF);
     }
 
     inFile.close();
-    Logger::LogAdd("Configuration", "Configuration Loaded.", LogType::NORMAL, GLF);
+    Logger::LogAdd("Configuration", "Configuration Loaded.", NORMAL, GLF);
 
     lastLoaded = Utils::FileModTime(filepath);
 }
@@ -61,17 +61,17 @@ void Configuration::Load() {
 void Configuration::Save() {
     json j;
 
-    Configuration::NetSettings.SaveToJson(j);
-    Configuration::GenSettings.SaveToJson(j);
-    Configuration::killSettings.SaveToJson(j);
-    Configuration::textSettings.SaveToJson(j);
+    NetSettings.SaveToJson(j);
+    GenSettings.SaveToJson(j);
+    killSettings.SaveToJson(j);
+    textSettings.SaveToJson(j);
 
     std::ofstream outFile(filepath);
     outFile << std::setw(4) << j;
     outFile.flush();
     outFile.close();
 
-    Logger::LogAdd("Configuration", "Configuration Saved.", LogType::NORMAL, GLF);
+    Logger::LogAdd("Configuration", "Configuration Saved.", NORMAL, GLF);
     lastLoaded = Utils::FileModTime(filepath);
 }
 

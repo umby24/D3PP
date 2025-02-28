@@ -62,7 +62,7 @@ void BuildModeMain::Load() {
 
     SaveFile = true;
     LastFileDate = Utils::FileModTime(filePath);
-    Logger::LogAdd(MODULE_NAME, "File loaded [" + filePath + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File loaded [" + filePath + "]", NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void BuildModeMain::Save() {
@@ -78,17 +78,23 @@ void BuildModeMain::Save() {
 
     pl.SaveFile();
     LastFileDate = Utils::FileModTime(filePath);
-    Logger::LogAdd(MODULE_NAME, "File saved [" + filePath + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File saved [" + filePath + "]", NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void BuildModeMain::MainFunc() {
+    if (_buildmodes.empty()) {
+        CreateDefaults();
+        Logger::LogAdd(MODULE_NAME, "Build mode list empty, creating default.", NORMAL, __FILE__, __LINE__, __FUNCTION__);
+        SaveFile = true;
+    }
+
     if (SaveFile) {
         SaveFile = false;
         Save();
     }
 
-    std::string bmFile = Files::GetFile(BUILD_MODE_FILE_NAME);
-    time_t modTime = Utils::FileModTime(bmFile);
+    const std::string bmFile = Files::GetFile(BUILD_MODE_FILE_NAME);
+    const time_t modTime = Utils::FileModTime(bmFile);
 
     if (modTime != LastFileDate) {
         Load();
@@ -118,7 +124,7 @@ void BuildModeMain::Distribute(int clientId, int mapId, unsigned short X, unsign
     
     if (_buildmodes.find(buildMode) == _buildmodes.end()) {
         ne->BuildMode = "Normal";
-        Logger::LogAdd(MODULE_NAME, "Could not find build mode '" + buildMode + "'.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Could not find build mode '" + buildMode + "'.", L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         return;
     }
 
@@ -138,6 +144,15 @@ void BuildModeMain::Distribute(int clientId, int mapId, unsigned short X, unsign
         pm->TriggerBuildMode(pluginName, clientId, mapId, X, Y, Z, mode, blockType);
         // -- Lua_Event_Build_Mode()
     }
+}
+
+void BuildModeMain::CreateDefaults() {
+    BuildMode normal;
+    normal.ID = "Normal";
+    normal.Plugin = "";
+    normal.Name = "Normal";
+
+    _buildmodes.insert(std::make_pair("Normal", normal));
 }
 
 void BuildModeMain::Resend(int clientId) {

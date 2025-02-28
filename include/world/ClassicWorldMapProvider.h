@@ -38,8 +38,8 @@ namespace D3PP::world {
         MapEnvironment GetEnvironment() override;
         void SetEnvironment(const MapEnvironment& env) override;
 
-        std::vector<D3PP::world::Teleporter> getPortals() override;
-        void SetPortals(const std::vector<D3PP::world::Teleporter> portals) override;
+        std::vector<Teleporter> getPortals() override;
+        void SetPortals(const std::vector<Teleporter> portals) override;
 
         std::vector<CustomParticle> getParticles() override;
         void SetParticles(std::vector<CustomParticle> particles) override;

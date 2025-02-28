@@ -234,7 +234,7 @@ void CPE::AfterLoginActions(const std::shared_ptr<IMinecraftClient>& client) {
     int clientId = client->GetId();
     std::string loginName = client->GetLoginName();
     std::string prettyName = Entity::GetDisplayname(clientEntity->Id);
-    int extVersion = CPE::GetClientExtVersion(client, EXT_PLAYER_LIST_EXT_NAME);
+    int extVersion = GetClientExtVersion(client, EXT_PLAYER_LIST_EXT_NAME);
     int tempNameId = concrete->GetPlayerInstance()->GetNameId();
 
     std::shared_lock lock(D3PP::network::Server::roMutex, std::defer_lock);
@@ -243,7 +243,7 @@ void CPE::AfterLoginActions(const std::shared_ptr<IMinecraftClient>& client) {
             continue;
 
         if (nc->GetId() != clientId) {
-            if (CPE::GetClientExtVersion(nc, EXT_PLAYER_LIST_EXT_NAME) == 2) {
+            if (GetClientExtVersion(nc, EXT_PLAYER_LIST_EXT_NAME) == 2) {
                 auto concrete2 = std::static_pointer_cast<NetworkClient>(nc);
                 Packets::SendExtAddPlayerName(concrete2, tempNameId, loginName, prettyName, clientMap->Name(), 0);
             }

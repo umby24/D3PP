@@ -72,7 +72,7 @@ int LuaMapLib::openLib(lua_State* L)
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    luaL_setfuncs(L, LuaMapLib::lib, 0);
+    luaL_setfuncs(L, lib, 0);
     lua_setglobal(L, "Map");
     return 1;
 }
@@ -81,7 +81,7 @@ int LuaMapLib::LuaMapBlockMove(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 10) {
-        Logger::LogAdd("Lua", "LuaError: Map_Block_Move called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Block_Move called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int mapId = luaL_checkinteger(L, 1);
@@ -106,20 +106,20 @@ int LuaMapLib::LuaMapBlockMove(lua_State* L) {
 }
 
 int LuaMapLib::LuaFillFlat(lua_State* L) {
-    Logger::LogAdd("Lua", "Called", LogType::DEBUG, GLF);
+    Logger::LogAdd("Lua", "Called", DEBUG, GLF);
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: FillFlat called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: FillFlat called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int mapId = luaL_checkinteger(L, 1);
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> map = mm->GetPointer(mapId);
-    Logger::LogAdd("Lua", "Got map", LogType::DEBUG, GLF);
+    Logger::LogAdd("Lua", "Got map", DEBUG, GLF);
     if (map != nullptr) {
-        Logger::LogAdd("Lua", "Calling gen", LogType::DEBUG, GLF);
+        Logger::LogAdd("Lua", "Calling gen", DEBUG, GLF);
         GenTools::FlatgrassGen(mapId);
     }
 
@@ -130,7 +130,7 @@ int LuaMapLib::LuaMapGetName(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Map_Get_Name called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Name called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int mapId = luaL_checkinteger(L, 1);
@@ -149,7 +149,7 @@ int LuaMapLib::LuaMapGetDimensions(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Map_Get_Dimensions called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Dimensions called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int mapId = luaL_checkinteger(L, 1);
@@ -172,7 +172,7 @@ int LuaMapLib::LuaMapGetTable(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 0) {
-        Logger::LogAdd("Lua", "LuaError: Map_Get_Table() called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Table() called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -198,7 +198,7 @@ int LuaMapLib::LuaMapBlockChangePlayer(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 10) {
-        Logger::LogAdd("Lua", "LuaError: Map_Block_Change_Client called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Block_Change_Client called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -231,7 +231,7 @@ int LuaMapLib::LuaMapBlockGetRank(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 4) {
-        Logger::LogAdd("Lua", "LuaError: Map_Block_Get_Rank called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Block_Get_Rank called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -257,7 +257,7 @@ int LuaMapLib::LuaMapGetUniqueId(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Map_Get_Unique_Id called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Unique_Id called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -277,7 +277,7 @@ int LuaMapLib::LuaMapGetDirectory(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Map_Get_Directory called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Directory called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -297,7 +297,7 @@ int LuaMapLib::LuaMapGetRankBuild(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Map_Get_Rank_Build called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Rank_Build called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -317,7 +317,7 @@ int LuaMapLib::LuaMapGetRankShow(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Map_Get_Rank_Show called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Rank_Show called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -337,7 +337,7 @@ int LuaMapLib::LuaMapGetRankJoin(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Map_Get_Rank_Join called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Rank_Join called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -357,7 +357,7 @@ int LuaMapLib::LuaMapGetSpawn(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Map_Get_Spawn called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Spawn called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -381,7 +381,7 @@ int LuaMapLib::LuaMapGetSaveInterval(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Map_Get_Save_Intervall called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Get_Save_Intervall called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -401,7 +401,7 @@ int LuaMapLib::LuaMapSetName(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Map_Set_Name called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Set_Name called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -423,7 +423,7 @@ int LuaMapLib::LuaMapSetDirectory(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Map_Set_Directory called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Set_Directory called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -445,7 +445,7 @@ int LuaMapLib::LuaMapSetRankBuild(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Map_Set_Rank_Build called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Set_Rank_Build called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -468,7 +468,7 @@ int LuaMapLib::LuaMapSetRankJoin(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Map_Set_Rank_Join called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Set_Rank_Join called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -491,7 +491,7 @@ int LuaMapLib::LuaMapSetRankShow(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Map_Set_Rank_Show called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Set_Rank_Show called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -515,7 +515,7 @@ int LuaMapLib::LuaMapSetSpawn(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 6) {
-        Logger::LogAdd("Lua", "LuaError: Map_Set_Spawn called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Set_Spawn called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -545,7 +545,7 @@ int LuaMapLib::LuaMapSetSaveInterval(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Map_Set_Save_Interval called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Set_Save_Interval called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -565,7 +565,7 @@ int LuaMapLib::LuaMapAdd(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 5) {
-        Logger::LogAdd("Lua", "LuaError: Map_Add called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Add called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -585,7 +585,7 @@ int LuaMapLib::LuaMapActionAddResize(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 4) {
-        Logger::LogAdd("Lua", "LuaError: Map_Action_Add_Resize called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Action_Add_Resize called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -604,7 +604,7 @@ int LuaMapLib::LuaMapLoad(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Map_Action_Add_Resize called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Action_Add_Resize called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -622,7 +622,7 @@ int LuaMapLib::LuaMapActionAddFill(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 3) {
-        Logger::LogAdd("Lua", "LuaError: Map_Action_Add_Fill called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Action_Add_Fill called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int mapId = luaL_checkinteger(L, 1);
@@ -638,7 +638,7 @@ int LuaMapLib::LuaMapActionAddSave(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Map_Action_Add_Save called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Action_Add_Save called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int mapId = luaL_checkinteger(L, 1);
@@ -653,7 +653,7 @@ int LuaMapLib::LuaMapActionAddDelete(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Map_Action_Add_Delete called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Action_Add_Delete called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int mapId = luaL_checkinteger(L, 1);
@@ -667,7 +667,7 @@ int LuaMapLib::LuaMapResend(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Map_Resend called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Resend called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int mapId = luaL_checkinteger(L, 1);
@@ -685,7 +685,7 @@ int LuaMapLib::LuaMapExport(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 8) {
-        Logger::LogAdd("Lua", "LuaError: Map_Export called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Export called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     Vector3S startLoc{};
@@ -718,7 +718,7 @@ int LuaMapLib::LuaMapExportGetSize(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Map_Export_Get_Size called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Export_Get_Size called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     std::string filename(luaL_checkstring(L, 1));
@@ -734,7 +734,7 @@ int LuaMapLib::LuaMapImportPlayer(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 9) {
-        Logger::LogAdd("Lua", "LuaError: Map_Import called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Import called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int playerNumber = luaL_checkinteger(L, 1);
@@ -764,7 +764,7 @@ int LuaMapLib::LuaMapBlockGetPlayer(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 4) {
-        Logger::LogAdd("Lua", "LuaError: Map_Block_Get_Player_Last called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Block_Get_Player_Last called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -789,7 +789,7 @@ int LuaMapLib::LuaMapBlockChange(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 10) {
-        Logger::LogAdd("Lua", "LuaError: Map_Block_Change called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Block_Change called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -817,7 +817,7 @@ int LuaMapLib::LuaMapBlockChangeClient(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 7) {
-        Logger::LogAdd("Lua", "LuaError: Map_Block_Change_Client called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Block_Change_Client called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -847,7 +847,7 @@ int LuaMapLib::LuaMapBlockGetType(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 4) {
-        Logger::LogAdd("Lua", "LuaError: Map_Block_Get_Type called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map_Block_Get_Type called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -872,7 +872,7 @@ int LuaMapLib::LuaBeginFill(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Map.BeginFill called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map.BeginFill called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -899,7 +899,7 @@ int LuaMapLib::LuaSetFillBlock(lua_State *L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 5) {
-        Logger::LogAdd("Lua", "LuaError: Map.SetFillBlock called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map.SetFillBlock called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -930,7 +930,7 @@ int LuaMapLib::LuaEndFill(lua_State *L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Map.EndFill called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map.EndFill called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -958,7 +958,7 @@ int LuaMapLib::LuaGetFillBlock(lua_State *L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 4) {
-        Logger::LogAdd("Lua", "LuaError: Map.GetFillBlock called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map.GetFillBlock called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -987,7 +987,7 @@ int LuaMapLib::LuaCreateParticle(lua_State *L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 20) {
-        Logger::LogAdd("Lua", "LuaError: Map.createParticle called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map.createParticle called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     CustomParticle cp{};
@@ -1030,7 +1030,7 @@ int LuaMapLib::LuaDeleteParticle(lua_State *L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Map.deleteParticle called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map.deleteParticle called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -1050,7 +1050,7 @@ int LuaMapLib::LuaSpawnParticle(lua_State *L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 8) {
-        Logger::LogAdd("Lua", "LuaError: Map.spawnParticle called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map.spawnParticle called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -1082,7 +1082,7 @@ int LuaMapLib::LuaSetProperty(lua_State* L)
     int nArgs = lua_gettop(L);
 
     if (nArgs != 3) {
-        Logger::LogAdd("Lua", "LuaError: Map.setProperty called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Map.setProperty called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 

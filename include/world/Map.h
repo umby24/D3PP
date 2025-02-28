@@ -71,7 +71,7 @@ namespace D3PP::world {
         std::vector<CustomParticle> Particles;
         std::vector<files::MapRankElement> RankBoxes;
 
-        std::recursive_mutex BlockMutex;
+        std::shared_mutex BlockMutex;
 
         bool BlockchangeStopped, PhysicsStopped, loaded;
         std::string filePath;

@@ -83,12 +83,12 @@ namespace D3PP::world {
         // -- Methods
         Player();
         Player(const std::string& name, const std::string& mppass, const char &version);
-        void ChangeMap(std::shared_ptr<D3PP::world::Map> map);
+        void ChangeMap(std::shared_ptr<Map> map);
 
         void SendMap();
 
         void PlayerClicked(ClickButton button, ClickAction action, short yaw, short pitch, char targetEntity,
-                           D3PP::Common::Vector3S targetBlock, ClickTargetBlockFace blockFace);
+                           Common::Vector3S targetBlock, ClickTargetBlockFace blockFace);
 
          int GetId() override;
 

@@ -66,7 +66,7 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) : Selections(MAX_S
     addSubId = 0;
     removeSubId = 0;
     SubEvents();
-    Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", NORMAL, GLF);
 }
 
 NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
@@ -185,7 +185,7 @@ void NetworkClient::Kick(const std::string& message, bool hide) {
     if (DisconnectTime == 0) {
         DisconnectTime = time(nullptr) + 1;
         LoggedIn = false;
-        Logger::LogAdd(MODULE_NAME, "Client Kicked [" + message + "]", LogType::NORMAL, GLF);
+        Logger::LogAdd(MODULE_NAME, "Client Kicked [" + message + "]", NORMAL, GLF);
     }
 }
 
@@ -534,7 +534,7 @@ void NetworkClient::HandleData() {
                 break;
 
             default:
-                Logger::LogAdd(MODULE_NAME, "Unknown Packet Received [" + stringulate((int)commandByte) + "]", LogType::WARNING, GLF);
+                Logger::LogAdd(MODULE_NAME, "Unknown Packet Received [" + stringulate((int)commandByte) + "]", WARNING, GLF);
                 Kick("Invalid Packet", true);
         }
 
@@ -616,7 +616,7 @@ void NetworkClient::Shutdown(const std::string& reason) {
     canSend = false;
     canReceive = false;
     D3PP::network::Server::UnregisterClient(GetSelfPointer());
-    Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(Id) + "] [" + reason + "]", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(Id) + "] [" + reason + "]", NORMAL, GLF);
     clientSocket->Disconnect();
     D3PP::network::Server::UnregisterClient(GetSelfPointer());
 }
@@ -625,6 +625,6 @@ bool NetworkClient::GetLoggedIn() {
     return this->LoggedIn;
 }
 
-std::shared_ptr<D3PP::world::IMinecraftPlayer> NetworkClient::GetPlayerInstance() {
+std::shared_ptr<IMinecraftPlayer> NetworkClient::GetPlayerInstance() {
     return this->player;
 }

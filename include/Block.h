@@ -72,6 +72,7 @@ private:
     void LoadOld();
     void Load();
     void MainFunc();
+    void GenerateDefault();
 };
 
 

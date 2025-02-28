@@ -53,8 +53,8 @@ namespace D3PP::world {
             virtual MapEnvironment GetEnvironment() = 0;
             virtual void SetEnvironment(const MapEnvironment& env) = 0;
 
-            virtual std::vector<D3PP::world::Teleporter> getPortals() = 0;
-            virtual void SetPortals(std::vector<D3PP::world::Teleporter> portals) = 0;
+            virtual std::vector<Teleporter> getPortals() = 0;
+            virtual void SetPortals(std::vector<Teleporter> portals) = 0;
 
             virtual std::vector<CustomParticle> getParticles() = 0;
             virtual void SetParticles(std::vector<CustomParticle> particles) = 0;

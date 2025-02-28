@@ -15,7 +15,7 @@ namespace D3PP::world {
     public:
         explicit PhysicsQueue(const Common::Vector3S& size);
         bool TryDequeue(TimeQueueItem& out);
-        void TryQueue(const D3PP::world::TimeQueueItem &in);
+        void TryQueue(const TimeQueueItem &in);
         void Clear();
     private:
         std::mutex m_accessLock;

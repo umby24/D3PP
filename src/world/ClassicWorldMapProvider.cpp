@@ -64,7 +64,7 @@ D3PP::Common::Vector3S D3PP::world::ClassicWorldMapProvider::GetSize() const {
     return Common::Vector3S{ m_cwMap->Size.X, m_cwMap->Size.Z, m_cwMap->Size.Y};
 }
 
-void D3PP::world::ClassicWorldMapProvider::SetSize(const D3PP::Common::Vector3S &newSize) {
+void D3PP::world::ClassicWorldMapProvider::SetSize(const Common::Vector3S &newSize) {
     if (m_cwMap->Spawn.X > newSize.X)
         m_cwMap->Spawn.X = newSize.X-1;
 
@@ -91,24 +91,24 @@ bool D3PP::world::ClassicWorldMapProvider::Reload() {
     return true;
 }
 
-void D3PP::world::ClassicWorldMapProvider::SetBlock(const D3PP::Common::Vector3S &location, const unsigned char &type) {
+void D3PP::world::ClassicWorldMapProvider::SetBlock(const Common::Vector3S &location, const unsigned char &type) {
     int blockIndex = GetBlockIndex(location.X, location.Y, location.Z);
     if (blockIndex >= m_cwMap->BlockData.size()) return;
     m_cwMap->BlockData[blockIndex] = type;
 }
 
-unsigned char D3PP::world::ClassicWorldMapProvider::GetBlock(const D3PP::Common::Vector3S &location) {
+unsigned char D3PP::world::ClassicWorldMapProvider::GetBlock(const Common::Vector3S &location) {
     int blockIndex = GetBlockIndex(location.X, location.Y, location.Z);
     if (blockIndex >= m_cwMap->BlockData.size()) return 255;
 
     return m_cwMap->BlockData[blockIndex];
 }
 
-short D3PP::world::ClassicWorldMapProvider::GetLastPlayer(const D3PP::Common::Vector3S &location) {
+short D3PP::world::ClassicWorldMapProvider::GetLastPlayer(const Common::Vector3S &location) {
     return 0;
 }
 
-void D3PP::world::ClassicWorldMapProvider::SetLastPlayer(const D3PP::Common::Vector3S &location, const short &player) {
+void D3PP::world::ClassicWorldMapProvider::SetLastPlayer(const Common::Vector3S &location, const short &player) {
 // -- TODO:
 }
 
@@ -137,7 +137,7 @@ void D3PP::world::ClassicWorldMapProvider::SetSpawn(const MinecraftLocation &loc
 }
 
 D3PP::world::MapPermissions D3PP::world::ClassicWorldMapProvider::GetPermissions() {
-    D3PP::world::MapPermissions currentPerms{0, 0, 0};
+    MapPermissions currentPerms{0, 0, 0};
     currentPerms.RankBuild = m_d3meta->BuildRank;
     currentPerms.RankJoin = m_d3meta->JoinRank;
     currentPerms.RankShow = m_d3meta->ShowRank;
@@ -145,7 +145,7 @@ D3PP::world::MapPermissions D3PP::world::ClassicWorldMapProvider::GetPermissions
     return currentPerms;
 }
 
-void D3PP::world::ClassicWorldMapProvider::SetPermissions(const D3PP::world::MapPermissions &perms) {
+void D3PP::world::ClassicWorldMapProvider::SetPermissions(const MapPermissions &perms) {
     m_d3meta->BuildRank = perms.RankBuild;
     m_d3meta->JoinRank = perms.RankJoin;
     m_d3meta->ShowRank = perms.RankShow;
@@ -208,7 +208,7 @@ D3PP::world::MapEnvironment D3PP::world::ClassicWorldMapProvider::GetEnvironment
     return currentEnv;
 }
 
-void D3PP::world::ClassicWorldMapProvider::SetEnvironment(const D3PP::world::MapEnvironment &env) {
+void D3PP::world::ClassicWorldMapProvider::SetEnvironment(const MapEnvironment &env) {
     if (m_cwMap->metaParsers.contains("CPE")) {
         auto cpeSettings = static_pointer_cast<files::CPEMetadata>(m_cwMap->metaParsers.at("CPE"));
         cpeSettings->EnvColorsVersion = 1;
@@ -252,7 +252,7 @@ std::vector<D3PP::world::Teleporter> D3PP::world::ClassicWorldMapProvider::getPo
     return m_d3meta->portals;
 }
 
-void D3PP::world::ClassicWorldMapProvider::SetPortals(const std::vector<D3PP::world::Teleporter> portals) {
+void D3PP::world::ClassicWorldMapProvider::SetPortals(const std::vector<Teleporter> portals) {
     m_d3meta->portals.clear();
     std::copy(portals.begin(), portals.end(), std::back_inserter(m_d3meta->portals));
 }
@@ -261,7 +261,7 @@ std::vector<D3PP::world::CustomParticle> D3PP::world::ClassicWorldMapProvider::g
     return m_d3meta->particles;
 }
 
-void D3PP::world::ClassicWorldMapProvider::SetParticles(std::vector<D3PP::world::CustomParticle> particles) {
+void D3PP::world::ClassicWorldMapProvider::SetParticles(std::vector<CustomParticle> particles) {
     m_d3meta->particles.clear();
     std::copy(particles.begin(), particles.end(), std::back_inserter(m_d3meta->particles));
 }

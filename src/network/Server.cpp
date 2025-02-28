@@ -51,7 +51,7 @@ D3PP::network::Server::Server() {
     std::thread handleThread([this]() { this->HandleClientData(); });
     std::swap(m_handleThread, handleThread);
 
-    Logger::LogAdd("Server", "Network server started on port " + stringulate(this->m_port), LogType::NORMAL, GLF);
+    Logger::LogAdd("Server", "Network server started on port " + stringulate(this->m_port), NORMAL, GLF);
 }
 
 void D3PP::network::Server::Start() {
@@ -112,11 +112,11 @@ void D3PP::network::Server::HandleClientData() {
 void D3PP::network::Server::HandleEvents() {
     auto e = m_serverSocket->CheckEvents();
 
-    if (e.contains(ServerSocketEvent::SOCKET_EVENT_CONNECT)) {
+    if (e.contains(SOCKET_EVENT_CONNECT)) {
         HandleIncomingClient();
     }
-    if (e.contains(ServerSocketEvent::SOCKET_EVENT_DATA)) {
-        for(auto &s : e[ServerSocketEvent::SOCKET_EVENT_DATA]) {
+    if (e.contains(SOCKET_EVENT_DATA)) {
+        for(auto &s : e[SOCKET_EVENT_DATA]) {
             int clientId = static_cast<int>(s);
             m_clients[clientId]->NotifyDataAvailable();
         }
@@ -153,7 +153,7 @@ void D3PP::network::Server::UnregisterClient(const std::shared_ptr<IMinecraftCli
     m_Instance->m_serverSocket->Unaccept(client->GetId());
     m_Instance->m_needsUpdate = true;
     std::scoped_lock<std::mutex> clientLock(m_ClientMutex);
-    D3PP::network::Server::m_clients.erase(client->GetId());
+    m_clients.erase(client->GetId());
 }
 
 void D3PP::network::Server::RebuildRoClients() {
@@ -168,7 +168,7 @@ void D3PP::network::Server::RebuildRoClients() {
 }
 
 void D3PP::network::Server::SendToAll(IPacket& packet, std::string extension, int extVersion) {
-    std::shared_lock lock(D3PP::network::Server::roMutex, std::defer_lock);
+    std::shared_lock lock(roMutex, std::defer_lock);
     for ( auto const & c : roClients ) {
         if (!extension.empty()) {
             int currentVer = CPE::GetClientExtVersion(c, extension);
@@ -182,7 +182,7 @@ void D3PP::network::Server::SendToAll(IPacket& packet, std::string extension, in
 }
 
 void D3PP::network::Server::SendAllExcept(IPacket& packet, std::shared_ptr<IMinecraftClient> toNot) {
-    std::shared_lock lock(D3PP::network::Server::roMutex);
+    std::shared_lock lock(roMutex);
     for ( auto const & c : roClients ) {
         if (c == toNot)
             continue;

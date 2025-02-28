@@ -27,7 +27,7 @@ int LuaBuildLib::openLib(lua_State* L)
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    luaL_setfuncs(L, LuaBuildLib::lib, 0);
+    luaL_setfuncs(L, lib, 0);
     lua_setglobal(L, "Build");
     return 1;
 }
@@ -37,7 +37,7 @@ int LuaBuildLib::LuaBuildLinePlayer(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 12) {
-        Logger::LogAdd("Lua", "LuaError: Build_Line_Player called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Build_Line_Player called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int playerNumber = luaL_checkinteger(L, 1);
@@ -62,7 +62,7 @@ int LuaBuildLib::LuaBuildBoxPlayer(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 14) {
-        Logger::LogAdd("Lua", "LuaError: Build_Box_Player called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Build_Box_Player called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -99,7 +99,7 @@ int LuaBuildLib::LuaBuildSpherePlayer(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 12) {
-        Logger::LogAdd("Lua", "LuaError: Build_Sphere_Player called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Build_Sphere_Player called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int playerNumber = luaL_checkinteger(L, 1);
@@ -124,7 +124,7 @@ int LuaBuildLib::LuaBuildRankBox(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 9) {
-        Logger::LogAdd("Lua", "LuaError: Build_Rank_Box called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Build_Rank_Box called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int mapId = luaL_checkinteger(L, 1);

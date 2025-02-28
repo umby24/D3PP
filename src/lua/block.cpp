@@ -27,7 +27,7 @@ int LuaBlockLib::openLib(lua_State* L)
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    luaL_setfuncs(L, LuaBlockLib::lib, 0);
+    luaL_setfuncs(L, lib, 0);
     lua_setglobal(L, "Block");
     return 1;
 }
@@ -36,7 +36,7 @@ int LuaBlockLib::LuaBlockGetTable(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 0) {
-        Logger::LogAdd("Lua", "LuaError: BlocK_Get_Table() called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: BlocK_Get_Table() called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -62,7 +62,7 @@ int LuaBlockLib::LuaBlockGetName(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Block_Get_Name() called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Block_Get_Name() called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -78,7 +78,7 @@ int LuaBlockLib::LuaBlockGetRankPlace(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Block_Get_Rank_Place() called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Block_Get_Rank_Place() called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -94,7 +94,7 @@ int LuaBlockLib::LuaBlockGetRankDelete(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Block_Get_Rank_Delete() called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Block_Get_Rank_Delete() called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -110,7 +110,7 @@ int LuaBlockLib::LuaBlockGetClientType(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Block_Get_Client_Type() called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Block_Get_Client_Type() called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -128,13 +128,13 @@ int LuaBlockLib::LuaBlockCreate(lua_State* L)
 
     if (nArgs < 2)
     {
-        Logger::LogAdd("Lua", "LuaError: Block.Create invalid number of arguments", LogType::L_ERROR, GLF);
+        Logger::LogAdd("Lua", "LuaError: Block.Create invalid number of arguments", L_ERROR, GLF);
         return 0;
     }
 
     int blockId = luaL_checkinteger(L, 1);
     if (blockId < 66) {
-        Logger::LogAdd("Lua", "LuaError: Please don't redefine the blocks under #66!", LogType::L_ERROR, GLF);
+        Logger::LogAdd("Lua", "LuaError: Please don't redefine the blocks under #66!", L_ERROR, GLF);
         return 0;
     }
 
@@ -158,7 +158,7 @@ int LuaBlockLib::LuaBlockSetRankPlace(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Block_Set_Rank_Place() called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Block_Set_Rank_Place() called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -178,7 +178,7 @@ int LuaBlockLib::LuaBlockSetRankDelete(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Block_Set_Rank_Delete() called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Block_Set_Rank_Delete() called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -198,7 +198,7 @@ int LuaBlockLib::LuaBlockSetKills(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Block_Set_Kills() called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Block_Set_Kills() called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -218,7 +218,7 @@ int LuaBlockLib::LuaBlockSetPhysics(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 7) {
-        Logger::LogAdd("Lua", "LuaError: Block_Set_Physics() called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Block_Set_Physics() called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 

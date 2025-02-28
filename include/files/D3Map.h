@@ -86,7 +86,7 @@ namespace D3PP::files {
 			std::vector<unsigned char> MapData;
             std::map<std::string, MapTeleporterElement> Teleporter;
             std::vector<MapRankElement> RankBoxes;
-            std::vector<D3PP::world::CustomParticle> Particles;
+            std::vector<world::CustomParticle> Particles;
 			// -----------------------
 			D3Map(const std::string& folder);
 			D3Map(const std::string& folder, const std::string& name, const Common::Vector3S& mapSize);
@@ -108,8 +108,8 @@ namespace D3PP::files {
             std::vector<MapTeleporterElement> getPortals();
             void SetPortals(std::vector<MapTeleporterElement> portals);
 
-            std::vector<D3PP::world::CustomParticle> GetParticles();
-            void SetParticles(std::vector<D3PP::world::CustomParticle> particles);
+            std::vector<world::CustomParticle> GetParticles();
+            void SetParticles(std::vector<world::CustomParticle> particles);
 		private:
             bool portalsChanged, rboxChanged, dataChanged, particleChanged;
 

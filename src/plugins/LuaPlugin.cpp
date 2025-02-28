@@ -36,7 +36,7 @@
 // This template wraps a member function into a C-style "free" function compatible with lua.
 
 void bail(lua_State* l, const std::string& errMsg) {
-    Logger::LogAdd("LuaState", errMsg + ", Error: " + lua_tostring(l, -1), LogType::L_ERROR, GLF);
+    Logger::LogAdd("LuaState", errMsg + ", Error: " + lua_tostring(l, -1), L_ERROR, GLF);
     lua_pop(l, 1);
 }
 
@@ -395,7 +395,7 @@ void LuaPlugin::Load() {
 
     LoadNewOrChanged();
     if (_files.empty()) {
-        Logger::LogAdd("LuaPlugin", "No lua files found, plugin is probably missing.", LogType::WARNING, GLF);
+        Logger::LogAdd("LuaPlugin", "No lua files found, plugin is probably missing.", WARNING, GLF);
         return;
     }
 

@@ -31,7 +31,7 @@ void PacketHandlers::HandleHandshake(const std::shared_ptr<NetworkClient>& clien
     if (!client->LoggedIn && isCpe != 66) {
         Client::Login(client->GetId(), clientName, mppass, clientVersion);
     } else if (isCpe == 66 && !client->LoggedIn) { // -- CPE capable Client
-        Logger::LogAdd("Network", "CPE Client Detected", LogType::DEBUG, GLF);
+        Logger::LogAdd("Network", "CPE Client Detected", DEBUG, GLF);
         Client::LoginCpe(client->GetId(), clientName, mppass, clientVersion);
     }
 }
@@ -101,7 +101,7 @@ void PacketHandlers::HandleExtInfo(const std::shared_ptr<NetworkClient> &client)
     }
     
     client->CustomExtensions = extensions;
-    Logger::LogAdd("CPE", "Client " + appName + " supports " + stringulate(extensions) + " extensions", LogType::DEBUG, GLF);
+    Logger::LogAdd("CPE", "Client " + appName + " supports " + stringulate(extensions) + " extensions", DEBUG, GLF);
 }
 
 void PacketHandlers::HandleExtEntry(const std::shared_ptr<NetworkClient> &client) {
@@ -119,7 +119,7 @@ void PacketHandlers::HandleCustomBlockSupportLevel(const std::shared_ptr<Network
 	const unsigned char supportLevel = client->ReceiveBuffer->ReadByte();
     client->CustomBlocksLevel = supportLevel;
 
-    Logger::LogAdd("CPE", "CPE Process complete.", LogType::DEBUG, GLF);
+    Logger::LogAdd("CPE", "CPE Process complete.", DEBUG, GLF);
     if (client->GetPlayerInstance() == nullptr) {
         client->Kick("&cInternal server error!!!", true);
         return;

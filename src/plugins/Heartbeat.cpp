@@ -36,10 +36,10 @@ void Heartbeat::Beat() {
 
     auto res = cli.Post(CLASSICUBE_HEARTBEAT_PATH, params);
     if (!res) {
-        Logger::LogAdd(MODULE_NAME, "Heartbeat failed.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Heartbeat failed.", L_ERROR, __FILE__, __LINE__, __FUNCTION__);
     }
     else if (res->status != 200 || (res->body.find("http") == std::string::npos)) {
-        Logger::LogAdd(MODULE_NAME, "Heartbeat failed.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Heartbeat failed.", L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         try {
             json j = json::parse(res->body);
             std::string reasonStr;
@@ -53,15 +53,15 @@ void Heartbeat::Beat() {
                 }
             }
 
-            Logger::LogAdd(MODULE_NAME, reasonStr, LogType::L_ERROR, GLF);
+            Logger::LogAdd(MODULE_NAME, reasonStr, L_ERROR, GLF);
         } catch(std::exception e) {
-            Logger::LogAdd(MODULE_NAME, "Error parsing Heartbeat. Response: " + res->body, LogType::L_ERROR, GLF);
+            Logger::LogAdd(MODULE_NAME, "Error parsing Heartbeat. Response: " + res->body, L_ERROR, GLF);
         }
     } else {
         if (isFirstBeat) {
-            Logger::LogAdd(MODULE_NAME, "Heartbeat sent.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+            Logger::LogAdd(MODULE_NAME, "Heartbeat sent.", NORMAL, __FILE__, __LINE__, __FUNCTION__);
             serverUrl = res->body;
-            Logger::LogAdd(MODULE_NAME, "Heartbeat URL: " + serverUrl, LogType::NORMAL, GLF);
+            Logger::LogAdd(MODULE_NAME, "Heartbeat URL: " + serverUrl, NORMAL, GLF);
             isFirstBeat = false;
         }
     }

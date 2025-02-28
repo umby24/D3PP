@@ -161,7 +161,7 @@ void D3PP::world::MapMain::AddResizeAction(int clientId, int mapId, unsigned sho
     if (thisMap == nullptr)
         return;
 
-    Common::Vector3S newSize(X, Y, Z);
+    Vector3S newSize(X, Y, Z);
 
     std::function<void()> resizeAction = [thisMap, clientId, newSize](){
         thisMap->Resize(newSize.X, newSize.Y, newSize.Z);
@@ -340,7 +340,7 @@ void D3PP::world::MapMain::MapListSave() {
     pl.SaveFile();
 
     LastWriteTime = Utils::FileModTime(fName);
-    Logger::LogAdd(MODULE_NAME, "File saved. [" + fName + "]", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "File saved. [" + fName + "]", NORMAL, GLF);
 }
 
 void D3PP::world::MapMain::MapListLoad() {
@@ -378,7 +378,7 @@ void D3PP::world::MapMain::MapListLoad() {
 
 
     LastWriteTime = Utils::FileModTime(fName);
-    Logger::LogAdd(MODULE_NAME, "File loaded. [" + fName + "]", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "File loaded. [" + fName + "]", NORMAL, GLF);
 }
 
 int D3PP::world::MapMain::Add(int id, short x, short y, short z, const std::string& name) {
@@ -401,7 +401,7 @@ int D3PP::world::MapMain::Add(int id, short x, short y, short z, const std::stri
     newMap->BlockchangeStopped = false;
     newMap->Clients = 0;
     newMap->LastClient = time(nullptr);
-    Common::Vector3S sizeVector {x, y, z};
+    Vector3S sizeVector {x, y, z};
     if (!name.ends_with(".cw")) {
         newMap->m_mapProvider = std::make_unique<D3MapProvider>();
         newMap->filePath = Files::GetFolder("Maps") + name + "/";
@@ -437,9 +437,9 @@ void D3PP::world::MapMain::Delete(int id) {
     Network* nm = Network::GetInstance();
 
     if (mp->Clients > 0) {
-        for(auto const &nc : D3PP::network::Server::roClients) {
+        for(auto const &nc : network::Server::roClients) {
             if (nc->GetLoggedIn() && nc->GetPlayerInstance()->GetEntity() != nullptr&& nc->GetPlayerInstance()->GetEntity()->MapID == id) {
-                MinecraftLocation somewhere {0, 0, D3PP::Common::Vector3S{(short)0, (short)0, (short)0}};
+                MinecraftLocation somewhere {0, 0, Vector3S{(short)0, (short)0, (short)0}};
                 nc->GetPlayerInstance()->GetEntity()->PositionSet(0, somewhere, 4, true);
             }
         }
@@ -455,7 +455,7 @@ void D3PP::world::MapMain::MapSettingsLoad() {
     json j;
     std::ifstream iStream(mapSettingsFile);
     if (!iStream.is_open()) {
-        Logger::LogAdd(MODULE_NAME, "Failed to load Map settings, generating...", LogType::WARNING, GLF);
+        Logger::LogAdd(MODULE_NAME, "Failed to load Map settings, generating...", WARNING, GLF);
         MapSettingsSave();
         return;
     }
@@ -470,7 +470,7 @@ void D3PP::world::MapMain::MapSettingsLoad() {
     mapSettingsMaxChangesSec = j["Max_Changes_s"];
     mapSettingsLastWriteTime = Utils::FileModTime(mapSettingsFile);
 
-    Logger::LogAdd(MODULE_NAME, "File Loaded [" + mapSettingsFile + "]", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "File Loaded [" + mapSettingsFile + "]", NORMAL, GLF);
 }
 
 void D3PP::world::MapMain::MapSettingsSave() {
@@ -485,15 +485,15 @@ void D3PP::world::MapMain::MapSettingsSave() {
     ofstream.close();
 
     mapSettingsLastWriteTime = Utils::FileModTime(hbSettingsFile);
-    Logger::LogAdd(MODULE_NAME, "File Saved [" + hbSettingsFile + "]", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "File Saved [" + hbSettingsFile + "]", NORMAL, GLF);
 }
 
-D3PP::Common::Vector3S D3PP::world::MapMain::GetMapExportSize(const std::string& filename) {
+Vector3S D3PP::world::MapMain::GetMapExportSize(const std::string& filename) {
     std::vector<unsigned char> tempData(10);
     int outputLen = GZIP::GZip_DecompressFromFile(tempData.data(), 10, filename);
     if (outputLen != 10) {
-        Logger::LogAdd(MODULE_NAME, "Map not imported: Error unzipping.", LogType::L_ERROR, GLF);
-        return Common::Vector3S{};
+        Logger::LogAdd(MODULE_NAME, "Map not imported: Error unzipping.", L_ERROR, GLF);
+        return Vector3S{};
     }
     // -- Read version and size info
     int versionNumber = 0;
@@ -502,10 +502,10 @@ D3PP::Common::Vector3S D3PP::world::MapMain::GetMapExportSize(const std::string&
     versionNumber |= tempData[2] << 16;
     versionNumber |= tempData[3] << 24;
     if (versionNumber != 1000) {
-        Logger::LogAdd(MODULE_NAME, "Map not imported, unknown version [" + filename + "]", LogType::L_ERROR, GLF);
-        return Common::Vector3S{};
+        Logger::LogAdd(MODULE_NAME, "Map not imported, unknown version [" + filename + "]", L_ERROR, GLF);
+        return Vector3S{};
     }
-    Common::Vector3S result;
+    Vector3S result;
     result.X = tempData[4];
     result.X |= tempData[5] << 8;
     result.Y = tempData[6];
@@ -548,7 +548,7 @@ void D3PP::world::MapMain::LoadMaps() {
     }
 
     if (Utils::FileSize(mapDir + Configuration::GenSettings.defaultMap) == -1 && Utils::FileSize(mapDir + Configuration::GenSettings.defaultMap + "u") == -1) {
-        files::ClassicWorld cwMap(Common::Vector3S{(short)64, 64, 64});
+        files::ClassicWorld cwMap(Vector3S{(short)64, 64, 64});
         cwMap.MapName = "default";
         cwMap.Save(mapDir + Configuration::GenSettings.defaultMap);
         Logger::LogAdd(MODULE_NAME, "Default map created", NORMAL, GLF);

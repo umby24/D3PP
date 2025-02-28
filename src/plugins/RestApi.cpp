@@ -307,7 +307,7 @@ void RestApi::Init() {
     });
     std::thread apiThread ([this]{ RunHttpServer(); });
     std::swap(m_serverThread, apiThread);
-    Logger::LogAdd(MODULE_NAME, "API Running on port 8080", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "API Running on port 8080", NORMAL, GLF);
 }
 
 void RestApi::RunHttpServer() {

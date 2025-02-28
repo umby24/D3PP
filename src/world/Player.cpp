@@ -80,8 +80,8 @@ D3PP::world::Player::Player() {
 }
 
 void D3PP::world::Player::SendMap() {
-    D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();
-    std::shared_ptr<D3PP::world::Map> myMap = mm->GetPointer(MapId);
+    MapMain* mm = MapMain::GetInstance();
+    std::shared_ptr<Map> myMap = mm->GetPointer(MapId);
     myMap->Send(myClientId);
     tEntity->SendPosOwn = true;
     tEntity->resend = true;
@@ -97,7 +97,7 @@ void D3PP::world::Player::SendMap() {
 }
 
 void D3PP::world::Player::PlayerClicked(ClickButton button, ClickAction action, short yaw, short pitch, char targetEntity,
-                           D3PP::Common::Vector3S targetBlock, ClickTargetBlockFace blockFace) {
+                           Common::Vector3S targetBlock, ClickTargetBlockFace blockFace) {
     PlayerClickEventArgs event;
     event.playerId = this->tEntity->playerList->Number;
     event.button = button;
@@ -110,13 +110,13 @@ void D3PP::world::Player::PlayerClicked(ClickButton button, ClickAction action, 
     Dispatcher::post(event);
 }
 
-void D3PP::world::Player::ChangeMap(std::shared_ptr<D3PP::world::Map> map) {
+void D3PP::world::Player::ChangeMap(std::shared_ptr<Map> map) {
     Network* nm = Network::GetInstance();
     auto myClient =  nm->GetClient(myClientId);
 
     if (myClientId != -1 && myClient != nullptr) {
-        D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();
-        std::shared_ptr<D3PP::world::Map> currentMap = mm->GetPointer(MapId);
+        MapMain* mm = MapMain::GetInstance();
+        std::shared_ptr<Map> currentMap = mm->GetPointer(MapId);
         std::string entityName = Entity::GetDisplayname(tEntity->Id);
         std::string mapChangeMessage = "&ePlayer '" + entityName + "&e' changed to map '" + map->Name() + "'";
 
@@ -155,7 +155,7 @@ void D3PP::world::Player::ChangeMap(std::shared_ptr<D3PP::world::Map> map) {
 }
 
 void D3PP::world::Player::DespawnEntities() {
-    auto* mm = D3PP::world::MapMain::GetInstance();
+    auto* mm = MapMain::GetInstance();
     Network* nm = Network::GetInstance();
     auto myClient = nm->GetClient(myClientId);
 

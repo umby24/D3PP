@@ -273,7 +273,7 @@ namespace httplib {
                 return std::lexicographical_compare(s1.begin(), s1.end(), s2.begin(),
                                                     s2.end(),
                                                     [](unsigned char c1, unsigned char c2) {
-                                                        return ::tolower(c1) < ::tolower(c2);
+                                                        return tolower(c1) < tolower(c2);
                                                     });
             }
         };
@@ -2023,7 +2023,7 @@ private:
                     auto duration = duration_cast<milliseconds>(current - start);
                     auto timeout = keep_alive_timeout_sec * 1000;
                     if (duration.count() > timeout) { return false; }
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                    std::this_thread::sleep_for(milliseconds(1));
                 } else {
                     return true;
                 }
@@ -2196,7 +2196,7 @@ private:
             auto ret = false;
             for (auto rp = result; rp; rp = rp->ai_next) {
                 const auto &ai = *rp;
-                if (!::bind(sock, ai.ai_addr, static_cast<socklen_t>(ai.ai_addrlen))) {
+                if (!bind(sock, ai.ai_addr, static_cast<socklen_t>(ai.ai_addrlen))) {
                     ret = true;
                     break;
                 }
@@ -2254,7 +2254,7 @@ private:
                         set_nonblocking(sock2, true);
 
                         auto ret =
-                                ::connect(sock2, ai.ai_addr, static_cast<socklen_t>(ai.ai_addrlen));
+                                connect(sock2, ai.ai_addr, static_cast<socklen_t>(ai.ai_addrlen));
 
                         if (ret < 0) {
                             if (is_connection_error() ||
@@ -2487,7 +2487,7 @@ private:
 
         inline EncodingType encoding_type(const Request &req, const Response &res) {
             auto ret =
-                    detail::can_compress_content_type(res.get_header_value("Content-Type"));
+                    can_compress_content_type(res.get_header_value("Content-Type"));
             if (!ret) { return EncodingType::None; }
 
             const auto &s = req.get_header_value("Accept-Encoding");
@@ -3458,7 +3458,7 @@ private:
                                         const std::string &b) const {
                 if (a.size() < b.size()) { return false; }
                 for (size_t i = 0; i < b.size(); i++) {
-                    if (::tolower(a[i]) != ::tolower(b[i])) { return false; }
+                    if (tolower(a[i]) != tolower(b[i])) { return false; }
                 }
                 return true;
             }
@@ -3504,7 +3504,7 @@ private:
             std::string out;
             auto it = beg;
             while (it != end) {
-                out += static_cast<char>(::tolower(*it));
+                out += static_cast<char>(tolower(*it));
                 it++;
             }
             return out;
@@ -4071,7 +4071,7 @@ static WSInit wsinit_;
 
     inline std::string Result::get_request_header_value(const char *key,
                                                         size_t id) const {
-        return detail::get_header_value(request_headers_, key, id, "");
+        return get_header_value(request_headers_, key, id, "");
     }
 
     template <typename T>
@@ -4602,7 +4602,7 @@ static WSInit wsinit_;
                 return false;
             }
 
-            if (!detail::write_headers(bstrm, res.headers)) { return false; }
+            if (!write_headers(bstrm, res.headers)) { return false; }
 
             // Flush buffer
             auto &data = bstrm.get_buffer();
@@ -4671,7 +4671,7 @@ static WSInit wsinit_;
                 }
                 assert(compressor != nullptr);
 
-                return detail::write_content_chunked(strm, res.content_provider_,
+                return write_content_chunked(strm, res.content_provider_,
                                                      is_shutting_down, *compressor);
             } else {
                 return detail::write_content_without_length(strm, res.content_provider_,
@@ -4811,7 +4811,7 @@ static WSInit wsinit_;
                 host, port, address_family_, socket_flags, tcp_nodelay_,
                 std::move(socket_options),
                 [](socket_t sock, struct addrinfo &ai) -> bool {
-                    if (::bind(sock, ai.ai_addr, static_cast<socklen_t>(ai.ai_addrlen))) {
+                    if (bind(sock, ai.ai_addr, static_cast<socklen_t>(ai.ai_addrlen))) {
                         return false;
                     }
                     if (::listen(sock, 5)) { // Listen through 5 channels
@@ -5166,14 +5166,14 @@ static WSInit wsinit_;
         // Check if the request URI doesn't exceed the limit
         if (line_reader.size() > CPPHTTPLIB_REQUEST_URI_MAX_LENGTH) {
             Headers dummy;
-            detail::read_headers(strm, dummy);
+            read_headers(strm, dummy);
             res.status = 414;
             return write_response(strm, close_connection, req, res);
         }
 
         // Request line and headers
         if (!parse_request_line(line_reader.ptr(), req) ||
-            !detail::read_headers(strm, req.headers)) {
+            !read_headers(strm, req.headers)) {
             res.status = 400;
             return write_response(strm, close_connection, req, res);
         }
@@ -5637,7 +5637,7 @@ static WSInit wsinit_;
                 compressor = detail::make_unique<detail::nocompressor>();
             }
 
-            return detail::write_content_chunked(strm, req.content_provider_,
+            return write_content_chunked(strm, req.content_provider_,
                                                  is_shutting_down, *compressor, error);
         } else {
             return detail::write_content(strm, req.content_provider_, 0,
@@ -5737,7 +5737,7 @@ static WSInit wsinit_;
             const auto &path = url_encode_ ? detail::encode_url(req.path) : req.path;
             bstrm.write_format("%s %s HTTP/1.1\r\n", req.method.c_str(), path.c_str());
 
-            detail::write_headers(bstrm, req.headers);
+            write_headers(bstrm, req.headers);
 
             // Flush buffer
             auto &data = bstrm.get_buffer();
@@ -5872,7 +5872,7 @@ static WSInit wsinit_;
 
         // Receive response and headers
         if (!read_response_line(strm, req, res) ||
-            !detail::read_headers(strm, res.headers)) {
+            !read_headers(strm, res.headers)) {
             error = Error::Read;
             return false;
         }

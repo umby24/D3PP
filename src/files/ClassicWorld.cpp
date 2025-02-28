@@ -10,7 +10,7 @@ D3PP::files::ClassicWorld::ClassicWorld(Common::Vector3S size) {
     Size = size;
     SpawnLook = 0;
     SpawnRotation = 0;
-    Spawn = D3PP::Common::Vector3S((short)(Size.X/2), Size.Y/2, Size.Z/2);
+    Spawn = Common::Vector3S((short)(Size.X/2), Size.Y/2, Size.Z/2);
     FormatVersion = 1;
     TimeCreated = Utils::CurrentUnixTime();
     LastAccessed = Utils::CurrentUnixTime();

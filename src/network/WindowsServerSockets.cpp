@@ -27,21 +27,21 @@ ServerSocket::ServerSocket(int port) {
 
 void ServerSocket::Listen() {
     if (!hasInit) {
-        Logger::LogAdd(MODULE_NAME, "WINSOCK NOT INITIALIZED YET!!!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "WINSOCK NOT INITIALIZED YET!!!", L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         throw std::runtime_error("Attempted to start listening before initializing winsock");
     }
 
     int iResult;
     iResult = bind(listenSocket, (struct sockaddr*)&server, sizeof(server));
     if (iResult== SOCKET_ERROR) {
-        Logger::LogAdd(MODULE_NAME, "Failed to start networking", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Failed to start networking", L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         return;
 
     }
     iResult = listen(listenSocket, 5);
 
     if (iResult== SOCKET_ERROR) {
-        Logger::LogAdd(MODULE_NAME, "Failed to start listening", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Failed to start listening", L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         closesocket(listenSocket);
         return;
     }
@@ -59,13 +59,13 @@ void ServerSocket::Init(int port) {
     iResult = WSAStartup(MAKEWORD(2, 2), &wsa);
     if (iResult != 0) {
         int wsaError = WSAGetLastError();
-        Logger::LogAdd(MODULE_NAME, "Failed to initialize winsock [" + stringulate(wsaError) + "]", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Failed to initialize winsock [" + stringulate(wsaError) + "]", L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         return;
     }
 
     listenSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (listenSocket == INVALID_SOCKET) {
-        Logger::LogAdd(MODULE_NAME, "Failed to initialize winsock[3]", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Failed to initialize winsock[3]", L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         WSACleanup();
         return;
     }
@@ -114,7 +114,7 @@ std::map<ServerSocketEvent, std::vector<SOCKET>> ServerSocket::CheckEvents() {
     if (activity == SOCKET_ERROR) {
         
         int errMsg = WSAGetLastError();
-        Logger::LogAdd("ServerSocket", "Some error occured calling select." + stringulate(errMsg), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("ServerSocket", "Some error occured calling select." + stringulate(errMsg), L_ERROR, __FILE__, __LINE__, __FUNCTION__);
 
         return std::map<ServerSocketEvent, std::vector<SOCKET>> { std::make_pair(SOCKET_EVENT_NONE, std::vector<SOCKET>())};;
     }

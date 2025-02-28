@@ -36,7 +36,7 @@ std::vector<std::string> GetDirectories(const std::string &dir) {
     return result;
 }
 
-void D3PP::plugins::PluginManager::RefreshPluginList() {
+void PluginManager::RefreshPluginList() {
     std::string pluginBaseDirectory = Files::GetFolder("Plugins");
     std::vector<std::string> pluginDirectories = GetDirectories(pluginBaseDirectory);
 
@@ -63,8 +63,8 @@ void D3PP::plugins::PluginManager::RefreshPluginList() {
     }
 }
 
-void D3PP::plugins::PluginManager::LoadPlugins() {
-    Logger::LogAdd("PluginManager", "Loading Plugins", LogType::NORMAL, GLF);
+void PluginManager::LoadPlugins() {
+    Logger::LogAdd("PluginManager", "Loading Plugins", NORMAL, GLF);
     RefreshPluginList();
     // -- TODO: Maybe? Make plugins only load if they are in a plugins settings file.
     int numLoadedPlugins = 0;
@@ -79,10 +79,10 @@ void D3PP::plugins::PluginManager::LoadPlugins() {
         }
     }
 
-    Logger::LogAdd("PluginManager", "Loaded " + stringulate(m_plugins.size()) + " plugins.", LogType::NORMAL, GLF);
+    Logger::LogAdd("PluginManager", "Loaded " + stringulate(m_plugins.size()) + " plugins.", NORMAL, GLF);
 }
 
-D3PP::plugins::PluginManager *D3PP::plugins::PluginManager::GetInstance() {
+PluginManager *PluginManager::GetInstance() {
     if (Instance == nullptr) {
         Instance = new PluginManager();
     }
@@ -93,7 +93,7 @@ D3PP::plugins::PluginManager *D3PP::plugins::PluginManager::GetInstance() {
 void PluginManager::TriggerCommand(const std::string &function, int clientId, const std::string &parsedCmd,
                                    const std::string &text0, const std::string &text1, const std::string &op1,
                                    const std::string &op2, const std::string &op3, const std::string &op4,
-                                   const std::string &op5) {
+                                   const std::string &op5) const {
     for(auto & plugin : m_plugins) {
         if (plugin->IsLoaded()) {
             plugin->TriggerCommand(function, clientId, parsedCmd, text0, text1, op1, op2, op3, op4, op5);
@@ -103,7 +103,7 @@ void PluginManager::TriggerCommand(const std::string &function, int clientId, co
 }
 
 void PluginManager::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, const std::string &function,
-                                   const std::string &args) {
+                                   const std::string &args) const {
     for(auto & plugin : m_plugins) {
         if (plugin->IsLoaded()) {
             plugin->TriggerMapFill(mapId, sizeX, sizeY, sizeZ, function, args);
@@ -112,7 +112,7 @@ void PluginManager::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, c
 }
 
 void PluginManager::TriggerPhysics(int mapId, unsigned short X, unsigned short Y, unsigned short Z,
-                                   const std::string &function) {
+                                   const std::string &function) const {
     for(auto & plugin : m_plugins) {
         if (plugin->IsLoaded()) {
             plugin->TriggerPhysics(mapId, X, Y, Z, function);
@@ -121,7 +121,7 @@ void PluginManager::TriggerPhysics(int mapId, unsigned short X, unsigned short Y
 }
 
 void PluginManager::TriggerBuildMode(const std::string &function, int clientId, int mapId, unsigned short X,
-                                     unsigned short Y, unsigned short Z, unsigned char mode, unsigned char block) {
+                                     unsigned short Y, unsigned short Z, unsigned char mode, unsigned char block) const {
     for(auto & plugin : m_plugins) {
         if (plugin->IsLoaded()) {
             plugin->TriggerBuildMode(function, clientId, mapId, X, Y, Z, mode, block);
@@ -129,8 +129,7 @@ void PluginManager::TriggerBuildMode(const std::string &function, int clientId, 
     }
 }
 
-void D3PP::plugins::PluginManager::TriggerBlockCreate(const std::string& function, int mapId, unsigned short X, unsigned short Y, unsigned short Z)
-{
+void PluginManager::TriggerBlockCreate(const std::string& function, int mapId, unsigned short X, unsigned short Y, unsigned short Z) const {
     for (auto& plugin : m_plugins) {
         if (plugin->IsLoaded()) {
             plugin->TriggerBlockCreate(function, mapId, X, Y, Z);
@@ -138,8 +137,7 @@ void D3PP::plugins::PluginManager::TriggerBlockCreate(const std::string& functio
     }
 }
 
-void D3PP::plugins::PluginManager::TriggerBlockDelete(const std::string& function, int mapId, unsigned short X, unsigned short Y, unsigned short Z)
-{
+void PluginManager::TriggerBlockDelete(const std::string& function, int mapId, unsigned short X, unsigned short Y, unsigned short Z) const {
     for (auto& plugin : m_plugins) {
         if (plugin->IsLoaded()) {
             plugin->TriggerBlockDelete(function, mapId, X, Y, Z);

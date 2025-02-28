@@ -35,6 +35,7 @@ public:
     static BuildModeMain* Instance;
      void Distribute(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z, bool mode, unsigned char blockType);
 
+     void CreateDefaults();
      void SetState(int clientId, char state);
      char GetState(int clientId);
      void SetCoordinate(int clientId, int index, D3PP::Common::Vector3F position);

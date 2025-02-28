@@ -29,7 +29,7 @@ std::string Files::GetFile(std::string name) {
 
 std::string Files::GetFolder(std::string name) {
     if (folders.find(name) == folders.end()) {
-        Logger::LogAdd(MODULE_NAME, "Path to folder [" + name + "] not defined", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Path to folder [" + name + "] not defined", WARNING, __FILE__, __LINE__, __FUNCTION__);
         return "";
     }
 

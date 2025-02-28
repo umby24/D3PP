@@ -54,7 +54,7 @@ int LuaCPELib::openLib(lua_State* L)
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    luaL_setfuncs(L, LuaCPELib::lib, 0);
+    luaL_setfuncs(L, lib, 0);
     lua_setglobal(L, "CPE");
     return 1;
 }
@@ -64,7 +64,7 @@ int LuaCPELib::LuaClientGetExtension(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Client_Get_Extension() called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("Lua", "LuaError: Client_Get_Extension() called with invalid number of arguments.", WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
 
@@ -86,7 +86,7 @@ int LuaCPELib::LuaClientGetExtensions(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Client_Get_Extensions called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Client_Get_Extensions called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -116,7 +116,7 @@ int LuaCPELib::LuaSelectionCuboidAdd(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 13) {
-        Logger::LogAdd("Lua", "LuaError: CPE_Selection_Cuboid_Add called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: CPE_Selection_Cuboid_Add called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -149,7 +149,7 @@ int LuaCPELib::LuaSelectionCuboidDelete(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: CPE_Selection_Cuboid_Delete called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: CPE_Selection_Cuboid_Delete called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -169,7 +169,7 @@ int LuaCPELib::LuaGetHeldBlock(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: CPE_Get_Held_Block called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: CPE_Get_Held_Block called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -192,7 +192,7 @@ int LuaCPELib::LuaSetHeldBlock(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 3) {
-        Logger::LogAdd("Lua", "LuaError: CPE_Set_Held_Block called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: CPE_Set_Held_Block called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -218,7 +218,7 @@ int LuaCPELib::LuaChangeModel(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: CPE_Change_Model called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: CPE_Change_Model called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -243,7 +243,7 @@ int LuaCPELib::LuaSetWeather(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: CPE_Set_Weather called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: CPE_Set_Weather called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -268,7 +268,7 @@ int LuaCPELib::LuaMapSetEnvColors(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 5) {
-        Logger::LogAdd("Lua", "LuaError: SetEnvColors called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: SetEnvColors called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -307,7 +307,7 @@ int LuaCPELib::LuaMapSetEnvColors(lua_State* L) {
             env.DLight = compressedColor;
             break;
         default:
-            Logger::LogAdd("Lua", "LuaError: Invalid Env color used.", LogType::WARNING, GLF);
+            Logger::LogAdd("Lua", "LuaError: Invalid Env color used.", WARNING, GLF);
             return 0;
     }
 
@@ -319,7 +319,7 @@ int LuaCPELib::LuaClientSetBlockPermissions(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 4) {
-        Logger::LogAdd("Lua", "LuaError: CPE_Client_Set_Block_Permissions called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: CPE_Client_Set_Block_Permissions called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -343,7 +343,7 @@ int LuaCPELib::LuaMapEnvSet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 5) {
-        Logger::LogAdd("Lua", "LuaError: CPE_Map_Env_Appearance_Set called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: CPE_Map_Env_Appearance_Set called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -373,7 +373,7 @@ int LuaCPELib::LuaClientHackcontrolSend(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 7) {
-        Logger::LogAdd("Lua", "LuaError: CPE_Client_Hackcontrol_Send called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: CPE_Client_Hackcontrol_Send called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -399,7 +399,7 @@ int LuaCPELib::LuaHotkeyAdd(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 4) {
-        Logger::LogAdd("Lua", "LuaError: CPE_Hotkey_Add called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: CPE_Hotkey_Add called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     std::string label(luaL_checkstring(L, 1));
@@ -415,7 +415,7 @@ int LuaCPELib::LuaHotkeyRemove(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: CPE_Hotkey_Add called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: CPE_Hotkey_Add called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     std::string label(luaL_checkstring(L, 1));
@@ -427,7 +427,7 @@ int LuaCPELib::LuaMapHackcontrolSet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 7) {
-        Logger::LogAdd("Lua", "LuaError: CPE_Map_Hackcontrol_Set called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: CPE_Map_Hackcontrol_Set called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -461,7 +461,7 @@ int LuaCPELib::LuaCreateBlock(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 16) {
-        Logger::LogAdd("Lua", "LuaError: BlockGlobalCreate called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: BlockGlobalCreate called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -483,11 +483,11 @@ int LuaCPELib::LuaCreateBlock(lua_State* L) {
     int fogB = static_cast<int>(luaL_checkinteger(L, 16));
 
     if (blockId == 0) {
-        Logger::LogAdd("Lua", "LuaError: You cannot redefine the air block!", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: You cannot redefine the air block!", WARNING, GLF);
         return 0;
     }
     if (blockId > 255) {
-        Logger::LogAdd("Lua", "LuaError: Invalid argument, blockid cannot be more than 255.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Invalid argument, blockid cannot be more than 255.", WARNING, GLF);
         return 0;
     }
 
@@ -528,7 +528,7 @@ int LuaCPELib::LuaDeleteBlock(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: BlockDelete called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: BlockDelete called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -550,7 +550,7 @@ int LuaCPELib::LuaSetBlockExt(lua_State* L)
     int nArgs = lua_gettop(L);
 
     if (nArgs != 13) {
-        Logger::LogAdd("Lua", "LuaError: SetBlockExt called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: SetBlockExt called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -559,7 +559,7 @@ int LuaCPELib::LuaSetBlockExt(lua_State* L)
     int blockId = static_cast<int>(luaL_checkinteger(L, 1));
 
     if (!cb->HasDef(blockId)) {
-        Logger::LogAdd("Lua", "LuaError: Attempt to set block ext on non-existing block. Create it using CPE.CreateBlockDef first", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Attempt to set block ext on non-existing block. Create it using CPE.CreateBlockDef first", WARNING, GLF);
         return 0;
     }
 
@@ -600,7 +600,7 @@ int LuaCPELib::LuaSetBlockExtClient(lua_State* L)
     int nArgs = lua_gettop(L);
 
     if (nArgs != 14) {
-        Logger::LogAdd("Lua", "LuaError: SetBlockExtClient called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: SetBlockExtClient called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -610,7 +610,7 @@ int LuaCPELib::LuaSetBlockExtClient(lua_State* L)
     int blockId = luaL_checkinteger(L, 1);
 
     if (!cb->HasDef(blockId)) {
-        Logger::LogAdd("Lua", "LuaError: Attempt to set block ext on non-existing block. Create it using CPE.CreateBlockDef first", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Attempt to set block ext on non-existing block. Create it using CPE.CreateBlockDef first", WARNING, GLF);
         return 0;
     }
 
@@ -655,7 +655,7 @@ int LuaCPELib::LuaCreateBlockClient(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 17) {
-        Logger::LogAdd("Lua", "LuaError: BlockCreateClient called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: BlockCreateClient called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     auto blockId = static_cast<int>(luaL_checkinteger(L, 1));
@@ -677,12 +677,12 @@ int LuaCPELib::LuaCreateBlockClient(lua_State* L) {
     auto clientId = static_cast<int>(luaL_checkinteger(L, 17));
 
     if (blockId == 0) {
-        Logger::LogAdd("Lua", "LuaError: You cannot redefine the air block!", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: You cannot redefine the air block!", WARNING, GLF);
         return 0;
     }
 
     if (blockId > 255) {
-        Logger::LogAdd("Lua", "LuaError: Invalid argument, blockid cannot be more than 255.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Invalid argument, blockid cannot be more than 255.", WARNING, GLF);
         return 0;
     }
 
@@ -719,7 +719,7 @@ int LuaCPELib::LuaDeleteBlockClient(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: BlockDeleteClient called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: BlockDeleteClient called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -740,7 +740,7 @@ int LuaCPELib::LuaSetClientHotbar(lua_State* L)
     int nArgs = lua_gettop(L);
 
     if (nArgs != 3) {
-        Logger::LogAdd("Lua", "LuaError: CPE.setClientHotbar called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: CPE.setClientHotbar called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -779,7 +779,7 @@ int LuaCPELib::LuaSetClientInventoryOrder(lua_State* L)
     int nArgs = lua_gettop(L);
 
     if (nArgs != 3) {
-        Logger::LogAdd("Lua", "LuaError: CPE.setClientInventoryOrder called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: CPE.setClientInventoryOrder called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 

@@ -47,9 +47,11 @@ void CommandMain::Init() {
     PluginReloadCommand.Name = "preload";
     PluginReloadCommand.Internal = true;
     PluginReloadCommand.Hidden = false;
-    PluginReloadCommand.Rank = 200;
-    PluginReloadCommand.RankShow = 200;
+    PluginReloadCommand.Rank = 260;
+    PluginReloadCommand.RankShow = 260;
     PluginReloadCommand.CanConsole = true;
+    PluginReloadCommand.Description = "Reloads all Lua Plugins";
+    PluginReloadCommand.Group = "Plugins";
     Commands.push_back(PluginReloadCommand);
 
     Command kickCommand;
@@ -57,10 +59,12 @@ void CommandMain::Init() {
     kickCommand.Name = "kick";
     kickCommand.Internal = true;
     kickCommand.Hidden = false;
-    kickCommand.Rank = 0;
-    kickCommand.RankShow = 0;
+    kickCommand.Rank = 150;
+    kickCommand.RankShow = 150;
     kickCommand.CanConsole = true;
-    kickCommand.Function = [this] { CommandMain::CommandKick(); };
+    kickCommand.Function = [this] { CommandKick(); };
+    kickCommand.Description = "kick [player] - Kicks a player from the server";
+    kickCommand.Group = "Admin";
     Commands.push_back(kickCommand);
 
     Command banCommand;
@@ -68,10 +72,12 @@ void CommandMain::Init() {
     banCommand.Name = "ban";
     banCommand.Internal = true;
     banCommand.Hidden = false;
-    banCommand.Rank = 0;
-    banCommand.RankShow = 0;
+    banCommand.Rank = 150;
+    banCommand.RankShow = 150;
     banCommand.CanConsole = true;
-    banCommand.Function = [this] { CommandMain::CommandBan(); };
+    banCommand.Function = [this] { CommandBan(); };
+    banCommand.Description = "ban [player] - Bans from the server";
+    banCommand.Group = "Admin";
     Commands.push_back(banCommand);
 
     Command unbanCommand;
@@ -79,10 +85,12 @@ void CommandMain::Init() {
     unbanCommand.Name = "unban";
     unbanCommand.Internal = true;
     unbanCommand.Hidden = false;
-    unbanCommand.Rank = 0;
+    unbanCommand.Rank = 150;
     unbanCommand.CanConsole = true;
-    unbanCommand.RankShow = 0;
-    unbanCommand.Function = [this] { CommandMain::CommandUnban(); };
+    unbanCommand.RankShow = 150;
+    unbanCommand.Function = [this] { CommandUnban(); };
+    unbanCommand.Description = "unban [player] - Unbans from the server";
+    unbanCommand.Group = "Admin";
     Commands.push_back(unbanCommand);
 
     Command stopcmd;
@@ -90,10 +98,12 @@ void CommandMain::Init() {
     stopcmd.Name = "stop";
     stopcmd.Internal = true;
     stopcmd.Hidden = false;
-    stopcmd.Rank = 0;
-    stopcmd.RankShow = 0;
+    stopcmd.Rank = 150;
+    stopcmd.RankShow = 150;
     stopcmd.CanConsole = true;
-    stopcmd.Function = [this] { CommandMain::CommandStop(); };
+    stopcmd.Function = [this] { CommandStop(); };
+    stopcmd.Description = "stop [player] - Stops a player from building";
+    stopcmd.Group = "Admin";
     Commands.push_back(stopcmd);
 
     Command unstopCmd;
@@ -101,10 +111,12 @@ void CommandMain::Init() {
     unstopCmd.Name = "unstop";
     unstopCmd.Internal = true;
     unstopCmd.Hidden = false;
-    unstopCmd.Rank = 0;
-    unstopCmd.RankShow = 0;
+    unstopCmd.Rank = 150;
+    unstopCmd.RankShow = 150;
     unstopCmd.CanConsole = true;
-    unstopCmd.Function = [this] { CommandMain::CommandUnStop(); };
+    unstopCmd.Function = [this] { CommandUnStop(); };
+    unstopCmd.Description = "unstop [player] - Unstops a player, allowing them to build again.";
+    unstopCmd.Group = "Admin";
     Commands.push_back(unstopCmd);
 
     Command muteCmd;
@@ -112,10 +124,12 @@ void CommandMain::Init() {
     muteCmd.Name = "mute";
     muteCmd.Internal = true;
     muteCmd.Hidden = false;
-    muteCmd.Rank = 0;
-    muteCmd.RankShow = 0;
+    muteCmd.Rank = 150;
+    muteCmd.RankShow = 150;
     muteCmd.CanConsole = true;
-    muteCmd.Function = [this] { CommandMain::CommandMute(); };
+    muteCmd.Function = [this] { CommandMute(); };
+    muteCmd.Description = "mute [player] [minutes] - Prevent a player from chatting for a time.";
+    muteCmd.Group = "Admin";
     Commands.push_back(muteCmd);
 
     Command unMuteCmd;
@@ -123,10 +137,12 @@ void CommandMain::Init() {
     unMuteCmd.Name = "unmute";
     unMuteCmd.Internal = true;
     unMuteCmd.Hidden = false;
-    unMuteCmd.Rank = 0;
-    unMuteCmd.RankShow = 0;
+    unMuteCmd.Rank = 150;
+    unMuteCmd.RankShow = 150;
     unMuteCmd.CanConsole = true;
-    unMuteCmd.Function = [this] { CommandMain::CommandUnmute(); };
+    unMuteCmd.Function = [this] { CommandUnmute(); };
+    muteCmd.Description = "unmute [player] - Allow a player to chat again.";
+    muteCmd.Group = "Admin";
     Commands.push_back(unMuteCmd);
 
     Command listCommands;
@@ -137,7 +153,9 @@ void CommandMain::Init() {
     listCommands.Rank = 0;
     listCommands.RankShow = 0;
     listCommands.CanConsole = true;
-    listCommands.Function = [this] { CommandMain::CommandCommands(); };
+    listCommands.Function = [this] { CommandCommands(); };
+    listCommands.Description = "commands [group(opt)] - Displays all commands, optionally within a specific group.";
+    listCommands.Group = "Common";
     Commands.push_back(listCommands);
 
     Command helpCommand;
@@ -148,7 +166,9 @@ void CommandMain::Init() {
     helpCommand.Rank = 0;
     helpCommand.RankShow = 0;
     helpCommand.CanConsole = true;
-    helpCommand.Function = [this] { CommandMain::CommandHelp(); };
+    helpCommand.Function = [this] { CommandHelp(); };
+    helpCommand.Description = "help [cmd] - Displays the help text of a command.";
+    helpCommand.Group = "Common";
     Commands.push_back(helpCommand);
 
     Command listPlayers;
@@ -159,7 +179,9 @@ void CommandMain::Init() {
     listPlayers.Rank = 0;
     listPlayers.RankShow = 0;
     listPlayers.CanConsole = true;
-    listPlayers.Function = [this] { CommandMain::CommandPlayers(); };
+    listPlayers.Function = [this] { CommandPlayers(); };
+    listPlayers.Description = "players - Lists all players on the server and in which map they are in.";
+    listPlayers.Group = "Common";
     Commands.push_back(listPlayers);
 
     Command pInfoCmd;
@@ -170,7 +192,9 @@ void CommandMain::Init() {
     pInfoCmd.Rank = 0;
     pInfoCmd.RankShow = 0;
     pInfoCmd.CanConsole = true;
-    pInfoCmd.Function = [this] { CommandMain::CommandPlayerInfo(); };
+    pInfoCmd.Function = [this] { CommandPlayerInfo(); };
+    pInfoCmd.Description = "pinfo [player] - Displays the playerDB stats of this user.";
+    pInfoCmd.Group = "Admin";
     Commands.push_back(pInfoCmd);
 
     Command pingCommand;
@@ -181,7 +205,9 @@ void CommandMain::Init() {
     pingCommand.Rank = 0;
     pingCommand.RankShow = 0;
     pingCommand.CanConsole = true;
-    pingCommand.Function = [this] { CommandMain::CommandPing(); };
+    pingCommand.Function = [this] { CommandPing(); };
+    pingCommand.Description = "Displays the network delay between yourself and the server.";
+    pingCommand.Group = "Common";
     Commands.push_back(pingCommand);
 
     Command globalCommand;
@@ -192,7 +218,9 @@ void CommandMain::Init() {
     globalCommand.Rank = 0;
     globalCommand.RankShow = 0;
     globalCommand.CanConsole = true;
-    globalCommand.Function = [this] { CommandMain::CommandGlobal(); };
+    globalCommand.Function = [this] { CommandGlobal(); };
+    globalCommand.Description = "global - Toggles global chat by default on or off.";
+    globalCommand.Group = "Chat";
     Commands.push_back(globalCommand);
 
     Command changeMapCommand;
@@ -203,7 +231,9 @@ void CommandMain::Init() {
     changeMapCommand.Rank = 0;
     changeMapCommand.RankShow = 0;
     changeMapCommand.CanConsole = false;
-    changeMapCommand.Function = [this] { CommandMain::CommandChangeMap(); };
+    changeMapCommand.Function = [this] { CommandChangeMap(); };
+    changeMapCommand.Description = "map [name] - Change to a new map.";
+    changeMapCommand.Group = "Map";
     Commands.push_back(changeMapCommand);
 
     Command changeRankCommand;
@@ -211,10 +241,12 @@ void CommandMain::Init() {
     changeRankCommand.Name = "setrank";
     changeRankCommand.Internal = true;
     changeRankCommand.Hidden = false;
-    changeRankCommand.Rank = 0;
-    changeRankCommand.RankShow = 0;
+    changeRankCommand.Rank = 150;
+    changeRankCommand.RankShow = 150;
     changeRankCommand.CanConsole = true;
-    changeRankCommand.Function = [this] { CommandMain::CommandChangeRank(); };
+    changeRankCommand.Function = [this] { CommandChangeRank(); };
+    changeRankCommand.Description = "setrank [name] [-1 - 65535]- Change a player to a new rank";
+    changeRankCommand.Group = "Admin";
     Commands.push_back(changeRankCommand);
 
     Command mapSaveCommand;
@@ -222,10 +254,12 @@ void CommandMain::Init() {
     mapSaveCommand.Name = "mapsave";
     mapSaveCommand.Internal = true;
     mapSaveCommand.Hidden = false;
-    mapSaveCommand.Rank = 0;
-    mapSaveCommand.RankShow = 0;
+    mapSaveCommand.Rank = 150;
+    mapSaveCommand.RankShow = 150;
     mapSaveCommand.CanConsole = false;
-    mapSaveCommand.Function = [this] { CommandMain::CommandSaveMap(); };
+    mapSaveCommand.Function = [this] { CommandSaveMap(); };
+    mapSaveCommand.Description = "Saves the map you are on.";
+    mapSaveCommand.Group = "Map";
     Commands.push_back(mapSaveCommand);
 
     Command getRankCommand;
@@ -236,7 +270,9 @@ void CommandMain::Init() {
     getRankCommand.Rank = 0;
     getRankCommand.RankShow = 0;
     getRankCommand.CanConsole = true;
-    getRankCommand.Function = [this] { CommandMain::CommandGetRank(); };
+    getRankCommand.Function = [this] { CommandGetRank(); };
+    getRankCommand.Description = "getrank [player] - Gets the rank of a player.";
+    getRankCommand.Group = "Common";
     Commands.push_back(getRankCommand);
 
     Command setMaterialCommand;
@@ -247,7 +283,9 @@ void CommandMain::Init() {
     setMaterialCommand.Rank = 0;
     setMaterialCommand.RankShow = 0;
     setMaterialCommand.CanConsole = false;
-    setMaterialCommand.Function = [this] { CommandMain::CommandSetMaterial(); };
+    setMaterialCommand.Function = [this] { CommandSetMaterial(); };
+    setMaterialCommand.Description = "material [block name] - Binds stone to instead build this material. /cancel to stop.";
+    setMaterialCommand.Group = "Building";
     Commands.push_back(setMaterialCommand);
 
     Command materialList;
@@ -258,7 +296,9 @@ void CommandMain::Init() {
     materialList.Rank = 0;
     materialList.RankShow = 0;
     materialList.CanConsole = true;
-    materialList.Function = [this] { CommandMain::CommandMaterials(); };
+    materialList.Function = [this] { CommandMaterials(); };
+    materialList.Description = "Displays a list of all custom blocks on the server.";
+    materialList.Group = "Building";
     Commands.push_back(materialList);
 
     Command undoPLayer;
@@ -266,10 +306,12 @@ void CommandMain::Init() {
     undoPLayer.Name = "undoplayer";
     undoPLayer.Internal = true;
     undoPLayer.Hidden = false;
-    undoPLayer.Rank = 0;
-    undoPLayer.RankShow = 0;
+    undoPLayer.Rank = 150;
+    undoPLayer.RankShow = 150;
     undoPLayer.CanConsole = true;
-    undoPLayer.Function = [this] { CommandMain::CommandUndoPlayer(); };
+    undoPLayer.Function = [this] { CommandUndoPlayer(); };
+    undoPLayer.Description = "undoplayer [player] [time] - Undoes the blocks placed by a player in the given duration.";
+    undoPLayer.Group = "Building";
     Commands.push_back(undoPLayer);
 
     Command undoCmd;
@@ -280,19 +322,23 @@ void CommandMain::Init() {
     undoCmd.Rank = 0;
     undoCmd.RankShow = 0;
     undoCmd.CanConsole = false;
-    undoCmd.Function = [this] { CommandMain::CommandUndo(); };
+    undoCmd.Function = [this] { CommandUndo(); };
+    undoCmd.Description = "undo [time] - Undoes your block changes for the past [time] seconds.";
+    undoCmd.Group = "Building";
     Commands.push_back(undoCmd);
 
     Command redoCmd;
-    undoCmd.Id = "Redo";
-    undoCmd.Name = "redo";
-    undoCmd.Internal = true;
-    undoCmd.Hidden = false;
-    undoCmd.Rank = 0;
-    undoCmd.RankShow = 0;
-    undoCmd.CanConsole = false;
-    undoCmd.Function = [this] { CommandMain::CommandRedo(); };
-    Commands.push_back(undoCmd);
+    redoCmd.Id = "Redo";
+    redoCmd.Name = "redo";
+    redoCmd.Internal = true;
+    redoCmd.Hidden = false;
+    redoCmd.Rank = 0;
+    redoCmd.RankShow = 0;
+    redoCmd.CanConsole = false;
+    redoCmd.Function = [this] { CommandRedo(); };
+    redoCmd.Description = "redo [time] - Replays block changes you removed with /undo";
+    redoCmd.Group = "Building";
+    Commands.push_back(redoCmd);
 
     Command mapList;
     mapList.Id = "List-Maps";
@@ -302,7 +348,9 @@ void CommandMain::Init() {
     mapList.Rank = 0;
     mapList.RankShow = 0;
     mapList.CanConsole = true;
-    mapList.Function = [this] { CommandMain::CommandListMaps(); };
+    mapList.Function = [this] { CommandListMaps(); };
+    mapList.Description = "Lists all maps available to change to.";
+    mapList.Group = "Common";
     Commands.push_back(mapList);
 
     Command serverInfo;
@@ -313,7 +361,9 @@ void CommandMain::Init() {
     serverInfo.Rank = 0;
     serverInfo.RankShow = 0;
     serverInfo.CanConsole = true;
-    serverInfo.Function = [this] { CommandMain::CommandServerInfo(); };
+    serverInfo.Function = [this] { CommandServerInfo(); };
+    serverInfo.Description = "Displays information about this server.";
+    serverInfo.Group = "Common";
     Commands.push_back(serverInfo);
 
     Command logCommand;
@@ -321,10 +371,12 @@ void CommandMain::Init() {
     logCommand.Name = "log";
     logCommand.Internal = true;
     logCommand.Hidden = false;
-    logCommand.Rank = 0;
-    logCommand.RankShow = 0;
+    logCommand.Rank = 260;
+    logCommand.RankShow = 260;
     logCommand.CanConsole = false;
-    logCommand.Function = [this] { CommandMain::CommandLogLast(); };
+    logCommand.Function = [this] { CommandLogLast(); };
+    logCommand.Description = "log [lines] - Display the last lines from the server console log.";
+    logCommand.Group = "Admin";
     Commands.push_back(logCommand);
 
     Command tpCommand;
@@ -335,7 +387,9 @@ void CommandMain::Init() {
     tpCommand.Rank = 0;
     tpCommand.RankShow = 0;
     tpCommand.CanConsole = false;
-    tpCommand.Function = [this] { CommandMain::CommandTeleport(); };
+    tpCommand.Function = [this] { CommandTeleport(); };
+    tpCommand.Description = "tp [player] - Teleport yourself to another player.";
+    tpCommand.Group = "Common";
     Commands.push_back(tpCommand);
 
     Command bringCommand;
@@ -343,10 +397,12 @@ void CommandMain::Init() {
     bringCommand.Name = "bring";
     bringCommand.Internal = true;
     bringCommand.Hidden = false;
-    bringCommand.Rank = 0;
-    bringCommand.RankShow = 0;
+    bringCommand.Rank = 100;
+    bringCommand.RankShow = 100;
     bringCommand.CanConsole = false;
-    bringCommand.Function = [this] { CommandMain::CommandBring(); };
+    bringCommand.Function = [this] { CommandBring(); };
+    bringCommand.Description = "bring [player] - Bring a player to your location.";
+    bringCommand.Group = "Common";
     Commands.push_back(bringCommand);
 
     Command mLoadCommand;
@@ -354,10 +410,12 @@ void CommandMain::Init() {
     mLoadCommand.Name = "mapload";
     mLoadCommand.Internal = true;
     mLoadCommand.Hidden = false;
-    mLoadCommand.Rank = 0;
-    mLoadCommand.RankShow = 0;
+    mLoadCommand.Rank = 260;
+    mLoadCommand.RankShow = 260;
     mLoadCommand.CanConsole = false;
-    mLoadCommand.Function = [this] { CommandMain::CommandLoadMap(); };
+    mLoadCommand.Function = [this] { CommandLoadMap(); };
+    mLoadCommand.Description = "mapload [folder] - Loads a map from a given file into this map file.";
+    mLoadCommand.Group = "Map";
     Commands.push_back(mLoadCommand);
 
     Command mResizeCmd;
@@ -365,10 +423,12 @@ void CommandMain::Init() {
     mResizeCmd.Name = "mapresize";
     mResizeCmd.Internal = true;
     mResizeCmd.Hidden = false;
-    mResizeCmd.Rank = 0;
-    mResizeCmd.RankShow = 0;
+    mResizeCmd.Rank = 150;
+    mResizeCmd.RankShow = 150;
     mResizeCmd.CanConsole = false;
-    mResizeCmd.Function = [this] { CommandMain::CommandResizeMap(); };
+    mResizeCmd.Function = [this] { CommandResizeMap(); };
+    mResizeCmd.Description = "mapresize [x] [y] [z] - Resizes this map to a new size.";
+    mResizeCmd.Group = "Map";
     Commands.push_back(mResizeCmd);
 
     Command mfillCommand;
@@ -376,10 +436,12 @@ void CommandMain::Init() {
     mfillCommand.Name = "mapfill";
     mfillCommand.Internal = true;
     mfillCommand.Hidden = false;
-    mfillCommand.Rank = 0;
-    mfillCommand.RankShow = 0;
+    mfillCommand.Rank = 150;
+    mfillCommand.RankShow = 150;
     mfillCommand.CanConsole = false;
-    mfillCommand.Function = [this] { CommandMain::CommandMapFill(); };
+    mfillCommand.Function = [this] { CommandMapFill(); };
+    mfillCommand.Description = "mapfill [gen] [args] - Run a map generator on this map. Args optional.";
+    mfillCommand.Group = "Map";
     Commands.push_back(mfillCommand);
 
     Command mRename;
@@ -387,10 +449,12 @@ void CommandMain::Init() {
     mRename.Name = "maprename";
     mRename.Internal = true;
     mRename.Hidden = false;
-    mRename.Rank = 0;
-    mRename.RankShow = 0;
+    mRename.Rank = 150;
+    mRename.RankShow = 150;
     mRename.CanConsole = false;
-    mRename.Function = [this] { CommandMain::CommandRenameMap(); };
+    mRename.Function = [this] { CommandRenameMap(); };
+    mRename.Description = "maprename [name] - Changes the name of this map in settings and on disk.";
+    mRename.Group = "Map";
     Commands.push_back(mRename);
 
     Command mDelete;
@@ -398,10 +462,12 @@ void CommandMain::Init() {
     mDelete.Name = "mapdelete";
     mDelete.Internal = true;
     mDelete.Hidden = false;
-    mDelete.Rank = 0;
-    mDelete.RankShow = 0;
+    mDelete.Rank = 260;
+    mDelete.RankShow = 260;
     mDelete.CanConsole = false;
-    mDelete.Function = [this] { CommandMain::CommandDeleteMap(); };
+    mDelete.Function = [this] { CommandDeleteMap(); };
+    mDelete.Description = "Delete this map.";
+    mDelete.Group = "Map";
     Commands.push_back(mDelete);
 
     Command mAdd;
@@ -409,10 +475,12 @@ void CommandMain::Init() {
     mAdd.Name = "mapadd";
     mAdd.Internal = true;
     mAdd.Hidden = false;
-    mAdd.Rank = 0;
-    mAdd.RankShow = 0;
+    mAdd.Rank = 260;
+    mAdd.RankShow = 260;
     mAdd.CanConsole = true;
-    mAdd.Function = [this] { CommandMain::CommandAddMap(); };
+    mAdd.Function = [this] { CommandAddMap(); };
+    mAdd.Description = "mapadd [name] - Creates a new map on the server.";
+    mAdd.Group = "Map";
     Commands.push_back(mAdd);
 
     Command mrbs;
@@ -420,10 +488,12 @@ void CommandMain::Init() {
     mrbs.Name = "mapbuildrank";
     mrbs.Internal = true;
     mrbs.Hidden = false;
-    mrbs.Rank = 0;
-    mrbs.RankShow = 0;
+    mrbs.Rank = 150;
+    mrbs.RankShow = 150;
     mrbs.CanConsole = false;
-    mrbs.Function = [this] { CommandMain::CommandMapRankBuildSet(); };
+    mrbs.Function = [this] { CommandMapRankBuildSet(); };
+    mrbs.Description = "mapbuildrank [rank] - Sets the minimum rank you need to build on this map.";
+    mrbs.Group = "Map";
     Commands.push_back(mrbs);
 
     Command mrss;
@@ -431,10 +501,12 @@ void CommandMain::Init() {
     mrss.Name = "mapshowrank";
     mrss.Internal = true;
     mrss.Hidden = false;
-    mrss.Rank = 0;
-    mrss.RankShow = 0;
+    mrss.Rank = 150;
+    mrss.RankShow = 150;
     mrss.CanConsole = false;
-    mrss.Function = [this] { CommandMain::CommandMapRankShowSet(); };
+    mrss.Function = [this] { CommandMapRankShowSet(); };
+    mrss.Description = "mapshowrank [rank] - Sets the minimum rank you need to have to see this map on /maps.";
+    mrss.Group = "Map";
     Commands.push_back(mrss);
 
     Command mrjs;
@@ -442,10 +514,12 @@ void CommandMain::Init() {
     mrjs.Name = "mapjoinrank";
     mrjs.Internal = true;
     mrjs.Hidden = false;
-    mrjs.Rank = 0;
-    mrjs.RankShow = 0;
+    mrjs.Rank = 150;
+    mrjs.RankShow = 150;
     mrjs.CanConsole = false;
-    mrjs.Function = [this] { CommandMain::CommandMapRankJoinSet(); };
+    mrjs.Function = [this] { CommandMapRankJoinSet(); };
+    mrjs.Description = "mapjoinrank [rank] - Sets the minimum rank to join this map.";
+    mrjs.Group = "Map";
     Commands.push_back(mrjs);
 
     Command mStopPhys;
@@ -453,10 +527,12 @@ void CommandMain::Init() {
     mStopPhys.Name = "pstop";
     mStopPhys.Internal = true;
     mStopPhys.Hidden = false;
-    mStopPhys.Rank = 0;
-    mStopPhys.RankShow = 0;
+    mStopPhys.Rank = 150;
+    mStopPhys.RankShow = 150;
     mStopPhys.CanConsole = false;
-    mStopPhys.Function = [this] { CommandMain::CommandStopPhysics(); };
+    mStopPhys.Function = [this] { CommandStopPhysics(); };
+    mStopPhys.Description = "Stops block physics from being processed on this map.";
+    mStopPhys.Group = "Map";
     Commands.push_back(mStopPhys);
 
     Command mStartPhys;
@@ -464,10 +540,12 @@ void CommandMain::Init() {
     mStartPhys.Name = "pstart";
     mStartPhys.Internal = true;
     mStartPhys.Hidden = false;
-    mStartPhys.Rank = 0;
-    mStartPhys.RankShow = 0;
+    mStartPhys.Rank = 150;
+    mStartPhys.RankShow = 150;
     mStopPhys.CanConsole = false;
-    mStartPhys.Function = [this] { CommandMain::CommandStartPhysics(); };
+    mStartPhys.Function = [this] { CommandStartPhysics(); };
+    mStartPhys.Description = "Enables block physics on this map.";
+    mStartPhys.Group = "Map";
     Commands.push_back(mStartPhys);
 
     Command mSetSpawn;
@@ -475,10 +553,12 @@ void CommandMain::Init() {
     mSetSpawn.Name = "setspawn";
     mSetSpawn.Internal = true;
     mSetSpawn.Hidden = false;
-    mSetSpawn.Rank = 0;
-    mSetSpawn.RankShow = 0;
+    mSetSpawn.Rank = 150;
+    mSetSpawn.RankShow = 150;
     mSetSpawn.CanConsole = false;
-    mSetSpawn.Function = [this] { CommandMain::CommandSetSpawn(); };
+    mSetSpawn.Function = [this] { CommandSetSpawn(); };
+    mSetSpawn.Description = "Sets the map spawn point to your current location.";
+    mSetSpawn.Group = "Map";
     Commands.push_back(mSetSpawn);
 
     Command mSetKillSpawn;
@@ -486,10 +566,12 @@ void CommandMain::Init() {
     mSetKillSpawn.Name = "setkillspawn";
     mSetKillSpawn.Internal = true;
     mSetKillSpawn.Hidden = false;
-    mSetKillSpawn.Rank = 0;
-    mSetKillSpawn.RankShow = 0;
+    mSetKillSpawn.Rank = 150;
+    mSetKillSpawn.RankShow = 150;
     mSetKillSpawn.CanConsole = false;
-    mSetKillSpawn.Function = [this] { CommandMain::CommandSetKilLSpawn(); };
+    mSetKillSpawn.Function = [this] { CommandSetKilLSpawn(); };
+    mSetKillSpawn.Description = "Sets the respawn location of the map to your current location.";
+    mSetKillSpawn.Group = "Map";
     Commands.push_back(mSetKillSpawn);
 
     Command mTeleporters;
@@ -500,7 +582,9 @@ void CommandMain::Init() {
     mTeleporters.Rank = 0;
     mTeleporters.RankShow = 0;
     mTeleporters.CanConsole = false;
-    mTeleporters.Function = [this] { CommandMain::CommandTeleporters(); };
+    mTeleporters.Function = [this] { CommandTeleporters(); };
+    mTeleporters.Description = "Lists all teleporters on this map.";
+    mTeleporters.Group = "Map";
     Commands.push_back(mTeleporters);
 
     Command cDeleteTp;
@@ -508,10 +592,12 @@ void CommandMain::Init() {
     cDeleteTp.Name = "deltp";
     cDeleteTp.Internal = true;
     cDeleteTp.Hidden = false;
-    cDeleteTp.Rank = 0;
-    cDeleteTp.RankShow = 0;
+    cDeleteTp.Rank = 150;
+    cDeleteTp.RankShow = 150;
     cDeleteTp.CanConsole = false;
-    cDeleteTp.Function = [this] { CommandMain::CommandDeleteTeleporter(); };
+    cDeleteTp.Function = [this] { CommandDeleteTeleporter(); };
+    cDeleteTp.Description = "deltp [name] - Deletes a teleporter from this map.";
+    cDeleteTp.Group = "Map";
     Commands.push_back(cDeleteTp);
 
     Command mapInfo;
@@ -522,7 +608,9 @@ void CommandMain::Init() {
     mapInfo.Rank = 0;
     mapInfo.RankShow = 0;
     mapInfo.CanConsole = false;
-    mapInfo.Function = [this] { CommandMain::CommandMapInfo(); };
+    mapInfo.Function = [this] { CommandMapInfo(); };
+    mapInfo.Description = "Displays information about the current map.";
+    mapInfo.Group = "Map";
     Commands.push_back(mapInfo);
 
     Command usermaps;
@@ -530,10 +618,12 @@ void CommandMain::Init() {
     usermaps.Name = "usermaps";
     usermaps.Internal = true;
     usermaps.Hidden = false;
-    usermaps.Rank = 0;
-    usermaps.RankShow = 0;
+    usermaps.Rank = 150;
+    usermaps.RankShow = 150;
     usermaps.CanConsole = true;
-    usermaps.Function = [this] { CommandMain::CommandUserMaps(); };
+    usermaps.Function = [this] { CommandUserMaps(); };
+    usermaps.Description = "Display a list of saved builds for import.";
+    usermaps.Group = "Building";
     Commands.push_back(usermaps);
 
     Command placeCmd;
@@ -544,7 +634,9 @@ void CommandMain::Init() {
     placeCmd.Rank = 0;
     placeCmd.RankShow = 0;
     placeCmd.CanConsole = false;
-    placeCmd.Function = [this] { CommandMain::CommandPlace(); };
+    placeCmd.Function = [this] { CommandPlace(); };
+    placeCmd.Description = "Places a block below your feet. Default of whatever block you placed last.";
+    placeCmd.Group = "Building";
     Commands.push_back(placeCmd);
 
 }
@@ -586,7 +678,9 @@ void CommandMain::Load() {
     std::string cmdFilename = Files::GetFile(COMMAND_FILENAME);
 
     if (Utils::FileSize(cmdFilename) == -1) {
-        Logger::LogAdd(MODULE_NAME, "Commands file does not exist.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Commands file does not exist, will generate.", L_ERROR, GLF);
+        Init();
+        SaveFile = true;
         return;
     }
 
@@ -599,6 +693,7 @@ void CommandMain::Load() {
     for (auto const &si : pl.SettingsDictionary) {
         if (si.first.empty())
             continue;
+
         bool found = false;
 
         for(auto &cmd : Commands) {
@@ -611,6 +706,7 @@ void CommandMain::Load() {
                 cmd.Plugin = pl.Read("Plugin", "");
                 cmd.Group = pl.Read("Group", "");
                 cmd.Description = pl.Read("Description", "-");
+                cmd.Hidden = pl.Read("Hidden", false);
                 break;
             }
         }
@@ -634,9 +730,31 @@ void CommandMain::Load() {
 
     RefreshGroups();
 
-    Logger::LogAdd(MODULE_NAME, "File loaded [" + cmdFilename + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File loaded [" + cmdFilename + "]", NORMAL, GLF);
     time_t modTime = Utils::FileModTime(cmdFilename);
     FileDateLast = modTime;
+}
+
+void CommandMain::Save() {
+    if (!SaveFile) { return; }
+    std::string cmdFilename = Files::GetFile(COMMAND_FILENAME);
+
+    PreferenceLoader pl(cmdFilename, "");
+    for (auto &cmd : Commands) {
+        pl.SelectGroup(cmd.Id);
+        pl.Write("Name", cmd.Name);
+        pl.Write("Rank", cmd.Rank);
+        pl.Write("Rank_Show", cmd.RankShow);
+        pl.Write("Plugin", cmd.Plugin);
+        pl.Write("Description", cmd.Description);
+        pl.Write("Hidden", cmd.Hidden);
+        pl.Write("Internal", cmd.Internal);
+        pl.Write("Group", cmd.Group);
+    }
+
+    pl.SaveFile();
+    Logger::LogAdd(MODULE_NAME, "File saved [" + cmdFilename + "]", NORMAL, GLF);
+    SaveFile = false;
 }
 
 void CommandMain::MainFunc() {
@@ -646,6 +764,10 @@ void CommandMain::MainFunc() {
     if (modTime != FileDateLast) {
         Load();
         FileDateLast = modTime;
+    }
+
+    if (SaveFile) {
+        Save();
     }
 }
 
@@ -691,14 +813,14 @@ void CommandMain::CommandDo(const std::shared_ptr<IMinecraftClient>& client, con
             continue;
 
         if (client->GetId() == -200 && !cmd.CanConsole) {
-            Logger::LogAdd(MODULE_NAME, "&cThis command is not accessible via console!", LogType::L_ERROR, GLF);
+            Logger::LogAdd(MODULE_NAME, "&cThis command is not accessible via console!", L_ERROR, GLF);
             found = true;
         } else if (client->GetRank() < cmd.Rank) {
             client->SendChat("§EYou are not allowed to use this command.");
             found = true;
         } else {
             if (!cmd.Hidden) {
-                Logger::LogAdd(MODULE_NAME, "Player '" + client->GetLoginName() + "' used command /" + ParsedCommand + " (" + join(ParsedOperator.begin(), ParsedOperator.end()) + ")", LogType::COMMAND, __FILE__, __LINE__, __FUNCTION__);
+                Logger::LogAdd(MODULE_NAME, "Player '" + client->GetLoginName() + "' used command /" + ParsedCommand + " (" + join(ParsedOperator.begin(), ParsedOperator.end()) + ")", COMMAND, __FILE__, __LINE__, __FUNCTION__);
             }
             if (!cmd.Plugin.empty()) {
                 // -- Run plugin based command

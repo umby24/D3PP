@@ -58,6 +58,7 @@ class CommandMain : TaskItem {
         CommandMain();
         void Init();
         void Load();
+        void Save();
         void RefreshGroups();
         void MainFunc();
         void CommandDo(const std::shared_ptr<IMinecraftClient>& client, const std::string& input);
