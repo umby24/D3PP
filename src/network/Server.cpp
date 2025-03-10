@@ -41,15 +41,12 @@ D3PP::network::Server* D3PP::network::Server::m_Instance = nullptr;
 D3PP::network::Server::Server() {
     m_port = Configuration::NetSettings.ListenPort;
 
-    Interval = std::chrono::seconds(5);
+    Interval = std::chrono::milliseconds(1);
     Main = [this](){ this->MainFunc(); };
-    TaskScheduler::RegisterTask("Bandwidth", *this);
+    TaskScheduler::RegisterTask("Server", *this);
     m_needsUpdate = false;
     m_serverSocket = std::make_unique<ServerSocket>(m_port);
     m_serverSocket->Listen();
-
-    std::thread handleThread([this]() { this->HandleClientData(); });
-    std::swap(m_handleThread, handleThread);
 
     Logger::LogAdd("Server", "Network server started on port " + stringulate(this->m_port), NORMAL, GLF);
 }
@@ -75,6 +72,7 @@ void D3PP::network::Server::MainFunc() {
     ReceivedIncrement = 0;
     SentIncrement = 0;
     //Logger::LogAdd("Server", "Recv: " + stringulate(BytesReceived) + " KB/s, Sent: " + stringulate(BytesSent) + " KB/s.", DEBUG, GLF);
+    HandleClientData();
 }
 
 void D3PP::network::Server::Shutdown() {
@@ -93,19 +91,15 @@ void D3PP::network::Server::Shutdown() {
 }
 
 void D3PP::network::Server::HandleClientData() {
-    while (System::IsRunning) {
-        HandleEvents();
-        {
-            std::shared_lock lock(roMutex);
-            for (auto const &c: roClients) {
-                if (c->IsDataAvailable())
-                    c->SendQueued();
+    HandleEvents();
+    {
+        std::shared_lock lock(roMutex);
+        for (auto const &c: roClients) {
+            if (c->IsDataAvailable())
+                c->SendQueued();
 
-                c->HandleData();
-            }
+            c->HandleData();
         }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 }
 

@@ -262,6 +262,15 @@ void Map::Resend() const
     pQueue->Clear();
 }
 
+/**
+ * Handles an incoming block change from a client.
+ * @param client The network client initiating the block change
+ * @param X X Coord of block change
+ * @param Y Y Coord of block change
+ * @param Z Z Coord of block change
+ * @param mode Mode, 0 for break, 1 for place.
+ * @param type block type.
+ */
 void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char type) {
     if (client == nullptr)
         return;
@@ -274,14 +283,10 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
         LastClient = time(nullptr);
         Reload();
     }
-
-    std::shared_lock lock(BlockMutex, std::defer_lock);
-    auto rawBlock = m_mapProvider->GetBlock(blockLocation);
-
-    if (client->IsStopped()) {
-        NetworkFunctions::SystemMessageNetworkSend(client->GetId(), "&eYou are not allowed to build (stopped).");
-        NetworkFunctions::NetworkOutBlockSet(client->GetId(), X, Y, Z, rawBlock);
-        return;
+    unsigned char rawBlock;
+    {
+        std::shared_lock lock(BlockMutex, std::defer_lock);
+        rawBlock = m_mapProvider->GetBlock(blockLocation);
     }
 
     unsigned char rawNewType;
@@ -301,15 +306,18 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
         NetworkFunctions::SystemMessageNetworkSend(client->GetId(), "&eYou are not allowed to delete this block type.");
         NetworkFunctions::NetworkOutBlockSet(client->GetId(), X, Y, Z, oldType.OnClient);
         return;
-    } else if (client->GetRank()  < newType.RankPlace) {
+    }
+    if (client->GetRank()  < newType.RankPlace) {
         NetworkFunctions::SystemMessageNetworkSend(client->GetId(), "&eYou are not allowed to build this block type.");
         NetworkFunctions::NetworkOutBlockSet(client->GetId(), X, Y, Z, oldType.OnClient);
         return;
-    } else if (client->GetRank() < blockRank) {
+    }
+    if (client->GetRank() < blockRank) {
         NetworkFunctions::SystemMessageNetworkSend(client->GetId(), "&eYou are not allowed to build here.");
         NetworkFunctions::NetworkOutBlockSet(client->GetId(), X, Y, Z, oldType.OnClient);
         return;
     }
+    // -- Inform the world that a block has changed (Clients and plugins)
     EventMapBlockChangeClient mbc;
     mbc.clientId = client->GetId();
     mbc.mapId = ID;
@@ -320,12 +328,14 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
     mbc.mode = mode;
     Dispatcher::post(mbc);
     
-    if (mbc.isCancelled()) {
+    if (mbc.isCancelled()) { // -- If a plugin kicked back a cancel of this block change, this will be true.
         NetworkFunctions::NetworkOutBlockSet(client->GetId(), X, Y, Z, oldType.OnClient);
         return;
     }
 
+    // -- Perform the physical change in memory of the block change.
     BlockChange(clientEntity->playerList->Number, X, Y, Z, rawNewType, true, true, true, 250);
+
     plugins::PluginManager* pm = plugins::PluginManager::GetInstance();
     //QueueBlockChange(Vector3S(X, Y, Z), 250, -1);
     if (!oldType.DeletePlugin.empty() && oldType.DeletePlugin.starts_with("Lua:")) {
@@ -336,7 +346,7 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
     if (!newType.CreatePlugin.empty() && newType.CreatePlugin.starts_with("Lua:")) {
         std::string myPlug(newType.CreatePlugin);
         Utils::replaceAll(myPlug, "Lua:", "");
-        pm->TriggerBlockDelete(myPlug, ID, X, Y, Z);
+        pm->TriggerBlockCreate(myPlug, ID, X, Y, Z);
     }
 
 }
@@ -518,10 +528,13 @@ unsigned short Map::GetBlockPlayer(unsigned short X, unsigned short Y, unsigned 
 
 void Map::QueueBlockPhysics(Vector3S location) {
     Block* bm = Block::GetInstance();
+    MapBlock blockEntry;
 
-    std::shared_lock lock(BlockMutex, std::defer_lock);
+    {
+        std::shared_lock lock(BlockMutex, std::defer_lock);
+        blockEntry = bm->GetBlock(m_mapProvider->GetBlock(location));
+    }
 
-    MapBlock blockEntry = bm->GetBlock(m_mapProvider->GetBlock(location));
     unsigned char blockPhysics = blockEntry.Physics;
     std::string physPlugin = blockEntry.PhysicsPlugin;
 
@@ -536,9 +549,12 @@ void Map::QueueBlockPhysics(Vector3S location) {
 void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
     Block* bm = Block::GetInstance();
     MapMain* mapMain= MapMain::GetInstance();
+    MapBlock blockEntry;
+    {
         std::shared_lock lock(BlockMutex, std::defer_lock);
+        blockEntry = bm->GetBlock(m_mapProvider->GetBlock(Vector3S(X, Y, Z)));
+    }
 
-    const MapBlock blockEntry = bm->GetBlock(m_mapProvider->GetBlock(Vector3S(X, Y, Z)));
         switch (blockEntry.Physics) {
             case 10:
                 Physics::BlockPhysics10(mapMain->GetPointer(ID), X, Y, Z);

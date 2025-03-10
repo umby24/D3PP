@@ -36,20 +36,21 @@ public:
      void Distribute(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z, bool mode, unsigned char blockType);
 
      void CreateDefaults();
-     void SetState(int clientId, char state);
-     char GetState(int clientId);
-     void SetCoordinate(int clientId, int index, D3PP::Common::Vector3F position);
-     unsigned short GetCoordinateX(int clientId, int index);
-     unsigned short GetCoordinateY(int clientId, int index);
-     unsigned short GetCoordinateZ(int clientId, int index);
-     void SetInt(int clientId, int index, int val);
+     static void SetState(int clientId, char state);
+
+    static char GetState(int clientId);
+     static void SetCoordinate(int clientId, int index, D3PP::Common::Vector3F position);
+     static unsigned short GetCoordinateX(int clientId, int index);
+     static unsigned short GetCoordinateY(int clientId, int index);
+     static unsigned short GetCoordinateZ(int clientId, int index);
+     static void SetInt(int clientId, int index, int val);
      int GetInt(int clientId, int index);
      void SetFloat(int clientId, int index, float val);
      float GetFloat(int clientId, int index);
      void SetString(int clientId, int index, std::string val);
      std::string GetString(int clientId, int index);
 
-    void SetMode(int clientId, std::string mode);
+    void SetMode(int clientId, const std::string &mode);
 
 private:
     std::vector<BlockResend> _resendBlocks;
