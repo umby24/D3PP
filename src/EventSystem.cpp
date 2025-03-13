@@ -3,6 +3,8 @@
 //
 #include "EventSystem.h"
 
+#include <ranges>
+
 
 std::map< Event::DescriptorType, std::vector<Dispatcher::SlotHandle> > Dispatcher::_observers;
 unsigned int Dispatcher::_nextID = 0;
@@ -13,8 +15,8 @@ Event::~Event()
 unsigned int Dispatcher::subscribe( const Event::DescriptorType& descriptor,
                                     SlotType&& slot )
 {
-    auto id           = _nextID;
-    SlotHandle handle = { id, slot };
+    const auto id           = _nextID;
+    const SlotHandle handle = { id, slot };
 
     _observers[ descriptor ].push_back( handle );
     ++_nextID;
@@ -24,23 +26,23 @@ unsigned int Dispatcher::subscribe( const Event::DescriptorType& descriptor,
 
 void Dispatcher::unsubscribe(unsigned int connection )
 {
-    for( auto&& pair : _observers )
+    for(auto &val: _observers | std::views::values)
     {
-        auto&& handles = pair.second;
+        auto&& handles = val;
 
-        handles.erase( std::remove_if( handles.begin(), handles.end(),
-                                       [&] ( SlotHandle& handle )
-                                       {
-                                           return handle.id == connection;
-                                       } ),
+        handles.erase( std::ranges::remove_if(handles,
+                                              [&] (const SlotHandle& handle )
+                                              {
+                                                  return handle.id == connection;
+                                              } ).begin(),
                        handles.end() );
     }
 }
 
 bool Dispatcher::hasDescriptor(const std::string& item) {
     bool found = false;
-    for (auto&& pair : _observers) {
-        if (pair.first == item) {
+    for (const auto &key: _observers | std::views::keys) {
+        if (key == item) {
             found = true;
             break;
         }
@@ -50,21 +52,19 @@ bool Dispatcher::hasDescriptor(const std::string& item) {
 
 void Dispatcher::post( Event& event )
 {
-    Event::DescriptorType type = event.type();
+    const Event::DescriptorType type = event.type();
 
-    if (_observers.find(type) == _observers.end())
+    if (!_observers.contains(type))
         return;
 
-    auto&& observers = _observers.at( type );
-    
-    for( auto&& observer : observers )
-        observer.slot( event );
+    for(auto&& observers = _observers.at( type ); auto&[id, eventHandler] : observers )
+        eventHandler( event );
 }
 
 Event::DescriptorType Dispatcher::getDescriptor(const std::string& descriptor) {
-    for (auto&& pair : _observers)
-        if (pair.first == descriptor)
-            return pair.first;
+    for (const auto &eventName: _observers | std::views::keys)
+        if (eventName == descriptor)
+            return eventName;
 
     return nullptr;
 }

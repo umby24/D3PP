@@ -15,6 +15,7 @@
 #include <filesystem>
 #include <shared_mutex>
 
+#include "world/Teleporter.h"
 #include "common/MinecraftLocation.h"
 #include "common/Vectors.h"
 
@@ -35,8 +36,6 @@ namespace D3PP::files {
 }
 
 namespace D3PP::world {
-    class Teleporter;
-
     struct MapBlockChanged {
 
     };

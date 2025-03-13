@@ -21,7 +21,7 @@ public:
 private:
     std::shared_ptr<httplib::Server> m_restServer;
     std::thread m_serverThread;
-    void RunHttpServer();
+    void RunHttpServer() const;
 };
 
 #endif //D3PP_RESTAPI_H

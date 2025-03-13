@@ -2,7 +2,8 @@
 #include <lua.hpp>
 
 #include <filesystem>
-#include <events/PlayerEventArgs.h>
+#include <ranges>
+#include "events/PlayerEventArgs.h"
 
 #include "plugins/LuaState.h"
 
@@ -10,7 +11,8 @@
 #include "Utils.h"
 #include "EventSystem.h"
 #include "Block.h"
-// -- Events..
+
+
 #include "events/EventChatAll.h"
 #include "events/EventChatMap.h"
 #include "events/EventClientAdd.h"
@@ -45,29 +47,29 @@ LuaPlugin::~LuaPlugin() {
 }
 
 void LuaPlugin::RegisterEventListener() {
-    Dispatcher::subscribe(EventChatAll{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventChatMap{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventChatAll{}.type(),       [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventChatMap{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
    // Dispatcher::subscribe(EventChatPrivate{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventClientAdd{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventClientDelete{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventClientLogin{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventClientLogout{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventEntityAdd{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventEntityDelete{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventEntityDie{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventEntityMapChange{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventEntityPositionSet{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapActionDelete{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapActionFill{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapActionLoad{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapActionResize{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapActionSave{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapAdd{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapBlockChange{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapBlockChangeClient{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventMapBlockChangePlayer{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(EventTimer{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
-    Dispatcher::subscribe(PlayerClickEventArgs{}.type(), [this](auto && PH1) { HandleEvent(std::forward<decltype(PH1)>(PH1)); });
+    Dispatcher::subscribe(EventClientAdd{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventClientDelete{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventClientLogin{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventClientLogout{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventEntityAdd{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventEntityDelete{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventEntityDie{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventEntityMapChange{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventEntityPositionSet{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventMapActionDelete{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventMapActionFill{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventMapActionLoad{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventMapActionResize{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventMapActionSave{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventMapAdd{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventMapBlockChange{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventMapBlockChangeClient{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventMapBlockChangePlayer{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(EventTimer{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
+    Dispatcher::subscribe(PlayerClickEventArgs{}.type(), [this]<typename T0>(T0 && PH1) { HandleEvent(std::forward<T0>(PH1)); });
 }
 
 void LuaPlugin::HandleEvent(Event& event) {
@@ -77,35 +79,31 @@ void LuaPlugin::HandleEvent(Event& event) {
     if (!m_loaded)
         return;
 
-    auto type = event.type(); // -- get the type..
+    const auto type = event.type(); // -- get the type..
 
     std::shared_lock lock (m_luaState->eventMutex); // -- Deadlock Source
-    if(m_luaState->events.find( type ) == m_luaState->events.end() ) // -- find all functions that want to be called on this event
+    if(!m_luaState->events.contains( type )) // -- find all functions that want to be called on this event
         return;
 
-    auto&& observers = m_luaState->events.at( type );
-
-    for( auto&& observer : observers ) {
-        std::scoped_lock<std::recursive_mutex> rcLock(executionMutex);
+    for(auto &&observers = m_luaState->events.at(type); auto &val: observers | std::views::values) {
+        std::scoped_lock rcLock(executionMutex);
         lua_State* thisLuaState = m_luaState->GetState();
 
-        lua_getglobal(thisLuaState, observer.second.functionName.c_str()); // -- Get the function to be called
+        lua_getglobal(thisLuaState, val.functionName.c_str()); // -- Get the function to be called
 
         if (!lua_isfunction(thisLuaState, -1)) {
             lua_pop(thisLuaState, 1);
             continue;
         }
 
-        int argCount = event.PushLua(thisLuaState); // -- Have the event push its args and return how many were pushed..
+        const int argCount = event.PushLua(thisLuaState); // -- Have the event push its args and return how many were pushed..
         try {
             if (lua_pcall(thisLuaState, argCount, 1, 0) != 0) { // -- Call the function.
                 bail(thisLuaState, "[Event Handler]"); // -- catch errors
                 return;
             }
             if (lua_isinteger(thisLuaState, -1)) {
-                int result = static_cast<int>(lua_tointeger(thisLuaState, -1));
-
-                if (result == 0) {
+                if (const int result = static_cast<int>(lua_tointeger(thisLuaState, -1)); result == 0) {
                     event.setCancelled();
                 }
             }
@@ -127,7 +125,7 @@ void LuaPlugin::Init() {
  * @param dir The starting directory to traverse
  * @return Paths (relative to dir) to lua files.
  */
-std::vector<std::string> EnumerateDirectory(const std::string &dir) {
+std::vector<std::string> EnumerateDirectory(const std::string &dir) { // NOLINT(*-no-recursion)
     std::vector<std::string> result{};
 
     if (std::filesystem::is_directory(dir)) {
@@ -170,10 +168,10 @@ void LuaPlugin::MainFunc() {
                 }
             }
             if (e.first.starts_with("add")) { // -- Register new events.
-                if (m_luaState->events.find(e.second.type) == m_luaState->events.end()) // -- Does this type exist in our tracker yet? i.e. EVENT_ENTITY_ADD.
+                if (!m_luaState->events.contains(e.second.type)) // -- Does this type exist in our tracker yet? i.e. EVENT_ENTITY_ADD.
                     m_luaState->events.insert(std::make_pair(e.second.type, std::map<std::string, LuaEvent>())); // -- If not create a base list for it.
 
-                if (m_luaState->events[e.second.type].find(e.second.eventId) != m_luaState->events[e.second.type].end()) { // -- Does this event list have our event id in it?
+                if (m_luaState->events[e.second.type].contains(e.second.eventId)) { // -- Does this event list have our event id in it?
                     m_luaState->events[e.second.type][e.second.eventId] = e.second; // -- if yes lets just reassign it.
                 }
                 else { // -- Otherwise we need to insert it.
@@ -186,48 +184,40 @@ void LuaPlugin::MainFunc() {
     }
 }
 
-void LuaPlugin::TimerMain() {
-    auto timerDescriptor = Dispatcher::getDescriptor("Timer");
-    {
+void LuaPlugin::TimerMain() { {
+        const auto timerDescriptor = Dispatcher::getDescriptor("Timer");
         std::shared_lock lock(m_luaState->eventMutex);
-        if (m_luaState->events.find(timerDescriptor) == m_luaState->events.end())
+        if (!m_luaState->events.contains(timerDescriptor))
             return;
 
-        auto &eventsAt = m_luaState->events[timerDescriptor];
-        for (auto &e: eventsAt) {
-            if (clock() >= (e.second.lastRun + e.second.duration)) {
-                e.second.lastRun = clock();
+        for (auto &eventsAt = m_luaState->events[timerDescriptor]; auto &val: eventsAt | std::views::values) {
+            if (clock() >= (val.lastRun + val.duration)) {
+                val.lastRun = clock();
                 std::scoped_lock<std::recursive_mutex> rcLock(executionMutex);
-//                executionMutex.lock();
                 lua_getglobal(m_luaState->GetState(),
-                              e.second.functionName.c_str()); // -- Get the function to be called
+                              val.functionName.c_str()); // -- Get the function to be called
                 if (!lua_isfunction(m_luaState->GetState(), -1)) {
                     lua_pop(m_luaState->GetState(), 1);
-//                    executionMutex.unlock();
                     continue;
                 }
                 if (!lua_checkstack(m_luaState->GetState(), 1)) {
 
                 }
-                lua_pushinteger(m_luaState->GetState(), e.second.mapId);
+                lua_pushinteger(m_luaState->GetState(), val.mapId);
                 int result = lua_pcall(m_luaState->GetState(), 1, 0, 0);
                 if (result == LUA_ERRRUN) {
-                    bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
-//                    executionMutex.unlock();
+                    bail(m_luaState->GetState(), "[Timer Event Handler]" + val.functionName); // -- catch errors
                     break;
                 } else if (result == LUA_ERRMEM) {
-                    bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
-//                    executionMutex.unlock();
+                    bail(m_luaState->GetState(), "[Timer Event Handler]" + val.functionName); // -- catch errors
                     break;
                 } else if (result == LUA_ERRERR) {
-                    bail(m_luaState->GetState(), "[Timer Event Handler]" + e.second.functionName); // -- catch errors
-//                    executionMutex.unlock();
+                    bail(m_luaState->GetState(), "[Timer Event Handler]" + val.functionName); // -- catch errors
                     break;
                 } else {
                     // -- success? maybe? who knows.
                     lua_pop(m_luaState->GetState(), lua_gettop(m_luaState->GetState()));
                 }
-//                executionMutex.unlock();
             }
         }
     }
@@ -238,13 +228,13 @@ void LuaPlugin::TimerMain() {
 void LuaPlugin::TriggerMapFill(int mapId, int sizeX, int sizeY, int sizeZ, const std::string& function, const std::string& args) {
     if (!m_loaded)
         return;
-    std::scoped_lock<std::recursive_mutex> pqlock(executionMutex);
+    std::scoped_lock pqlock(executionMutex);
     lua_getglobal(m_luaState->GetState(), function.c_str());
     if (lua_isfunction(m_luaState->GetState(), -1)) {
-        lua_pushinteger(m_luaState->GetState(), static_cast<lua_Integer>(mapId));
-        lua_pushinteger(m_luaState->GetState(), static_cast<lua_Integer>(sizeX));
-        lua_pushinteger(m_luaState->GetState(), static_cast<lua_Integer>(sizeY));
-        lua_pushinteger(m_luaState->GetState(), static_cast<lua_Integer>(sizeZ));
+        lua_pushinteger(m_luaState->GetState(), mapId);
+        lua_pushinteger(m_luaState->GetState(), sizeX);
+        lua_pushinteger(m_luaState->GetState(), sizeY);
+        lua_pushinteger(m_luaState->GetState(), sizeZ);
         lua_pushstring(m_luaState->GetState(), args.c_str());
         if (lua_pcall(m_luaState->GetState(), 5, 0, 0)) {
             bail(m_luaState->GetState(), "Failed to run mapfill");

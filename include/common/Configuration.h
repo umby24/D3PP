@@ -72,6 +72,7 @@ struct GeneralSettings {
     std::string WelcomeMessage;
     std::string logLevel;
     std::string defaultMap;
+    std::string listMapPrefix;
     int SpawnMapId;
     int ClickDistance;
     int LogPrune;
@@ -92,6 +93,11 @@ struct GeneralSettings {
             } else {
                 defaultMap = "default.cw";
             }
+            if (!j["General"]["ListMapPrefix"].is_null()) {
+                listMapPrefix = j["General"]["ListMapPrefix"];
+            } else {
+                listMapPrefix = "&e";
+            }
         }
     }
 
@@ -106,6 +112,7 @@ struct GeneralSettings {
         j["General"]["SpawnMapId"] = SpawnMapId;
         j["General"]["WelcomeMessage"] = WelcomeMessage;
         j["General"]["DefaultMap"] = defaultMap;
+        j["General"]["ListMapPrefix"] = listMapPrefix;
     }
 };
 

@@ -37,7 +37,7 @@ public:
 
      void CreateDefaults();
      static void SetState(int clientId, char state);
-
+    static void CreateMode(const std::string& name, std::string plugin);
     static char GetState(int clientId);
      static void SetCoordinate(int clientId, int index, D3PP::Common::Vector3F position);
      static unsigned short GetCoordinateX(int clientId, int index);

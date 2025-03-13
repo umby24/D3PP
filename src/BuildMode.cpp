@@ -1,4 +1,6 @@
 #include "BuildMode.h"
+
+#include <utility>
 #include "common/Files.h"
 #include "common/PreferenceLoader.h"
 #include "network/Network.h"
@@ -161,6 +163,7 @@ void BuildModeMain::CreateDefaults() {
     normal.Name = "Normal";
 
     _buildmodes.insert(std::make_pair("Normal", normal));
+    SaveFile = true;
 }
 
 void BuildModeMain::Resend(const int clientId) {
@@ -205,6 +208,17 @@ char BuildModeMain::GetState(const int clientId) {
 
     result = ne->BuildState;
     return result;
+}
+
+void BuildModeMain::CreateMode(const std::string& name, std::string plugin) {
+    BuildMode newBuildMode {
+        name,
+        name,
+        std::move(plugin)
+    };
+    const auto instance = BuildModeMain::GetInstance();
+    instance->_buildmodes.insert(std::make_pair(name, newBuildMode));
+    instance->SaveFile = true;
 }
 
 void BuildModeMain::SetCoordinate(const int clientId, const int index, D3PP::Common::Vector3F location) {

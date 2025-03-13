@@ -119,13 +119,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     myPlayer->MapId = spawnMap->ID;
     c->LoggedIn = true;
 
-
-    std::string motd = MapMain::GetMapMOTDOverride(spawnMap->ID);
-
-    if (motd.empty())
-        motd = Configuration::GenSettings.motd;
-
-    NetworkFunctions::SystemLoginScreen(c->GetId(), Configuration::GenSettings.name, motd, currentRank.OnClient);
+    NetworkFunctions::SystemLoginScreen(c->GetId(), Configuration::GenSettings.name, Configuration::GenSettings.motd, currentRank.OnClient);
 
 
     Entity::Add(newEntity);

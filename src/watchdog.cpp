@@ -60,6 +60,9 @@ void watchdog::MainFunc() {
 		    // -- Artificial block for scoped lock
             const std::scoped_lock<std::mutex> pLock(_lock);
             for (auto &item : _modules) {
+                item.CpuTime = item.CpuTime4Percent * 100 / time_;
+                item.CpuTime4Percent = 0;
+
                 item.Timeout = currentTime - item.WatchTime;
                 if (item.BiggestTimeout < item.Timeout) {
                     item.BiggestTimeout = item.Timeout;
@@ -92,7 +95,7 @@ void watchdog::HtmlStats(time_t time_) {
         modTable += "<td>" + stringulate(item.BiggestTimeout) + "ms (Max. " + stringulate(item.MaxTimeout) + "ms)</td>\n";
         modTable += "<td>" + item.BiggestMessage + "</td>\n";
         modTable += "<td>" + item.LastMessage + "</td>\n";
-        modTable += "<td>" + stringulate((item.CallsPerSecond*1000/div_time)) + "/s</td>\n";
+        modTable += "<td>" + stringulate((item.CallsPerSecond*100/div_time)) + "/s</td>\n";
         modTable += "<td>" + stringulate(item.CpuTime) + "%</td>\n";
         modTable += "</tr>\n";
 
@@ -138,18 +141,14 @@ void watchdog::HtmlStats(time_t time_) {
 
 watchdog::watchdog() {
     struct WatchdogModule mainModule { .Name = "Main", .MaxTimeout =  200 };
-    struct WatchdogModule netMod { .Name = "Network", .MaxTimeout =  200 };
     struct WatchdogModule physMod { .Name = "Map_Physic", .MaxTimeout =  400 };
-    struct WatchdogModule bcMod { .Name = "Map_BlockChanging", .MaxTimeout =  400 };
+    struct WatchdogModule bcMod { .Name = "Map_Blockchanging", .MaxTimeout =  400 };
     struct WatchdogModule actionMod { .Name = "Map_Action", .MaxTimeout =  10000 };
-    struct WatchdogModule loginMod { .Name = "Client_login", .MaxTimeout =  2000 };
 
     _modules.push_back(mainModule);
-    _modules.push_back(netMod);
     _modules.push_back(physMod);
     _modules.push_back(bcMod);
     _modules.push_back(actionMod);
-    _modules.push_back(loginMod);
     isRunning = true;
 
     this->Teardown = [this] { isRunning = false; };

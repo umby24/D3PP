@@ -105,8 +105,9 @@ void main_console() {
 
 void main_loop() {
     while (System::IsRunning) {
+        watchdog::Watch("Main", "Begin thread-slope", 0);
         TaskScheduler::RunMainTasks();
-
+        watchdog::Watch("Main", "End thread-slope", 2);
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     std::cout << "YO WTF WE EXITING WHY";

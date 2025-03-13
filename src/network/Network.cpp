@@ -33,6 +33,10 @@ std::shared_ptr<IMinecraftClient> Network::GetClient(int id) {
     return result;
 }
 
+/**
+ * DEPRECATED: Kept for legacy purposes only
+ * @return
+ */
 Network *Network::GetInstance() {
     if (singleton_ == nullptr)
         singleton_ = new Network();

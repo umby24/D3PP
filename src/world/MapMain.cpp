@@ -1,5 +1,6 @@
 #include "world/MapMain.h"
 
+#include <ranges>
 #include <string>
 #include <world/ClassicWorldMapProvider.h>
 #include "common/Files.h"
@@ -20,7 +21,6 @@
 #include "world/Entity.h"
 #include "world/Map.h"
 #include "world/D3MapProvider.h"
-#include "world/Teleporter.h"
 #include "world/Player.h"
 #include "compression.h"
 #include "System.h"
@@ -55,7 +55,6 @@ void D3PP::world::MapMain::Init() {
 
 void D3PP::world::MapMain::MainFunc() {
     std::string mapListFile = Files::GetFile(MAP_LIST_FILE);
-    long fileTime = Utils::FileModTime(mapListFile);
     
     if (System::IsRunning && !mbcStarted) {
         std::thread mbcThread([this]() { this->MapBlockChange(); });
@@ -74,24 +73,25 @@ void D3PP::world::MapMain::MainFunc() {
         LoadD3Maps();
     }
 
-    for(auto const &m : _maps) {
+    for(const auto &[mapId, mapPtr] : _maps) {
         // -- Auto save maps every 5 minutes
-        if (m.second->SaveTime + 5*60 < time(nullptr) && m.second->loaded) {
-            m.second->SaveTime = time(nullptr);
-            AddSaveAction(0, m.first, "");
+        if (mapPtr->SaveTime + 5*60 < time(nullptr) && mapPtr->loaded) {
+            mapPtr->SaveTime = time(nullptr);
+            AddSaveAction(0, mapId, "");
         }
-        if (m.second->Clients > 0) {
-            m.second->LastClient = time(nullptr);
-            if (!m.second->loaded) {
-                m.second->Reload();
+        if (mapPtr->Clients > 0) {
+            mapPtr->LastClient = time(nullptr);
+            if (!mapPtr->loaded) {
+                mapPtr->Reload();
             }
         }
-        if (m.second->loaded && (time(nullptr) - m.second->LastClient) > 200) { // -- Unload unused maps after 3 minutes
-            m.second->Unload();
+        if (mapPtr->loaded && (time(nullptr) - mapPtr->LastClient) > 200) { // -- Unload unused maps after 3 minutes
+            mapPtr->Unload();
         }
     }
-    fileTime = Utils::FileModTime(Files::GetFile(MAP_SETTINGS_FILE));
-    if (fileTime != mapSettingsLastWriteTime) {
+
+    if (const long fileTime = Utils::FileModTime(Files::GetFile(MAP_SETTINGS_FILE));
+        fileTime != mapSettingsLastWriteTime) {
         MapSettingsLoad();
     }
 }
@@ -103,17 +103,20 @@ D3PP::world::MapMain* D3PP::world::MapMain::GetInstance() {
     return Instance;
 }
 
-void D3PP::world::MapMain::AddSaveAction(int clientId, int mapId, const std::string& directory) {
+void D3PP::world::MapMain::AddSaveAction(int clientId, const int mapId, const std::string& directory) {
     std::shared_ptr<Map> thisMap = GetPointer(mapId);
 
     if (thisMap == nullptr)
         return;
 
-    std::function<void()> saveAction = [thisMap, clientId](){
-        thisMap->Save("");
-        if (clientId > 0) {
+    const std::function saveAction = [thisMap, clientId, directory](){
+        if (const bool saveResult = thisMap->Save(directory); clientId > 0 && saveResult) {
             NetworkFunctions::SystemMessageNetworkSend(clientId, "&eMap Saved.");
+        } else if (!saveResult) {
+            Logger::LogAdd(MODULE_NAME, "Error saving map!", L_ERROR, GLF);
+            NetworkFunctions::SystemMessageNetworkSend(clientId, "&eMap NOT SAVED!!");
         }
+
         EventMapActionSave mas{};
         mas.actionId = -1;
         mas.mapId = thisMap->ID;
@@ -123,13 +126,13 @@ void D3PP::world::MapMain::AddSaveAction(int clientId, int mapId, const std::str
     thisMap->m_actions.AddTask(saveAction);
 }
 
-void D3PP::world::MapMain::AddLoadAction(int clientId, int mapId, const std::string& directory) {
+void D3PP::world::MapMain::AddLoadAction(int clientId, const int mapId, const std::string& directory) {
     std::shared_ptr<Map> thisMap = GetPointer(mapId);
 
     if (thisMap == nullptr)
         return;
 
-    std::function<void()> loadAction = [thisMap, clientId, directory](){
+    const std::function loadAction = [thisMap, clientId, directory](){
         thisMap->Load(directory);
         thisMap->filePath = directory;
 
@@ -145,8 +148,8 @@ void D3PP::world::MapMain::AddLoadAction(int clientId, int mapId, const std::str
     thisMap->m_actions.AddTask(loadAction);
 }
 
-void D3PP::world::MapMain::LoadImmediately(int mapId, const std::string& directory) {
-    std::shared_ptr<Map> thisMap = GetPointer(mapId);
+void D3PP::world::MapMain::LoadImmediately(const int mapId, const std::string& directory) {
+    const std::shared_ptr<Map> thisMap = GetPointer(mapId);
 
     if (thisMap == nullptr)
         return;
@@ -155,7 +158,7 @@ void D3PP::world::MapMain::LoadImmediately(int mapId, const std::string& directo
     thisMap->filePath = directory;
 }
 
-void D3PP::world::MapMain::AddResizeAction(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z) {
+void D3PP::world::MapMain::AddResizeAction(int clientId, const int mapId, const unsigned short X, const unsigned short Y, const unsigned short Z) {
     std::shared_ptr<Map> thisMap = GetPointer(mapId);
 
     if (thisMap == nullptr)
@@ -163,7 +166,7 @@ void D3PP::world::MapMain::AddResizeAction(int clientId, int mapId, unsigned sho
 
     Vector3S newSize(X, Y, Z);
 
-    std::function<void()> resizeAction = [thisMap, clientId, newSize](){
+    const std::function resizeAction = [thisMap, clientId, newSize](){
         thisMap->Resize(newSize.X, newSize.Y, newSize.Z);
         if (clientId > 0) {
             NetworkFunctions::SystemMessageNetworkSend(clientId, "&eMap Resized.");
@@ -175,16 +178,15 @@ void D3PP::world::MapMain::AddResizeAction(int clientId, int mapId, unsigned sho
     };
 
     thisMap->m_actions.AddTask(resizeAction);
-    
 }
 
-void D3PP::world::MapMain::AddFillAction(int clientId, int mapId, std::string functionName, std::string argString) {
+void D3PP::world::MapMain::AddFillAction(int clientId, const int mapId, const std::string& functionName, const std::string& argString) {
     std::shared_ptr<Map> thisMap = GetPointer(mapId);
 
     if (thisMap == nullptr)
         return;
 
-    std::function<void()> fillAction = [thisMap, clientId, functionName, argString](){
+    const std::function fillAction = [thisMap, clientId, functionName, argString](){
         thisMap->Fill(functionName, argString);
         if (clientId > 0) {
             NetworkFunctions::SystemMessageNetworkSend(clientId, "&eMap Filled.");
@@ -198,7 +200,7 @@ void D3PP::world::MapMain::AddFillAction(int clientId, int mapId, std::string fu
     thisMap->m_actions.AddTask(fillAction);
 }
 
-void D3PP::world::MapMain::AddDeleteAction(int clientId, int mapId) {
+void D3PP::world::MapMain::AddDeleteAction(const int clientId, const int mapId) {
     EventMapActionDelete delAct{};
     delAct.actionId = -1;
     delAct.mapId = mapId;
@@ -210,24 +212,24 @@ void D3PP::world::MapMain::AddDeleteAction(int clientId, int mapId) {
     }
 }
 
-void D3PP::world::MapMain::MapBlockChange() {
+void D3PP::world::MapMain::MapBlockChange() const {
     while (System::IsRunning) {
         watchdog::Watch("Map_Blockchanging", "Begin thread-slope", 0);
 
-        for(auto const &m : _maps) {
-            if (m.second->BlockchangeStopped || !m.second->loaded)
+        for(const auto &[mapId, mapPtr] : _maps) {
+            if (mapPtr->BlockchangeStopped || !mapPtr->loaded)
                 continue;
 
             int maxChangedSec = 1100 / 10;
             ChangeQueueItem i{};
 
             while (maxChangedSec > 0) {
-                if (m.second->bcQueue == nullptr) {
+                if (mapPtr->bcQueue == nullptr) {
                     continue;
                 }
-                if (m.second->bcQueue->TryDequeue(i)) {
-                    unsigned char currentMat = m.second->GetBlockType(i.Location.X, i.Location.Y, i.Location.Z);
-                    NetworkFunctions::NetworkOutBlockSet2Map(m.first, i.Location.X, i.Location.Y, i.Location.Z,
+                if (mapPtr->bcQueue->TryDequeue(i)) {
+                    unsigned char currentMat = mapPtr->GetBlockType(i.Location.X, i.Location.Y, i.Location.Z);
+                    NetworkFunctions::NetworkOutBlockSet2Map(mapId, i.Location.X, i.Location.Y, i.Location.Z,
                                                              currentMat);
                 }
                 maxChangedSec--;
@@ -239,16 +241,12 @@ void D3PP::world::MapMain::MapBlockChange() {
     }
 }
 
-//bool comparePhysicsTime(const TimeQueueItem& first, const TimeQueueItem& second) {
-//    return (first.Time < second.Time);
-//}
-
-void D3PP::world::MapMain::MapBlockPhysics() {
+void D3PP::world::MapMain::MapBlockPhysics() const {
     while (System::IsRunning) {
         watchdog::Watch("Map_Physic", "Begin Thread-Slope", 0);
 
-        for(auto const &map : _maps) {
-            if (map.second->PhysicsStopped)
+        for(const auto &map: _maps | std::views::values) {
+            if (map->PhysicsStopped)
                 continue;
 //            {
 //                std::scoped_lock<std::mutex> myLock(map.second->physicsQueueMutex);
@@ -258,17 +256,17 @@ void D3PP::world::MapMain::MapBlockPhysics() {
             int counter = 0;
             TimeQueueItem physItem;
 
-            while (counter < 1000) { // -- TODO: May need adjustment.
-                if (map.second->pQueue == nullptr) { // -- Avoid edge cases while the map is still loading
+            while (counter < 5000) { // -- TODO: May need adjustment.
+                if (map->pQueue == nullptr) { // -- Avoid edge cases while the map is still loading
                     continue;
                 }
-                if (map.second->pQueue != nullptr && map.second->pQueue->TryDequeue(physItem)) {
+                if (map->pQueue != nullptr && map->pQueue->TryDequeue(physItem)) {
                     if (physItem.Time < std::chrono::steady_clock::now()) {
-                        map.second->ProcessPhysics(physItem.Location.X, physItem.Location.Y, physItem.Location.Z);
+                        map->ProcessPhysics(physItem.Location.X, physItem.Location.Y, physItem.Location.Z);
                         counter++;
                     } else {
                         // -- Not ready yet, push it back to the end.
-                        map.second->pQueue->TryQueue(physItem);
+                        map->pQueue->TryQueue(physItem);
                     }
                 }
                 counter++;
@@ -280,18 +278,18 @@ void D3PP::world::MapMain::MapBlockPhysics() {
     }
 }
 
-std::shared_ptr<D3PP::world::Map> D3PP::world::MapMain::GetPointer(int id) {
-    if (_maps.find(id) != _maps.end())
+std::shared_ptr<D3PP::world::Map> D3PP::world::MapMain::GetPointer(const int id) {
+    if (_maps.contains(id))
         return _maps[id];
 
     return nullptr;
 }
 
-std::shared_ptr<D3PP::world::Map> D3PP::world::MapMain::GetPointer(const std::string& name) {
+std::shared_ptr<D3PP::world::Map> D3PP::world::MapMain::GetPointer(const std::string& name) const {
     std::shared_ptr<Map> result = nullptr;
-    for (auto const &mi : _maps) {
-        if (Utils::InsensitiveCompare(mi.second->m_mapProvider->MapName, name)) {
-            result = mi.second;
+    for (const auto &map: _maps | std::views::values) {
+        if (Utils::InsensitiveCompare(map->m_mapProvider->MapName, name)) {
+            result = map;
             break;
         }
     }
@@ -312,28 +310,16 @@ int D3PP::world::MapMain::GetMapId() {
     }
 }
 
-std::string D3PP::world::MapMain::GetMapMOTDOverride(int mapId) {
-    MapMain* mmInstance = GetInstance();
-    std::string result;
-    std::shared_ptr<Map> mapPtr = mmInstance->GetPointer(mapId);
-
-    if (mapPtr == nullptr)
-        return result;
-    
-    //result = mapPtr->MotdOverride;
-    return result;
-}
-
 void D3PP::world::MapMain::MapListSave() {
-    std::string fName = Files::GetFile(MAP_LIST_FILE);
+    const std::string fName = Files::GetFile(MAP_LIST_FILE);
     PreferenceLoader pl(fName, "");
 
-    for(auto const &m : _maps) {
-        pl.SelectGroup(stringulate(m.first));
-        if (!m.second->m_mapProvider)
+    for(const auto &[mapId, mapPtr] : _maps) {
+        pl.SelectGroup(stringulate(mapId));
+        if (!mapPtr->m_mapProvider)
             continue;
-        pl.Write("Name", m.second->m_mapProvider->MapName);
-        pl.Write("Directory", m.second->filePath);
+        pl.Write("Name", mapPtr->m_mapProvider->MapName);
+        pl.Write("Directory", mapPtr->filePath);
         pl.Write("Delete", 0);
         pl.Write("Reload", 0);
     }
@@ -344,25 +330,24 @@ void D3PP::world::MapMain::MapListSave() {
 }
 
 void D3PP::world::MapMain::MapListLoad() {
-    std::string fName = Files::GetFile(MAP_LIST_FILE);
+    const std::string fName = Files::GetFile(MAP_LIST_FILE);
     PreferenceLoader pl(fName, "");
     pl.LoadFile();
 
-    for(auto const &m : pl.SettingsDictionary) {
-        if (m.first.empty())
+    for(const auto &key: pl.SettingsDictionary | std::views::keys) {
+        if (key.empty())
             continue;
-        int mapId = stoi(m.first);
+        const int mapId = stoi(key);
 
-        pl.SelectGroup(m.first);
-        std::string mapName = pl.Read("Name", m.first);
-        std::string directory = pl.Read("Directory", Files::GetFolder("Maps") + m.first + "/");
-        bool mapDelete = (pl.Read("Delete", 0) == 1);
+        pl.SelectGroup(key);
+        std::string mapName = pl.Read("Name", key);
+        std::string directory = pl.Read("Directory", Files::GetFolder("Maps") + key + "/");
+        const bool mapDelete = (pl.Read("Delete", 0) == 1);
         bool mapReload = (pl.Read("Reload", 0) == 1);
         if (mapDelete) {
             AddDeleteAction(0, mapId);
         } else {
-            std::shared_ptr<Map> mapPtr = GetPointer(mapId);
-            if (mapPtr == nullptr) {
+            if (std::shared_ptr<Map> mapPtr = GetPointer(mapId); mapPtr == nullptr) {
                 Add(mapId, 64, 64, 64, mapName);
                 mapReload = true;
                 mapPtr = GetPointer(mapId);
@@ -381,7 +366,7 @@ void D3PP::world::MapMain::MapListLoad() {
     Logger::LogAdd(MODULE_NAME, "File loaded. [" + fName + "]", NORMAL, GLF);
 }
 
-int D3PP::world::MapMain::Add(int id, short x, short y, short z, const std::string& name) {
+int D3PP::world::MapMain::Add(int id, const short x, const short y, const short z, const std::string& name) {
     bool createNew = false;
     if (id == -1) {
         id = GetMapId();
@@ -395,7 +380,7 @@ int D3PP::world::MapMain::Add(int id, short x, short y, short z, const std::stri
         return -1;
 
 
-    std::shared_ptr<Map> newMap = std::make_shared<Map>();
+    auto newMap = std::make_shared<Map>();
     newMap->ID = id;
     newMap->SaveTime = time(nullptr);
     newMap->BlockchangeStopped = false;
@@ -428,18 +413,16 @@ int D3PP::world::MapMain::Add(int id, short x, short y, short z, const std::stri
     return id;
 }
 
-void D3PP::world::MapMain::Delete(int id) {
-    std::shared_ptr<Map> mp = GetPointer(id);
+void D3PP::world::MapMain::Delete(const int id) {
+    const std::shared_ptr<Map> mp = GetPointer(id);
 
     if (mp == nullptr)
         return;
 
-    Network* nm = Network::GetInstance();
-
     if (mp->Clients > 0) {
         for(auto const &nc : network::Server::roClients) {
             if (nc->GetLoggedIn() && nc->GetPlayerInstance()->GetEntity() != nullptr&& nc->GetPlayerInstance()->GetEntity()->MapID == id) {
-                MinecraftLocation somewhere {0, 0, Vector3S{(short)0, (short)0, (short)0}};
+                const MinecraftLocation somewhere {0, 0, Vector3S{static_cast<short>(0), static_cast<short>(0), static_cast<short>(0)}};
                 nc->GetPlayerInstance()->GetEntity()->PositionSet(0, somewhere, 4, true);
             }
         }
@@ -451,7 +434,7 @@ void D3PP::world::MapMain::Delete(int id) {
 }
 
 void D3PP::world::MapMain::MapSettingsLoad() {
-    std::string mapSettingsFile = Files::GetFile("Map_Settings");
+    const std::string mapSettingsFile = Files::GetFile("Map_Settings");
     json j;
     std::ifstream iStream(mapSettingsFile);
     if (!iStream.is_open()) {
@@ -463,6 +446,7 @@ void D3PP::world::MapMain::MapSettingsLoad() {
     try {
         iStream >> j;
     } catch (int exception) {
+        Logger::LogAdd(MODULE_NAME, "Failed to load Map settings, [E: " + stringulate(exception) + "]", WARNING, GLF);
         return;
     }
     iStream.close();
@@ -474,7 +458,7 @@ void D3PP::world::MapMain::MapSettingsLoad() {
 }
 
 void D3PP::world::MapMain::MapSettingsSave() {
-    std::string hbSettingsFile = Files::GetFile("Map_Settings");
+    const std::string hbSettingsFile = Files::GetFile("Map_Settings");
     json j;
     j["Max_Changes_s"] = mapSettingsMaxChangesSec;
 
@@ -490,8 +474,8 @@ void D3PP::world::MapMain::MapSettingsSave() {
 
 Vector3S D3PP::world::MapMain::GetMapExportSize(const std::string& filename) {
     std::vector<unsigned char> tempData(10);
-    int outputLen = GZIP::GZip_DecompressFromFile(tempData.data(), 10, filename);
-    if (outputLen != 10) {
+
+    if (const int outputLen = GZIP::GZip_DecompressFromFile(tempData.data(), 10, filename); outputLen != 10) {
         Logger::LogAdd(MODULE_NAME, "Map not imported: Error unzipping.", L_ERROR, GLF);
         return Vector3S{};
     }
@@ -505,7 +489,7 @@ Vector3S D3PP::world::MapMain::GetMapExportSize(const std::string& filename) {
         Logger::LogAdd(MODULE_NAME, "Map not imported, unknown version [" + filename + "]", L_ERROR, GLF);
         return Vector3S{};
     }
-    Vector3S result;
+    Vector3S result{};
     result.X = tempData[4];
     result.X |= tempData[5] << 8;
     result.Y = tempData[6];
@@ -516,25 +500,22 @@ Vector3S D3PP::world::MapMain::GetMapExportSize(const std::string& filename) {
 }
 
 void D3PP::world::MapMain::LoadD3Maps() {
-    std::string mapDir = Files::GetFolder("Maps");
-    if (std::filesystem::is_directory(mapDir)) {
-        for (const auto &entry : std::filesystem::directory_iterator(mapDir)) {
-            std::string fileName = entry.path().filename().string();
+    const std::string mapDir = Files::GetFolder("Maps");
+    if ( !std::filesystem::is_directory(mapDir)) return;
 
-            if (fileName.length() < 3) // -- exclude . and ..
-                continue;
+    for (const auto &entry : std::filesystem::directory_iterator(mapDir)) {
+        std::string fileName = entry.path().filename().string();
 
-            if (entry.is_directory()) {
-                int dataSize = Utils::FileSize(mapDir + fileName + "/Data-Layer.gz");
-                int configSize = Utils::FileSize(mapDir + fileName + "/Config.txt");
+        if (fileName.length() < 3) // -- exclude . and ..
+            continue;
 
-                if (dataSize != -1 && configSize != -1) {
-                    int newMapId = GetMapId();
-                    Add(newMapId, 64, 64 ,64, mapDir + fileName);
-                    LoadImmediately(newMapId, mapDir + fileName);
-                }
+        if (entry.is_directory()) {
+            const int dataSize = Utils::FileSize(mapDir + fileName + "/Data-Layer.gz");
 
-                continue;
+            if (const int configSize = Utils::FileSize(mapDir + fileName + "/Config.txt"); dataSize != -1 && configSize != -1) {
+                const int newMapId = GetMapId();
+                Add(newMapId, 64, 64 ,64, mapDir + fileName);
+                LoadImmediately(newMapId, mapDir + fileName);
             }
         }
     }
@@ -548,12 +529,12 @@ void D3PP::world::MapMain::LoadMaps() {
     }
 
     if (Utils::FileSize(mapDir + Configuration::GenSettings.defaultMap) == -1 && Utils::FileSize(mapDir + Configuration::GenSettings.defaultMap + "u") == -1) {
-        files::ClassicWorld cwMap(Vector3S{(short)64, 64, 64});
+        files::ClassicWorld cwMap(Vector3S{static_cast<short>(64), 64, 64});
         cwMap.MapName = "default";
         cwMap.Save(mapDir + Configuration::GenSettings.defaultMap);
         Logger::LogAdd(MODULE_NAME, "Default map created", NORMAL, GLF);
     }
-    int defaultId = GetMapId();
+    const int defaultId = GetMapId();
     Add(defaultId, 64, 64, 64, mapDir + Configuration::GenSettings.defaultMap);
     LoadImmediately(defaultId, mapDir + Configuration::GenSettings.defaultMap);
 
@@ -569,7 +550,7 @@ void D3PP::world::MapMain::LoadMaps() {
             }
 
             if (fileName.ends_with(".cw") && fileName != Configuration::GenSettings.defaultMap) {
-                int newId = GetMapId();
+                const int newId = GetMapId();
                 Add(newId, 64, 64, 64, mapDir + fileName);
                 LoadImmediately(newId, mapDir + fileName);
             }

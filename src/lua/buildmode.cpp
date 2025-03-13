@@ -25,6 +25,7 @@ const struct luaL_Reg LuaBuildModeLib::lib[] = {
        {"getfloat", &LuaBuildModeFloatGet},
        {"getstring", &LuaBuildModeStringGet},
        {"setstring", &LuaBuildModeStringSet},
+{"create", &LuaBuildModeCreate},
        {NULL, NULL}
 };
 
@@ -274,4 +275,18 @@ int LuaBuildModeLib::LuaBuildModeStringGet(lua_State* L) {
 
     lua_pushstring(L, val.c_str());
     return 1;
+}
+
+int LuaBuildModeLib::LuaBuildModeCreate(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: BuildMode.Create called with invalid number of arguments.", WARNING, GLF);
+        return 0;
+    }
+    std::string name = luaL_checkstring(L, 1);
+    std::string plugin = luaL_checkstring(L, 2);
+
+    BuildModeMain::CreateMode(name, plugin);
+    return 0;
 }

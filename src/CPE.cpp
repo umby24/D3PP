@@ -245,15 +245,15 @@ void CPE::AfterLoginActions(const std::shared_ptr<IMinecraftClient>& client) {
         if (nc->GetId() != clientId) {
             if (GetClientExtVersion(nc, EXT_PLAYER_LIST_EXT_NAME) == 2) {
                 auto concrete2 = std::static_pointer_cast<NetworkClient>(nc);
-                Packets::SendExtAddPlayerName(concrete2, tempNameId, loginName, prettyName, clientMap->Name(), 0);
+                Packets::SendExtAddPlayerName(concrete2, tempNameId, loginName, prettyName, Configuration::GenSettings.listMapPrefix + clientMap->Name(), 0);
             }
             if (extVersion == 2) {
                 std::shared_ptr<Map> dudesMap = mapMain->GetPointer(nc->GetPlayerInstance()->GetEntity()->MapID);
-                Packets::SendExtAddPlayerName(concrete, nc->GetPlayerInstance()->GetNameId(), nc->GetPlayerInstance()->GetLoginName(), Entity::GetDisplayname(nc->GetPlayerInstance()->GetEntity()->Id), dudesMap->Name(), 0);
+                Packets::SendExtAddPlayerName(concrete, nc->GetPlayerInstance()->GetNameId(), nc->GetPlayerInstance()->GetLoginName(), Entity::GetDisplayname(nc->GetPlayerInstance()->GetEntity()->Id), Configuration::GenSettings.listMapPrefix + dudesMap->Name(), 0);
             }
         } else {
             if (extVersion == 2) {
-                Packets::SendExtAddPlayerName(concrete, 255, loginName, prettyName, clientMap->Name(), 0);
+                Packets::SendExtAddPlayerName(concrete, 255, loginName, prettyName, Configuration::GenSettings.listMapPrefix + clientMap->Name(), 0);
             }
         }
     }

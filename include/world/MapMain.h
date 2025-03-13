@@ -35,12 +35,11 @@ namespace D3PP::world {
         MapMain();
 
         std::shared_ptr<Map> GetPointer(int id);
-        std::shared_ptr<Map> GetPointer(const std::string& name);
+        std::shared_ptr<Map> GetPointer(const std::string& name) const;
         
         int Add(int id, short x, short y, short z, const std::string &name);
         void Delete(int id);
         static MapMain *GetInstance();
-        static std::string GetMapMOTDOverride(int mapId);
         static int GetMapSize(int x, int y, int z, int blockSize) { return (x * y * z) * blockSize; }
         static int GetMapOffset(int x, int y, int z, int sizeX, int sizeY, int sizeZ, int blockSize) {
             return (x + y * sizeX + z * sizeX * sizeY) * blockSize;
@@ -52,7 +51,7 @@ namespace D3PP::world {
         void AddLoadAction(int clientId, int mapId, const std::string &directory);
         void LoadImmediately(int mapId, const std::string &directory);
         void AddResizeAction(int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z);
-        void AddFillAction(int clientId, int mapId, std::string functionName, std::string argString);
+        void AddFillAction(int clientId, int mapId, const std::string& functionName, const std::string& argString);
         void AddDeleteAction(int clientId, int mapId);
         bool SaveFile;
         std::map<int, std::shared_ptr<Map>> _maps;
@@ -83,8 +82,8 @@ namespace D3PP::world {
         void MapListLoad();
         void MapSettingsSave();
         void MapSettingsLoad();
-        void MapBlockChange();
-        void MapBlockPhysics();
+        void MapBlockChange() const;
+        void MapBlockPhysics() const;
     };
 }
 

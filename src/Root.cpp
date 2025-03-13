@@ -17,8 +17,7 @@ Root::Root() : m_restApi(), m_pluginManager(nullptr), m_block(nullptr), m_buildM
                m_heartbeat(nullptr) {
 }
 
-Root::~Root() {
-}
+Root::~Root() = default;
 
 void Root::Start() {
 
