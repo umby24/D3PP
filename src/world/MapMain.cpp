@@ -248,10 +248,6 @@ void D3PP::world::MapMain::MapBlockPhysics() const {
         for(const auto &map: _maps | std::views::values) {
             if (map->PhysicsStopped)
                 continue;
-//            {
-//                std::scoped_lock<std::mutex> myLock(map.second->physicsQueueMutex);
-//                std::sort(map.second->PhysicsQueue.begin(), map.second->PhysicsQueue.end(), comparePhysicsTime);
-//            }
 
             int counter = 0;
             TimeQueueItem physItem;
@@ -366,7 +362,7 @@ void D3PP::world::MapMain::MapListLoad() {
     Logger::LogAdd(MODULE_NAME, "File loaded. [" + fName + "]", NORMAL, GLF);
 }
 
-int D3PP::world::MapMain::Add(int id, const short x, const short y, const short z, const std::string& name) {
+int D3PP::world::MapMain::Add(int id, const short x, const short y, const short z, std::string name) {
     bool createNew = false;
     if (id == -1) {
         id = GetMapId();
@@ -387,12 +383,19 @@ int D3PP::world::MapMain::Add(int id, const short x, const short y, const short 
     newMap->Clients = 0;
     newMap->LastClient = time(nullptr);
     Vector3S sizeVector {x, y, z};
-    if (!name.ends_with(".cw")) {
+    if (name.ends_with("D3")) {
         newMap->m_mapProvider = std::make_unique<D3MapProvider>();
         newMap->filePath = Files::GetFolder("Maps") + name + "/";
     } else {
+
         newMap->m_mapProvider = std::make_unique<ClassicWorldMapProvider>();
-        newMap->filePath = name;
+        if (!name.ends_with(".cw"))
+            newMap->filePath = Files::GetFolder("CWMaps") + name + ".cw";
+        else {
+            newMap->filePath = Files::GetFolder("CWMaps") + name;
+            name = name.substr(0, name.size() - 3);
+        }
+
     }
 
     if (createNew) {

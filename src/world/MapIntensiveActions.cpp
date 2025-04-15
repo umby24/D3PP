@@ -4,6 +4,7 @@
 
 #include "System.h"
 #include "Utils.h"
+#include "watchdog.h"
 
 D3PP::world::MapIntensiveActions::MapIntensiveActions() : runner([this]() {this->MainFunc();}) {
     m_finished = false;
@@ -11,11 +12,13 @@ D3PP::world::MapIntensiveActions::MapIntensiveActions() : runner([this]() {this-
 
 void D3PP::world::MapIntensiveActions::MainFunc() {
     while (!m_finished) {
+        watchdog::Watch("Map_Action", "Begin loop", 0);
         if (!itemQueue.empty()) {
             std::function<void()> taskToComplete = itemQueue.front();
             taskToComplete();
             itemQueue.pop();
         }
+        watchdog::Watch("Map_Action", "End loop", 2);
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }

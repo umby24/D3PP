@@ -5,7 +5,7 @@
 #include <files/ClassicWorld.h>
 #include "common/Logger.h"
 
-D3PP::files::ClassicWorld::ClassicWorld(Common::Vector3S size) {
+D3PP::files::ClassicWorld::ClassicWorld(Common::Vector3S size) : Size(), Spawn() {
     BlockData.resize(size.X * size.Y * size.Z);
     Size = size;
     SpawnLook = 0;
@@ -17,17 +17,21 @@ D3PP::files::ClassicWorld::ClassicWorld(Common::Vector3S size) {
     LastModified = Utils::CurrentUnixTime();
 
     for(int i = 0; i < 16; i++) {
-        Uuid.push_back(char(Utils::RandomNumber(200)));
+        Uuid.push_back(static_cast<char>(Utils::RandomNumber(200)));
     }
 
     metaParsers.insert(std::make_pair("CPE", std::make_shared<CPEMetadata>()));
 }
 
-D3PP::files::ClassicWorld::ClassicWorld(std::string filepath) {
+D3PP::files::ClassicWorld::ClassicWorld(const std::string& filepath): FormatVersion(0), Size(), Spawn(), TimeCreated(0),
+                                                               LastAccessed(0),
+                                                               LastModified(0),
+                                                               SpawnRotation(0),
+                                                               SpawnLook(0) {
     m_filePath = filepath;
     Logger::LogAdd("ClassicWorld", "Path set to " + m_filePath, DEBUG, GLF);
 
-    auto baseTag = Nbt::NbtFile::Load(filepath);
+    const auto baseTag = Nbt::NbtFile::Load(filepath);
     m_baseTag = std::get<Nbt::TagCompound>(baseTag);
 
     if (m_baseTag.name != "ClassicWorld") {
@@ -101,8 +105,8 @@ void D3PP::files::ClassicWorld::Load() {
         std::get<Nbt::TagShort>(spawnBase["Y"]),
         std::get<Nbt::TagShort>(spawnBase["Z"])
     };
-    SpawnRotation = (unsigned char)std::get<Nbt::TagByte>(spawnBase["H"]);
-    SpawnLook = (unsigned char)std::get<Nbt::TagByte>(spawnBase["P"]);
+    SpawnRotation = static_cast<unsigned char>(std::get<Nbt::TagByte>(spawnBase["H"]));
+    SpawnLook = static_cast<unsigned char>(std::get<Nbt::TagByte>(spawnBase["P"]));
 
     for (auto q : std::get<Nbt::TagByteArray>(m_baseTag["BlockArray"])) {
         BlockData.push_back(static_cast<unsigned char>(q));
@@ -145,8 +149,8 @@ void D3PP::files::ClassicWorld::Save(std::string filepath) {
     spawnCompound.data.insert({"X", { Nbt::TagShort {Spawn.X} }});
     spawnCompound.data.insert({"Y", { Nbt::TagShort {Spawn.Y} }});
     spawnCompound.data.insert({"Z", { Nbt::TagShort {Spawn.Z} }});
-    spawnCompound.data.insert({"H", { Nbt::TagByte {(char)SpawnRotation} }});
-    spawnCompound.data.insert({"P", { Nbt::TagByte {(char)SpawnLook} }});
+    spawnCompound.data.insert({"H", { Nbt::TagByte {static_cast<signed char>(static_cast<char>(SpawnRotation))} }});
+    spawnCompound.data.insert({"P", { Nbt::TagByte {static_cast<signed char>(static_cast<char>(SpawnLook))} }});
 
     baseCompound.data.insert({"Spawn", {spawnCompound}});
     std::vector<signed char> tempArr(BlockData.begin(), BlockData.end());

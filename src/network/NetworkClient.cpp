@@ -594,7 +594,7 @@ void NetworkClient::AddUndoItem(const D3PP::Common::UndoItem &item) {
     if (m_currentUndoIndex == -1)
         m_currentUndoIndex = 0;
 
-    if (m_currentUndoIndex != (m_undoItems.size()-1)) {
+    if (m_currentUndoIndex < (m_undoItems.size()-1)) {
         // -- Remove everything forward of this.
         m_undoItems.erase(m_undoItems.end()-m_currentUndoIndex, m_undoItems.end());
     }

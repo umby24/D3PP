@@ -37,7 +37,7 @@ namespace D3PP::world {
         std::shared_ptr<Map> GetPointer(int id);
         std::shared_ptr<Map> GetPointer(const std::string& name) const;
         
-        int Add(int id, short x, short y, short z, const std::string &name);
+        int Add(int id, short x, short y, short z, std::string name);
         void Delete(int id);
         static MapMain *GetInstance();
         static int GetMapSize(int x, int y, int z, int blockSize) { return (x * y * z) * blockSize; }

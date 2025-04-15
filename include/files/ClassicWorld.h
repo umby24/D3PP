@@ -319,8 +319,8 @@ namespace D3PP::files {
         unsigned char FormatVersion;
         std::string MapName, CreatingService, CreatingUsername, GeneratingSoftware, GeneratorName;
         std::vector<signed char> Uuid;
-        Common::Vector3S Size;
-        Common::Vector3S Spawn;
+        Common::Vector3S Size{};
+        Common::Vector3S Spawn{};
         long TimeCreated, LastAccessed, LastModified;
         unsigned char SpawnRotation, SpawnLook;
         std::vector<unsigned char> BlockData;
@@ -329,8 +329,9 @@ namespace D3PP::files {
 
         // -- Create a new map
         explicit ClassicWorld(Common::Vector3S size);
+
         // -- Load an existing file
-        explicit ClassicWorld(std::string filepath);
+        explicit ClassicWorld(const std::string &filepath);
 
         void Load();
         void Save(std::string filepath);

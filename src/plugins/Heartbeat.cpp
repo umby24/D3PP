@@ -22,6 +22,11 @@ const std::string MODULE_NAME = "Heartbeat";
 Heartbeat* Heartbeat::Instance = nullptr;
 
 void Heartbeat::Beat() {
+    if (salt.empty()) {
+        salt = CreateSalt();
+        Configuration::NetSettings.Salt = salt;
+        Configuration::GetInstance()->Save();
+    }
     httplib::Client cli(CLASSICUBE_NET_URL);
 
     httplib::Params params;
@@ -95,6 +100,7 @@ std::string Heartbeat::CreateSalt() {
 void Heartbeat::Init() {
     salt = Configuration::NetSettings.Salt;
     if (salt.empty()) {
+        Logger::LogAdd("Heartbeat", "Salt is empty.", DEBUG, __FILE__, __LINE__, __FUNCTION__);
         salt = CreateSalt();
         Configuration::NetSettings.Salt = salt;
         Configuration::GetInstance()->Save();

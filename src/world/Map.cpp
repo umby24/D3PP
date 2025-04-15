@@ -96,7 +96,10 @@ bool Map::Save(const std::string& directory) const
 void Map::Load(const std::string& directory) {
     std::unique_lock lock(BlockMutex);
 
-    if (m_mapProvider == nullptr && !directory.empty()) {
+    if (!directory.empty() && !directory.ends_with(".cw")) {
+        if (m_mapProvider) {
+            m_mapProvider.reset();
+        }
         m_mapProvider = std::make_unique<D3MapProvider>();
     } else if (m_mapProvider == nullptr) {
         Logger::LogAdd(MODULE_NAME, "Map Reloaded [" + m_mapProvider->MapName + "]", NORMAL, GLF);
