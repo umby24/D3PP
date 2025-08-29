@@ -422,7 +422,6 @@ int D3PP::world::MapMain::Add(int id, short x, short y, short z, const std::stri
 
     _maps.insert(std::make_pair(id, newMap));
     SaveFile = true;
-    
 
     EventMapAdd ema;
     ema.mapId = id;
@@ -436,8 +435,6 @@ void D3PP::world::MapMain::Delete(int id) {
 
     if (mp == nullptr)
         return;
-
-    Network* nm = Network::GetInstance();
 
     if (mp->Clients > 0) {
         for(auto const &nc : D3PP::network::Server::roClients) {

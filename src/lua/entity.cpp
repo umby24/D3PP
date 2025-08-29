@@ -66,7 +66,7 @@ int LuaEntityLib::LuaEntityAdd(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 7) {
-        Logger::LogAdd("Lua", "LuaError: Entity.Add called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: entity.create() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -90,7 +90,7 @@ int LuaEntityLib::LuaEntityDelete(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Entity_Delete called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: entity.delete() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int entityId = static_cast<int>(luaL_checkinteger(L, 1));
@@ -113,7 +113,7 @@ int LuaEntityLib::LuaEntityGetPlayer(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: ENTITY_GET_PLAYER called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: entity.getplayer() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int entityId = static_cast<int>(luaL_checkinteger(L, 1));
@@ -131,7 +131,7 @@ int LuaEntityLib::LuaEntityGetMapId(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: ENTITY_GET_Map_Id called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: entity.getmap() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int entityId = luaL_checkinteger(L, 1);
@@ -149,7 +149,7 @@ int LuaEntityLib::LuaEntityGetPosition(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Entity.GetPosition called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: entity.getposition() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int entityId = luaL_checkinteger(L, 1);
@@ -176,7 +176,7 @@ int LuaEntityLib::LuaEntityGetRotation(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: ENTITY_GET_Rotation called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: entity.getrotation() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int entityId = luaL_checkinteger(L, 1);
@@ -195,7 +195,7 @@ int LuaEntityLib::LuaEntityGetLook(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: ENTITY_GET_Look called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: entity.getlook() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     const int entityId = luaL_checkinteger(L, 1);
@@ -213,7 +213,7 @@ int LuaEntityLib::LuaEntityResend(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Entity_Resend called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: entity.resend() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int entityId = luaL_checkinteger(L, 1);
@@ -230,7 +230,7 @@ int LuaEntityLib::LuaEntityMessage2Clients(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Entity_Message_2_Clients called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: entity.sendmessage() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int entityid = luaL_checkinteger(L, 1);
@@ -244,7 +244,7 @@ int LuaEntityLib::LuaEntityDisplaynameGet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: ENTITY_displayname_get called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: entity.getdisplayname() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int entityId = luaL_checkinteger(L, 1);
@@ -264,7 +264,7 @@ int LuaEntityLib::LuaEntityDisplaynameSet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 4 && nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: ENTITY_displayname_set called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: entity.setdisplayname() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -295,7 +295,7 @@ int LuaEntityLib::LuaEntityPositionSet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 7) {
-        Logger::LogAdd("Lua", "LuaError: ENTITY_Position_Set called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: entity.setposition() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int entityId = luaL_checkinteger(L, 1);
@@ -321,7 +321,7 @@ int LuaEntityLib::LuaEntityKill(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: ENTITY_Kill called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: entity.kill() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int entityId = luaL_checkinteger(L, 1);
@@ -338,7 +338,7 @@ int LuaEntityLib::LuaEntitySetModel(lua_State *L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Entity.SetModel called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: entity.setmodel() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int entityId = static_cast<int>(luaL_checkinteger(L, 1));

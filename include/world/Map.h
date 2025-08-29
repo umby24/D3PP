@@ -131,7 +131,6 @@ namespace D3PP::world {
         void RemoveEntity(std::shared_ptr<Entity> e);
         void AddEntity(std::shared_ptr<Entity> e);
         void SetBlocks(const std::vector<unsigned char>& blocks) { m_mapProvider->SetBlocks(blocks); }
-        std::mutex BlockChangeMutex;
         std::unique_ptr<FillState> CurrentFillState;
         MapIntensiveActions IActions;
     protected:

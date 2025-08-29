@@ -53,7 +53,8 @@ void Heartbeat::Beat() {
                 }
             }
 
-            Logger::LogAdd(MODULE_NAME, reasonStr, LogType::L_ERROR, GLF);
+            if (isFirstBeat)
+                Logger::LogAdd(MODULE_NAME, reasonStr, LogType::L_ERROR, GLF);
         } catch(std::exception e) {
             Logger::LogAdd(MODULE_NAME, "Error parsing Heartbeat. Response: " + res->body, LogType::L_ERROR, GLF);
         }

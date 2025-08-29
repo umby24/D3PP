@@ -63,6 +63,7 @@ void D3PP::world::D3MapProvider::SetSize(const D3PP::Common::Vector3S &newSize) 
 
 bool D3PP::world::D3MapProvider::Unload() {
     m_d3map->MapData.resize(1);
+    m_d3map->MapData.shrink_to_fit();
     return true;
 }
 

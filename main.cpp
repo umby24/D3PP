@@ -59,7 +59,6 @@ int main()
             catch (const std::exception& e)
             {
                 std::cout << "An Exception occurred: " << e.what() << std::endl;
-                //DBG_FAIL(e.what());
             }
             catch (...)
             {
@@ -77,21 +76,23 @@ int main()
 
     Files::Load();
     Logger::LogAdd("Main", "====== Welcome to D3PP =====", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-    Configuration* config = Configuration::GetInstance();
+    Logger::LogAdd("Main", "Version: " + stringulate(MainVersion), LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
 
-    Block *b = Block::GetInstance();
-    Rank *r = Rank::GetInstance();
-    
-    Player_List *l = Player_List::GetInstance();
-    PlayerMain *pm = PlayerMain::GetInstance();
-    CommandMain *cm = CommandMain::GetInstance();
-    BuildModeMain *bmm = BuildModeMain::GetInstance();
-    Heartbeat* hb = Heartbeat::GetInstance();
+    // Instantiate all singleton classes
+    Configuration::GetInstance();
+
+    Block::GetInstance();
+    Rank::GetInstance();
+    Player_List::GetInstance();
+    PlayerMain::GetInstance();
+    CommandMain::GetInstance();
+    BuildModeMain::GetInstance();
+    Heartbeat::GetInstance();
     RestApi rapi;
     D3PP::plugins::PluginManager *plugm = D3PP::plugins::PluginManager::GetInstance();
-    watchdog* wd = watchdog::GetInstance();
-    CustomBlocks* cb = CustomBlocks::GetInstance();
-    D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();
+    watchdog::GetInstance();
+    CustomBlocks::GetInstance();
+    D3PP::world::MapMain::GetInstance();
 
     TaskScheduler::RunSetupTasks();
 

@@ -7,6 +7,7 @@
 #include "Utils.h"
 #include "common/Logger.h"
 #include <time.h>
+#include <cstring>
 
 watchdog* watchdog::singleton_ = nullptr;
 
@@ -122,9 +123,16 @@ void watchdog::HtmlStats(time_t time_) {
     std::string meh(buffer);
     std::string genTimeStr = "[GEN_TIME]";
     std::string genTSStr = "[GEN_TIMESTAMP]";
+    std::string VIRTStr = "[VIRT]";
+    std::string PHYSStr = "[PHYS]";
     std::string durationStr = stringulate(duration);
+    std::string virtualStr = stringulate(GetVirtualRAMUsage());
+    std::string physicalStr = stringulate(GetPhysicalRAMUsage());
+
     Utils::replaceAll(result, genTimeStr, durationStr);
     Utils::replaceAll(result, genTSStr, meh);
+    Utils::replaceAll(result, VIRTStr, virtualStr);
+    Utils::replaceAll(result, PHYSStr, physicalStr);
 
     std::string memFile = Files::GetFile(WATCHDOG_HTML_NAME);
     delete tme_info;
@@ -137,19 +145,19 @@ void watchdog::HtmlStats(time_t time_) {
 }
 
 watchdog::watchdog() {
-    struct WatchdogModule mainModule { .Name = "Main", .MaxTimeout =  200 };
-    struct WatchdogModule netMod { .Name = "Network", .MaxTimeout =  200 };
+//    struct WatchdogModule mainModule { .Name = "Main", .MaxTimeout =  200 };
+//    struct WatchdogModule netMod { .Name = "Network", .MaxTimeout =  200 };
     struct WatchdogModule physMod { .Name = "Map_Physic", .MaxTimeout =  400 };
-    struct WatchdogModule bcMod { .Name = "Map_BlockChanging", .MaxTimeout =  400 };
-    struct WatchdogModule actionMod { .Name = "Map_Action", .MaxTimeout =  10000 };
-    struct WatchdogModule loginMod { .Name = "Client_login", .MaxTimeout =  2000 };
+//    struct WatchdogModule bcMod { .Name = "Map_BlockChanging", .MaxTimeout =  400 };
+//    struct WatchdogModule actionMod { .Name = "Map_Action", .MaxTimeout =  10000 };
+//    struct WatchdogModule loginMod { .Name = "Client_login", .MaxTimeout =  2000 };
 
-    _modules.push_back(mainModule);
-    _modules.push_back(netMod);
+//    _modules.push_back(mainModule);
+//    _modules.push_back(netMod);
     _modules.push_back(physMod);
-    _modules.push_back(bcMod);
-    _modules.push_back(actionMod);
-    _modules.push_back(loginMod);
+//    _modules.push_back(bcMod);
+//    _modules.push_back(actionMod);
+//    _modules.push_back(loginMod);
     isRunning = true;
 
     this->Teardown = [this] { isRunning = false; };
@@ -158,4 +166,133 @@ watchdog::watchdog() {
     std::thread myThread(&watchdog::MainFunc, this);
     std::swap(myThread, mainThread);
     TaskScheduler::RegisterTask("Watchdog", *this);
+}
+
+
+/* Code for the two below methods from the Cuberite project
+ * https://github.com/cuberite/cuberite/blob/master/src/Root.cpp
+ */
+int watchdog::GetVirtualRAMUsage() {
+#ifdef _WIN32
+    PROCESS_MEMORY_COUNTERS_EX pmc;
+		if (GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS *)&pmc, sizeof(pmc)))
+		{
+			return (int)(pmc.PrivateUsage / 1024);
+		}
+		return -1;
+#elif defined(__linux__)
+    // Code adapted from https://stackoverflow.com/questions/63166/how-to-determine-cpu-and-memory-consumption-from-inside-a-process
+    std::ifstream StatFile("/proc/self/status");
+    if (!StatFile.good())
+    {
+        return -1;
+    }
+    while (StatFile.good())
+    {
+        std::string Line;
+        std::getline(StatFile, Line);
+        if (strncmp(Line.c_str(), "VmSize:", 7) == 0)
+        {
+            int res = atoi(Line.c_str() + 8);
+            return (res == 0) ? -1 : res;  // If parsing failed, return -1
+        }
+    }
+    return -1;
+#elif defined (__APPLE__)
+    // Code adapted from https://stackoverflow.com/questions/63166/how-to-determine-cpu-and-memory-consumption-from-inside-a-process
+		struct task_basic_info t_info;
+		mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+
+		if (KERN_SUCCESS == task_info(
+			mach_task_self(),
+			TASK_BASIC_INFO,
+			reinterpret_cast<task_info_t>(&t_info),
+			&t_info_count
+		))
+		{
+			return static_cast<int>(t_info.virtual_size / 1024);
+		}
+		return -1;
+	#else
+		LOGINFO("%s: Unknown platform, cannot query memory usage", __FUNCTION__);
+		return -1;
+#endif
+}
+
+int watchdog::GetPhysicalRAMUsage() {
+#ifdef _WIN32
+    PROCESS_MEMORY_COUNTERS pmc;
+		if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)))
+		{
+			return (int)(pmc.WorkingSetSize / 1024);
+		}
+		return -1;
+#elif defined(__linux__)
+    // Code adapted from https://stackoverflow.com/questions/63166/how-to-determine-cpu-and-memory-consumption-from-inside-a-process
+    std::ifstream StatFile("/proc/self/status");
+    if (!StatFile.good())
+    {
+        return -1;
+    }
+    while (StatFile.good())
+    {
+        std::string Line;
+        std::getline(StatFile, Line);
+        if (strncmp(Line.c_str(), "VmRSS:", 6) == 0)
+        {
+            int res = atoi(Line.c_str() + 7);
+            return (res == 0) ? -1 : res;  // If parsing failed, return -1
+        }
+    }
+    return -1;
+#elif defined (__APPLE__)
+    // Code adapted from https://stackoverflow.com/questions/63166/how-to-determine-cpu-and-memory-consumption-from-inside-a-process
+		struct task_basic_info t_info;
+		mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+
+		if (KERN_SUCCESS == task_info(
+			mach_task_self(),
+			TASK_BASIC_INFO,
+			reinterpret_cast<task_info_t>(&t_info),
+			&t_info_count
+		))
+		{
+			return static_cast<int>(t_info.resident_size / 1024);
+		}
+		return -1;
+	#elif defined (__FreeBSD__)
+		/*
+		struct rusage self_usage;
+		int status = getrusage(RUSAGE_SELF, &self_usage);
+		if (!status)
+		{
+			return static_cast<int>(self_usage.ru_maxrss);
+		}
+		return -1;
+		*/
+		// Good to watch: https://www.youtube.com/watch?v=Os5cK0H8EOA - getrusage.
+		// Unfortunately, it only gives peak memory usage a.k.a max resident set size
+		// So it is better to use FreeBSD kvm function to get the size of resident pages.
+
+		static kvm_t* kd = NULL;
+
+		if (kd == NULL)
+		{
+			kd = kvm_open(NULL, "/dev/null", NULL, O_RDONLY, "kvm_open");  // returns a descriptor used to access kernel virtual memory
+		}
+		if (kd != NULL)
+		{
+			int pc = 0;  // number of processes found
+			struct kinfo_proc* kp;
+			kp = kvm_getprocs(kd, KERN_PROC_PID, getpid(), &pc);
+			if ((kp != NULL) && (pc >= 1))
+			{
+				return static_cast<int>(kp->ki_rssize * getpagesize() / 1024);
+			}
+		}
+		return -1;
+	#else
+		LOGINFO("%s: Unknown platform, cannot query memory usage", __FUNCTION__);
+		return -1;
+#endif
 }

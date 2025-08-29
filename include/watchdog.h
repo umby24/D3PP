@@ -33,6 +33,9 @@ public:
     watchdog();
     static void Watch(const std::string &moadule, const std::string &message, int state);
     static watchdog* GetInstance();
+
+    int GetVirtualRAMUsage();
+    int GetPhysicalRAMUsage();
 protected:
 
     static watchdog* singleton_;
@@ -69,6 +72,8 @@ const std::string HTML_TEMPLATE = R"(<html>
       <br>
       <br>
     Site generated in [GEN_TIME] ms. [GEN_TIMESTAMP]<br>
+    Virtual Ram Usage: [VIRT]<br />
+    Physical Ram Usage: [PHYS]<br />
   </body>
 </html>
 )";
