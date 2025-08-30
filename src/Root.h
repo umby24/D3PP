@@ -21,7 +21,7 @@ public:
 	~Root();
 
 	void Start();
-	static void Stop();
+	void Stop();
 	static void Restart();
 
 	/** Returns the amount of virtual RAM used, in KiB. Returns a negative number on error */

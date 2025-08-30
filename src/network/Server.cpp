@@ -61,19 +61,11 @@ void D3PP::network::Server::TeardownFunc() {
         m_handleThread.join();
 }
 
-void D3PP::network::Server::TeardownFunc() {
-    TaskScheduler::UnregisterTask("Bandwidth");
-
-    if (m_handleThread.joinable())
-        m_handleThread.join();
-}
-
 void D3PP::network::Server::Start() {
     if (m_Instance == nullptr) {
         m_Instance = new Server();
     }
 }
-
 
 void D3PP::network::Server::Stop() {
     if (m_Instance == nullptr)

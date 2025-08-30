@@ -302,7 +302,7 @@ D3PP::world::MapMain::~MapMain()
     Shutdown();
 }
 
-std::shared_ptr<D3PP::world::Map> D3PP::world::MapMain::GetPointer(const std::string &name)
+std::shared_ptr<D3PP::world::Map> D3PP::world::MapMain::GetPointer(const std::string &name) const
 {
     std::shared_ptr<Map> result = nullptr;
     for (const auto &map: _maps | std::views::values) {

@@ -49,3 +49,55 @@ void Root::Start() {
 
     m_pluginManager->LoadPlugins();
 }
+
+void Root::Stop() {
+    Logger::LogAdd("Root", "Running Teardown Tasks...", NORMAL, GLF);
+    TaskScheduler::RunTeardownTasks();
+
+    if (m_pluginManager != nullptr) {
+        delete D3PP::plugins::PluginManager::GetInstance();
+        m_pluginManager = nullptr;
+    }
+
+    if (m_mapMain != nullptr) {
+        delete D3PP::world::MapMain::GetInstance();
+        m_mapMain = nullptr;
+    }
+
+    if (m_customBlocks != nullptr) {
+        delete CustomBlocks::GetInstance();
+        m_customBlocks = nullptr;
+    }
+
+    if (m_buildMode != nullptr) {
+        delete BuildModeMain::GetInstance();
+        m_buildMode = nullptr;
+    }
+
+    if (m_rank != nullptr) {
+        delete Rank::GetInstance();
+        m_rank = nullptr;
+    }
+
+    if (m_command != nullptr) {
+        delete CommandMain::GetInstance();
+        m_command = nullptr;
+    }
+
+    if (m_block != nullptr) {
+        delete Block::GetInstance();
+        m_block = nullptr;
+    }
+
+    if (m_watchdog != nullptr) {
+        delete watchdog::GetInstance();
+        m_watchdog = nullptr;
+    }
+
+    if (m_config != nullptr) {
+        delete Configuration::GetInstance();
+        m_config = nullptr;
+    }
+
+    Logger::LogAdd("Root", "Done", DEBUG, GLF);
+}

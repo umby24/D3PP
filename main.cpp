@@ -78,22 +78,10 @@ int main()
     D3PP::network::Server::Stop();
     TaskScheduler::RunTeardownTasks();
 // -- Wait for all threads to close:
-    if (mainThread.joinable())
-        mainThread.join();
-    
-    // -- Cleanup singletons
-    delete plugm;
-    delete Heartbeat::GetInstance();
-    delete BuildModeMain::GetInstance();
-    delete CommandMain::Instance;
-    delete PlayerMain::GetInstance();
-    delete Player_List::GetInstance();
-    delete Rank::GetInstance();
-    delete Block::GetInstance();
-    delete Configuration::GetInstance();
-    delete watchdog::GetInstance();
-    delete CustomBlocks::GetInstance();
-    delete D3PP::world::MapMain::GetInstance();
+    if (main_thread.joinable())
+        main_thread.join();
+
+    serverRoot.Stop();
     Files::Save();
     
     Logger::LogAdd("Module", "Server shutdown complete.", NORMAL, GLF);

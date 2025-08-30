@@ -456,7 +456,7 @@ void NetworkClient::HandleData() {
             }
             if (!isAllowedPacket) {
                 Logger::LogAdd(MODULE_NAME, "Disconnecting " + this->IP + ": Unexpected handshake opcode.", WARNING, GLF);
-                Kick("Invalid Packet", true);
+                Shutdown("Invalid Packet");
                 return;
             }
         }
@@ -535,7 +535,7 @@ void NetworkClient::HandleData() {
 
             default:
                 Logger::LogAdd(MODULE_NAME, "Unknown Packet Received [" + stringulate((int)commandByte) + "]", WARNING, GLF);
-                Kick("Invalid Packet", true);
+                Shutdown("Invalid Packet");
         }
 
         maxRepeat--;
@@ -615,7 +615,6 @@ void NetworkClient::Shutdown(const std::string& reason) {
     Client::Logout(Id, reason, true);
     canSend = false;
     canReceive = false;
-    D3PP::network::Server::UnregisterClient(GetSelfPointer());
     Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(Id) + "] [" + reason + "]", NORMAL, GLF);
     clientSocket->Disconnect();
     D3PP::network::Server::UnregisterClient(GetSelfPointer());
