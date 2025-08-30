@@ -40,8 +40,7 @@ int LuaNetworkLib::LuaNetworkOutBlockSet(lua_State* L)
     int blockZ = luaL_checkinteger(L, 4);
     int blockType = luaL_checkinteger(L, 5);
 
-    Network* n = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> client = n->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> client = Network::GetClient(clientId);
 
     if (client != nullptr) {
         NetworkFunctions::NetworkOutBlockSet(clientId, blockX, blockY, blockZ, static_cast<unsigned char>(blockType));

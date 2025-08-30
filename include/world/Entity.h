@@ -64,7 +64,7 @@ public:
     // -- Methods:
     Entity(std::string name, int mapId, float X, float Y, float Z, float rotation, float look);
     Entity(std::string name, int mapId, MinecraftLocation loc, std::shared_ptr<NetworkClient> c);
-
+    ~Entity();
     static std::shared_ptr<Entity> GetPointer(int id, bool isClientId = false);
     static std::shared_ptr<Entity> GetPointer(const std::string& name);
     static std::string GetDisplayname(int id);

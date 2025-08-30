@@ -85,8 +85,7 @@ void D3PP::world::Player::SendMap() {
     myMap->Send(myClientId);
     tEntity->SendPosOwn = true;
     tEntity->resend = true;
-    Network* nm = Network::GetInstance();
-    auto myClient = nm->GetClient(myClientId);
+    auto myClient = Network::GetClient(myClientId);
 
     if (myClientId != -1 && myClient != nullptr) {
         auto entities = myMap->GetEntities();
@@ -111,8 +110,7 @@ void D3PP::world::Player::PlayerClicked(ClickButton button, ClickAction action, 
 }
 
 void D3PP::world::Player::ChangeMap(std::shared_ptr<Map> map) {
-    Network* nm = Network::GetInstance();
-    auto myClient =  nm->GetClient(myClientId);
+    auto myClient =  Network::GetClient(myClientId);
 
     if (myClientId != -1 && myClient != nullptr) {
         MapMain* mm = MapMain::GetInstance();
@@ -156,8 +154,7 @@ void D3PP::world::Player::ChangeMap(std::shared_ptr<Map> map) {
 
 void D3PP::world::Player::DespawnEntities() {
     auto* mm = MapMain::GetInstance();
-    Network* nm = Network::GetInstance();
-    auto myClient = nm->GetClient(myClientId);
+    auto myClient = Network::GetClient(myClientId);
 
     if (myClientId != -1 && myClient != nullptr) {
         auto entities = mm->GetPointer(MapId)->GetEntities();

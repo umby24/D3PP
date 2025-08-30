@@ -107,6 +107,7 @@ Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rot
     Vector3F locAsBlocks {X, Y, Z};
     Location.SetAsPlayerCoords(locAsBlocks);
     associatedClient = nullptr;
+    Logger::LogAdd("Entity", "Entity CTOR 1", DEBUG, GLF);
 }
 
 Entity::Entity(std::string name, int mapId, MinecraftLocation loc, std::shared_ptr<NetworkClient> c) : variables{}, Location(loc) {
@@ -129,6 +130,12 @@ Entity::Entity(std::string name, int mapId, MinecraftLocation loc, std::shared_p
     BuildMode = "Normal";
     playerList = nullptr;
     associatedClient = c;
+    Logger::LogAdd("Entity", "Entity CTOR 2", DEBUG, GLF);
+}
+
+Entity::~Entity() {
+    Logger::LogAdd("Entity", "Entity DTOR", DEBUG, GLF);
+    associatedClient = nullptr;
 }
 
 std::shared_ptr<Entity> Entity::GetPointer(int id, bool isClientId) {
@@ -186,7 +193,6 @@ void Entity::Delete(int id) {
     std::shared_ptr<Entity> e = GetPointer(id);
     if (e == nullptr)
         return;
-    Network* n = Network::GetInstance();
 
     for(auto const &nc : D3PP::network::Server::roClients) {
         if (nc->GetPlayerInstance() == nullptr || nc->GetPlayerInstance()->GetEntity() == nullptr)
@@ -201,6 +207,7 @@ void Entity::Delete(int id) {
     ed.entityId = id;
     Dispatcher::post(ed);
 
+    e->Despawn();
     AllEntities.erase(id);
 }
 
@@ -231,7 +238,10 @@ void Entity::Despawn() const {
         if (nc->GetMapId() != MapID)
             continue;
 
+        auto mm = MapMain::GetInstance();
+        auto currentMap = mm->GetPointer(MapID);
         nc->DespawnEntity(selfPointer);
+        currentMap->RemoveEntity(selfPointer);
     }
 }
 

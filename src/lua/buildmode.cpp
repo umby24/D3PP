@@ -68,8 +68,7 @@ int LuaBuildModeLib::LuaBuildModeGet(lua_State* L) {
     }
 
     int clientId = luaL_checkinteger(L, 1);
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> networkClient = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> networkClient = Network::GetClient(clientId);
 
     if (networkClient != nullptr) {
         std::shared_ptr<Entity> clientEntity = Entity::GetPointer(clientId, true);
@@ -111,8 +110,7 @@ int LuaBuildModeLib::LuaBuildModeStateGet(lua_State* L) {
         return 0;
     }
     int clientId = luaL_checkinteger(L, 1);
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> networkClient = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> networkClient = Network::GetClient(clientId);
 
     if (networkClient != nullptr) {
         std::shared_ptr<Entity> e = Entity::GetPointer(clientId, true);

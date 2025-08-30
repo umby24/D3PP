@@ -4,18 +4,10 @@
 
 #include "network/Network.h"
 #include "network/NetworkClient.h"
-#include "world/Entity.h"
 #include "world/Player.h"
-#include "Client.h"
-#include "EventSystem.h"
-#include "common/ByteBuffer.h"
-#include "network/Packets.h"
 #include "network/Server.h"
 #include "ConsoleClient.h"
 
-Network* Network::singleton_ = nullptr;
-
-Network::Network() = default;
 
 std::shared_ptr<IMinecraftClient> Network::GetClient(int id) {
     if (id == -200)
@@ -31,15 +23,4 @@ std::shared_ptr<IMinecraftClient> Network::GetClient(int id) {
     }
 
     return result;
-}
-
-/**
- * DEPRECATED: Kept for legacy purposes only
- * @return
- */
-Network *Network::GetInstance() {
-    if (singleton_ == nullptr)
-        singleton_ = new Network();
-
-    return singleton_;
 }

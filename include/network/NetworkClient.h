@@ -13,6 +13,8 @@
 #include <vector>
 #include <atomic>
 
+#include "common/TaskScheduler.h"
+
 class Sockets;
 class ByteBuffer;
 class Player;
@@ -69,7 +71,7 @@ public:
     This includes sending and receiving packets, managing the client state, and
     interacting with the game world.
 */
-class NetworkClient : public IMinecraftClient {
+class NetworkClient : public IMinecraftClient, public TaskItem {
     friend class Client;
 public:
     NetworkClient();
@@ -135,10 +137,11 @@ public:
     bool GetLoggedIn() override;
     std::shared_ptr<D3PP::world::IMinecraftPlayer> GetPlayerInstance() override;
 
-    std::shared_ptr<NetworkClient> GetSelfPointer() const;
+    [[nodiscard]] std::shared_ptr<NetworkClient> GetSelfPointer() const;
 private:
     int Id;
     int eventSubId, addSubId, removeSubId, m_currentUndoIndex;
+    std::string taskId;
     std::vector<D3PP::Common::UndoItem> m_undoItems;
     std::atomic<bool> DataAvailable;
     std::atomic<bool> DataWaiting;

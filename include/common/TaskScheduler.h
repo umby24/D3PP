@@ -14,6 +14,7 @@
 class TaskItem {
 public:
     TaskItem() {};
+    bool IsDeleted = false;
     std::string TaskId;
     std::chrono::duration<double> Interval;
     std::chrono::time_point<std::chrono::system_clock> LastRun;

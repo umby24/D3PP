@@ -197,9 +197,8 @@ void Client::LoginCpe(int clientId, std::string name, std::string mppass, char v
 }
 
 void Client::Logout(int clientId, std::string message, bool showtoall) {
-    Network *n = Network::GetInstance();
     MapMain *mm = MapMain::GetInstance();
-    std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(n->GetClient(clientId));
+    std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
     if (!c || c == nullptr || c == NULL) {
         return;
     }
@@ -209,9 +208,10 @@ void Client::Logout(int clientId, std::string message, bool showtoall) {
     }
 
     if (c->player && c->GetPlayerInstance()->GetEntity()) {
-        std::shared_ptr<Map> currentMap = mm->GetPointer(c->player->GetEntity()->MapID);
+        auto entity = c->player->GetEntity();
+        std::shared_ptr<Map> currentMap = mm->GetPointer(entity->MapID);
         if (currentMap != nullptr) {
-            currentMap->RemoveEntity(c->player->GetEntity());
+            currentMap->RemoveEntity(entity);
         }
 
         if (showtoall) {
@@ -221,9 +221,8 @@ void Client::Logout(int clientId, std::string message, bool showtoall) {
         D3PP::network::ExtRemovePlayerName rpnPacket(c->player->GetNameId());
         D3PP::network::Server::SendToAll(rpnPacket, EXT_PLAYER_LIST_EXT_NAME, 1);
 
-        c->player->GetEntity()->Despawn();
-        Entity::Delete(c->player->GetEntity()->Id);
-        //c->player->tEntity = nullptr; TODO:
+        entity->Despawn();
+        Entity::Delete(entity->Id);
     }
     
     EventClientLogout ecl;

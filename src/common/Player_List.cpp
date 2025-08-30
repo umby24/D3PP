@@ -350,7 +350,7 @@ void PlayerListEntry::SetRank(int rank, const std::string &reason) {
     }
 }
 
-void PlayerListEntry::Kick(const std::string &reason, int count, bool log, bool show) {
+void PlayerListEntry::Kick(const std::string &reason, bool show) {
     bool found = false;
     {
         std::shared_lock lock(D3PP::network::Server::roMutex, std::defer_lock);
@@ -372,9 +372,6 @@ void PlayerListEntry::Kick(const std::string &reason, int count, bool log, bool 
         i->SaveFile = true;
         if (show) {
             NetworkFunctions::SystemMessageNetworkSend2All(-1, "Player " + Name + " was kicked (" + reason + ")");
-        }
-        if (log) {
-            Logger::LogAdd(MODULE_NAME, "Player " + Name + " was kicked (" + reason + ")", NORMAL, __FILE__, __LINE__, __FUNCTION__);
         }
     }
 }
@@ -440,7 +437,7 @@ void PlayerListEntry::Ban(std::string reason) {
     std::string playerName = GetDisplayName();
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&cPlayer '" + playerName + "'&c was banned. (" + reason + ")");
     Logger::LogAdd(MODULE_NAME, "Player banned: " + Name + " [" + reason + "]", NORMAL, __FILE__, __LINE__, __FUNCTION__);
-    Kick(reason, 1, true, false);
+    Kick(reason, false);
 }
 
 std::string PlayerListEntry::GetDisplayName() {

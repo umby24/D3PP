@@ -10,8 +10,7 @@
 #include "CPE.h"
 
 static std::shared_ptr<NetworkClient> GetPlayer(int id) {
-    auto network = Network::GetInstance();
-    auto result = std::static_pointer_cast<NetworkClient>(network->GetClient(id));
+    auto result = std::static_pointer_cast<NetworkClient>(Network::GetClient(id));
     return result;
 }
 void Packets::SendClientHandshake(int clientId, char protocolVersion, std::string serverName, std::string serverMotd,

@@ -1148,7 +1148,7 @@ void CommandMain::CommandKick() {
     std::string kickReason = (ParsedText1.empty() ? "§SYou were kicked." : ParsedText1);
 
     if (c->GetRank() > ple->PRank) {
-        ple->Kick(kickReason, ple->KickCounter+1, true, true);
+        ple->Kick(kickReason, true);
     } else {
         c->SendChat("§ECan't kick someone ranked higher than you.");
         return;

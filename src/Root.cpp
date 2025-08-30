@@ -32,6 +32,9 @@ void Root::Start() {
     this->m_buildMode = BuildModeMain::GetInstance();
     this->m_customBlocks = CustomBlocks::GetInstance();
     this->m_mapMain = D3PP::world::MapMain::GetInstance();
+    this->m_playerMain = PlayerMain::GetInstance();
+    this->m_heartbeat = Heartbeat::GetInstance();
+    this->m_playerList = Player_List::GetInstance();
     m_pluginManager = D3PP::plugins::PluginManager::GetInstance();
 
     Logger::LogAdd("Root", "Modules loaded.", DEBUG, GLF);
@@ -98,6 +101,19 @@ void Root::Stop() {
         delete Configuration::GetInstance();
         m_config = nullptr;
     }
-
+    if (m_playerMain != nullptr) {
+        delete PlayerMain::GetInstance();
+        m_playerMain = nullptr;
+    }
+    if (m_playerList != nullptr) {
+        delete Player_List::GetInstance();
+        m_playerList = nullptr;
+    }
+    if (m_heartbeat != nullptr) {
+        delete Heartbeat::GetInstance();
+        m_heartbeat = nullptr;
+    }
+    D3PP::network::Server::Stop();
+    System::IsRunning = false;
     Logger::LogAdd("Root", "Done", DEBUG, GLF);
 }

@@ -133,8 +133,8 @@ void D3PP::network::Server::HandleIncomingClient() {
     std::unique_ptr<Sockets> newClient = m_serverSocket->Accept();
 
     if (newClient != nullptr && newClient->GetSocketFd() != -1) {
-        NetworkClient newNcClient(std::move(newClient));
-        int clientId = newNcClient.GetId();
+        auto newNcClient = std::make_shared<NetworkClient>(std::move(newClient));
+        int clientId = newNcClient->GetId();
         RegisterClient(newNcClient);
 
         EventClientAdd eca;
@@ -143,20 +143,27 @@ void D3PP::network::Server::HandleIncomingClient() {
     }
 }
 
-void D3PP::network::Server::RegisterClient(NetworkClient client) {
-    std::scoped_lock<std::mutex> clientLock(m_ClientMutex);
-    m_clients.insert(std::make_pair(client.GetId(), std::make_shared<NetworkClient>(client)));
+void D3PP::network::Server::RegisterClient(const std::shared_ptr<NetworkClient> &client) {
+    std::scoped_lock clientLock(m_ClientMutex);
+    m_clients.insert(std::make_pair(client->GetId(), client));
     RebuildRoClients();
 }
 
 void D3PP::network::Server::UnregisterClient(const std::shared_ptr<IMinecraftClient>& client) {
+    if (client == nullptr) {
+        return;
+    }
     EventClientDelete ecd;
     ecd.clientId = client->GetId();
     Dispatcher::post(ecd);
     m_Instance->m_serverSocket->Unaccept(client->GetId());
     m_Instance->m_needsUpdate = true;
+    auto it = m_clients.find(client->GetId());
     std::scoped_lock<std::mutex> clientLock(m_ClientMutex);
+    auto hardRef = m_clients.at(it->first);
+    hardRef.reset();
     m_clients.erase(client->GetId());
+
 }
 
 void D3PP::network::Server::RebuildRoClients() {

@@ -286,7 +286,7 @@ int LuaPlayerLib::LuaPlayerKick(lua_State* L) {
     std::shared_ptr<PlayerListEntry> ple = pll->GetPointer(playerNumber);
 
     if (ple != nullptr) {
-        ple->Kick(reason, count, log, show);
+        ple->Kick(reason, show);
     }
 
     return 0;

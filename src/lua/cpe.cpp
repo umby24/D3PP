@@ -71,8 +71,7 @@ int LuaCPELib::LuaClientGetExtension(lua_State* L) {
     int clientId = static_cast<int>(luaL_checkinteger(L, 1));
     std::string extension(luaL_checkstring(L, 2));
     int result = 0;
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(clientId);
 
     if (c != nullptr) {
         result = CPE::GetClientExtVersion(c, extension);
@@ -91,8 +90,7 @@ int LuaCPELib::LuaClientGetExtensions(lua_State* L) {
     }
 
     int clientId = luaL_checkinteger(L, 1);
-    Network* nm = Network::GetInstance();
-    auto client = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
+    auto client = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
 
     if (client == nullptr || !client->LoggedIn)
         return 0;
@@ -137,8 +135,7 @@ int LuaCPELib::LuaSelectionCuboidAdd(lua_State* L) {
     auto blue = static_cast<short>(luaL_checkinteger(L, 12));
     auto opacity = static_cast<float>(luaL_checknumber(L, 13));
 
-    Network* nm = Network::GetInstance();
-    auto nc = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
+    auto nc = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
     if (nc == nullptr)
         return 0;
 
@@ -156,8 +153,7 @@ int LuaCPELib::LuaSelectionCuboidDelete(lua_State* L) {
 
     int clientId = static_cast<int>(luaL_checkinteger(L, 1));
     int selectionId = static_cast<int>(luaL_checkinteger(L, 2));
-    Network* nm = Network::GetInstance();
-    auto nc = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
+    auto nc = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
 
     if (nc == nullptr)
         return 0;
@@ -175,8 +171,7 @@ int LuaCPELib::LuaGetHeldBlock(lua_State* L) {
     }
 
     int clientId = static_cast<int>(luaL_checkinteger(L, 1));
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> nc = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> nc = Network::GetClient(clientId);
     if (nc == nullptr)
         return 0;
     std::shared_ptr<Entity> e = Entity::GetPointer(clientId, true);
@@ -201,8 +196,7 @@ int LuaCPELib::LuaSetHeldBlock(lua_State* L) {
     int blockId = static_cast<int>(luaL_checkinteger(L, 2));
     int canChange = static_cast<int>(luaL_checkinteger(L, 3));
 
-    Network* nm = Network::GetInstance();
-    auto nc = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
+    auto nc = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
 
     if (nc == nullptr)
         return 0;
@@ -226,8 +220,7 @@ int LuaCPELib::LuaChangeModel(lua_State* L) {
     int clientId = luaL_checkinteger(L, 1);
     std::string model(luaL_checkstring(L, 2));
 
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> nc = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> nc = Network::GetClient(clientId);
 
     if (nc == nullptr)
         return 0;
@@ -254,8 +247,7 @@ int LuaCPELib::LuaSetWeather(lua_State* L) {
     if (weatherType != 0 && weatherType != 1 && weatherType != 2)
         return 0;
 
-    Network* nm = Network::GetInstance();
-    auto nc = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
+    auto nc = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
 
     if (nc == nullptr || !nc->LoggedIn)
         return 0;
@@ -329,8 +321,7 @@ int LuaCPELib::LuaClientSetBlockPermissions(lua_State* L) {
     bool canPlace = lua_toboolean(L, 3);
     bool canDelete = lua_toboolean(L, 4);
 
-    Network* nm = Network::GetInstance();
-    auto nc = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
+    auto nc = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
 
     if (nc == nullptr || !nc->LoggedIn)
         return 0;
@@ -386,8 +377,7 @@ int LuaCPELib::LuaClientHackcontrolSend(lua_State* L) {
     bool thirdperson = lua_toboolean(L, 6);
     int jumpHeight = luaL_checkinteger(L, 7);
 
-    Network* nm = Network::GetInstance();
-    auto nc = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
+    auto nc = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
 
     if (nc == nullptr || !nc->LoggedIn)
         return 0;
@@ -641,8 +631,7 @@ int LuaCPELib::LuaSetBlockExtClient(lua_State* L)
     def.maxY = maxY;
     def.maxZ = maxZ;
 
-    Network* n = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> client = n->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> client = Network::GetClient(clientId);
     if (client != nullptr) {
         client->SendDefineBlock(def);
     }
@@ -706,8 +695,7 @@ int LuaCPELib::LuaCreateBlockClient(lua_State* L) {
                                static_cast<char>(fogG),
                                static_cast<char>(fogB)
     };
-    Network* n = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> client = n->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> client = Network::GetClient(clientId);
     if (client != nullptr) {
         client->SendDefineBlock(newBlock);
     }
@@ -724,8 +712,7 @@ int LuaCPELib::LuaDeleteBlockClient(lua_State* L) {
 
     int blockId = luaL_checkinteger(L, 1);
     int clientId = luaL_checkinteger(L, 2);
-    Network* n = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> client = n->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> client = Network::GetClient(clientId);
 
     if (client != nullptr) {
         client->SendDeleteBlock(blockId);
@@ -747,8 +734,7 @@ int LuaCPELib::LuaSetClientHotbar(lua_State* L)
     int hotbarIndex = luaL_checkinteger(L, 2);
     int blockId = luaL_checkinteger(L, 3);
 
-    Network* n = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> client = n->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> client = Network::GetClient(clientId);
     if (hotbarIndex > 8 || hotbarIndex < 0) {
         Logger::LogAdd("Lua", "LuaError: CPE.setClientHotbar called with invalid range for hotbarIndex: must be between 0 and 8, inclusive.", WARNING, GLF);
         return 0;
@@ -786,8 +772,7 @@ int LuaCPELib::LuaSetClientInventoryOrder(lua_State* L)
     int order = luaL_checkinteger(L, 2);
     int blockId = luaL_checkinteger(L, 3);
 
-    Network* n = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> client = n->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> client = Network::GetClient(clientId);
 
     if (client != nullptr && client->GetLoggedIn()) {
         bool isExtended = false;// (CPE::GetClientExtVersion(client, EXTENDED) > 0);

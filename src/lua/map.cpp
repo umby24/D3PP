@@ -828,8 +828,7 @@ int LuaMapLib::LuaMapBlockChangeClient(lua_State* L) {
     int Z = static_cast<int>(luaL_checknumber(L, 5));
     unsigned char mode = luaL_checkinteger(L, 6);
     unsigned char type = luaL_checkinteger(L, 7);
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(nm->GetClient(clientId));
+    std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
 
     MapMain* mm = MapMain::GetInstance();
     std::shared_ptr<Map> map = mm->GetPointer(mapId);

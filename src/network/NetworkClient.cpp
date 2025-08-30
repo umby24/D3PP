@@ -67,6 +67,13 @@ NetworkClient::NetworkClient(std::unique_ptr<Sockets> socket) : Selections(MAX_S
     removeSubId = 0;
     SubEvents();
     Logger::LogAdd(MODULE_NAME, "Client Created [" + stringulate(Id) + "]", NORMAL, GLF);
+    Logger::LogAdd("NetworkClient", "NC SOCKET CTOR", DEBUG, GLF);
+    this->Interval = std::chrono::seconds(5);
+    this->Main = [this]{this->MainFunc(); };
+    this->Teardown = [this]{this->Shutdown("Server Closing"); };
+
+    taskId = TaskScheduler::RegisterTask("nc" + stringulate(Id), *this);
+    this->TaskId = taskId;
 }
 
 NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
@@ -90,11 +97,18 @@ NetworkClient::NetworkClient() : Selections(MAX_SELECTION_BOXES) {
     addSubId = 0;
     removeSubId = 0;
     SubEvents();
+    Logger::LogAdd("NetworkClient", "NC BLANK CTOR", DEBUG, GLF);
+    this->Interval = std::chrono::seconds(5);
+    this->Main = [this]{this->MainFunc(); };
+    this->Teardown = [this]{this->Shutdown("Server Closing"); };
+
+    taskId = TaskScheduler::RegisterTask("nc", *this);
+    this->TaskId = taskId;
 }
 
 void NetworkClient::MainFunc() {
-    if (DisconnectTime > 0 && DisconnectTime < time(nullptr)) {
-        Shutdown("Forced Disconnect");
+    if (DisconnectTime != 0 && DisconnectTime < time(nullptr)) {
+        Shutdown("Forced Disconnect"); // -- Client was kicked but hasn't disconnected yet. Terminate from our end.
         return;
     }
     if (LastTimeEvent + NETWORK_CLIENT_TIMEOUT < time(nullptr)) {
@@ -179,6 +193,7 @@ void NetworkClient::OutputPing() {
 }
 
 void NetworkClient::Kick(const std::string& message, bool hide) {
+    Logger::LogAdd(MODULE_NAME, "Kicking Client [" + stringulate(Id) + "] Message: " + message, DEBUG, GLF);
     canReceive = false;
     NetworkFunctions::SystemRedScreen(this->Id, message);
 
@@ -187,6 +202,8 @@ void NetworkClient::Kick(const std::string& message, bool hide) {
         LoggedIn = false;
         Logger::LogAdd(MODULE_NAME, "Client Kicked [" + message + "]", NORMAL, GLF);
     }
+
+    //Shutdown("Kicked: " + message);
 }
 
 void NetworkClient::SpawnEntity(std::shared_ptr<Entity> e) {
@@ -309,9 +326,17 @@ NetworkClient::NetworkClient(NetworkClient &client) : Selections(MAX_SELECTION_B
     addSubId = 0;
     removeSubId = 0;
     SubEvents();
+    Logger::LogAdd("NetworkClient", "Copy CTOR", DEBUG, GLF);
+    TaskScheduler::UnregisterTask(client.taskId);
+    this->Interval = std::chrono::seconds(5);
+    this->Main = [this]{this->MainFunc(); };
+    this->Teardown = [this]{this->Shutdown("Server Closing"); };
+    taskId = TaskScheduler::RegisterTask("nc" + stringulate(Id), *this);
+    this->TaskId = taskId;
 }
 
 NetworkClient::~NetworkClient() {
+    Logger::LogAdd("NetworkClient", "NC DTOR", DEBUG, GLF);
     SendBuffer = nullptr;
     ReceiveBuffer = nullptr;
 
@@ -332,8 +357,7 @@ void NetworkClient::SendChat(std::string message) {
 }
 
 std::shared_ptr<NetworkClient> NetworkClient::GetSelfPointer() const {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<NetworkClient> selfPointer = std::static_pointer_cast<NetworkClient>(nm->GetClient(this->Id));
+    std::shared_ptr<NetworkClient> selfPointer = std::static_pointer_cast<NetworkClient>(Network::GetClient(this->Id));
     return selfPointer;
 }
 
@@ -418,8 +442,7 @@ void NetworkClient::SendQueued() {
 
 bool NetworkClient::ReadData() {
     if (canReceive) {
-        auto *receiveBuf = new char[1026];
-        receiveBuf[1024] = 99;
+        auto *receiveBuf = new char[1024];
         int dataRead = clientSocket->Read(receiveBuf, 1024);
         LastTimeEvent = time(nullptr);
         DataWaiting = false;
@@ -431,13 +454,18 @@ bool NetworkClient::ReadData() {
             delete[] receiveBuf;
             return true;
         } else {
+            Logger::LogAdd(MODULE_NAME, "Client Disconnected, rec " + stringulate(dataRead), DEBUG, GLF);
             delete[] receiveBuf;
-            D3PP::network::Server::UnregisterClient(GetSelfPointer());
-            Shutdown("Connection lost");
+            canReceive = false;
+            canSend = false;
+            DisconnectTime = time(nullptr) + 1;
             return false;
         }
     }
+
+    return false;
 }
+
 void NetworkClient::HandleData() {
     if (DataWaiting) {
         if (!ReadData())
@@ -615,9 +643,12 @@ void NetworkClient::Shutdown(const std::string& reason) {
     Client::Logout(Id, reason, true);
     canSend = false;
     canReceive = false;
+    player = nullptr; // -- Free our player instance.. Hopefully start a DTOR chain.
+
     Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(Id) + "] [" + reason + "]", NORMAL, GLF);
     clientSocket->Disconnect();
     D3PP::network::Server::UnregisterClient(GetSelfPointer());
+    TaskScheduler::UnregisterTask(taskId);
 }
 
 bool NetworkClient::GetLoggedIn() {

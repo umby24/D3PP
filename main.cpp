@@ -23,7 +23,7 @@ using namespace std;
 
 void main_loop();
 void main_console();
-int main_version = 1019;
+int main_version = 1020;
 
 void fixWindowsTerminal() {
 #if _WIN32

@@ -51,7 +51,7 @@ public:
     void SetAttribute(std::string attrName, std::string value);
 
     void SetRank(int rank, const std::string &reason);
-    void Kick(const std::string &reason, int count, bool log, bool show);
+    void Kick(const std::string &reason, bool show);
     void Ban(std::string reason);
     void Unban();
     void Mute(int minutes, std::string reason);
