@@ -465,6 +465,7 @@ Map::Map() : ID(0), SaveTime(0), Particles(), RankBoxes(), BlockMutex(), LastCli
 	PhysicsStopped = false;
 }
 
+
 void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1,
                     unsigned short Z1, bool undo, bool physic, unsigned char priority) {
 	const Vector3S location0(X0, Y0, Z0);

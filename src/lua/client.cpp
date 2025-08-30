@@ -39,7 +39,6 @@ int LuaClientLib::LuaClientGetTable(lua_State* L) {
     std::shared_lock lock(D3PP::network::Server::roMutex, std::defer_lock);
     int numClients = static_cast<int>(D3PP::network::Server::roClients.size());
     int index = 1;
-
     lua_newtable(L);
 
     if (numClients > 0) {
@@ -79,7 +78,7 @@ int LuaClientLib::LuaClientGetIp(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: CLient_Get_IP called with invalid number of arguments.", WARNING, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("Lua", "LuaError: client.getip() called with invalid number of arguments.", LogType::WARNING, __FILE__, __LINE__, __FUNCTION__);
         return 0;
     }
 

@@ -37,7 +37,7 @@ int LuaTeleporterLib::LuaTeleporterGetTable(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Teleporter_Get_Table called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: teleporter.getall() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int mapId = luaL_checkinteger(L, 1);
@@ -69,7 +69,7 @@ int LuaTeleporterLib::LuaTeleporterGetBox(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Teleporter_Get_Box called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: teleporter.getlocation() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int mapId = luaL_checkinteger(L, 1);
@@ -102,7 +102,7 @@ int LuaTeleporterLib::LuaTeleporterGetDestination(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Teleporter_Get_Destination called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: teleporter.getdestination() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int mapId = luaL_checkinteger(L, 1);
@@ -135,7 +135,7 @@ int LuaTeleporterLib::LuaTeleporterAdd(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 14) {
-        Logger::LogAdd("Lua", "LuaError: Teleporter_Add called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: teleporter.add() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int mapId = luaL_checkinteger(L, 1);
@@ -180,7 +180,7 @@ int LuaTeleporterLib::LuaTeleporterDelete(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Teleporter_Delete called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: teleporter.delete() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 

@@ -83,6 +83,7 @@ void D3PP::world::ClassicWorldMapProvider::SetSize(const Common::Vector3S &newSi
 
 bool D3PP::world::ClassicWorldMapProvider::Unload() {
     m_cwMap->BlockData.resize(1);
+    m_cwMap->BlockData.shrink_to_fit();
     return true;
 }
 

@@ -64,6 +64,11 @@ public:
     virtual std::shared_ptr<D3PP::world::IMinecraftPlayer> GetPlayerInstance() = 0;
 };
 
+/*
+    The NetworkClient class handles network communication for a Minecraft client.
+    This includes sending and receiving packets, managing the client state, and
+    interacting with the game world.
+*/
 class NetworkClient : public IMinecraftClient {
     friend class Client;
 public:

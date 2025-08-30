@@ -3,9 +3,20 @@
 
 [![discord](https://img.shields.io/badge/Discord-blue?style=for-the-badge)](https://discord.gg/CcnAaZpy)
 
-The [D3classic](https://github.com/umby24/D3classic) server, ported to C++.
+This is a robust, performant, extensible server for Classicube. 
 
-Porting it for better maintainability and for fun.
+It started as a port of the [D3classic](https://github.com/umby24/D3classic) server, but has evolved beyond the original code base at this point.
+
+## Features
+ - Live-reload Lua plugin system
+ - Multi-world
+ - Multi-platform (Windows/Linux/Docker)
+ - Available Web UI and REST API
+ - Simple yet powerful physics system
+ - Multi-threaded for best performance
+ - Automatic world unloader to save on memory load
+ - Significant (although incomplete) CPE support
+ - Infinitely customizable
 
 ## Roadmap
  - ~~Port the primary server functionality (See issue #1)~~
@@ -56,9 +67,9 @@ If you would like those reach out to let me know, and of course Pull Requests ar
 ## Compling on Linux
 These instructions used on Fedora
 
-# install your distros build-essential files
-# Install lua
-# clone the repo and open it up in terminal
-# mkdir build && cd build
-# cmake ../
-# make
+* install your distros build-essential files
+* Install lua, sqlite3, zlib
+* clone the repo and open it up in terminal
+* mkdir build && cd build
+* cmake ../
+* make

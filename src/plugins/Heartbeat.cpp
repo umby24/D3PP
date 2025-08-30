@@ -58,7 +58,8 @@ void Heartbeat::Beat() {
                 }
             }
 
-            Logger::LogAdd(MODULE_NAME, reasonStr, L_ERROR, GLF);
+            if (isFirstBeat)
+                Logger::LogAdd(MODULE_NAME, reasonStr, LogType::L_ERROR, GLF);
         } catch(std::exception e) {
             Logger::LogAdd(MODULE_NAME, "Error parsing Heartbeat. Response: " + res->body, L_ERROR, GLF);
         }
@@ -82,9 +83,15 @@ Heartbeat::Heartbeat() {
     
     this->Setup = [this] { Init(); };
     this->Main = [this] { MainFunc(); };
+    this->Teardown = [this] { TeardownFunc(); };
     this->Interval = std::chrono::seconds(1);
     this->LastRun = std::chrono::system_clock::now();
     TaskScheduler::RegisterTask(MODULE_NAME, *this);
+}
+
+void Heartbeat::TeardownFunc() {
+    TaskScheduler::UnregisterTask(MODULE_NAME);
+
 }
 
 std::string Heartbeat::CreateSalt() {

@@ -43,12 +43,29 @@ D3PP::network::Server::Server() {
 
     Interval = std::chrono::milliseconds(1);
     Main = [this](){ this->MainFunc(); };
-    TaskScheduler::RegisterTask("Server", *this);
+    Teardown = [this](){ this->TeardownFunc(); };
+    TaskScheduler::RegisterTask("Bandwidth", *this);
     m_needsUpdate = false;
     m_serverSocket = std::make_unique<ServerSocket>(m_port);
     m_serverSocket->Listen();
-
+    
+    std::thread handleThread([this]() { this->HandleClientData(); });
+    std::swap(m_handleThread, handleThread);
     Logger::LogAdd("Server", "Network server started on port " + stringulate(this->m_port), NORMAL, GLF);
+}
+
+void D3PP::network::Server::TeardownFunc() {
+    TaskScheduler::UnregisterTask("Bandwidth");
+
+    if (m_handleThread.joinable())
+        m_handleThread.join();
+}
+
+void D3PP::network::Server::TeardownFunc() {
+    TaskScheduler::UnregisterTask("Bandwidth");
+
+    if (m_handleThread.joinable())
+        m_handleThread.join();
 }
 
 void D3PP::network::Server::Start() {

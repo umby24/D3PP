@@ -19,6 +19,7 @@
 #include "network/Network_Functions.h"
 #include "network/Packets.h"
 #include "network/packets/ExtRemovePlayerName.h"
+
 #include "world/Player.h"
 #include "common/Player_List.h"
 #include "world/Entity.h"
@@ -26,11 +27,12 @@
 
 
 #include "world/Map.h"
-#include "System.h"
-#include "plugins/Heartbeat.h"
+#include "System.h" // -- For SYSTEM_VERSION_NUMBER
+#include "plugins/Heartbeat.h" // -- For name verification
 
 #include "CPE.h"
 
+// -- Event broadcasting
 #include "EventSystem.h"
 #include "events/EventClientLogin.h"
 #include "events/EventClientLogout.h"
@@ -46,14 +48,15 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     Rank *rm = Rank::GetInstance();
     Heartbeat* hbm = Heartbeat::GetInstance();
 
+    // -- Create the base items required for login, assign a client ID, etc.
     std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
-
+    // NEW
     auto myPlayer = std::make_shared<D3PP::world::Player>(name, mppass, version);
 
     myPlayer->myClientId = c->GetId();
     c->player = myPlayer;
 
-
+    // -- Pre-login checks
     bool preLoginCorrect = true;
     if (version != 7) {
         preLoginCorrect = false;
@@ -95,6 +98,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
         c->Kick("You are banned", true);
         return;
     }
+    // -- Entity is verified. Bump their information in the playerDB
     entry->Online = 1;
     entry->LoginCounter++;
     entry->IP = c->IP;
@@ -103,11 +107,13 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     if (entry->OntimeCounter < 0) {
         entry->OntimeCounter = 0;
     }
-
+    // -- Retrieve configuration information
     c->GlobalChat = entry->GlobalChat;
+    // -- Assign a map, entity, etc.
     std::shared_ptr<Map> spawnMap = mm->GetPointer(Configuration::GenSettings.SpawnMapId);
     MinecraftLocation spawnLocation = spawnMap->GetSpawn();
 
+    // NEW
     std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(name, Configuration::GenSettings.SpawnMapId, spawnLocation, c);
     RankItem currentRank = rm->GetRank(entry->PRank, false);
 
@@ -118,7 +124,7 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     myPlayer->tEntity = newEntity;
     myPlayer->MapId = spawnMap->ID;
     c->LoggedIn = true;
-
+// -- Now with everything setup on our end, we can start sending packets to the client
     NetworkFunctions::SystemLoginScreen(c->GetId(), Configuration::GenSettings.name, Configuration::GenSettings.motd, currentRank.OnClient);
 
 
@@ -130,7 +136,8 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
 //    newEntity->SpawnSelf = true;
     newEntity->Spawn();
 
-    Logger::LogAdd(MODULE_NAME, "Player Logged in (IP:" + c->IP + " Name:" + name + ")", NORMAL, GLF);
+    // -- Broadcast to all players that a new player has joined
+    Logger::LogAdd(MODULE_NAME, "Player Logged in (IP:" + c->IP + " Name:" + name + ")", LogType::NORMAL, GLF);
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&ePlayer '" + Entity::GetDisplayname(newEntity->Id) + "&e' logged in");
     NetworkFunctions::SystemMessageNetworkSend(c->GetId(), Configuration::GenSettings.WelcomeMessage);
     
@@ -145,6 +152,10 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     pl->SaveFile = true;
 }
 
+/*
+    First step in the login process for CPE clients.
+    Let the client know what extensions we support, then wait for their response.
+*/
 void Client::LoginCpe(int clientId, std::string name, std::string mppass, char version) {
     std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
 

@@ -34,6 +34,7 @@ private:
     time_t lastBeat;
 
     static int GetUniqueOnlinePlayers();
+    void TeardownFunc();
 };
 
 #endif //D3PP_HEARTBEAT_H

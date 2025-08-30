@@ -63,7 +63,7 @@ int LuaPlayerLib::LuaPlayerGetPrefix(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Player_Get_Prefix called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.getprefix() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -86,7 +86,7 @@ int LuaPlayerLib::LuaPlayerGetName(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Player_Get_Name called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.getname() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -109,7 +109,7 @@ int LuaPlayerLib::LuaPlayerGetSuffix(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Player_Get_Suffix called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.getsuffix() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -131,7 +131,7 @@ int LuaPlayerLib::LuaPlayerGetIp(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Player_Get_Ip called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.ip() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -153,7 +153,7 @@ int LuaPlayerLib::LuaPlayerGetOntime(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Player_Get_Ontime called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.ontime() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -175,7 +175,7 @@ int LuaPlayerLib::LuaPlayerGetRank(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Player_Get_Rank called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.rank() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -197,7 +197,7 @@ int LuaPlayerLib::LuaPlayerGetOnline(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Player_Get_Online called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.online() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -219,7 +219,7 @@ int LuaPlayerLib::LuaPlayerGetMuteTime(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Player_Get_Mute_Time called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.mutetime() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -241,7 +241,7 @@ int LuaPlayerLib::LuaPlayerSetRank(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 3) {
-        Logger::LogAdd("Lua", "LuaError: Player_Set_Rank called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.setrank() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -263,7 +263,7 @@ int LuaPlayerLib::LuaPlayerKick(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs > 2) {
-        Logger::LogAdd("Lua", "LuaError: Player_Kick called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.kick() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -296,7 +296,7 @@ int LuaPlayerLib::LuaPlayerBan(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Player_Ban called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.ban() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -317,7 +317,7 @@ int LuaPlayerLib::LuaPlayerUnban(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Player_Unban called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.unban() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -337,7 +337,7 @@ int LuaPlayerLib::LuaPlayerStop(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Player_Stop called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.stop() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -358,7 +358,7 @@ int LuaPlayerLib::LuaPlayerUnstop(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Player_Unstop called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.unstop() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -378,7 +378,7 @@ int LuaPlayerLib::LuaPlayerMute(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 3) {
-        Logger::LogAdd("Lua", "LuaError: Player_Mute called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.mute() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -400,7 +400,7 @@ int LuaPlayerLib::LuaPlayerUnmute(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Player_Unmute called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: player.unmute() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 

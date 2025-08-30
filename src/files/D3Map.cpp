@@ -407,8 +407,16 @@ namespace D3PP::files {
             float SpawnY = stof(pLoader.Read("Spawn_Y", "1"));
             float SpawnZ = stof(pLoader.Read("Spawn_Z", "0"));
             MapSpawn.SetAsPlayerCoords(Common::Vector3F{SpawnX, SpawnY, SpawnZ});
-            MapSpawn.Rotation = stof(pLoader.Read("Spawn_Rot", "0"));
-            MapSpawn.Look=stof(pLoader.Read("Spawn_Look", "0"));
+            if (Utils::IsNumeric(pLoader.Read("Spawn_Rot", "0"))) {
+                MapSpawn.Rotation = stof(pLoader.Read("Spawn_Rot", "0"));
+            } else {
+                MapSpawn.Rotation = 0;
+            }
+            if (Utils::IsNumeric(pLoader.Read("Spawn_Look", "0"))) {
+                MapSpawn.Look = stof(pLoader.Read("Spawn_Look", "0"));
+            } else {
+                MapSpawn.Look = 0;
+            }
             ColorsSet = (pLoader.Read("Colors_Set", 0) > 0);
             SkyColor = pLoader.Read("Sky_Color", -1);
             CloudColor = pLoader.Read("Cloud_Color", -1);

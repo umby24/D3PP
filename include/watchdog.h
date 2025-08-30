@@ -32,6 +32,9 @@ public:
     watchdog();
     static void Watch(const std::string &moadule, const std::string &message, int state);
     static watchdog* GetInstance();
+
+    int GetVirtualRAMUsage();
+    int GetPhysicalRAMUsage();
 protected:
 
     static watchdog* singleton_;
@@ -42,16 +45,68 @@ private:
     void HtmlStats(time_t time_);
     void MainFunc();
     std::thread mainThread;
+    void DoTeardown();
 };
 
 const std::string HTML_TEMPLATE = R"(<html>
 <head>
-    <title>Minecraft-Server Watchdog</title>
+    <title>D3PP Watchdog</title>
+    <style type=""text/css"">
+            body {
+                font-family: ""Microsoft PhagsPa"";
+                color:#2f2f2f;
+                background-color:#F7F7F7;
+            }
+            h1.header {
+                background-color:darkblue;
+                text-shadow:2px 1px 0px rgba(0,0,0,.2); 
+                font-size:25px;
+                font-weight:bold;
+                text-decoration:none;
+                text-align:center;
+                color:white;
+                margin:0;
+                height:42px; 
+                width:auto;
+                border-bottom: 1px black solid;
+                height: 42px;
+                margin: -8px;
+                line-height: 42px;
+            }
+            table {
+                border: 1px solid #A0A0A0;
+                table-layout: auto;
+                empty-cells: hide;
+                border-collapse: collapse;
+            }
+            tr {
+                border: 1px solid #A0A0A0;
+                background-color: #D0D0D0;
+                color: #212121;
+                opacity:1.0;
+            }
+            td {
+                border-right: 1px solid #A0A0A0;
+            }
+            th {
+                border-right: 1px solid #A0A0A0;
+            }
+            .wellText {
+                font-weight: bold;
+                color: #00AA00;
+            }
+            .laggingText {
+                font-weight: bold;
+                color: #AA0000;
+            }
+        </style>
   </head>
   <body>
-    <b><u>Modules:</u></b><br>
+    <h1 class="header">D3PP Watchdog</h1>
     <br>
-    <table border=1>      <tr>
+    <h3>Watch Modules:</h3>
+    <br>
+    <table>      <tr>
         <th><b>Name</b></th>
         <th><b>State</b></th>
         <th><b>Timeout</b></th>
@@ -68,6 +123,8 @@ const std::string HTML_TEMPLATE = R"(<html>
       <br>
       <br>
     Site generated in [GEN_TIME] ms. [GEN_TIMESTAMP]<br>
+    Virtual Ram Usage: [VIRT]<br />
+    Physical Ram Usage: [PHYS]<br />
   </body>
 </html>
 )";

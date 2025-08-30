@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 include_directories(include/)
+include_directories(/usr/include/lua5.4)
 # set the project name
 project(D3PP)
 set(CMAKE_COMPILER_)
@@ -12,10 +13,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 set(VERSION_STRING 0.1.9)
 set(VERSION ${VERSION_STRING})
 
+if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
+		cmake_policy(SET CMP0135 NEW)
+	endif()
+    
 include(FetchContent)
 FetchContent_Declare(
-  googletest 
-  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+        googletest
+        URL https://github.com/google/googletest/archive/52eb8108c5bdec04579160ae17225d66034bd723.zip
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL //github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
@@ -107,6 +112,7 @@ add_executable(
   ${D3PP_SOURCE_FILES}
   Testing/hello_test.cc
   Testing/utils_test.cc
+  Testing/Client_test.cc
   Testing/common/MinecraftLocationTest.cc
         Testing/common/ByteBufferTest.cc
   Testing/files/d3map_test.cc
@@ -132,7 +138,7 @@ else ()
 endif ()
 
 include_directories(${Lua_INCLUDE_DIRS})
-target_link_libraries(hello_test ${LUA_LIBRARIES})
+target_link_libraries(hello_test gmock gmock_main ${LUA_LIBRARIES})
 
 
 include(GoogleTest)

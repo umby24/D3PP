@@ -47,7 +47,7 @@ int LuaBuildModeLib::LuaBuildModeSet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Build_Mode_Set called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: buildmode.set() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int clientId = luaL_checkinteger(L, 1);
@@ -63,7 +63,7 @@ int LuaBuildModeLib::LuaBuildModeGet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Build_Mode_Get called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: buildmode.get() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
 
@@ -91,7 +91,7 @@ int LuaBuildModeLib::LuaBuildModeStateSet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Build_Mode_State_Set called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: buildmode.setstate() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int clientId = luaL_checkinteger(L, 1);
@@ -107,7 +107,7 @@ int LuaBuildModeLib::LuaBuildModeStateGet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Build_Mode_State_Get called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: buildmode.getstate() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int clientId = luaL_checkinteger(L, 1);
@@ -133,7 +133,7 @@ int LuaBuildModeLib::LuaBuildModeCoordinateSet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 5) {
-        Logger::LogAdd("Lua", "LuaError: Build_Mode_Coordinate_Set called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: buildmode.setcoordinate() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int clientId = luaL_checkinteger(L, 1);
@@ -152,7 +152,7 @@ int LuaBuildModeLib::LuaBuildModeCoordinateGet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Build_Mode_Coordinate_Get called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: buildmode.getcoordinate() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int clientId = luaL_checkinteger(L, 1);
@@ -177,7 +177,7 @@ int LuaBuildModeLib::LuaBuildModeLongSet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 3) {
-        Logger::LogAdd("Lua", "LuaError: Build_Mode_Long_Set called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: buildmode.setlong() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int clientId = luaL_checkinteger(L, 1);
@@ -194,7 +194,7 @@ int LuaBuildModeLib::LuaBuildModeLongGet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Build_Mode_Long_Get called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: buildmode.getlong() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int clientId = luaL_checkinteger(L, 1);
@@ -212,7 +212,7 @@ int LuaBuildModeLib::LuaBuildModeFloatSet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 3) {
-        Logger::LogAdd("Lua", "LuaError: Build_Mode_float_Set called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: buildmode.setfloat() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int clientId = luaL_checkinteger(L, 1);
@@ -228,7 +228,7 @@ int LuaBuildModeLib::LuaBuildModeFloatGet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Build_Mode_Float_Get called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: buildmode.getfloat() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int clientId = luaL_checkinteger(L, 1);
@@ -246,7 +246,7 @@ int LuaBuildModeLib::LuaBuildModeStringSet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 3) {
-        Logger::LogAdd("Lua", "LuaError: Build_Mode_String_Set called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: buildmode.setstring() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int clientId = luaL_checkinteger(L, 1);
@@ -263,7 +263,7 @@ int LuaBuildModeLib::LuaBuildModeStringGet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Build_Mode_String_Get called with invalid number of arguments.", WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: buildmode.getstring() called with invalid number of arguments.", LogType::WARNING, GLF);
         return 0;
     }
     int clientId = luaL_checkinteger(L, 1);
