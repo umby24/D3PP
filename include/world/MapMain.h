@@ -33,7 +33,8 @@ namespace D3PP::world {
     class MapMain : TaskItem {
     public:
         MapMain();
-
+        ~MapMain();
+        
         std::shared_ptr<Map> GetPointer(int id);
         std::shared_ptr<Map> GetPointer(const std::string& name);
         
@@ -48,6 +49,7 @@ namespace D3PP::world {
         static Common::Vector3S GetMapExportSize(const std::string &filename);
         void Init();
         void MainFunc();
+        void Shutdown();
         void AddSaveAction(int clientId, int mapId, const std::string &directory);
         void AddLoadAction(int clientId, int mapId, const std::string &directory);
         void LoadImmediately(int mapId, const std::string &directory);

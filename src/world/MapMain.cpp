@@ -1,4 +1,3 @@
-#include "world/MapMain.h"
 
 #include <string>
 #include <world/ClassicWorldMapProvider.h>
@@ -22,10 +21,12 @@
 #include "world/D3MapProvider.h"
 #include "world/Teleporter.h"
 #include "world/Player.h"
+#include "world/MapMain.h"
 #include "compression.h"
 #include "System.h"
 #include "watchdog.h"
 #include "Utils.h"
+
 
 const std::string MODULE_NAME = "MapMain";
 D3PP::world::MapMain* D3PP::world::MapMain::Instance = nullptr;
@@ -33,6 +34,7 @@ D3PP::world::MapMain* D3PP::world::MapMain::Instance = nullptr;
 D3PP::world::MapMain::MapMain() {
     this->Setup = [this] { Init(); };
     this->Main = [this] { MainFunc(); };
+    this->Teardown = [this] { Shutdown(); };
     this->Interval = std::chrono::seconds(1);
     this->LastRun = std::chrono::system_clock::now();
 
@@ -51,6 +53,20 @@ D3PP::world::MapMain::MapMain() {
 void D3PP::world::MapMain::Init() {
     LoadD3Maps();
     LoadMaps();
+}
+
+void D3PP::world::MapMain::Shutdown() {
+    for (auto& [id, map] : _maps) {
+        map->Unload();
+    }
+
+    if (BlockchangeThread.joinable()) {
+        BlockchangeThread.join();
+    }
+
+    if (PhysicsThread.joinable()) {
+        PhysicsThread.join();
+    }
 }
 
 void D3PP::world::MapMain::MainFunc() {
@@ -287,7 +303,13 @@ std::shared_ptr<D3PP::world::Map> D3PP::world::MapMain::GetPointer(int id) {
     return nullptr;
 }
 
-std::shared_ptr<D3PP::world::Map> D3PP::world::MapMain::GetPointer(const std::string& name) {
+D3PP::world::MapMain::~MapMain()
+{
+    Shutdown();
+}
+
+std::shared_ptr<D3PP::world::Map> D3PP::world::MapMain::GetPointer(const std::string &name)
+{
     std::shared_ptr<Map> result = nullptr;
     for (auto const &mi : _maps) {
         if (Utils::InsensitiveCompare(mi.second->m_mapProvider->MapName, name)) {

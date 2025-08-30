@@ -52,6 +52,7 @@ namespace D3PP::network {
      void HandleIncomingClient();
      void MainFunc();
      void HandleEvents();
+     void TeardownFunc();
      static void RebuildRoClients();
  };
 }

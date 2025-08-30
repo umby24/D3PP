@@ -86,9 +86,9 @@ void watchdog::HtmlStats(time_t time_) {
        modTable += "<tr>\n";
        modTable += "<td>" + item.Name + "</td>\n";
         if (item.BiggestTimeout >= item.MaxTimeout)
-            modTable += "<td><font color=\"#AA0000\"><b>Lagging</b></font></td>\n";
+            modTable += "<td class=\"laggingText\">Lagging</td>\n";
         else
-            modTable += "<td><font color=\"#00AA00\"><b>Well</b></font></td>\n";
+            modTable += "<td class=\"wellText\">Well</td>\n";
 
         modTable += "<td>" + stringulate(item.BiggestTimeout) + "ms (Max. " + stringulate(item.MaxTimeout) + "ms)</td>\n";
         modTable += "<td>" + item.BiggestMessage + "</td>\n";
@@ -155,12 +155,9 @@ watchdog::watchdog() {
 //    _modules.push_back(mainModule);
 //    _modules.push_back(netMod);
     _modules.push_back(physMod);
-//    _modules.push_back(bcMod);
-//    _modules.push_back(actionMod);
-//    _modules.push_back(loginMod);
     isRunning = true;
 
-    this->Teardown = [this] { isRunning = false; };
+    this->Teardown = [this] { isRunning = false; DoTeardown(); };
     this->Interval = std::chrono::seconds(100);
     this->LastRun = std::chrono::system_clock::now();
     std::thread myThread(&watchdog::MainFunc, this);
@@ -168,6 +165,10 @@ watchdog::watchdog() {
     TaskScheduler::RegisterTask("Watchdog", *this);
 }
 
+void watchdog::DoTeardown() {
+    if (mainThread.joinable())
+        mainThread.join();
+}
 
 /* Code for the two below methods from the Cuberite project
  * https://github.com/cuberite/cuberite/blob/master/src/Root.cpp

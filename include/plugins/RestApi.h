@@ -18,7 +18,7 @@ public:
     RestApi();
 
     void Init();
-
+    void Shutdown();
 private:
     std::shared_ptr<httplib::Server> m_restServer;
     std::thread m_serverThread;

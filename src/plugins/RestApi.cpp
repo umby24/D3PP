@@ -24,8 +24,19 @@ using json = nlohmann::json;
 
 RestApi::RestApi() {
     this->Setup = [this] { Init(); };
+    this->Teardown = [this] { Shutdown(); };
     m_restServer = nullptr;
     TaskScheduler::RegisterTask(MODULE_NAME, *this);
+}
+
+void RestApi::Shutdown() {
+    if (m_restServer) {
+        m_restServer->stop();
+    }
+    if (m_serverThread.joinable()) {
+        m_serverThread.join();
+    }
+    m_restServer = nullptr;
 }
 
 void RestApi::Init() {

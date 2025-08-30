@@ -78,9 +78,15 @@ Heartbeat::Heartbeat() {
     
     this->Setup = [this] { Init(); };
     this->Main = [this] { MainFunc(); };
+    this->Teardown = [this] { TeardownFunc(); };
     this->Interval = std::chrono::seconds(1);
     this->LastRun = std::chrono::system_clock::now();
     TaskScheduler::RegisterTask(MODULE_NAME, *this);
+}
+
+void Heartbeat::TeardownFunc() {
+    TaskScheduler::UnregisterTask(MODULE_NAME);
+
 }
 
 std::string Heartbeat::CreateSalt() {

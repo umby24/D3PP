@@ -452,6 +452,7 @@ Map::Map() : IActions(), RankBoxes(), Particles() {
   //  Clients = 0;
 }
 
+
 void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1,
                     unsigned short Z1, bool undo, bool physic, unsigned char priority) {
 
