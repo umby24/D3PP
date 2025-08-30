@@ -31,7 +31,7 @@
 using namespace std;
 void mainLoop();
 void MainConsole();
-int MainVersion = 1018;
+int MainVersion = 1019;
 
 void fixWindowsTerminal() {
 #if _WIN32
