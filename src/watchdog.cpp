@@ -8,6 +8,7 @@
 #include "common/Logger.h"
 #include <time.h>
 #include <cstring>
+#include <chrono>
 
 watchdog* watchdog::singleton_ = nullptr;
 
@@ -21,7 +22,7 @@ void watchdog::Watch(const std::string &moadule, const std::string &message, int
             continue;
         }
 
-        item.Timeout = clock() - item.WatchTime;
+        item.Timeout = (clock() - item.WatchTime) * 1000 / CLOCKS_PER_SEC;
         if (item.BiggestTimeout < item.Timeout) {
             item.BiggestTimeout = item.Timeout;
             item.BiggestMessage = item.LastMessage;
@@ -50,21 +51,22 @@ watchdog *watchdog::GetInstance() {
 }
 
 void watchdog::MainFunc() {
-    clock_t timer = 0;
+    auto start = std::chrono::steady_clock::now();
 
     while (isRunning) {
-	    const clock_t currentTime = clock(); // -- generationTIme and timer
-	    const clock_t time_ = currentTime - timer;
-        timer = currentTime;
+	    auto currentTime_chrono = std::chrono::steady_clock::now();
+	    auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime_chrono - start).count();
+	    const clock_t currentTime = clock(); // -- for CPU time calculations
+	    start = currentTime_chrono;
 	    {
 		    int i = 0;
 		    // -- Artificial block for scoped lock
             const std::scoped_lock<std::mutex> pLock(_lock);
             for (auto &item : _modules) {
-                item.CpuTime = item.CpuTime4Percent * 100 / time_;
+                item.CpuTime = elapsed_ms > 0 ? item.CpuTime4Percent * 1000 / (elapsed_ms * CLOCKS_PER_SEC) * 100 : 0;
                 item.CpuTime4Percent = 0;
 
-                item.Timeout = currentTime - item.WatchTime;
+                item.Timeout = (currentTime - item.WatchTime) * 1000 / CLOCKS_PER_SEC;
                 if (item.BiggestTimeout < item.Timeout) {
                     item.BiggestTimeout = item.Timeout;
                 }
@@ -72,13 +74,13 @@ void watchdog::MainFunc() {
                 i++;
             }
         }
-        HtmlStats(time_);
+        HtmlStats(elapsed_ms);
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 }
 
 void watchdog::HtmlStats(time_t time_) {
-    time_t start_time = time(nullptr);
+    auto start_time_chrono = std::chrono::steady_clock::now();
     clock_t div_time = clock();
     std::string result = HTML_TEMPLATE;
 
@@ -96,7 +98,7 @@ void watchdog::HtmlStats(time_t time_) {
         modTable += "<td>" + stringulate(item.BiggestTimeout) + "ms (Max. " + stringulate(item.MaxTimeout) + "ms)</td>\n";
         modTable += "<td>" + item.BiggestMessage + "</td>\n";
         modTable += "<td>" + item.LastMessage + "</td>\n";
-        modTable += "<td>" + stringulate((item.CallsPerSecond*100/div_time)) + "/s</td>\n";
+        modTable += "<td>" + stringulate(time_ > 0 ? (item.CallsPerSecond * 1000 / time_) : 0) + "/s</td>\n";
         modTable += "<td>" + stringulate(item.CpuTime) + "%</td>\n";
         modTable += "</tr>\n";
 
@@ -108,8 +110,9 @@ void watchdog::HtmlStats(time_t time_) {
     std::string modTableStr = "[MODULE_TABLE]";
     Utils::replaceAll(result, modTableStr, modTable);
 
+    auto finishTime_chrono = std::chrono::steady_clock::now();
+    auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(finishTime_chrono - start_time_chrono).count();
     time_t finishTime = time(nullptr);
-    time_t duration = finishTime - start_time;
     char buffer[255];
     struct tm *tme_info = new tm{};
     #if defined(__unix__)
@@ -128,7 +131,7 @@ void watchdog::HtmlStats(time_t time_) {
     std::string genTSStr = "[GEN_TIMESTAMP]";
     std::string VIRTStr = "[VIRT]";
     std::string PHYSStr = "[PHYS]";
-    std::string durationStr = stringulate(duration);
+    std::string durationStr = stringulate(duration_ms);
     std::string virtualStr = stringulate(GetVirtualRAMUsage());
     std::string physicalStr = stringulate(GetPhysicalRAMUsage());
 

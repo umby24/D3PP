@@ -5,6 +5,7 @@
 #include "common/Configuration.h"
 #include "common/Logger.h"
 #include "network/Server.h"
+#include "common/TaskScheduler.h"
 
 Root::Root() : m_restApi(), m_pluginManager(nullptr), m_block(nullptr), m_buildMode(nullptr), m_command(nullptr),
                m_customBlocks(nullptr),
@@ -40,6 +41,7 @@ void Root::Start() {
     Logger::LogAdd("Root", "Modules loaded.", DEBUG, GLF);
 
     Logger::LogAdd("Main", "Running Init Tasks...", NORMAL, GLF);
+    TaskScheduler::InitializeMonitoringTask();
     TaskScheduler::RunSetupTasks();
 
     System::IsRunning = true;
@@ -50,11 +52,22 @@ void Root::Start() {
     D3PP::network::Server::Start();
     Logger::LogAdd("Root", "Done", DEBUG, GLF);
 
+    // Start heartbeat thread
+    if (m_heartbeat != nullptr) {
+        m_heartbeat->Start();
+    }
+
     m_pluginManager->LoadPlugins();
 }
 
 void Root::Stop() {
     Logger::LogAdd("Root", "Running Teardown Tasks...", NORMAL, GLF);
+    
+    // Stop heartbeat thread first
+    if (m_heartbeat != nullptr) {
+        m_heartbeat->Stop();
+    }
+    
     TaskScheduler::RunTeardownTasks();
 
     if (m_pluginManager != nullptr) {

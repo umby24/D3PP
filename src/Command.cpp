@@ -639,6 +639,7 @@ void CommandMain::Init() {
     placeCmd.Group = "Building";
     Commands.push_back(placeCmd);
 
+    Save();
 }
 void CommandMain::RefreshGroups() {
     // -- Build list of groups.
@@ -913,27 +914,33 @@ void CommandMain::CommandHelp() {
 }
 
 void CommandMain::CommandPlayers() {
-    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
-     c->SendChat("§SPlayers:");
-    std::string textToSend;
-    std::shared_lock lock(D3PP::network::Server::roMutex, std::defer_lock);
-     for(auto const &nc : D3PP::network::Server::roClients) {
-         if (nc != nullptr && nc->GetPlayerInstance() != nullptr && nc->GetPlayerInstance()->GetEntity()->playerList != nullptr) {
-             std::string playerName = Entity::GetDisplayname(nc->GetPlayerInstance()->GetEntity()->Id);
+    auto c = Network::GetClient(CommandClientId);
+    if (!c) return;
 
+    c->SendChat("§SPlayers:");
+    std::string textToSend;
+
+    std::shared_lock lock(D3PP::network::Server::roMutex, std::defer_lock);
+
+    auto sendBuffer = [&](const std::string& buffer) {
+        if (!buffer.empty()) c->SendChat(buffer);
+    };
+
+    for (const auto& nc : D3PP::network::Server::roClients) {
+        auto entity = nc && nc->GetPlayerInstance() ? nc->GetPlayerInstance()->GetEntity() : nullptr;
+        if (entity && entity->playerList) {
+            std::string playerName = Entity::GetDisplayname(entity->Id);
             std::string toAdd = playerName + " &c| ";
-            if (64 - textToSend.size() >= toAdd.size()) {
+            if (textToSend.size() + toAdd.size() <= 64) {
                 textToSend += toAdd;
             } else {
-                c->SendChat(textToSend);
+                sendBuffer(textToSend);
                 textToSend = toAdd;
             }
-         }
-     }
-     if (!textToSend.empty()) {
-         c->SendChat(textToSend);
-     }
+        }
+    }
 }
+
 
 void CommandMain::CommandPlayerInfo() {
     
@@ -972,7 +979,6 @@ void CommandMain::CommandChangeRank() {
     
     std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     Player_List* pll = Player_List::GetInstance();
-    Rank* rm = Rank::GetInstance();
 
     std::string playerName = ParsedOperator.at(0);
 
@@ -1010,10 +1016,10 @@ void CommandMain::CommandGlobal() {
     if (c == nullptr)
         return;
 
-    std::string onString = "on";
-    std::string trueString = "true";
-    std::string offString = "off";
-    std::string falseString = "false";
+    const std::string onString = "on";
+    const std::string trueString = "true";
+    const std::string offString = "off";
+    const std::string falseString = "false";
 
     if (Utils::InsensitiveCompare(ParsedOperator.at(0), onString) || Utils::InsensitiveCompare(ParsedOperator.at(0), trueString)) {
         c->SetGlobalChat(true);
@@ -1714,6 +1720,7 @@ void CommandMain::CommandMapInfo() {
     
     std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
     MapMain* mapMain = MapMain::GetInstance();
+    Block* bm = Block::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
     std::string textToSend = "§SMapInfo:<br>";
@@ -1725,6 +1732,20 @@ void CommandMain::CommandMapInfo() {
     MapPermissions perms = cMap->GetMapPermissions();
 
     textToSend += "§SRanks: Build: " + stringulate(perms.RankBuild) + " Join: " + stringulate(perms.RankJoin) + " Show: " + stringulate(perms.RankShow) + " <br>";
+    // Added map texture, edge/side blocks and hack control status
+    auto mapEnv = cMap->GetMapEnvironment();
+    textToSend += "§STexture URL: " + mapEnv.TextureUrl + "<br>";
+
+    textToSend += "§SEdge Block: " + bm->GetBlock(mapEnv.EdgeBlock).Name + "<br>";
+    textToSend += "§SSide Block: " + bm->GetBlock(mapEnv.SideBlock).Name + "<br>";
+    textToSend += "§SWeather: " + std::string(mapEnv.WeatherType ? "Rain" : "Clear") + "<br>";
+
+    textToSend += "§SSky Color: " + to_hex_format(mapEnv.SkyColor) + "<br>";
+    textToSend += "§SCloud Color: " + to_hex_format(mapEnv.CloudColor) + "<br>";
+    textToSend += "§SFog Color: " + to_hex_format(mapEnv.FogColor) + "<br>";
+    textToSend += "§ALight Color: " + to_hex_format(mapEnv.Alight) + "<br>";
+    textToSend += "§SDLight Color: " + to_hex_format(mapEnv.DLight) + "<br>";
+
 
     if (cMap->PhysicsStopped) {
         textToSend += "&cPhysics Stopped&f<br>";

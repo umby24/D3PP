@@ -75,23 +75,34 @@ void Heartbeat::Beat() {
     lastBeat = time(nullptr);
 }
 
-Heartbeat::Heartbeat() {
+Heartbeat::Heartbeat() : isRunning(false) {
     salt = "";
     isPublic = false;
     lastBeat = time(nullptr)-25;
     isFirstBeat = true;
-    
-    this->Setup = [this] { Init(); };
-    this->Main = [this] { MainFunc(); };
-    this->Teardown = [this] { TeardownFunc(); };
-    this->Interval = std::chrono::seconds(1);
-    this->LastRun = std::chrono::system_clock::now();
-    TaskScheduler::RegisterTask(MODULE_NAME, *this);
 }
 
-void Heartbeat::TeardownFunc() {
-    TaskScheduler::UnregisterTask(MODULE_NAME);
+Heartbeat::~Heartbeat() {
+    Stop();
+}
 
+void Heartbeat::Start() {
+    if (!isRunning.load()) {
+        Init();
+        isRunning.store(true);
+        heartbeatThread = std::thread(&Heartbeat::ThreadLoop, this);
+        Logger::LogAdd(MODULE_NAME, "Heartbeat thread started", DEBUG, GLF);
+    }
+}
+
+void Heartbeat::Stop() {
+    if (isRunning.load()) {
+        isRunning.store(false);
+        if (heartbeatThread.joinable()) {
+            heartbeatThread.join();
+        }
+        Logger::LogAdd(MODULE_NAME, "Heartbeat thread stopped", DEBUG, GLF);
+    }
 }
 
 std::string Heartbeat::CreateSalt() {
@@ -114,9 +125,19 @@ void Heartbeat::Init() {
     }
 }
 
-void Heartbeat::MainFunc() {
-    if (time(nullptr) - lastBeat > 30) { // -- Heartbeat every 30 seconds.
-        Beat();
+void Heartbeat::ThreadLoop() {
+    while (isRunning.load()) {
+        try {
+            if (time(nullptr) - lastBeat > 30) { // -- Heartbeat every 30 seconds.
+                Beat();
+            }
+            
+            // Sleep for 1 second between checks
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        } catch (const std::exception& e) {
+            Logger::LogAdd(MODULE_NAME, "Exception in heartbeat thread: " + std::string(e.what()), L_ERROR, GLF);
+            std::this_thread::sleep_for(std::chrono::seconds(5)); // Wait longer on error
+        }
     }
 }
 

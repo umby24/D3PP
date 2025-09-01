@@ -7,6 +7,18 @@
 #include <sstream>
 #include <chrono>
 
+inline std::string to_hex_format(int value, bool uppercase = true, bool prefix = false, int width = 6) {
+    std::ostringstream ss;
+    if (prefix) {
+        ss << "0x";
+    }
+    if (uppercase) {
+        ss << std::uppercase;
+    }
+    ss << std::hex << std::setfill('0') << std::setw(width) << value;
+    return ss.str();
+}
+
 template<typename ValueType>
 std::string stringulate(ValueType v)
 {

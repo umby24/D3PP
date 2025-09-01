@@ -116,6 +116,7 @@ void NetworkClient::MainFunc() {
         return;
     }
 
+
     if (PingTime >= std::chrono::steady_clock::now()) return;
 
     PingTime = std::chrono::steady_clock::now() + std::chrono::seconds(5);
@@ -644,11 +645,11 @@ void NetworkClient::Shutdown(const std::string& reason) {
     canSend = false;
     canReceive = false;
     player = nullptr; // -- Free our player instance.. Hopefully start a DTOR chain.
+    TaskScheduler::UnregisterTask(taskId);
 
     Logger::LogAdd(MODULE_NAME, "Client deleted [" + stringulate(Id) + "] [" + reason + "]", NORMAL, GLF);
     clientSocket->Disconnect();
     D3PP::network::Server::UnregisterClient(GetSelfPointer());
-    TaskScheduler::UnregisterTask(taskId);
 }
 
 bool NetworkClient::GetLoggedIn() {

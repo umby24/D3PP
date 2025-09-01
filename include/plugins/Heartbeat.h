@@ -6,8 +6,8 @@
 #define D3PP_HEARTBEAT_H
 #include <string>
 #include <chrono>
-
-#include "common/TaskScheduler.h"
+#include <thread>
+#include <atomic>
 
 
 const char *const CLASSICUBE_NET_URL = "http://www.classicube.net";
@@ -16,12 +16,13 @@ const char *const CLASSICUBE_HEARTBEAT_PATH = "/server/heartbeat/";
 const std::string HEARTBEAT_FILE_NAME = "Heartbeat_HTML";
 
 
-class Heartbeat : TaskItem {
+class Heartbeat {
 public:
     Heartbeat();
+    ~Heartbeat();
     static std::string CreateSalt();
-    void Init();
-    void MainFunc();
+    void Start();
+    void Stop();
     void Beat();
     bool VerifyName(std::string name, std::string pass);
     static Heartbeat* GetInstance();
@@ -32,9 +33,14 @@ private:
     std::string serverUrl;
     bool isPublic;
     time_t lastBeat;
-
+    
+    // Thread management
+    std::thread heartbeatThread;
+    std::atomic<bool> isRunning;
+    
+    void Init();
+    void ThreadLoop();
     static int GetUniqueOnlinePlayers();
-    void TeardownFunc();
 };
 
 #endif //D3PP_HEARTBEAT_H
