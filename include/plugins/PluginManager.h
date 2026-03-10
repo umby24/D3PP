@@ -30,8 +30,8 @@ namespace D3PP::plugins {
         void TriggerBuildMode(const std::string &function, int clientId, int mapId, unsigned short X, unsigned short Y, unsigned short Z, unsigned char mode, unsigned char block) const;
         void TriggerBlockCreate(const std::string& function, int mapId, unsigned short X, unsigned short Y, unsigned short Z) const;
         void TriggerBlockDelete(const std::string& function, int mapId, unsigned short X, unsigned short Y, unsigned short Z) const;
-    private:
         static PluginManager* Instance;
+    private:
         void RefreshPluginList();
         std::vector<std::shared_ptr<LuaPlugin>> m_plugins;
     };

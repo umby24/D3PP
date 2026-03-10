@@ -76,7 +76,6 @@ public:
     std::vector<std::shared_ptr<PlayerListEntry>> _pList;
     static Player_List* GetInstance();
     bool SaveFile;
-protected:
     static Player_List* Instance;
 private:
     bool dbOpen;

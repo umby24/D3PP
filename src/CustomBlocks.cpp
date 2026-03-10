@@ -12,8 +12,6 @@
 
 using json = nlohmann::json;
 
-CustomBlocks* CustomBlocks::instance = nullptr;
-
 void CustomBlocks::Load() {
     std::string filePath = Files::GetFile(CUSTOM_BLOCK_FILE_NAME);
 
@@ -180,11 +178,10 @@ void CustomBlocks::MainFunc() {
     }
 }
 
-CustomBlocks *CustomBlocks::GetInstance() {
-    if (instance == nullptr)
-        instance = new CustomBlocks();
+CustomBlocks* CustomBlocks::Instance = nullptr;
 
-    return instance;
+CustomBlocks *CustomBlocks::GetInstance() {
+    return Instance;
 }
 
 std::vector<BlockDefinition> CustomBlocks::GetBlocks() {

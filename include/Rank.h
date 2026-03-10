@@ -33,12 +33,12 @@ public:
     void SetJson(json j);
     std::string GetJson();
     static Rank* GetInstance();
+    static Rank* Instance;
 
     void Save();
 private:
     std::map<int, RankItem> m_ranks;
     std::mutex m_rankLock;
-    static Rank* Instance;
     bool SaveFile;
     time_t LastFileDate;
 

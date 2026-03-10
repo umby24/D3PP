@@ -773,9 +773,6 @@ void CommandMain::MainFunc() {
 }
 
 CommandMain* CommandMain::GetInstance() {
-    if (Instance == nullptr)
-        Instance = new CommandMain();
-
     return Instance;
 }
 

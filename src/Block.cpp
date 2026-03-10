@@ -5797,9 +5797,6 @@ void Block::GenerateDefault() {
 }
 
 Block *Block::GetInstance() {
-    if (Instance == nullptr)
-        Instance = new Block();
-
     return Instance;
 }
 

@@ -58,8 +58,8 @@ public:
 
     static PlayerMain* GetInstance();
     static int GetFreeNameId();
-private:
     static PlayerMain* Instance;
+private:
     time_t OntimeCounter;
 
     void MainFunc();

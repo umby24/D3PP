@@ -62,7 +62,6 @@ public:
     static Block* GetInstance();
     std::vector<MapBlock> Blocks;
     bool SaveFile;
-protected:
     static Block* Instance;
 private:
 

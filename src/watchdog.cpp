@@ -44,9 +44,6 @@ void watchdog::Watch(const std::string &moadule, const std::string &message, int
 }
 
 watchdog *watchdog::GetInstance() {
-    if (singleton_ == nullptr)
-        singleton_ = new watchdog();
-
     return singleton_;
 }
 

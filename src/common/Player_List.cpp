@@ -93,14 +93,13 @@ Player_List::Player_List() {
 void Player_List::Load() {
     OpenDatabase();
     sqlite3_stmt *stmt;
-    std::string sqlStatement = "SELECT * FROM Player_List";
-    char* errMsg = 0;
-    int rc;
-    rc = sqlite3_prepare_v2(db, sqlStatement.c_str(), sqlStatement.size(), &stmt, nullptr);
+    const std::string sqlStatement = "SELECT * FROM Player_List";
+    char* errMsg = nullptr;
 
-    if (rc != SQLITE_OK) {
-        Logger::LogAdd(MODULE_NAME, "Failed to load DB!", L_ERROR, __FILE__, __LINE__, __FUNCTION__);
-        Logger::LogAdd(MODULE_NAME, "DB Error: " + stringulate(errMsg), L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+    if (const int rc = sqlite3_prepare_v2(db, sqlStatement.c_str(), sqlStatement.size(), &stmt, nullptr);
+        rc != SQLITE_OK) {
+        Logger::LogAdd(MODULE_NAME, "Failed to load DB!", L_ERROR, GLF);
+        Logger::LogAdd(MODULE_NAME, "DB Error: " + std::string(sqlite3_errmsg(db)), L_ERROR, GLF);
         return;
     }
 
@@ -109,8 +108,7 @@ void Player_List::Load() {
 
         sqlite3_column_text(stmt, 3);
         newEntry->Number = sqlite3_column_int(stmt, 0);
-        const char *tmp;
-        tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        auto tmp = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1));
         newEntry->Name = std::string(tmp);
 
         newEntry->PRank = sqlite3_column_int(stmt, 2);
@@ -118,38 +116,40 @@ void Player_List::Load() {
         newEntry->KickCounter = sqlite3_column_int(stmt, 4);
         newEntry->OntimeCounter = sqlite3_column_int(stmt, 5);
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
+
         if (tmp != nullptr)
-        newEntry->IP = std::string(tmp);
+            newEntry->IP = std::string(tmp);
+
         newEntry->Stopped = sqlite3_column_int(stmt, 7);
         newEntry->Banned = sqlite3_column_int(stmt, 8);
         newEntry->MuteTime = sqlite3_column_int(stmt, 9);
 
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
         if (tmp != nullptr)
-        newEntry->BanMessage = std::string(tmp);
+            newEntry->BanMessage = std::string(tmp);
 
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 11));
         if (tmp != nullptr)
-        newEntry->KickMessage = std::string(tmp);
+            newEntry->KickMessage = std::string(tmp);
 
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 12));
         if (tmp != nullptr)
-        newEntry->MuteMessage = std::string(tmp);
+            newEntry->MuteMessage = std::string(tmp);
 
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 13));
         if (tmp != nullptr)
-        newEntry->RankMessage = std::string(tmp);
+            newEntry->RankMessage = std::string(tmp);
 
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 14));
         if (tmp != nullptr)
-        newEntry->StopMessage = std::string(tmp);
+            newEntry->StopMessage = std::string(tmp);
 
         newEntry->GlobalChat = sqlite3_column_int(stmt, 16);
         _pList.push_back(newEntry);
     }
 
     sqlite3_finalize(stmt);
-    Logger::LogAdd(MODULE_NAME, "Database Loaded.", NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Database Loaded.", NORMAL, GLF);
     CloseDatabase();
 
     for(auto const &i : _pList) {
@@ -166,8 +166,7 @@ void Player_List::Save() {
             continue;
 
         sqlite3_stmt *res;
-        int rc = sqlite3_prepare_v2(db, REPLACE_SQL.c_str(), -1, &res, nullptr);
-        if (rc == SQLITE_OK) {
+        if (const int rc = sqlite3_prepare_v2(db, REPLACE_SQL.c_str(), -1, &res, nullptr); rc == SQLITE_OK) {
             sqlite3_bind_int(res, 1, i->Number);
             sqlite3_bind_text(res, 2, i->Name.c_str(), i->Name.size(), nullptr);
             sqlite3_bind_int(res, 3, i->PRank);
@@ -250,9 +249,6 @@ int Player_List::GetNumber() {
 }
 
 Player_List *Player_List::GetInstance() {
-    if (Instance == nullptr)
-        Instance = new Player_List();
-
     return Instance;
 }
 
@@ -340,7 +336,7 @@ void PlayerListEntry::SetRank(int rank, const std::string &reason) {
     i->SaveFile = true;
 
     Rank* r = Rank::GetInstance();
-    std::shared_lock lock(D3PP::network::Server::roMutex, std::defer_lock);
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     for(auto &nc : D3PP::network::Server::roClients) {
         if (nc->GetPlayerInstance() && nc->GetPlayerInstance()->GetEntity() && nc->GetPlayerInstance()->GetEntity()->playerList && nc->GetPlayerInstance()->GetEntity()->playerList->Number == Number) {
             RankItem ri = r->GetRank(rank, false);

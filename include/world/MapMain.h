@@ -57,8 +57,8 @@ namespace D3PP::world {
         void AddDeleteAction(int clientId, int mapId);
         bool SaveFile;
         std::map<int, std::shared_ptr<Map>> _maps;
-    private:
         static MapMain *Instance;
+    private:
         std::thread BlockchangeThread;
         std::thread PhysicsThread;
         bool mbcStarted;

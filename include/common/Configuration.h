@@ -182,11 +182,11 @@ public:
     static TextSettings textSettings;
     Configuration();
     static Configuration* GetInstance();
+    static Configuration* Instance;
     void Save();
 private:
-    static Configuration* _instance;
     std::string filepath;
-    time_t lastLoaded;
+    time_t lastLoaded{};
     bool saveFile;
 
     void Load();

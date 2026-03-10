@@ -83,10 +83,6 @@ void PluginManager::LoadPlugins() {
 }
 
 PluginManager *PluginManager::GetInstance() {
-    if (Instance == nullptr) {
-        Instance = new PluginManager();
-    }
-
     return Instance;
 }
 

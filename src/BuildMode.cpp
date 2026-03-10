@@ -33,10 +33,6 @@ BuildModeMain::BuildModeMain()  {
 }
 
 BuildModeMain* BuildModeMain::GetInstance() {
-    if (Instance == nullptr) {
-        Instance = new BuildModeMain();
-    }
-
     return Instance;
 }
 

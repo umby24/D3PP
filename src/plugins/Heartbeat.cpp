@@ -142,10 +142,6 @@ void Heartbeat::ThreadLoop() {
 }
 
 Heartbeat *Heartbeat::GetInstance() {
-    if (Instance == nullptr) {
-        Instance = new Heartbeat();
-    }
-
     return Instance;
 }
 

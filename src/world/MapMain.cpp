@@ -113,9 +113,6 @@ void D3PP::world::MapMain::MainFunc() {
 }
 
 D3PP::world::MapMain* D3PP::world::MapMain::GetInstance() {
-    if (Instance == nullptr)
-        Instance = new MapMain();
-
     return Instance;
 }
 

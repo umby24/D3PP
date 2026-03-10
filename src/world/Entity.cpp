@@ -4,14 +4,15 @@
 
 #include "world/Entity.h"
 
+#include <ranges>
 #include <utility>
+#include <shared_mutex>
 #include "Block.h"
 
 #include "network/Network.h"
 #include "network/NetworkClient.h"
 #include "network/Server.h"
 #include "world/Player.h"
-#include "common/Player_List.h"
 
 #include "world/Teleporter.h"
 #include "world/Map.h"
@@ -140,6 +141,7 @@ Entity::~Entity() {
 
 std::shared_ptr<Entity> Entity::GetPointer(int id, bool isClientId) {
     if (!isClientId) {
+        std::scoped_lock lock(entityMutex);
         if (AllEntities.find(id) == AllEntities.end())
             return nullptr;
 
@@ -147,7 +149,7 @@ std::shared_ptr<Entity> Entity::GetPointer(int id, bool isClientId) {
     }
 
     std::shared_ptr<Entity> result = nullptr;
-
+    std::scoped_lock lock(entityMutex);
     for (auto const &e : AllEntities) {
         if (e.second == nullptr || e.second->associatedClient == nullptr)
             continue;
@@ -180,9 +182,10 @@ std::string Entity::GetDisplayname(int id) {
 }
 
 std::shared_ptr<Entity> Entity::GetPointer(const std::string& name) {
-    for(auto const &e : AllEntities) {
-        if (Utils::InsensitiveCompare(e.second->Name, name)) {
-            return e.second;
+    std::scoped_lock lock(entityMutex);
+    for(const auto &entity: AllEntities | std::views::values) {
+        if (Utils::InsensitiveCompare(entity->Name, name)) {
+            return entity;
         }
     }
 
@@ -208,6 +211,7 @@ void Entity::Delete(int id) {
     Dispatcher::post(ed);
 
     e->Despawn();
+    std::scoped_lock lock(entityMutex);
     AllEntities.erase(id);
 }
 

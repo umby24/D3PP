@@ -80,16 +80,21 @@ void LuaPlugin::HandleEvent(Event& event) {
         return;
 
     const auto type = event.type(); // -- get the type..
+    auto eventsToCall = std::vector<std::string>{};
+    {
+        std::shared_lock lock (m_luaState->eventMutex);
+        if(!m_luaState->events.contains( type )) // -- find all functions that want to be called on this event
+            return;
 
-    std::shared_lock lock (m_luaState->eventMutex); // -- Deadlock Source
-    if(!m_luaState->events.contains( type )) // -- find all functions that want to be called on this event
-        return;
-
-    for(auto &&observers = m_luaState->events.at(type); auto &val: observers | std::views::values) {
+        for(auto &&observers = m_luaState->events.at(type); auto &val: observers | std::views::values) {
+            eventsToCall.push_back(val.functionName);
+        }
+    }
+    for (const auto& functionName : eventsToCall) {
         std::scoped_lock rcLock(executionMutex);
         lua_State* thisLuaState = m_luaState->GetState();
 
-        lua_getglobal(thisLuaState, val.functionName.c_str()); // -- Get the function to be called
+        lua_getglobal(thisLuaState, functionName.c_str()); // -- Get the function to be called
 
         if (!lua_isfunction(thisLuaState, -1)) {
             lua_pop(thisLuaState, 1);
@@ -109,12 +114,14 @@ void LuaPlugin::HandleEvent(Event& event) {
             }
 
             lua_pop(thisLuaState, 1);
-        } catch (const int exception) {
-            bail(thisLuaState, "[Error Handler]"); // -- catch errors
+        } catch (std::exception& ex) {
+            bail(thisLuaState, "[Error Handler] " + std::string(ex.what())); // -- catch errors
             return;
         }
         // -- done.
     }
+
+
 }
 
 void LuaPlugin::Init() {
@@ -158,7 +165,7 @@ void LuaPlugin::MainFunc() {
 
     // -- Prune our events listing. Requires unique lock of event mutex.
     {
-        std::unique_lock lock(m_luaState->eventMutex); // -- Deadlock something..
+        std::unique_lock lock(m_luaState->eventMutex);
         for (auto& e : m_luaState->modifyList) {
             if (e.first.starts_with("del")) { // -- Remove items earmarked for removal.
                 for (auto& i : m_luaState->events) {
@@ -186,14 +193,23 @@ void LuaPlugin::MainFunc() {
 
 void LuaPlugin::TimerMain() { {
         const auto timerDescriptor = Dispatcher::getDescriptor("Timer");
-        std::shared_lock lock(m_luaState->eventMutex);
-        if (!m_luaState->events.contains(timerDescriptor))
-            return;
+        auto eventsFire = std::vector<LuaEvent>{};
+        {
+            std::shared_lock lock(m_luaState->eventMutex);
+                if (!m_luaState->events.contains(timerDescriptor))
+                    return;
 
-        for (auto &eventsAt = m_luaState->events[timerDescriptor]; auto &val: eventsAt | std::views::values) {
+                for (auto &eventsAt = m_luaState->events[timerDescriptor]; auto &val: eventsAt | std::views::values) {
+                    eventsFire.push_back(val);
+                }
+        }
+        for (auto &val : eventsFire) {
             if (clock() >= (val.lastRun + val.duration)) {
-                val.lastRun = clock();
-                std::scoped_lock<std::recursive_mutex> rcLock(executionMutex);
+                {
+                    std::shared_lock lock(m_luaState->eventMutex);
+                    m_luaState->events[timerDescriptor][val.eventId].lastRun = clock();
+                }
+                std::scoped_lock rcLock(executionMutex);
                 lua_getglobal(m_luaState->GetState(),
                               val.functionName.c_str()); // -- Get the function to be called
                 if (!lua_isfunction(m_luaState->GetState(), -1)) {
@@ -204,20 +220,21 @@ void LuaPlugin::TimerMain() { {
 
                 }
                 lua_pushinteger(m_luaState->GetState(), val.mapId);
-                int result = lua_pcall(m_luaState->GetState(), 1, 0, 0);
+                const int result = lua_pcall(m_luaState->GetState(), 1, 0, 0);
                 if (result == LUA_ERRRUN) {
                     bail(m_luaState->GetState(), "[Timer Event Handler]" + val.functionName); // -- catch errors
                     break;
-                } else if (result == LUA_ERRMEM) {
-                    bail(m_luaState->GetState(), "[Timer Event Handler]" + val.functionName); // -- catch errors
-                    break;
-                } else if (result == LUA_ERRERR) {
-                    bail(m_luaState->GetState(), "[Timer Event Handler]" + val.functionName); // -- catch errors
-                    break;
-                } else {
-                    // -- success? maybe? who knows.
-                    lua_pop(m_luaState->GetState(), lua_gettop(m_luaState->GetState()));
                 }
+                if (result == LUA_ERRMEM) {
+                    bail(m_luaState->GetState(), "[Timer Event Handler]" + val.functionName); // -- catch errors
+                    break;
+                }
+                if (result == LUA_ERRERR) {
+                    bail(m_luaState->GetState(), "[Timer Event Handler]" + val.functionName); // -- catch errors
+                    break;
+                }
+                // -- success? maybe? who knows.
+                lua_pop(m_luaState->GetState(), lua_gettop(m_luaState->GetState()));
             }
         }
     }
@@ -335,7 +352,7 @@ void LuaPlugin::TriggerBlockCreate(const std::string& function, int mapId, unsig
         if (lua_pcall(m_luaState->GetState(), 4, 0, 0)) {
             bail(m_luaState->GetState(), "Failed to run Block Create.");
         } else {
-
+            lua_pop(m_luaState->GetState(), lua_gettop(m_luaState->GetState()));
         }
     }
     else {

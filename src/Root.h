@@ -1,6 +1,8 @@
 #ifndef D3PP_ROOT
 #define D3PP_ROOT
 
+#include <memory>
+
 #include "Block.h"
 #include "BuildMode.h"
 #include "Command.h"
@@ -31,18 +33,18 @@ public:
 	static int GetPhysicalRAMUsage(void);
 private:
 	RestApi m_restApi;
-	D3PP::plugins::PluginManager* m_pluginManager;
-	Block* m_block;
-	BuildModeMain* m_buildMode;
-	CommandMain* m_command;
-	CustomBlocks* m_customBlocks;
-	Rank* m_rank;
-	watchdog* m_watchdog;
-	D3PP::world::MapMain* m_mapMain;
-	Configuration* m_config;
-	Player_List* m_playerList;
-	PlayerMain* m_playerMain;
-	Heartbeat* m_heartbeat;
+	std::unique_ptr<Configuration> m_config;
+	std::unique_ptr<Block> m_block;
+	std::unique_ptr<CommandMain> m_command;
+	std::unique_ptr<Rank> m_rank;
+	std::unique_ptr<watchdog> m_watchdog;
+	std::unique_ptr<BuildModeMain> m_buildMode;
+	std::unique_ptr<CustomBlocks> m_customBlocks;
+	std::unique_ptr<D3PP::world::MapMain> m_mapMain;
+	std::unique_ptr<PlayerMain> m_playerMain;
+	std::unique_ptr<Heartbeat> m_heartbeat;
+	std::unique_ptr<Player_List> m_playerList;
+	std::unique_ptr<D3PP::plugins::PluginManager> m_pluginManager;
 
 	void StartWorlds();
 };

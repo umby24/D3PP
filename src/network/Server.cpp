@@ -72,7 +72,8 @@ void D3PP::network::Server::Stop() {
         return;
 
     m_Instance->Shutdown();
-    free(m_Instance);
+    delete m_Instance;
+    m_Instance = nullptr;
 }
 
 void D3PP::network::Server::MainFunc() {
@@ -119,6 +120,7 @@ void D3PP::network::Server::HandleEvents() {
         HandleIncomingClient();
     }
     if (e.contains(SOCKET_EVENT_DATA)) {
+        std::scoped_lock clientLock(m_ClientMutex);
         for(auto &s : e[SOCKET_EVENT_DATA]) {
             int clientId = static_cast<int>(s);
             m_clients[clientId]->NotifyDataAvailable();
@@ -158,8 +160,8 @@ void D3PP::network::Server::UnregisterClient(const std::shared_ptr<IMinecraftCli
     Dispatcher::post(ecd);
     m_Instance->m_serverSocket->Unaccept(client->GetId());
     m_Instance->m_needsUpdate = true;
-    auto it = m_clients.find(client->GetId());
     std::scoped_lock<std::mutex> clientLock(m_ClientMutex);
+    const auto it = m_clients.find(client->GetId());
     auto hardRef = m_clients.at(it->first);
     hardRef.reset();
     m_clients.erase(client->GetId());
@@ -178,7 +180,7 @@ void D3PP::network::Server::RebuildRoClients() {
 }
 
 void D3PP::network::Server::SendToAll(IPacket& packet, std::string extension, int extVersion) {
-    std::shared_lock lock(roMutex, std::defer_lock);
+    std::shared_lock lock(roMutex);
     for ( auto const & c : roClients ) {
         if (!extension.empty()) {
             int currentVer = CPE::GetClientExtVersion(c, extension);

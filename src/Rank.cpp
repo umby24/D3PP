@@ -149,9 +149,6 @@ void Rank::DefaultRanks() {
 }
 
 Rank *Rank::GetInstance() {
-    if (Instance == nullptr)
-        Instance = new Rank();
-
     return Instance;
 }
 

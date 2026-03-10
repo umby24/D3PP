@@ -7,16 +7,7 @@
 #include "network/Server.h"
 #include "common/TaskScheduler.h"
 
-Root::Root() : m_restApi(), m_pluginManager(nullptr), m_block(nullptr), m_buildMode(nullptr), m_command(nullptr),
-               m_customBlocks(nullptr),
-               m_rank(nullptr),
-               m_watchdog(nullptr),
-               m_mapMain(nullptr),
-               m_config(nullptr),
-               m_playerList(nullptr),
-               m_playerMain(nullptr),
-               m_heartbeat(nullptr) {
-}
+Root::Root() = default;
 
 Root::~Root() = default;
 
@@ -24,19 +15,41 @@ void Root::Start() {
 
     Logger::LogAdd("Root", "Initializing Modules...", DEBUG, GLF);
 
-    m_config = Configuration::GetInstance();
+    m_config = std::make_unique<Configuration>();
+    Configuration::Instance = m_config.get();
 
-    this->m_block = Block::GetInstance();
-    this->m_command = CommandMain::GetInstance();
-    this->m_rank = Rank::GetInstance();
-    this->m_watchdog = watchdog::GetInstance();
-    this->m_buildMode = BuildModeMain::GetInstance();
-    this->m_customBlocks = CustomBlocks::GetInstance();
-    this->m_mapMain = D3PP::world::MapMain::GetInstance();
-    this->m_playerMain = PlayerMain::GetInstance();
-    this->m_heartbeat = Heartbeat::GetInstance();
-    this->m_playerList = Player_List::GetInstance();
-    m_pluginManager = D3PP::plugins::PluginManager::GetInstance();
+    m_block = std::make_unique<Block>();
+    Block::Instance = m_block.get();
+
+    m_command = std::make_unique<CommandMain>();
+    CommandMain::Instance = m_command.get();
+
+    m_rank = std::make_unique<Rank>();
+    Rank::Instance = m_rank.get();
+
+    m_watchdog = std::make_unique<watchdog>();
+    watchdog::singleton_ = m_watchdog.get();
+
+    m_buildMode = std::make_unique<BuildModeMain>();
+    BuildModeMain::Instance = m_buildMode.get();
+
+    m_customBlocks = std::make_unique<CustomBlocks>();
+    CustomBlocks::Instance = m_customBlocks.get();
+
+    m_mapMain = std::make_unique<D3PP::world::MapMain>();
+    D3PP::world::MapMain::Instance = m_mapMain.get();
+
+    m_playerMain = std::make_unique<PlayerMain>();
+    PlayerMain::Instance = m_playerMain.get();
+
+    m_heartbeat = std::make_unique<Heartbeat>();
+    Heartbeat::Instance = m_heartbeat.get();
+
+    m_playerList = std::make_unique<Player_List>();
+    Player_List::Instance = m_playerList.get();
+
+    m_pluginManager = std::make_unique<D3PP::plugins::PluginManager>();
+    D3PP::plugins::PluginManager::Instance = m_pluginManager.get();
 
     Logger::LogAdd("Root", "Modules loaded.", DEBUG, GLF);
 
@@ -52,8 +65,7 @@ void Root::Start() {
     D3PP::network::Server::Start();
     Logger::LogAdd("Root", "Done", DEBUG, GLF);
 
-    // Start heartbeat thread
-    if (m_heartbeat != nullptr) {
+    if (m_heartbeat) {
         m_heartbeat->Start();
     }
 
@@ -62,70 +74,26 @@ void Root::Start() {
 
 void Root::Stop() {
     Logger::LogAdd("Root", "Running Teardown Tasks...", NORMAL, GLF);
-    
-    // Stop heartbeat thread first
-    if (m_heartbeat != nullptr) {
+
+    if (m_heartbeat) {
         m_heartbeat->Stop();
     }
-    
+
     TaskScheduler::RunTeardownTasks();
 
-    if (m_pluginManager != nullptr) {
-        delete D3PP::plugins::PluginManager::GetInstance();
-        m_pluginManager = nullptr;
-    }
+    m_pluginManager.reset(); D3PP::plugins::PluginManager::Instance = nullptr;
+    m_playerList.reset();    Player_List::Instance = nullptr;
+    m_playerMain.reset();    PlayerMain::Instance = nullptr;
+    m_heartbeat.reset();     Heartbeat::Instance = nullptr;
+    m_mapMain.reset();       D3PP::world::MapMain::Instance = nullptr;
+    m_customBlocks.reset();  CustomBlocks::Instance = nullptr;
+    m_buildMode.reset();     BuildModeMain::Instance = nullptr;
+    m_rank.reset();          Rank::Instance = nullptr;
+    m_command.reset();       CommandMain::Instance = nullptr;
+    m_block.reset();         Block::Instance = nullptr;
+    m_watchdog.reset();      watchdog::singleton_ = nullptr;
+    m_config.reset();        Configuration::Instance = nullptr;
 
-    if (m_mapMain != nullptr) {
-        delete D3PP::world::MapMain::GetInstance();
-        m_mapMain = nullptr;
-    }
-
-    if (m_customBlocks != nullptr) {
-        delete CustomBlocks::GetInstance();
-        m_customBlocks = nullptr;
-    }
-
-    if (m_buildMode != nullptr) {
-        delete BuildModeMain::GetInstance();
-        m_buildMode = nullptr;
-    }
-
-    if (m_rank != nullptr) {
-        delete Rank::GetInstance();
-        m_rank = nullptr;
-    }
-
-    if (m_command != nullptr) {
-        delete CommandMain::GetInstance();
-        m_command = nullptr;
-    }
-
-    if (m_block != nullptr) {
-        delete Block::GetInstance();
-        m_block = nullptr;
-    }
-
-    if (m_watchdog != nullptr) {
-        delete watchdog::GetInstance();
-        m_watchdog = nullptr;
-    }
-
-    if (m_config != nullptr) {
-        delete Configuration::GetInstance();
-        m_config = nullptr;
-    }
-    if (m_playerMain != nullptr) {
-        delete PlayerMain::GetInstance();
-        m_playerMain = nullptr;
-    }
-    if (m_playerList != nullptr) {
-        delete Player_List::GetInstance();
-        m_playerList = nullptr;
-    }
-    if (m_heartbeat != nullptr) {
-        delete Heartbeat::GetInstance();
-        m_heartbeat = nullptr;
-    }
     D3PP::network::Server::Stop();
     System::IsRunning = false;
     Logger::LogAdd("Root", "Done", DEBUG, GLF);

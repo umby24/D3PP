@@ -42,9 +42,6 @@ void PlayerMain::MainFunc() {
 }
 
 PlayerMain *PlayerMain::GetInstance() {
-    if (Instance == nullptr)
-        Instance = new PlayerMain();
-
     return Instance;
 }
 

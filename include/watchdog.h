@@ -35,7 +35,6 @@ public:
 
     int GetVirtualRAMUsage();
     int GetPhysicalRAMUsage();
-protected:
 
     static watchdog* singleton_;
     std::mutex _lock;

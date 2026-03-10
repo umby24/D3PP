@@ -10,13 +10,10 @@ NetworkSettings Configuration::NetSettings { 32, 25565, true, false, ""};
 GeneralSettings Configuration::GenSettings { "D3PP Server", "Welcome to D3PP!","&cWelcome to D3PP", "INFO", "default.cw", "&e", 0,160, 3, true };
 KillSettings Configuration::killSettings { 1, MinecraftLocation{ 0, 0, Vector3S((short)0, (short)0, (short)0)} };
 TextSettings Configuration::textSettings { "&4Error:&f ", "&e", "&3|" };
-Configuration* Configuration::_instance = nullptr;
+Configuration* Configuration::Instance = nullptr;
 
 Configuration* Configuration::GetInstance() {
-    if (_instance == nullptr)
-        _instance = new Configuration();
-    
-    return _instance;
+    return Instance;
 }
 
 Configuration::Configuration() {
@@ -26,6 +23,7 @@ Configuration::Configuration() {
     this->Teardown = [this] { Save(); };
     saveFile = false;
     filepath = Files::GetFile("configuration");
+    lastLoaded = 0;
 
     TaskScheduler::RegisterTask("Configuration", *this);
 }
