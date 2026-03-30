@@ -14,6 +14,7 @@
 class TaskItem {
 public:
     TaskItem() {};
+    bool IsDeleted = false;
     std::string TaskId;
     std::chrono::duration<double> Interval;
     std::chrono::time_point<std::chrono::system_clock> LastRun;
@@ -21,6 +22,13 @@ public:
     std::function<void()>Setup;
     std::function<void()>Main;
     std::function<void()>Teardown;
+
+    // Execution time monitoring
+    std::chrono::milliseconds LastExecutionTime = std::chrono::milliseconds(0);
+    std::chrono::milliseconds MaxExecutionTime = std::chrono::milliseconds(0);
+    std::chrono::milliseconds MinExecutionTime = std::chrono::milliseconds(999999);
+    std::chrono::milliseconds TotalExecutionTime = std::chrono::milliseconds(0);
+    int ExecutionCount = 0;
 };
 
 class TaskScheduler {
@@ -30,6 +38,8 @@ public:
     static void RunSetupTasks();
     static void RunMainTasks();
     static void RunTeardownTasks();
+    static void GenerateTaskMonitoringReport();
+    static void InitializeMonitoringTask();
 private:
     static std::map<std::string, TaskItem> _tasks;
     static std::mutex _taskLock;

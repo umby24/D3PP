@@ -27,7 +27,7 @@ int LuaBlockLib::openLib(lua_State* L)
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    luaL_setfuncs(L, LuaBlockLib::lib, 0);
+    luaL_setfuncs(L, lib, 0);
     lua_setglobal(L, "Block");
     return 1;
 }
@@ -136,7 +136,7 @@ int LuaBlockLib::LuaBlockCreate(lua_State* L)
 
     int blockId = luaL_checkinteger(L, 1);
     if (blockId < 66) {
-        Logger::LogAdd("Lua", "LuaError: Please don't redefine the blocks under #66!", LogType::L_ERROR, GLF);
+        Logger::LogAdd("Lua", "LuaError: Please don't redefine the blocks under #66!", L_ERROR, GLF);
         return 0;
     }
 

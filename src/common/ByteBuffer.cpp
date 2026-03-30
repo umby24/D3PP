@@ -6,7 +6,7 @@
 #include "Utils.h"
 
 ByteBuffer::ByteBuffer(const std::function<void()>& callback) : _buffer(initial_size), _bufLock() {
-    this->_size = (unsigned int) ByteBuffer::initial_size;
+    this->_size = (unsigned int) initial_size;
     if (callback != nullptr)
         this->cbfunc = callback;
     this->Interval = std::chrono::seconds(10);
@@ -20,7 +20,7 @@ ByteBuffer::ByteBuffer(const std::function<void()>& callback) : _buffer(initial_
 }
 
 void ByteBuffer::MainFunc() {
-    if ((_largestAlloc > ByteBuffer::initial_size) && (_writePos > ByteBuffer::initial_size || _readPos > ByteBuffer::initial_size)) {
+    if ((_largestAlloc > initial_size) && (_writePos > initial_size || _readPos > initial_size)) {
         _largestAlloc = 0;
         return;
     }

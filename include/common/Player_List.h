@@ -51,7 +51,7 @@ public:
     void SetAttribute(std::string attrName, std::string value);
 
     void SetRank(int rank, const std::string &reason);
-    void Kick(const std::string &reason, int count, bool log, bool show);
+    void Kick(const std::string &reason, bool show);
     void Ban(std::string reason);
     void Unban();
     void Mute(int minutes, std::string reason);
@@ -76,7 +76,6 @@ public:
     std::vector<std::shared_ptr<PlayerListEntry>> _pList;
     static Player_List* GetInstance();
     bool SaveFile;
-protected:
     static Player_List* Instance;
 private:
     bool dbOpen;

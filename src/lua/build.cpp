@@ -27,7 +27,7 @@ int LuaBuildLib::openLib(lua_State* L)
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    luaL_setfuncs(L, LuaBuildLib::lib, 0);
+    luaL_setfuncs(L, lib, 0);
     lua_setglobal(L, "Build");
     return 1;
 }

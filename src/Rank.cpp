@@ -27,7 +27,6 @@ Rank::Rank() {
 void Rank::Save() {
     std::string rankFile = Files::GetFile(RANK_FILE_NAME);
 
-
     std::ofstream oStream(rankFile, std::ios::trunc);
     oStream << GetJson();
     oStream.flush();
@@ -36,7 +35,7 @@ void Rank::Save() {
     time_t modTime = Utils::FileModTime(rankFile);
     LastFileDate = modTime;
 
-    Logger::LogAdd(MODULE_NAME, "File saved [" + rankFile + "]", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "File saved [" + rankFile + "]", NORMAL, GLF);
 }
 
 void Rank::MainFunc() {
@@ -61,7 +60,7 @@ void Rank::Load() {
     std::ifstream iStream(filePath);
 
     if (!iStream.is_open()) {
-        Logger::LogAdd(MODULE_NAME, "Failed to load ranks!!", LogType::L_ERROR, GLF);
+        Logger::LogAdd(MODULE_NAME, "Failed to load ranks!!", L_ERROR, GLF);
         DefaultRanks();
         return;
     }
@@ -69,7 +68,7 @@ void Rank::Load() {
     try {
         iStream >> j;
     } catch (std::exception e) {
-        Logger::LogAdd(MODULE_NAME, "Failed to load ranks file! Json parse error", LogType::L_ERROR, GLF);
+        Logger::LogAdd(MODULE_NAME, "Failed to load ranks file! Json parse error", L_ERROR, GLF);
         iStream.close();
         return;
     }
@@ -78,7 +77,7 @@ void Rank::Load() {
 
     SetJson(j);
 
-    Logger::LogAdd("Rank", "File loaded.", LogType::NORMAL, GLF);
+    Logger::LogAdd("Rank", "File loaded.", NORMAL, GLF);
 
     time_t modTime = Utils::FileModTime(filePath);
     LastFileDate = modTime;
@@ -91,7 +90,7 @@ void Rank::Load() {
 void Rank::Add(const RankItem& item) {
     std::scoped_lock<std::mutex> _pqLock(m_rankLock);
     m_ranks[item.Rank] = item;
-    Logger::LogAdd(MODULE_NAME, "Rank added [" + stringulate(item.Rank) + "]", LogType::NORMAL, GLF );
+    Logger::LogAdd(MODULE_NAME, "Rank added [" + stringulate(item.Rank) + "]", NORMAL, GLF );
     SaveFile = true;
 }
 
@@ -150,9 +149,6 @@ void Rank::DefaultRanks() {
 }
 
 Rank *Rank::GetInstance() {
-    if (Instance == nullptr)
-        Instance = new Rank();
-
     return Instance;
 }
 

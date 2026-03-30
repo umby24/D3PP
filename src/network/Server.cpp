@@ -41,18 +41,17 @@ D3PP::network::Server* D3PP::network::Server::m_Instance = nullptr;
 D3PP::network::Server::Server() {
     m_port = Configuration::NetSettings.ListenPort;
 
-    Interval = std::chrono::seconds(5);
+    Interval = std::chrono::milliseconds(1);
     Main = [this](){ this->MainFunc(); };
     Teardown = [this](){ this->TeardownFunc(); };
     TaskScheduler::RegisterTask("Bandwidth", *this);
     m_needsUpdate = false;
     m_serverSocket = std::make_unique<ServerSocket>(m_port);
     m_serverSocket->Listen();
-
+    
     std::thread handleThread([this]() { this->HandleClientData(); });
     std::swap(m_handleThread, handleThread);
-
-    Logger::LogAdd("Server", "Network server started on port " + stringulate(this->m_port), LogType::NORMAL, GLF);
+    Logger::LogAdd("Server", "Network server started on port " + stringulate(this->m_port), NORMAL, GLF);
 }
 
 void D3PP::network::Server::TeardownFunc() {
@@ -68,13 +67,13 @@ void D3PP::network::Server::Start() {
     }
 }
 
-
 void D3PP::network::Server::Stop() {
     if (m_Instance == nullptr)
         return;
 
     m_Instance->Shutdown();
-    free(m_Instance);
+    delete m_Instance;
+    m_Instance = nullptr;
 }
 
 void D3PP::network::Server::MainFunc() {
@@ -83,6 +82,7 @@ void D3PP::network::Server::MainFunc() {
     ReceivedIncrement = 0;
     SentIncrement = 0;
     //Logger::LogAdd("Server", "Recv: " + stringulate(BytesReceived) + " KB/s, Sent: " + stringulate(BytesSent) + " KB/s.", DEBUG, GLF);
+    HandleClientData();
 }
 
 void D3PP::network::Server::Shutdown() {
@@ -101,30 +101,27 @@ void D3PP::network::Server::Shutdown() {
 }
 
 void D3PP::network::Server::HandleClientData() {
-    while (System::IsRunning) {
-        HandleEvents();
-        {
-            std::shared_lock lock(roMutex);
-            for (auto const &c: roClients) {
-                if (c->IsDataAvailable())
-                    c->SendQueued();
+    HandleEvents();
+    {
+        std::shared_lock lock(roMutex);
+        for (auto const &c: roClients) {
+            if (c->IsDataAvailable())
+                c->SendQueued();
 
-                c->HandleData();
-            }
+            c->HandleData();
         }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 }
 
 void D3PP::network::Server::HandleEvents() {
     auto e = m_serverSocket->CheckEvents();
 
-    if (e.contains(ServerSocketEvent::SOCKET_EVENT_CONNECT)) {
+    if (e.contains(SOCKET_EVENT_CONNECT)) {
         HandleIncomingClient();
     }
-    if (e.contains(ServerSocketEvent::SOCKET_EVENT_DATA)) {
-        for(auto &s : e[ServerSocketEvent::SOCKET_EVENT_DATA]) {
+    if (e.contains(SOCKET_EVENT_DATA)) {
+        std::scoped_lock clientLock(m_ClientMutex);
+        for(auto &s : e[SOCKET_EVENT_DATA]) {
             int clientId = static_cast<int>(s);
             m_clients[clientId]->NotifyDataAvailable();
         }
@@ -138,8 +135,8 @@ void D3PP::network::Server::HandleIncomingClient() {
     std::unique_ptr<Sockets> newClient = m_serverSocket->Accept();
 
     if (newClient != nullptr && newClient->GetSocketFd() != -1) {
-        NetworkClient newNcClient(std::move(newClient));
-        int clientId = newNcClient.GetId();
+        auto newNcClient = std::make_shared<NetworkClient>(std::move(newClient));
+        int clientId = newNcClient->GetId();
         RegisterClient(newNcClient);
 
         EventClientAdd eca;
@@ -148,20 +145,27 @@ void D3PP::network::Server::HandleIncomingClient() {
     }
 }
 
-void D3PP::network::Server::RegisterClient(NetworkClient client) {
-    std::scoped_lock<std::mutex> clientLock(m_ClientMutex);
-    m_clients.insert(std::make_pair(client.GetId(), std::make_shared<NetworkClient>(client)));
+void D3PP::network::Server::RegisterClient(const std::shared_ptr<NetworkClient> &client) {
+    std::scoped_lock clientLock(m_ClientMutex);
+    m_clients.insert(std::make_pair(client->GetId(), client));
     RebuildRoClients();
 }
 
 void D3PP::network::Server::UnregisterClient(const std::shared_ptr<IMinecraftClient>& client) {
+    if (client == nullptr) {
+        return;
+    }
     EventClientDelete ecd;
     ecd.clientId = client->GetId();
     Dispatcher::post(ecd);
     m_Instance->m_serverSocket->Unaccept(client->GetId());
     m_Instance->m_needsUpdate = true;
     std::scoped_lock<std::mutex> clientLock(m_ClientMutex);
-    D3PP::network::Server::m_clients.erase(client->GetId());
+    const auto it = m_clients.find(client->GetId());
+    auto hardRef = m_clients.at(it->first);
+    hardRef.reset();
+    m_clients.erase(client->GetId());
+
 }
 
 void D3PP::network::Server::RebuildRoClients() {
@@ -176,7 +180,7 @@ void D3PP::network::Server::RebuildRoClients() {
 }
 
 void D3PP::network::Server::SendToAll(IPacket& packet, std::string extension, int extVersion) {
-    std::shared_lock lock(D3PP::network::Server::roMutex, std::defer_lock);
+    std::shared_lock lock(roMutex);
     for ( auto const & c : roClients ) {
         if (!extension.empty()) {
             int currentVer = CPE::GetClientExtVersion(c, extension);
@@ -190,7 +194,7 @@ void D3PP::network::Server::SendToAll(IPacket& packet, std::string extension, in
 }
 
 void D3PP::network::Server::SendAllExcept(IPacket& packet, std::shared_ptr<IMinecraftClient> toNot) {
-    std::shared_lock lock(D3PP::network::Server::roMutex);
+    std::shared_lock lock(roMutex);
     for ( auto const & c : roClients ) {
         if (c == toNot)
             continue;

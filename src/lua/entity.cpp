@@ -39,7 +39,7 @@ int LuaEntityLib::openLib(lua_State* L)
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    luaL_setfuncs(L, LuaEntityLib::lib, 0);
+    luaL_setfuncs(L, lib, 0);
     lua_setglobal(L, "Entity");
     return 1;
 }
@@ -101,7 +101,7 @@ int LuaEntityLib::LuaEntityDelete(lua_State* L) {
     }
 
     if (e->associatedClient != nullptr) {
-        Logger::LogAdd("Lua", "LuaError: Cannot delete a player's entity.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Cannot delete a player's entity.", WARNING, GLF);
         return 0;
     }
 

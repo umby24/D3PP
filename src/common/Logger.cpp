@@ -60,21 +60,21 @@ void Logger::FileWrite() {
 
 LogType StringToLogLevel(const std::string& message) {
     if (Utils::InsensitiveCompare("info", message))
-        return LogType::NORMAL;
+        return NORMAL;
     if (Utils::InsensitiveCompare("chat", message))
-        return LogType::CHAT;
+        return CHAT;
     if (Utils::InsensitiveCompare("command", message))
-        return LogType::COMMAND;
+        return COMMAND;
     if (Utils::InsensitiveCompare("debug", message))
-        return LogType::DEBUG;
+        return DEBUG;
     if (Utils::InsensitiveCompare("error", message))
-        return LogType::L_ERROR;
+        return L_ERROR;
     if (Utils::InsensitiveCompare("verbose", message))
-        return LogType::VERBOSE;
+        return VERBOSE;
     if (Utils::InsensitiveCompare("warning", message))
-        return LogType::WARNING;
+        return WARNING;
 
-    return LogType::NORMAL;
+    return NORMAL;
 }
 
 void Logger::Add(struct LogMessage message) {
@@ -112,33 +112,33 @@ void Logger::Add(struct LogMessage message) {
     std::cout << "[" << buffer << "] ";
 
     switch(message.Type) {
-        case LogType::VERBOSE:
+        case VERBOSE:
             std::cout << "\x1B[30m[Verbose] ";
             std::cout << "\x1B[37m" << message.File << "| ";
             std::cout << "\x1B[33m" << message.Module << ": ";
             break;
-        case LogType::DEBUG:
+        case DEBUG:
             std::cout << "\x1B[30m[Debug] ";
             std::cout << "\x1B[37m" << message.File << "| ";
             std::cout << message.Module << ": ";
             break;
-        case LogType::WARNING:
+        case WARNING:
             std::cout << "\x1B[93m[Warning] ";
             std::cout << "\x1B[37m" << message.File << "| ";
             std::cout << message.Module << ": ";
             break;
-        case LogType::L_ERROR:
+        case L_ERROR:
             std::cout << "\x1B[91m[Error]\x1B[37m ";
             std::cout << message.File << "| ";
             std::cout << message.Module << ": ";
             break;
-        case LogType::CHAT:
+        case CHAT:
             std::cout << "\x1B[36m[Chat]\x1B[97m ";
             break;
-        case LogType::COMMAND:
+        case COMMAND:
             std::cout << "\x1B[32m[Command]\x1B[97m ";
             break;
-        case LogType::NORMAL:
+        case NORMAL:
             std::cout << "\x1B[92m[Info]\x1B[97m ";
             break;
     }

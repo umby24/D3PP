@@ -20,7 +20,7 @@ int LuaNetworkLib::openLib(lua_State* L)
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    luaL_setfuncs(L, LuaNetworkLib::lib, 0);
+    luaL_setfuncs(L, lib, 0);
     lua_setglobal(L, "Network");
     return 1;
 }
@@ -30,7 +30,7 @@ int LuaNetworkLib::LuaNetworkOutBlockSet(lua_State* L)
     int nArgs = lua_gettop(L);
 
     if (nArgs != 5) {
-        Logger::LogAdd("Lua", "LuaError: NetworkOutBlockSet called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: NetworkOutBlockSet called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -40,8 +40,7 @@ int LuaNetworkLib::LuaNetworkOutBlockSet(lua_State* L)
     int blockZ = luaL_checkinteger(L, 4);
     int blockType = luaL_checkinteger(L, 5);
 
-    Network* n = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> client = n->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> client = Network::GetClient(clientId);
 
     if (client != nullptr) {
         NetworkFunctions::NetworkOutBlockSet(clientId, blockX, blockY, blockZ, static_cast<unsigned char>(blockType));

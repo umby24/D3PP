@@ -22,6 +22,11 @@ const std::string MODULE_NAME = "Heartbeat";
 Heartbeat* Heartbeat::Instance = nullptr;
 
 void Heartbeat::Beat() {
+    if (salt.empty()) {
+        salt = CreateSalt();
+        Configuration::NetSettings.Salt = salt;
+        Configuration::GetInstance()->Save();
+    }
     httplib::Client cli(CLASSICUBE_NET_URL);
 
     httplib::Params params;
@@ -36,10 +41,10 @@ void Heartbeat::Beat() {
 
     auto res = cli.Post(CLASSICUBE_HEARTBEAT_PATH, params);
     if (!res) {
-        Logger::LogAdd(MODULE_NAME, "Heartbeat failed.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Heartbeat failed.", L_ERROR, __FILE__, __LINE__, __FUNCTION__);
     }
     else if (res->status != 200 || (res->body.find("http") == std::string::npos)) {
-        Logger::LogAdd(MODULE_NAME, "Heartbeat failed.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Heartbeat failed.", L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         try {
             json j = json::parse(res->body);
             std::string reasonStr;
@@ -56,13 +61,13 @@ void Heartbeat::Beat() {
             if (isFirstBeat)
                 Logger::LogAdd(MODULE_NAME, reasonStr, LogType::L_ERROR, GLF);
         } catch(std::exception e) {
-            Logger::LogAdd(MODULE_NAME, "Error parsing Heartbeat. Response: " + res->body, LogType::L_ERROR, GLF);
+            Logger::LogAdd(MODULE_NAME, "Error parsing Heartbeat. Response: " + res->body, L_ERROR, GLF);
         }
     } else {
         if (isFirstBeat) {
-            Logger::LogAdd(MODULE_NAME, "Heartbeat sent.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+            Logger::LogAdd(MODULE_NAME, "Heartbeat sent.", NORMAL, __FILE__, __LINE__, __FUNCTION__);
             serverUrl = res->body;
-            Logger::LogAdd(MODULE_NAME, "Heartbeat URL: " + serverUrl, LogType::NORMAL, GLF);
+            Logger::LogAdd(MODULE_NAME, "Heartbeat URL: " + serverUrl, NORMAL, GLF);
             isFirstBeat = false;
         }
     }
@@ -70,23 +75,34 @@ void Heartbeat::Beat() {
     lastBeat = time(nullptr);
 }
 
-Heartbeat::Heartbeat() {
+Heartbeat::Heartbeat() : isRunning(false) {
     salt = "";
     isPublic = false;
     lastBeat = time(nullptr)-25;
     isFirstBeat = true;
-    
-    this->Setup = [this] { Init(); };
-    this->Main = [this] { MainFunc(); };
-    this->Teardown = [this] { TeardownFunc(); };
-    this->Interval = std::chrono::seconds(1);
-    this->LastRun = std::chrono::system_clock::now();
-    TaskScheduler::RegisterTask(MODULE_NAME, *this);
 }
 
-void Heartbeat::TeardownFunc() {
-    TaskScheduler::UnregisterTask(MODULE_NAME);
+Heartbeat::~Heartbeat() {
+    Stop();
+}
 
+void Heartbeat::Start() {
+    if (!isRunning.load()) {
+        Init();
+        isRunning.store(true);
+        heartbeatThread = std::thread(&Heartbeat::ThreadLoop, this);
+        Logger::LogAdd(MODULE_NAME, "Heartbeat thread started", DEBUG, GLF);
+    }
+}
+
+void Heartbeat::Stop() {
+    if (isRunning.load()) {
+        isRunning.store(false);
+        if (heartbeatThread.joinable()) {
+            heartbeatThread.join();
+        }
+        Logger::LogAdd(MODULE_NAME, "Heartbeat thread stopped", DEBUG, GLF);
+    }
 }
 
 std::string Heartbeat::CreateSalt() {
@@ -102,23 +118,30 @@ std::string Heartbeat::CreateSalt() {
 void Heartbeat::Init() {
     salt = Configuration::NetSettings.Salt;
     if (salt.empty()) {
+        Logger::LogAdd("Heartbeat", "Salt is empty.", DEBUG, __FILE__, __LINE__, __FUNCTION__);
         salt = CreateSalt();
         Configuration::NetSettings.Salt = salt;
         Configuration::GetInstance()->Save();
     }
 }
 
-void Heartbeat::MainFunc() {
-    if (time(nullptr) - lastBeat > 30) { // -- Heartbeat every 30 seconds.
-        Beat();
+void Heartbeat::ThreadLoop() {
+    while (isRunning.load()) {
+        try {
+            if (time(nullptr) - lastBeat > 30) { // -- Heartbeat every 30 seconds.
+                Beat();
+            }
+            
+            // Sleep for 1 second between checks
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        } catch (const std::exception& e) {
+            Logger::LogAdd(MODULE_NAME, "Exception in heartbeat thread: " + std::string(e.what()), L_ERROR, GLF);
+            std::this_thread::sleep_for(std::chrono::seconds(5)); // Wait longer on error
+        }
     }
 }
 
 Heartbeat *Heartbeat::GetInstance() {
-    if (Instance == nullptr) {
-        Instance = new Heartbeat();
-    }
-
     return Instance;
 }
 

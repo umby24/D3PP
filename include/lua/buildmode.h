@@ -22,6 +22,7 @@ protected:
     static int LuaBuildModeFloatGet(lua_State* L);
     static int LuaBuildModeStringSet(lua_State* L);
     static int LuaBuildModeStringGet(lua_State* L);
+	static int LuaBuildModeCreate(lua_State* L);
 private:
 };
 

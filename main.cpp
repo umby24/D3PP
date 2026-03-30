@@ -1,37 +1,29 @@
 #include <iostream>
 #include <string>
 #include <thread>
-#include <CustomBlocks.h>
 
-#include "network/Network.h"
 #include "network/Server.h"
 #include "Rank.h"
 #include "System.h"
 #include "common/Logger.h"
-#include "world/MapMain.h"
 #include "Block.h"
-#include "world/Player.h"
-#include "BuildMode.h"
-#include "plugins/Heartbeat.h"
 #include "plugins/PluginManager.h"
-#include "watchdog.h"
 #include "common/Files.h"
-#include "common/Player_List.h"
 #include "Command.h"
 #include "plugins/LuaPlugin.h"
-#include "plugins/RestApi.h"
-#include "common/Configuration.h"
 #include "ConsoleClient.h"
 #include "network/Network_Functions.h"
+#include "src/Root.h"
 #include "world/Map.h"
 
 #if _WIN32
 #include <windows.h>
 #endif
 using namespace std;
-void mainLoop();
-void MainConsole();
-int MainVersion = 1019;
+
+void main_loop();
+void main_console();
+int main_version = 1020;
 
 void fixWindowsTerminal() {
 #if _WIN32
@@ -48,17 +40,17 @@ void fixWindowsTerminal() {
 
 int main()
 {
-    std::set_terminate([](){ 
-        std::exception_ptr eptr = std::current_exception();
-        if (eptr)
+    std::set_terminate([](){
+		    if (const std::exception_ptr exception_pointer = std::current_exception())
         {
             try
             {
-                std::rethrow_exception(eptr);
+                std::rethrow_exception(exception_pointer);
             }
             catch (const std::exception& e)
             {
-                std::cout << "An Exception occurred: " << e.what() << std::endl;
+                std::cout << "An Exception occurred: " << e.what() << '\n';
+                //DBG_FAIL(e.what());
             }
             catch (...)
             {
@@ -75,65 +67,29 @@ int main()
     srand(time(nullptr));
 
     Files::Load();
-    Logger::LogAdd("Main", "====== Welcome to D3PP =====", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-    Logger::LogAdd("Main", "Version: " + stringulate(MainVersion), LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Root serverRoot;
+    Logger::LogAdd("Main", "====== Welcome to D3PP =====", NORMAL, GLF);
 
-    // Instantiate all singleton classes
-    Configuration::GetInstance();
+    serverRoot.Start();
 
-    Block::GetInstance();
-    Rank::GetInstance();
-    Player_List::GetInstance();
-    PlayerMain::GetInstance();
-    CommandMain::GetInstance();
-    BuildModeMain::GetInstance();
-    Heartbeat::GetInstance();
-    RestApi rapi;
-    D3PP::plugins::PluginManager *plugm = D3PP::plugins::PluginManager::GetInstance();
-    watchdog::GetInstance();
-    CustomBlocks::GetInstance();
-    D3PP::world::MapMain::GetInstance();
-
-    TaskScheduler::RunSetupTasks();
-
-    System::IsRunning = true;
-    System::startTime = time(nullptr);
-    System::ServerName = "D3PP Beta v" + stringulate(SYSTEM_VERSION_NUMBER);
-    
-    D3PP::network::Server::Start();
-
-    std::thread mainThread(mainLoop);
-    plugm->LoadPlugins();
-
-    MainConsole();
+    std::thread main_thread(main_loop);
+    main_console();
 
     D3PP::network::Server::Stop();
     TaskScheduler::RunTeardownTasks();
-    // -- Wait for all threads to close:
-    if (mainThread.joinable())
-        mainThread.join();
-    
-    // -- Cleanup singletons
-    delete plugm;
-    delete Heartbeat::GetInstance();
-    delete BuildModeMain::GetInstance();
-    delete CommandMain::Instance;
-    delete PlayerMain::GetInstance();
-    delete Player_List::GetInstance();
-    delete Rank::GetInstance();
-    delete Block::GetInstance();
-    delete Configuration::GetInstance();
-    delete watchdog::GetInstance();
-    delete CustomBlocks::GetInstance();
-    delete D3PP::world::MapMain::GetInstance();
-    Files::Save();
+// -- Wait for all threads to close:
+    if (main_thread.joinable())
+        main_thread.join();
 
-    Logger::LogAdd("Module", "Server shutdown complete.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    serverRoot.Stop();
+    Files::Save();
+    
+    Logger::LogAdd("Module", "Server shutdown complete.", NORMAL, GLF);
     return 0;
 }
 
-void MainConsole() {
-    auto cc = ConsoleClient::GetInstance();
+void main_console() {
+	const auto cc = ConsoleClient::GetInstance();
     CommandMain* cm = CommandMain::GetInstance();
     std::string input;
 
@@ -153,10 +109,11 @@ void MainConsole() {
     }
 }
 
-void mainLoop() {
+void main_loop() {
     while (System::IsRunning) {
+        watchdog::Watch("Main", "Begin thread-slope", 0);
         TaskScheduler::RunMainTasks();
-
+        watchdog::Watch("Main", "End thread-slope", 2);
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }

@@ -72,14 +72,14 @@ void D3PP::plugins::LuaState::RegisterApiLibs(std::shared_ptr<LuaState> plugin) 
 void D3PP::plugins::LuaState::LoadString(const std::string& strToLoad) {
     int loadResult = luaL_loadstring(m_state, strToLoad.c_str());
     if (loadResult != 0) {
-        Logger::LogAdd("LuaState", "Failed to load string! Subsystem: [" + m_name + "], Error: " + lua_tostring(m_state, -1), LogType::L_ERROR, GLF);
+        Logger::LogAdd("LuaState", "Failed to load string! Subsystem: [" + m_name + "], Error: " + lua_tostring(m_state, -1), L_ERROR, GLF);
         lua_pop(m_state, 1);
         return;
     }
 
     loadResult = lua_pcall(m_state, 0, LUA_MULTRET, 0);
     if (loadResult != 0) {
-        Logger::LogAdd("LuaState", "Failed to execute string! Subsystem: [" + m_name + "], Error: " + lua_tostring(m_state, -1), LogType::L_ERROR, GLF);
+        Logger::LogAdd("LuaState", "Failed to execute string! Subsystem: [" + m_name + "], Error: " + lua_tostring(m_state, -1), L_ERROR, GLF);
         lua_pop(m_state, 1);
         return;
     }
@@ -87,13 +87,13 @@ void D3PP::plugins::LuaState::LoadString(const std::string& strToLoad) {
 
 void D3PP::plugins::LuaState::LoadFile(const std::string& filepath, bool logWarnings) {
     if (m_state == NULL) {
-        Logger::LogAdd("LuaState", "Failed to load file [" + filepath + "]; Lua State is NULL!", LogType::L_ERROR, GLF);
+        Logger::LogAdd("LuaState", "Failed to load file [" + filepath + "]; Lua State is NULL!", L_ERROR, GLF);
         return;
     }
 
     int loadResult = luaL_loadfile(m_state, filepath.c_str());
     if (loadResult != LUA_OK) {
-        Logger::LogAdd("LuaState", "Failed to load file [" + filepath + "]; Lua Error! Subsystem: [" + m_name + "], Error: " + lua_tostring(m_state, -1), LogType::L_ERROR, GLF);
+        Logger::LogAdd("LuaState", "Failed to load file [" + filepath + "]; Lua Error! Subsystem: [" + m_name + "], Error: " + lua_tostring(m_state, -1), L_ERROR, GLF);
         lua_pop(m_state, 1);
         return;
     }
@@ -101,7 +101,7 @@ void D3PP::plugins::LuaState::LoadFile(const std::string& filepath, bool logWarn
     // -- Execute the file's global functions.
     int executeResult = lua_pcall(m_state, 0, 0, 0);
     if (executeResult != LUA_OK) {
-        Logger::LogAdd("LuaState", "Failed to load file [" + filepath + "]; File Initialization Error! Subsystem: [" + m_name + "], Error: " + lua_tostring(m_state, -1), LogType::L_ERROR, GLF);
+        Logger::LogAdd("LuaState", "Failed to load file [" + filepath + "]; File Initialization Error! Subsystem: [" + m_name + "], Error: " + lua_tostring(m_state, -1), L_ERROR, GLF);
         lua_pop(m_state, 1);
         return;
     }

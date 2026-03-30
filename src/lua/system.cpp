@@ -49,7 +49,7 @@ int LuaSystemLib::openLib(lua_State* L, std::shared_ptr<D3PP::plugins::LuaState>
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    luaL_setfuncs(L, LuaSystemLib::lib, 0);
+    luaL_setfuncs(L, lib, 0);
     lua_setglobal(L, "System");
     return 1;
 }
@@ -58,7 +58,7 @@ int LuaSystemLib::LuaFileGet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Files_File_Get called with invalid number of arguments.", LogType::WARNING,GLF);
+        Logger::LogAdd("Lua", "LuaError: Files_File_Get called with invalid number of arguments.", WARNING,GLF);
         return 0;
     }
 
@@ -72,7 +72,7 @@ int LuaSystemLib::LuaFolderGet(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: Files_Folder_Get called with invalid number of arguments.", LogType::WARNING,GLF);
+        Logger::LogAdd("Lua", "LuaError: Files_Folder_Get called with invalid number of arguments.", WARNING,GLF);
         return 0;
     }
 
@@ -86,7 +86,7 @@ int LuaSystemLib::LuaSystemLog(lua_State* L)
     int nArgs = lua_gettop(L);
 
     if (nArgs < 1 || nArgs > 3) {
-        Logger::LogAdd("Lua", "LuaError: Log called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Log called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -95,13 +95,13 @@ int LuaSystemLib::LuaSystemLog(lua_State* L)
     LogType thisLogType;
 
     if (Utils::InsensitiveCompare("info", logType))
-        thisLogType = LogType::NORMAL;
+        thisLogType = NORMAL;
     
     if (Utils::InsensitiveCompare("warning", logType))
-        thisLogType = LogType::WARNING;
+        thisLogType = WARNING;
     
     if (Utils::InsensitiveCompare("error", logType))
-        thisLogType = LogType::L_ERROR;
+        thisLogType = L_ERROR;
     
     Logger::LogAdd("Lua", logMessage, thisLogType, GLF);
     return 0;
@@ -112,7 +112,7 @@ int LuaSystemLib::LuaGetPlatform(lua_State* L)
     int nArgs = lua_gettop(L);
 
     if (nArgs != 0) {
-        Logger::LogAdd("Lua", "LuaError: GetPlatform called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: GetPlatform called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -135,7 +135,7 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 6) {
-        Logger::LogAdd("Lua", "LuaError: Event_Add called with invalid number of arguments.", LogType::WARNING,GLF);
+        Logger::LogAdd("Lua", "LuaError: Event_Add called with invalid number of arguments.", WARNING,GLF);
         return 0;
     }
 
@@ -147,7 +147,7 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
     int mapId = luaL_checkinteger(L, 6);
 
     if (!Dispatcher::hasDescriptor(type)) {
-        Logger::LogAdd("Lua", "LuaError: Invalid event type: " + type + ".", LogType::WARNING,GLF);
+        Logger::LogAdd("Lua", "LuaError: Invalid event type: " + type + ".", WARNING,GLF);
         return 0;
     }
 
@@ -189,7 +189,7 @@ int LuaSystemLib::LuaEventDelete(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 1) {
-        Logger::LogAdd("Lua", "LuaError: System.deleteEvent called with invalid number of arguments.", LogType::WARNING,GLF);
+        Logger::LogAdd("Lua", "LuaError: System.deleteEvent called with invalid number of arguments.", WARNING,GLF);
         return 0;
     }
 
@@ -210,7 +210,7 @@ int LuaSystemLib::LuaMessageToAll(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs < 2) {
-        Logger::LogAdd("Lua", "LuaError: System_Message_Network_Send_2_All called with invalid number of arguments.", LogType::WARNING,GLF);
+        Logger::LogAdd("Lua", "LuaError: System_Message_Network_Send_2_All called with invalid number of arguments.", WARNING,GLF);
         return 0;
     }
 
@@ -231,7 +231,7 @@ int LuaSystemLib::LuaMessage(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs < 2) {
-        Logger::LogAdd("Lua", "LuaError: System.msg called with invalid number of arguments.", LogType::WARNING,GLF);
+        Logger::LogAdd("Lua", "LuaError: System.msg called with invalid number of arguments.", WARNING,GLF);
         return 0;
     }
 
@@ -252,7 +252,7 @@ int LuaSystemLib::LuaAddCommand(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs < 2) {
-        Logger::LogAdd("Lua", "LuaError: System.addCmd called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: System.addCmd called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -289,7 +289,7 @@ int LuaSystemLib::LuaSetSoftwareName(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs < 1) {
-        Logger::LogAdd("Lua", "LuaError: System.setSoftwareName called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: System.setSoftwareName called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -303,7 +303,7 @@ int LuaSystemLib::LuaSetServerName(lua_State *L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs < 1) {
-        Logger::LogAdd("Lua", "LuaError: System.setServerName called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: System.setServerName called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -321,7 +321,7 @@ int LuaSystemLib::LuaAddTextColor(lua_State* L)
     int nArgs = lua_gettop(L);
 
     if (nArgs != 5) {
-        Logger::LogAdd("Lua", "LuaError: System.addTextColor called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: System.addTextColor called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
 
@@ -332,7 +332,7 @@ int LuaSystemLib::LuaAddTextColor(lua_State* L)
     int alphaVal = luaL_checkinteger(L, 5);
 
     if (character.size() > 1) {
-        Logger::LogAdd("Lua", "LuaError: System.addTextColor, character invalid: may only be one character!", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: System.addTextColor, character invalid: may only be one character!", WARNING, GLF);
         return 0;
     }
 

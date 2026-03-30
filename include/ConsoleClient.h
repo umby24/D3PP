@@ -32,7 +32,7 @@ public:
     bool IsStopped() override { return false; }
     void SendChat(std::string message) override {
         Utils::replaceAll(message, "<br>", "\n");
-        Logger::LogAdd("CONSOLE", message, LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd("CONSOLE", message, NORMAL, __FILE__, __LINE__, __FUNCTION__);
     }
     void Kick(const std::string& message, bool hide) override { /* noop */ }
     void SendDefineBlock(BlockDefinition newBlock) override;

@@ -12,7 +12,7 @@ D3PP::world::D3MapProvider::D3MapProvider() {
     m_d3map = nullptr;
 }
 
-void D3PP::world::D3MapProvider::CreateNew(const D3PP::Common::Vector3S &size, const std::string &path,
+void D3PP::world::D3MapProvider::CreateNew(const Common::Vector3S &size, const std::string &path,
                                            const std::string &name) {
     m_d3map = std::make_unique<files::D3Map>(path, name, size);
     MapName = name;
@@ -57,7 +57,7 @@ D3PP::Common::Vector3S D3PP::world::D3MapProvider::GetSize() const {
     return Common::Vector3S(m_d3map->MapSize);
 }
 
-void D3PP::world::D3MapProvider::SetSize(const D3PP::Common::Vector3S &newSize) {
+void D3PP::world::D3MapProvider::SetSize(const Common::Vector3S &newSize) {
     m_d3map->Resize(newSize);
 }
 
@@ -71,23 +71,26 @@ bool D3PP::world::D3MapProvider::Reload() {
     return Load("");
 }
 
-void D3PP::world::D3MapProvider::SetBlock(const D3PP::Common::Vector3S &location, const unsigned char &type) {
+void D3PP::world::D3MapProvider::SetBlock(const Common::Vector3S &location, const unsigned char &type) {
     m_d3map->SetBlock(location, type);
 }
 
-unsigned char D3PP::world::D3MapProvider::GetBlock(const D3PP::Common::Vector3S& location) {
+unsigned char D3PP::world::D3MapProvider::GetBlock(const Common::Vector3S& location) {
     return m_d3map->GetBlock(location);
 }
 
 void D3PP::world::D3MapProvider::SetBlocks(const std::vector<unsigned char> &blocks) {
     m_d3map->MapData.clear();
     m_d3map->MapData.resize((m_d3map->MapSize.X * m_d3map->MapSize.Y * m_d3map->MapSize.Z)*4);
+    int dataInt = 0;
 
-    for(int i = 0; i < blocks.size(); i++) {
-        m_d3map->MapData[i*4] = blocks[i];
-        m_d3map->MapData[(i*4)+1] = 0; // -- Blank meta
-        m_d3map->MapData[(i*4)+2] = 255; // -- Last player = -1
-        m_d3map->MapData[(i*4)+3] = 255;
+    for(int i = 0; i < blocks.size()-1; i++) {
+        if (dataInt == m_d3map->MapData.size())
+            break;
+        m_d3map->MapData[dataInt++] = blocks[i];
+        m_d3map->MapData[dataInt++] = 0;
+        m_d3map->MapData[dataInt++] = 255;
+        m_d3map->MapData[dataInt++] = 255;
     }
 
     std::copy(blocks.begin(), blocks.end(), std::back_inserter(m_d3map->MapData));
@@ -111,23 +114,25 @@ MinecraftLocation D3PP::world::D3MapProvider::GetSpawn() {
 
 void D3PP::world::D3MapProvider::SetSpawn(const MinecraftLocation &location) {
     m_d3map->MapSpawn = location;
+    m_d3map->configChanged = true;
 }
 
 D3PP::world::MapPermissions D3PP::world::D3MapProvider::GetPermissions() {
-    return D3PP::world::MapPermissions { m_d3map->BuildRank, m_d3map->JoinRank, m_d3map->ShowRank };
+    return MapPermissions { m_d3map->BuildRank, m_d3map->JoinRank, m_d3map->ShowRank };
 }
 
-void D3PP::world::D3MapProvider::SetPermissions(const D3PP::world::MapPermissions &perms) {
+void D3PP::world::D3MapProvider::SetPermissions(const MapPermissions &perms) {
     m_d3map->BuildRank = perms.RankBuild;
     m_d3map->JoinRank = perms.RankJoin;
     m_d3map->ShowRank = perms.RankShow;
+    m_d3map->configChanged = true;
 }
 
-short D3PP::world::D3MapProvider::GetLastPlayer(const D3PP::Common::Vector3S &location) {
+short D3PP::world::D3MapProvider::GetLastPlayer(const Common::Vector3S &location) {
     return m_d3map->GetBlockLastPlayer(location);
 }
 
-void D3PP::world::D3MapProvider::SetLastPlayer(const D3PP::Common::Vector3S &location, const short &player) {
+void D3PP::world::D3MapProvider::SetLastPlayer(const Common::Vector3S &location, const short &player) {
     m_d3map->SetBlockLastPlayer(location, player);
 }
 
@@ -159,7 +164,7 @@ D3PP::world::MapEnvironment D3PP::world::D3MapProvider::GetEnvironment() {
     return currentEnv;
 }
 
-void D3PP::world::D3MapProvider::SetEnvironment(const D3PP::world::MapEnvironment &env) {
+void D3PP::world::D3MapProvider::SetEnvironment(const MapEnvironment &env) {
     m_d3map->SkyColor =  env.SkyColor;
     m_d3map->CloudColor =  env.CloudColor;
     m_d3map->FogColor =  env.FogColor;
@@ -183,9 +188,10 @@ void D3PP::world::D3MapProvider::SetEnvironment(const D3PP::world::MapEnvironmen
     m_d3map->weatherFade = env.weatherFade;
     m_d3map->expoFog = env.expoFog;
     m_d3map->mapSideOffset = env.mapSideOffset;
+    m_d3map->configChanged = true;
 }
 
-void D3PP::world::D3MapProvider::SetPortals(const std::vector<D3PP::world::Teleporter> portals) {
+void D3PP::world::D3MapProvider::SetPortals(const std::vector<Teleporter> portals) {
     std::vector<files::MapTeleporterElement> mtes;
 
     for(const auto &item : portals) {
@@ -212,10 +218,12 @@ void D3PP::world::D3MapProvider::SetPortals(const std::vector<D3PP::world::Telep
 
         mtes.push_back(newMte);
     }
+
+    m_d3map->SetPortals(mtes);
 }
 
 std::vector<D3PP::world::Teleporter> D3PP::world::D3MapProvider::getPortals() {
-    std::vector<D3PP::world::Teleporter> result;
+    std::vector<Teleporter> result;
     auto mapPortals = m_d3map->getPortals();
     for(const auto &i : mapPortals) {
         MinecraftLocation origin{};
@@ -227,7 +235,7 @@ std::vector<D3PP::world::Teleporter> D3PP::world::D3MapProvider::getPortals() {
         dest.Rotation = i.DestRot;
         dest.Look = i.DestLook;
 
-        D3PP::world::Teleporter newTp;
+        Teleporter newTp;
         newTp.Destination = dest;
         newTp.OriginStart = origin;
         newTp.OriginEnd = end;
@@ -243,7 +251,7 @@ std::vector<D3PP::world::CustomParticle> D3PP::world::D3MapProvider::getParticle
     return m_d3map->GetParticles();
 }
 
-void D3PP::world::D3MapProvider::SetParticles(std::vector<D3PP::world::CustomParticle> particles) {
+void D3PP::world::D3MapProvider::SetParticles(std::vector<CustomParticle> particles) {
     if (m_d3map != nullptr)
         m_d3map->SetParticles(particles);
 }

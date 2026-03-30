@@ -60,27 +60,27 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     bool preLoginCorrect = true;
     if (version != 7) {
         preLoginCorrect = false;
-        Logger::LogAdd(MODULE_NAME, "Unknown Client version: " + stringulate(version), LogType::L_ERROR, GLF);
+        Logger::LogAdd(MODULE_NAME, "Unknown Client version: " + stringulate(version), L_ERROR, GLF);
         c->Kick("Unknown client version", true);
     } else if (Chat::StringIV(name)) {
         preLoginCorrect = false;
-        Logger::LogAdd(MODULE_NAME, "Invalid Name: " + name, LogType::L_ERROR, GLF);
+        Logger::LogAdd(MODULE_NAME, "Invalid Name: " + name, L_ERROR, GLF);
         c->Kick("Invalid name", true);
     } else if (name.empty()) {
         preLoginCorrect = false;
-        Logger::LogAdd(MODULE_NAME, "Empty Name provided: " + stringulate(version), LogType::L_ERROR, GLF);
+        Logger::LogAdd(MODULE_NAME, "Empty Name provided: " + stringulate(version), L_ERROR, GLF);
         c->Kick("Invalid name", true);
     } else if (D3PP::network::Server::roClients.size() > Configuration::NetSettings.MaxPlayers) {
         preLoginCorrect = false;
-        Logger::LogAdd(MODULE_NAME, "Login Failed: Server is full", LogType::L_ERROR, GLF);
+        Logger::LogAdd(MODULE_NAME, "Login Failed: Server is full", L_ERROR, GLF);
         c->Kick("Server is full", true);
     } else if (mm->GetPointer(Configuration::GenSettings.SpawnMapId) == nullptr) {
          preLoginCorrect = false;
-        Logger::LogAdd(MODULE_NAME, "Login Failed: Spawnmap invalid", LogType::L_ERROR, GLF);
+        Logger::LogAdd(MODULE_NAME, "Login Failed: Spawnmap invalid", L_ERROR, GLF);
         c->Kick("&eSpawnmap Invalid", true);
     } else if (Configuration::NetSettings.VerifyNames && c->IP != "127.0.0.1" && (!hbm->VerifyName(name, mppass))) {
         preLoginCorrect = false;
-        Logger::LogAdd(MODULE_NAME, "Login Failed: failed name verification", LogType::L_ERROR, GLF);
+        Logger::LogAdd(MODULE_NAME, "Login Failed: failed name verification", L_ERROR, GLF);
         c->Kick("&eName verification failed", true);
     }
     
@@ -124,15 +124,9 @@ void Client::Login(int clientId, std::string name, std::string mppass, char vers
     myPlayer->tEntity = newEntity;
     myPlayer->MapId = spawnMap->ID;
     c->LoggedIn = true;
+// -- Now with everything setup on our end, we can start sending packets to the client
+    NetworkFunctions::SystemLoginScreen(c->GetId(), Configuration::GenSettings.name, Configuration::GenSettings.motd, currentRank.OnClient);
 
-
-    std::string motd = MapMain::GetMapMOTDOverride(spawnMap->ID);
-
-    if (motd.empty())
-        motd = Configuration::GenSettings.motd;
-
-    // -- Now with everything setup on our end, we can start sending packets to the client
-    NetworkFunctions::SystemLoginScreen(c->GetId(), Configuration::GenSettings.name, motd, currentRank.OnClient);
 
     Entity::Add(newEntity);
     Entity::SetDisplayName(newEntity->Id, currentRank.Prefix, name, currentRank.Suffix);
@@ -199,25 +193,25 @@ void Client::LoginCpe(int clientId, std::string name, std::string mppass, char v
     Packets::SendExtEntry(c, TEXT_COLORS_EXT_NAME, 1);
 
     c->player = std::move(myPlayer);
-    Logger::LogAdd(MODULE_NAME, "LoginCPE complete", LogType::DEBUG, GLF);
+    Logger::LogAdd(MODULE_NAME, "LoginCPE complete", DEBUG, GLF);
 }
 
 void Client::Logout(int clientId, std::string message, bool showtoall) {
-    Network *n = Network::GetInstance();
     MapMain *mm = MapMain::GetInstance();
-    std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(n->GetClient(clientId));
+    std::shared_ptr<NetworkClient> c = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
     if (!c || c == nullptr || c == NULL) {
         return;
     }
     if (c->LoggedIn) {
         c->LoggedIn = false;
-        Logger::LogAdd(MODULE_NAME, "Player logged out (IP: " + c->IP + " Name: " + c->GetLoginName() + " Message: " + message + ")", LogType::NORMAL, GLF);
+        Logger::LogAdd(MODULE_NAME, "Player logged out (IP: " + c->IP + " Name: " + c->GetLoginName() + " Message: " + message + ")", NORMAL, GLF);
     }
 
     if (c->player && c->GetPlayerInstance()->GetEntity()) {
-        std::shared_ptr<Map> currentMap = mm->GetPointer(c->player->GetEntity()->MapID);
+        auto entity = c->player->GetEntity();
+        std::shared_ptr<Map> currentMap = mm->GetPointer(entity->MapID);
         if (currentMap != nullptr) {
-            currentMap->RemoveEntity(c->player->GetEntity());
+            currentMap->RemoveEntity(entity);
         }
 
         if (showtoall) {
@@ -227,9 +221,8 @@ void Client::Logout(int clientId, std::string message, bool showtoall) {
         D3PP::network::ExtRemovePlayerName rpnPacket(c->player->GetNameId());
         D3PP::network::Server::SendToAll(rpnPacket, EXT_PLAYER_LIST_EXT_NAME, 1);
 
-        c->player->GetEntity()->Despawn();
-        Entity::Delete(c->player->GetEntity()->Id);
-        //c->player->tEntity = nullptr; TODO:
+        entity->Despawn();
+        Entity::Delete(entity->Id);
     }
     
     EventClientLogout ecl;

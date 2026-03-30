@@ -10,13 +10,13 @@
 #include "world/Teleporter.h"
 
 namespace D3PP::Common {
-    class D3PPMetadata : public D3PP::files::IMetadataStructure {
+    class D3PPMetadata : public files::IMetadataStructure {
     public:
         short BuildRank;
         short JoinRank;
         short ShowRank;
-        std::vector<D3PP::world::Teleporter> portals;
-        std::vector<D3PP::world::CustomParticle> particles;
+        std::vector<world::Teleporter> portals;
+        std::vector<world::CustomParticle> particles;
         std::vector<unsigned char> history;
 
         Nbt::TagCompound Read(Nbt::TagCompound metadata) override;

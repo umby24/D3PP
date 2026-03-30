@@ -43,8 +43,8 @@ void NetworkFunctions::SystemRedScreen(const int& clientId, const std::string& m
 
 void NetworkFunctions::SystemMessageNetworkSend(const int& clientId, const std::string& message, const int& type) {
     if (clientId == CONSOLE_CLIENT_ID) {
-        Network* n = Network::GetInstance();
-        std::shared_ptr<IMinecraftClient> c = n->GetClient(CONSOLE_CLIENT_ID);
+        
+        std::shared_ptr<IMinecraftClient> c = Network::GetClient(CONSOLE_CLIENT_ID);
         c->SendChat(message);
         return;
     }
@@ -64,7 +64,7 @@ void NetworkFunctions::SystemMessageNetworkSend(const int& clientId, const std::
 }
 
 void NetworkFunctions::SystemMessageNetworkSend2All(const int& mapId, const std::string& message, const int& type) {
-    Network* n = Network::GetInstance();
+    
     std::string sanitized = SanitizeMessageString(message);
     Chat::EmoteReplace(sanitized);
     int lines = Utils::strCount(sanitized, '\n') + 1;
@@ -88,10 +88,10 @@ void NetworkFunctions::SystemMessageNetworkSend2All(const int& mapId, const std:
 }
 
 void NetworkFunctions::NetworkOutBlockSet(const int& clientId, const short& x, const short& y, const short& z, const unsigned char& type) {
-    Network* n = Network::GetInstance();
+    
     Block* b = Block::GetInstance();
     MapBlock mb = b->GetBlock(type);
-    std::shared_ptr<NetworkClient> nc = std::static_pointer_cast<NetworkClient>(n->GetClient(clientId));
+    std::shared_ptr<NetworkClient> nc = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
     unsigned char newType(type);
 
     if (nc->LoggedIn) {
@@ -145,8 +145,7 @@ void NetworkFunctions::NetworkOutBlockSet2Map(const int& mapId, const unsigned s
 }
 
 void NetworkFunctions::NetworkOutEntityAdd(const int& clientId, const char& playerId, const std::string& name, const MinecraftLocation& location) {
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> c = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(clientId);
 
     auto rotation = static_cast<unsigned char>((location.Rotation/360)*256.0);
     auto look = static_cast<unsigned char>((location.Look/360)*256.0);

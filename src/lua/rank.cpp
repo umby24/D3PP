@@ -24,7 +24,7 @@ int LuaRankLib::openLib(lua_State* L)
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    luaL_setfuncs(L, LuaRankLib::lib, 0);
+    luaL_setfuncs(L, lib, 0);
     lua_setglobal(L, "Rank");
     return 1;
 }
@@ -58,7 +58,7 @@ int LuaRankLib::LuaRankAdd(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 4) {
-        Logger::LogAdd("Lua", "LuaError: Rank_Add called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Rank_Add called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int rankNumber = luaL_checkinteger(L, 1);
@@ -80,7 +80,7 @@ int LuaRankLib::LuaRankDelete(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Rank_Delete called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Rank_Delete called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int rankNumber = luaL_checkinteger(L, 1);
@@ -96,7 +96,7 @@ int LuaRankLib::LuaRankGetName(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Rank_Get_Name called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Rank_Get_Name called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int rankNumber = luaL_checkinteger(L, 1);
@@ -113,7 +113,7 @@ int LuaRankLib::LuaRankGetPrefix(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Rank_Get_Prefix called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Rank_Get_Prefix called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int rankNumber = luaL_checkinteger(L, 1);
@@ -130,7 +130,7 @@ int LuaRankLib::LuaRankGetSuffix(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Rank_Get_Suffix called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Rank_Get_Suffix called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int rankNumber = luaL_checkinteger(L, 1);
@@ -147,7 +147,7 @@ int LuaRankLib::LuaRankGetRoot(lua_State* L) {
     int nArgs = lua_gettop(L);
 
     if (nArgs != 2) {
-        Logger::LogAdd("Lua", "LuaError: Rank_Get_Name called with invalid number of arguments.", LogType::WARNING, GLF);
+        Logger::LogAdd("Lua", "LuaError: Rank_Get_Name called with invalid number of arguments.", WARNING, GLF);
         return 0;
     }
     int rankNumber = luaL_checkinteger(L, 1);

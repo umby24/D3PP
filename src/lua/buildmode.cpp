@@ -25,6 +25,7 @@ const struct luaL_Reg LuaBuildModeLib::lib[] = {
        {"getfloat", &LuaBuildModeFloatGet},
        {"getstring", &LuaBuildModeStringGet},
        {"setstring", &LuaBuildModeStringSet},
+{"create", &LuaBuildModeCreate},
        {NULL, NULL}
 };
 
@@ -36,7 +37,7 @@ int LuaBuildModeLib::openLib(lua_State* L)
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    luaL_setfuncs(L, LuaBuildModeLib::lib, 0);
+    luaL_setfuncs(L, lib, 0);
     lua_setglobal(L, "BuildMode");
     return 1;
 }
@@ -67,8 +68,7 @@ int LuaBuildModeLib::LuaBuildModeGet(lua_State* L) {
     }
 
     int clientId = luaL_checkinteger(L, 1);
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> networkClient = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> networkClient = Network::GetClient(clientId);
 
     if (networkClient != nullptr) {
         std::shared_ptr<Entity> clientEntity = Entity::GetPointer(clientId, true);
@@ -110,8 +110,7 @@ int LuaBuildModeLib::LuaBuildModeStateGet(lua_State* L) {
         return 0;
     }
     int clientId = luaL_checkinteger(L, 1);
-    Network* nm = Network::GetInstance();
-    std::shared_ptr<IMinecraftClient> networkClient = nm->GetClient(clientId);
+    std::shared_ptr<IMinecraftClient> networkClient = Network::GetClient(clientId);
 
     if (networkClient != nullptr) {
         std::shared_ptr<Entity> e = Entity::GetPointer(clientId, true);
@@ -274,4 +273,18 @@ int LuaBuildModeLib::LuaBuildModeStringGet(lua_State* L) {
 
     lua_pushstring(L, val.c_str());
     return 1;
+}
+
+int LuaBuildModeLib::LuaBuildModeCreate(lua_State *L) {
+    int nArgs = lua_gettop(L);
+
+    if (nArgs != 2) {
+        Logger::LogAdd("Lua", "LuaError: BuildMode.Create called with invalid number of arguments.", WARNING, GLF);
+        return 0;
+    }
+    std::string name = luaL_checkstring(L, 1);
+    std::string plugin = luaL_checkstring(L, 2);
+
+    BuildModeMain::CreateMode(name, plugin);
+    return 0;
 }

@@ -8,7 +8,6 @@
 #include <vector>
 #include <mutex>
 #include <thread>
-#include <fstream>
 
 #include "common/TaskScheduler.h"
 
@@ -36,7 +35,6 @@ public:
 
     int GetVirtualRAMUsage();
     int GetPhysicalRAMUsage();
-protected:
 
     static watchdog* singleton_;
     std::mutex _lock;

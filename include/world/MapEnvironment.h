@@ -18,6 +18,8 @@ namespace D3PP::world {
         std::string TextureUrl;
         // -- EnvMapAspect
         int cloudHeight, maxFogDistance, cloudSpeed, weatherSpeed, weatherFade, expoFog, mapSideOffset;
+        // -- EnvWeatherControl
+        int WeatherType; // 0 = Clear, 1 = Rain, 2 = Snow
 
         MapEnvironment() {
             SkyColor = -1;
@@ -42,6 +44,7 @@ namespace D3PP::world {
             weatherFade = 128;
             expoFog = 0;
             mapSideOffset = -2;
+            WeatherType = 0;
         }
     };
 }

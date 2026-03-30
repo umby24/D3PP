@@ -1,4 +1,6 @@
 #include "BuildMode.h"
+
+#include <utility>
 #include "common/Files.h"
 #include "common/PreferenceLoader.h"
 #include "network/Network.h"
@@ -31,10 +33,6 @@ BuildModeMain::BuildModeMain()  {
 }
 
 BuildModeMain* BuildModeMain::GetInstance() {
-    if (Instance == nullptr) {
-        Instance = new BuildModeMain();
-    }
-
     return Instance;
 }
 
@@ -62,7 +60,7 @@ void BuildModeMain::Load() {
 
     SaveFile = true;
     LastFileDate = Utils::FileModTime(filePath);
-    Logger::LogAdd(MODULE_NAME, "File loaded [" + filePath + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File loaded [" + filePath + "]", NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void BuildModeMain::Save() {
@@ -78,17 +76,23 @@ void BuildModeMain::Save() {
 
     pl.SaveFile();
     LastFileDate = Utils::FileModTime(filePath);
-    Logger::LogAdd(MODULE_NAME, "File saved [" + filePath + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "File saved [" + filePath + "]", NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void BuildModeMain::MainFunc() {
+    if (_buildmodes.empty()) {
+        CreateDefaults();
+        Logger::LogAdd(MODULE_NAME, "Build mode list empty, creating default.", NORMAL, __FILE__, __LINE__, __FUNCTION__);
+        SaveFile = true;
+    }
+
     if (SaveFile) {
         SaveFile = false;
         Save();
     }
 
-    std::string bmFile = Files::GetFile(BUILD_MODE_FILE_NAME);
-    time_t modTime = Utils::FileModTime(bmFile);
+    const std::string bmFile = Files::GetFile(BUILD_MODE_FILE_NAME);
+    const time_t modTime = Utils::FileModTime(bmFile);
 
     if (modTime != LastFileDate) {
         Load();
@@ -118,37 +122,54 @@ void BuildModeMain::Distribute(int clientId, int mapId, unsigned short X, unsign
     
     if (_buildmodes.find(buildMode) == _buildmodes.end()) {
         ne->BuildMode = "Normal";
-        Logger::LogAdd(MODULE_NAME, "Could not find build mode '" + buildMode + "'.", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Could not find build mode '" + buildMode + "'.", L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         return;
     }
-
     std::shared_ptr<Map> playerMap = mm->GetPointer(mapId);
+
+    if (nc->IsStopped()) {
+        NetworkFunctions::SystemMessageNetworkSend(nc->GetId(), "&eYou are not allowed to build (stopped).");
+        NetworkFunctions::NetworkOutBlockSet(nc->GetId(), X, Y, Z, playerMap->GetBlockType(X, Y, Z));
+        return;
+    }
 
     if (_buildmodes[buildMode].Plugin.empty()) {
         playerMap->BlockChange(nc, X, Y, Z, mode, blockType);
     } else {
+        // -- Player is in a 'build mode'. Block changes aren't written to the map.
         BlockResend queuedItem{};
         queuedItem.Location = D3PP::Common::Vector3S(X, Y, Z);
+        // -- Store the location of this block change so we can replay the actual blocks after the buildmode ends
         queuedItem.clientId = clientId;
         queuedItem.mapId = mapId;
         _resendBlocks.insert(_resendBlocks.begin(), queuedItem);
+
+        // -- Then trigger the plugin that will handle the buildmode.
         std::string pluginName = _buildmodes[buildMode].Plugin;
         Utils::replaceAll(pluginName, "Lua:", "");
         D3PP::plugins::PluginManager *pm = D3PP::plugins::PluginManager::GetInstance();
         pm->TriggerBuildMode(pluginName, clientId, mapId, X, Y, Z, mode, blockType);
-        // -- Lua_Event_Build_Mode()
     }
 }
 
-void BuildModeMain::Resend(int clientId) {
+void BuildModeMain::CreateDefaults() {
+    BuildMode normal;
+    normal.ID = "Normal";
+    normal.Plugin = "";
+    normal.Name = "Normal";
+
+    _buildmodes.insert(std::make_pair("Normal", normal));
+    SaveFile = true;
+}
+
+void BuildModeMain::Resend(const int clientId) {
     std::vector<int> toRemove;
     MapMain* mapMain= MapMain::GetInstance();
 
     while(!_resendBlocks.empty()) {
         BlockResend &toResend = _resendBlocks.at(0);
 
-        std::shared_ptr<Map> thisMap = mapMain->GetPointer(toResend.mapId);
-        if (thisMap != nullptr) {
+        if (std::shared_ptr<Map> thisMap = mapMain->GetPointer(toResend.mapId); thisMap != nullptr) {
             int blockType = thisMap->GetBlockType(toResend.Location.X, toResend.Location.Y, toResend.Location.Z);
             NetworkFunctions::NetworkOutBlockSet(clientId, toResend.Location.X, toResend.Location.Y, toResend.Location.Z, blockType);
         }
@@ -156,10 +177,8 @@ void BuildModeMain::Resend(int clientId) {
     }
 }
 
-void BuildModeMain::SetMode(int clientId, std::string mode) {
-    std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
-
-    if (ne != nullptr) {
+void BuildModeMain::SetMode(const int clientId, const std::string &mode) {
+    if (std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true); ne != nullptr) {
         ne->BuildMode = mode;
         Resend(clientId);
     }
@@ -167,8 +186,8 @@ void BuildModeMain::SetMode(int clientId, std::string mode) {
 
 
 
-void BuildModeMain::SetState(int clientId, char state) {
-    std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
+void BuildModeMain::SetState(const int clientId, const char state) {
+    const std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
 
     if (ne == nullptr)
         return;
@@ -176,10 +195,10 @@ void BuildModeMain::SetState(int clientId, char state) {
     ne->BuildState = state;
 }
 
-char BuildModeMain::GetState(int clientId) {
+char BuildModeMain::GetState(const int clientId) {
     char result = -1;
 
-    std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
+    const std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
     if (ne == nullptr)
         return result;
 
@@ -187,13 +206,24 @@ char BuildModeMain::GetState(int clientId) {
     return result;
 }
 
-void BuildModeMain::SetCoordinate(int clientId, int index, D3PP::Common::Vector3F location) {
-    std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
+void BuildModeMain::CreateMode(const std::string& name, std::string plugin) {
+    BuildMode newBuildMode {
+        name,
+        name,
+        std::move(plugin)
+    };
+    const auto instance = BuildModeMain::GetInstance();
+    instance->_buildmodes.insert(std::make_pair(name, newBuildMode));
+    instance->SaveFile = true;
+}
+
+void BuildModeMain::SetCoordinate(const int clientId, const int index, D3PP::Common::Vector3F location) {
+    const std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
 
     if (ne == nullptr)
         return;
 
-    if (index > Client_Player_Buildmode_Variables)
+    if (index >= Client_Player_Buildmode_Variables)
         return;
 
     ne->variables[index].X = location.X;
@@ -203,12 +233,12 @@ void BuildModeMain::SetCoordinate(int clientId, int index, D3PP::Common::Vector3
 
 unsigned short BuildModeMain::GetCoordinateX(int clientId, int index) {
     unsigned short result = 0;
-    std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
+    const std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
 
     if (ne == nullptr)
         return result;
 
-    if (index > Client_Player_Buildmode_Variables)
+    if (index >= Client_Player_Buildmode_Variables)
         return result;
 
     result = ne->variables[index].X;
@@ -217,38 +247,38 @@ unsigned short BuildModeMain::GetCoordinateX(int clientId, int index) {
 
 unsigned short BuildModeMain::GetCoordinateY(int clientId, int index) {
     unsigned short result = 0;
-    std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
+    const std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
 
     if (ne == nullptr)
         return result;
 
-    if (index > Client_Player_Buildmode_Variables)
+    if (index >= Client_Player_Buildmode_Variables)
         return result;
 
     result = ne->variables[index].Y;
     return result;
 }
 
-unsigned short BuildModeMain::GetCoordinateZ(int clientId, int index) {
+unsigned short BuildModeMain::GetCoordinateZ(const int clientId, const int index) {
     unsigned short result = 0;
-    std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
+    const std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
 
     if (ne == nullptr)
         return result;
 
-    if (index > Client_Player_Buildmode_Variables)
+    if (index >= Client_Player_Buildmode_Variables)
         return result;
 
     result = ne->variables[index].Z;
     return result;
 }
 
-void BuildModeMain::SetInt(int clientId, int index, int val) {
-    std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
+void BuildModeMain::SetInt(const int clientId, const int index, const int val) {
+    const std::shared_ptr<Entity> ne = Entity::GetPointer(clientId, true);
     if (ne == nullptr)
         return;
 
-    if (index > Client_Player_Buildmode_Variables)
+    if (index >= Client_Player_Buildmode_Variables)
         return;
 
     ne->variables[index].Long = val;

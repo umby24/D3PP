@@ -14,7 +14,7 @@
       "variables": [
         {
           "name": "CMAKE_TOOLCHAIN_FILE",
-          "value": "F:/Documents/Git/vcpkg/scripts/buildsystems/vcpkg.cmake",
+          "value": "C:\\Users\\unknown\\Documents\\Git\\vcpkg/scripts/buildsystems/vcpkg.cmake",
           "type": "FILEPATH"
         }
       ]

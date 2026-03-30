@@ -13,7 +13,6 @@
 #include "Rank.h"
 #include "Block.h"
 #include <json.hpp>
-#include <network/Network.h>
 #include "network/Network_Functions.h"
 #include "network/NetworkClient.h"
 
@@ -140,7 +139,7 @@ void RestApi::Init() {
     });
     m_restServer->Delete(R"(/settings/ranks/(\d+))", [](const httplib::Request &req, httplib::Response &res) {
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
-        int rankId = std::stoi(req.matches[1].str().c_str());
+        const int rankId = std::stoi(req.matches[1].str().c_str());
 
         Rank *rm = Rank::GetInstance();
         rm->Delete(rankId, true);
@@ -191,7 +190,7 @@ void RestApi::Init() {
         res.set_header("Access-Control-Allow-Headers", "content-type");
     });
     m_restServer->Get("/world/maps",[](const httplib::Request& req, httplib::Response& res) {
-        D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();
+        const D3PP::world::MapMain* mm = D3PP::world::MapMain::GetInstance();
         json j;
         std::vector<json> items;
         for (auto const &m : mm->_maps) {
@@ -239,7 +238,6 @@ void RestApi::Init() {
     });
 
     m_restServer->Get("/network/players",[](const httplib::Request& req, httplib::Response& res) {
-        Network* nMain = Network::GetInstance();
 
         json j;
         j["max"] = Configuration::NetSettings.MaxPlayers;
@@ -262,25 +260,25 @@ void RestApi::Init() {
     m_restServer->Get("/system/log",[](const httplib::Request& req, httplib::Response& res) {
         json j;
 
-        Logger* logMain = Logger::GetInstance();
+        const Logger* logMain = Logger::GetInstance();
         int numLines = 500;
         if (numLines > logMain->Messages.size()) {
             numLines = logMain->Messages.size();
         }
-        int logSize = logMain->Messages.size();
+        const int logSize = logMain->Messages.size();
         std::vector<json> items;
 
         for(int i = 0; i< numLines; i++) {
 
-            LogMessage message = logMain->Messages.at(logSize-i-1);
+            auto [Module, Message, File, Line, Procedure, Type, Time] = logMain->Messages.at(logSize-i-1);
             json obj = {
-                    {"module", message.Module},
-                    {"message", message.Message},
-                    {"file", message.File},
-                    {"line", message.Line},
-                    {"function", message.Procedure},
-                    {"type", message.Type},
-                    {"time", message.Time}
+                    {"module", Module},
+                    {"message", Message},
+                    {"file", File},
+                    {"line", Line},
+                    {"function", Procedure},
+                    {"type", Type},
+                    {"time", Time}
             };
             items.push_back(obj);
         }
@@ -304,23 +302,23 @@ void RestApi::Init() {
     });
 
     m_restServer->set_error_handler([](const auto& req, auto& res) {
-        auto fmt = "<p>Error Status: <span style='color:red;'>%d</span></p>";
+        const auto fmt = "<p>Error Status: <span style='color:red;'>%d</span></p>";
         char buf[BUFSIZ];
         snprintf(buf, sizeof(buf), fmt, res.status);
         res.set_content(buf, "text/html");
     });
     m_restServer->set_exception_handler([](const auto& req, auto& res, std::exception &e) {
         res.status = 500;
-        auto fmt = "<h1>Error 500</h1><p>%s</p>";
+        const auto fmt = "<h1>Error 500</h1><p>%s</p>";
         char buf[BUFSIZ];
         snprintf(buf, sizeof(buf), fmt, e.what());
         res.set_content(buf, "text/html");
     });
     std::thread apiThread ([this]{ RunHttpServer(); });
     std::swap(m_serverThread, apiThread);
-    Logger::LogAdd(MODULE_NAME, "API Running on port 8080", LogType::NORMAL, GLF);
+    Logger::LogAdd(MODULE_NAME, "API Running on port 8080", NORMAL, GLF);
 }
 
-void RestApi::RunHttpServer() {
+void RestApi::RunHttpServer() const {
     m_restServer->listen("localhost", 8080);
 }

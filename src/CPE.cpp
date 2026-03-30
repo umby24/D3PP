@@ -234,7 +234,7 @@ void CPE::AfterLoginActions(const std::shared_ptr<IMinecraftClient>& client) {
     int clientId = client->GetId();
     std::string loginName = client->GetLoginName();
     std::string prettyName = Entity::GetDisplayname(clientEntity->Id);
-    int extVersion = CPE::GetClientExtVersion(client, EXT_PLAYER_LIST_EXT_NAME);
+    int extVersion = GetClientExtVersion(client, EXT_PLAYER_LIST_EXT_NAME);
     int tempNameId = concrete->GetPlayerInstance()->GetNameId();
 
     std::shared_lock lock(D3PP::network::Server::roMutex, std::defer_lock);
@@ -243,17 +243,17 @@ void CPE::AfterLoginActions(const std::shared_ptr<IMinecraftClient>& client) {
             continue;
 
         if (nc->GetId() != clientId) {
-            if (CPE::GetClientExtVersion(nc, EXT_PLAYER_LIST_EXT_NAME) == 2) {
+            if (GetClientExtVersion(nc, EXT_PLAYER_LIST_EXT_NAME) == 2) {
                 auto concrete2 = std::static_pointer_cast<NetworkClient>(nc);
-                Packets::SendExtAddPlayerName(concrete2, tempNameId, loginName, prettyName, clientMap->Name(), 0);
+                Packets::SendExtAddPlayerName(concrete2, tempNameId, loginName, prettyName, Configuration::GenSettings.listMapPrefix + clientMap->Name(), 0);
             }
             if (extVersion == 2) {
                 std::shared_ptr<Map> dudesMap = mapMain->GetPointer(nc->GetPlayerInstance()->GetEntity()->MapID);
-                Packets::SendExtAddPlayerName(concrete, nc->GetPlayerInstance()->GetNameId(), nc->GetPlayerInstance()->GetLoginName(), Entity::GetDisplayname(nc->GetPlayerInstance()->GetEntity()->Id), dudesMap->Name(), 0);
+                Packets::SendExtAddPlayerName(concrete, nc->GetPlayerInstance()->GetNameId(), nc->GetPlayerInstance()->GetLoginName(), Entity::GetDisplayname(nc->GetPlayerInstance()->GetEntity()->Id), Configuration::GenSettings.listMapPrefix + dudesMap->Name(), 0);
             }
         } else {
             if (extVersion == 2) {
-                Packets::SendExtAddPlayerName(concrete, 255, loginName, prettyName, clientMap->Name(), 0);
+                Packets::SendExtAddPlayerName(concrete, 255, loginName, prettyName, Configuration::GenSettings.listMapPrefix + clientMap->Name(), 0);
             }
         }
     }

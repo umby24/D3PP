@@ -55,6 +55,7 @@ public:
     CustomBlocks();
 
     static CustomBlocks* GetInstance();
+    static CustomBlocks* Instance;
 
     void MainFunc();
     void Load();
@@ -65,7 +66,6 @@ public:
     bool HasDef(int blockId);
     BlockDefinition GetDef(int blockId);
 private:
-    static CustomBlocks* instance;
     bool isModified;
     time_t lastModified;
 

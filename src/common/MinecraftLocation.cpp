@@ -22,7 +22,7 @@ Vector3S MinecraftLocation::GetAsBlockCoords() const {
     return result;
 }
 
-D3PP::Common::Vector3F MinecraftLocation::GetAsFloatCoords() const
+Vector3F MinecraftLocation::GetAsFloatCoords() const
 {
     Vector3F result{
         Location.X / 32.0,

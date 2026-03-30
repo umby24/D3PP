@@ -4,9 +4,9 @@
 #include "world/BlockChangeQueue.h"
 
 
-D3PP::world::BlockChangeQueue::BlockChangeQueue(const D3PP::Common::Vector3S &size) : IUniqueQueue(size) {}
+D3PP::world::BlockChangeQueue::BlockChangeQueue(const Common::Vector3S &size) : IUniqueQueue(size) {}
 
-bool D3PP::world::BlockChangeQueue::TryDequeue(D3PP::world::ChangeQueueItem &out) {
+bool D3PP::world::BlockChangeQueue::TryDequeue(ChangeQueueItem &out) {
     std::scoped_lock<std::mutex> pLock(m_accessLock);
     if (m_ChangeQueue.empty())
         return false;
@@ -17,7 +17,7 @@ bool D3PP::world::BlockChangeQueue::TryDequeue(D3PP::world::ChangeQueueItem &out
     return true;
 }
 
-void D3PP::world::BlockChangeQueue::TryQueue(const D3PP::world::ChangeQueueItem &in) {
+void D3PP::world::BlockChangeQueue::TryQueue(const ChangeQueueItem &in) {
     if (IsQueued(in.Location))
         return;
 

@@ -35,7 +35,7 @@ namespace D3PP::network {
      static void Stop();
      void Shutdown();
 
-     static void RegisterClient(NetworkClient client);
+     static void RegisterClient(const std::shared_ptr<NetworkClient> &client);
      static void UnregisterClient(const std::shared_ptr<IMinecraftClient>& client);
      static void SendToAll(IPacket& packet, std::string extension, int extVersion);
      static void SendAllExcept(IPacket& packet, std::shared_ptr<IMinecraftClient> toNot);

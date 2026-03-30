@@ -1,8 +1,8 @@
 #include "world/Map.h"
 #include "common/Vectors.h"
 
-int GetIndex(int x, int y, int z, int mapX, int mapY) {
-    return (x + y * mapX + z * mapX * mapY) * 1;
+int GetIndex(int x, int y, int z, int mapX, int mapZ) {
+    return (z * mapZ + y) * mapX + x;
 }
 
 void FlatgrassGen(int mapId) {
@@ -25,7 +25,7 @@ void FlatgrassGen(int mapId) {
                 if (z == mapSize.Z/2)
                     blockType = 4;
 
-                newBlocks[GetIndex(x, y, z, mapSize.X, mapSize.Y)] = blockType;
+                newBlocks[GetIndex(x, z, y, mapSize.X, mapSize.Z)] = blockType;
             }
         }
     }

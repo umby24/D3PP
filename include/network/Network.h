@@ -17,9 +17,6 @@ class IMinecraftClient;
 
 class Network {
 public:
-    Network();
-    static Network* GetInstance();
-    static Network* singleton_;
     static std::shared_ptr<IMinecraftClient> GetClient(int id);
 };
 

@@ -36,7 +36,7 @@ void Player_List::CloseDatabase() {
     if (dbOpen) {
         dbOpen = false;
         sqlite3_close(db);
-        Logger::LogAdd(MODULE_NAME, "Database closed [" + fileName + "]", LogType::DEBUG, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Database closed [" + fileName + "]", DEBUG, __FILE__, __LINE__, __FUNCTION__);
     }
 }
 
@@ -51,13 +51,13 @@ void Player_List::CreateDatabase() {
     sqlite3_open(fileName.c_str(), &tempdb);
     int rc = sqlite3_exec(tempdb, CREATE_SQL.c_str(), callback, 0, &zErrMsg);
     if (rc != SQLITE_OK) {
-        Logger::LogAdd(MODULE_NAME, "Failed to create new DB", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+        Logger::LogAdd(MODULE_NAME, "Failed to create new DB", L_ERROR, __FILE__, __LINE__, __FUNCTION__);
         // -- err :<
         sqlite3_free(tempdb);
         return;
     }
 
-    Logger::LogAdd(MODULE_NAME, "Database created.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Database created.", NORMAL, __FILE__, __LINE__, __FUNCTION__);
     sqlite3_close(tempdb);
 }
 
@@ -68,7 +68,7 @@ void Player_List::OpenDatabase() {
     }
     sqlite3_open(fileName.c_str(), &db);
     dbOpen = true;
-    Logger::LogAdd(MODULE_NAME, "Database Opened.", LogType::DEBUG, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Database Opened.", DEBUG, __FILE__, __LINE__, __FUNCTION__);
 }
 
 Player_List::Player_List() {
@@ -93,14 +93,13 @@ Player_List::Player_List() {
 void Player_List::Load() {
     OpenDatabase();
     sqlite3_stmt *stmt;
-    std::string sqlStatement = "SELECT * FROM Player_List";
-    char* errMsg = 0;
-    int rc;
-    rc = sqlite3_prepare_v2(db, sqlStatement.c_str(), sqlStatement.size(), &stmt, nullptr);
+    const std::string sqlStatement = "SELECT * FROM Player_List";
+    char* errMsg = nullptr;
 
-    if (rc != SQLITE_OK) {
-        Logger::LogAdd(MODULE_NAME, "Failed to load DB!", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
-        Logger::LogAdd(MODULE_NAME, "DB Error: " + stringulate(errMsg), LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__);
+    if (const int rc = sqlite3_prepare_v2(db, sqlStatement.c_str(), sqlStatement.size(), &stmt, nullptr);
+        rc != SQLITE_OK) {
+        Logger::LogAdd(MODULE_NAME, "Failed to load DB!", L_ERROR, GLF);
+        Logger::LogAdd(MODULE_NAME, "DB Error: " + std::string(sqlite3_errmsg(db)), L_ERROR, GLF);
         return;
     }
 
@@ -109,8 +108,7 @@ void Player_List::Load() {
 
         sqlite3_column_text(stmt, 3);
         newEntry->Number = sqlite3_column_int(stmt, 0);
-        const char *tmp;
-        tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        auto tmp = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1));
         newEntry->Name = std::string(tmp);
 
         newEntry->PRank = sqlite3_column_int(stmt, 2);
@@ -118,38 +116,40 @@ void Player_List::Load() {
         newEntry->KickCounter = sqlite3_column_int(stmt, 4);
         newEntry->OntimeCounter = sqlite3_column_int(stmt, 5);
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
+
         if (tmp != nullptr)
-        newEntry->IP = std::string(tmp);
+            newEntry->IP = std::string(tmp);
+
         newEntry->Stopped = sqlite3_column_int(stmt, 7);
         newEntry->Banned = sqlite3_column_int(stmt, 8);
         newEntry->MuteTime = sqlite3_column_int(stmt, 9);
 
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
         if (tmp != nullptr)
-        newEntry->BanMessage = std::string(tmp);
+            newEntry->BanMessage = std::string(tmp);
 
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 11));
         if (tmp != nullptr)
-        newEntry->KickMessage = std::string(tmp);
+            newEntry->KickMessage = std::string(tmp);
 
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 12));
         if (tmp != nullptr)
-        newEntry->MuteMessage = std::string(tmp);
+            newEntry->MuteMessage = std::string(tmp);
 
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 13));
         if (tmp != nullptr)
-        newEntry->RankMessage = std::string(tmp);
+            newEntry->RankMessage = std::string(tmp);
 
         tmp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 14));
         if (tmp != nullptr)
-        newEntry->StopMessage = std::string(tmp);
+            newEntry->StopMessage = std::string(tmp);
 
         newEntry->GlobalChat = sqlite3_column_int(stmt, 16);
         _pList.push_back(newEntry);
     }
 
     sqlite3_finalize(stmt);
-    Logger::LogAdd(MODULE_NAME, "Database Loaded.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Database Loaded.", NORMAL, GLF);
     CloseDatabase();
 
     for(auto const &i : _pList) {
@@ -166,8 +166,7 @@ void Player_List::Save() {
             continue;
 
         sqlite3_stmt *res;
-        int rc = sqlite3_prepare_v2(db, REPLACE_SQL.c_str(), -1, &res, nullptr);
-        if (rc == SQLITE_OK) {
+        if (const int rc = sqlite3_prepare_v2(db, REPLACE_SQL.c_str(), -1, &res, nullptr); rc == SQLITE_OK) {
             sqlite3_bind_int(res, 1, i->Number);
             sqlite3_bind_text(res, 2, i->Name.c_str(), i->Name.size(), nullptr);
             sqlite3_bind_int(res, 3, i->PRank);
@@ -189,9 +188,9 @@ void Player_List::Save() {
         sqlite3_finalize(res);
 
         if (dbSaveResult != SQLITE_DONE)
-            Logger::LogAdd(MODULE_NAME, "Error saving PlayerDB.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+            Logger::LogAdd(MODULE_NAME, "Error saving PlayerDB.", NORMAL, __FILE__, __LINE__, __FUNCTION__);
     }
-    Logger::LogAdd(MODULE_NAME, "Database Saved.", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Database Saved.", NORMAL, __FILE__, __LINE__, __FUNCTION__);
     CloseDatabase();
 }
 
@@ -250,9 +249,6 @@ int Player_List::GetNumber() {
 }
 
 Player_List *Player_List::GetInstance() {
-    if (Instance == nullptr)
-        Instance = new Player_List();
-
     return Instance;
 }
 
@@ -340,7 +336,7 @@ void PlayerListEntry::SetRank(int rank, const std::string &reason) {
     i->SaveFile = true;
 
     Rank* r = Rank::GetInstance();
-    std::shared_lock lock(D3PP::network::Server::roMutex, std::defer_lock);
+    std::shared_lock lock(D3PP::network::Server::roMutex);
     for(auto &nc : D3PP::network::Server::roClients) {
         if (nc->GetPlayerInstance() && nc->GetPlayerInstance()->GetEntity() && nc->GetPlayerInstance()->GetEntity()->playerList && nc->GetPlayerInstance()->GetEntity()->playerList->Number == Number) {
             RankItem ri = r->GetRank(rank, false);
@@ -350,7 +346,7 @@ void PlayerListEntry::SetRank(int rank, const std::string &reason) {
     }
 }
 
-void PlayerListEntry::Kick(const std::string &reason, int count, bool log, bool show) {
+void PlayerListEntry::Kick(const std::string &reason, bool show) {
     bool found = false;
     {
         std::shared_lock lock(D3PP::network::Server::roMutex, std::defer_lock);
@@ -373,9 +369,6 @@ void PlayerListEntry::Kick(const std::string &reason, int count, bool log, bool 
         if (show) {
             NetworkFunctions::SystemMessageNetworkSend2All(-1, "Player " + Name + " was kicked (" + reason + ")");
         }
-        if (log) {
-            Logger::LogAdd(MODULE_NAME, "Player " + Name + " was kicked (" + reason + ")", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-        }
     }
 }
 
@@ -397,7 +390,7 @@ void PlayerListEntry::Mute(int minutes, std::string reason) {
     i->SaveFile = true;
     std::string playerName = GetDisplayName();
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&cPlayer '" + playerName + "'&c was muted. (" + reason + ")");
-    Logger::LogAdd(MODULE_NAME, "Player muted: " + Name + " [" + reason + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Player muted: " + Name + " [" + reason + "]", NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void PlayerListEntry::Unmute() {
@@ -407,7 +400,7 @@ void PlayerListEntry::Unmute() {
     i->SaveFile = true;
     std::string playerName = GetDisplayName();
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&cPlayer '" + playerName + "'&c was unmuted.");
-    Logger::LogAdd(MODULE_NAME, "Player unmuted: " + Name, LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Player unmuted: " + Name, NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void PlayerListEntry::Stop(std::string reason) {
@@ -418,7 +411,7 @@ void PlayerListEntry::Stop(std::string reason) {
     i->SaveFile = true;
     std::string playerName = GetDisplayName();
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&cPlayer '" + playerName + "'&c was stopped. (" + reason + ")");
-    Logger::LogAdd(MODULE_NAME, "Player stopped: " + Name + " [" + reason + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Player stopped: " + Name + " [" + reason + "]", NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void PlayerListEntry::Unstop() {
@@ -428,7 +421,7 @@ void PlayerListEntry::Unstop() {
     i->SaveFile = true;
     std::string playerName = GetDisplayName();
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&cPlayer '" + playerName + "'&c was unstopped.");
-    Logger::LogAdd(MODULE_NAME, "Player unstopped: " + Name, LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Player unstopped: " + Name, NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }
 
 void PlayerListEntry::Ban(std::string reason) {
@@ -439,8 +432,8 @@ void PlayerListEntry::Ban(std::string reason) {
     i->SaveFile = true;
     std::string playerName = GetDisplayName();
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&cPlayer '" + playerName + "'&c was banned. (" + reason + ")");
-    Logger::LogAdd(MODULE_NAME, "Player banned: " + Name + " [" + reason + "]", LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
-    Kick(reason, 1, true, false);
+    Logger::LogAdd(MODULE_NAME, "Player banned: " + Name + " [" + reason + "]", NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Kick(reason, false);
 }
 
 std::string PlayerListEntry::GetDisplayName() {
@@ -456,5 +449,5 @@ void PlayerListEntry::Unban() {
     i->SaveFile = true;
     std::string playerName = GetDisplayName();
     NetworkFunctions::SystemMessageNetworkSend2All(-1, "&cPlayer '" + playerName + "'&c was unbanned.");
-    Logger::LogAdd(MODULE_NAME, "Player unbanned: " + Name, LogType::NORMAL, __FILE__, __LINE__, __FUNCTION__);
+    Logger::LogAdd(MODULE_NAME, "Player unbanned: " + Name, NORMAL, __FILE__, __LINE__, __FUNCTION__);
 }

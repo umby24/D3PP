@@ -4,14 +4,15 @@
 
 #include "world/Entity.h"
 
+#include <ranges>
 #include <utility>
+#include <shared_mutex>
 #include "Block.h"
 
 #include "network/Network.h"
 #include "network/NetworkClient.h"
 #include "network/Server.h"
 #include "world/Player.h"
-#include "common/Player_List.h"
 
 #include "world/Teleporter.h"
 #include "world/Map.h"
@@ -80,7 +81,7 @@ int Entity::GetFreeIdClient(int mapId) {
         }
     }
 
-    Logger::LogAdd(MODULE_NAME, "No free map clientID", LogType::L_ERROR, __FILE__, __LINE__, __FUNCTION__ );
+    Logger::LogAdd(MODULE_NAME, "No free map clientID", L_ERROR, __FILE__, __LINE__, __FUNCTION__ );
     return -1;
 }
 
@@ -107,6 +108,7 @@ Entity::Entity(std::string name, int mapId, float X, float Y, float Z, float rot
     Vector3F locAsBlocks {X, Y, Z};
     Location.SetAsPlayerCoords(locAsBlocks);
     associatedClient = nullptr;
+    Logger::LogAdd("Entity", "Entity CTOR 1", DEBUG, GLF);
 }
 
 Entity::Entity(std::string name, int mapId, MinecraftLocation loc, std::shared_ptr<NetworkClient> c) : variables{}, Location(loc) {
@@ -129,10 +131,17 @@ Entity::Entity(std::string name, int mapId, MinecraftLocation loc, std::shared_p
     BuildMode = "Normal";
     playerList = nullptr;
     associatedClient = c;
+    Logger::LogAdd("Entity", "Entity CTOR 2", DEBUG, GLF);
+}
+
+Entity::~Entity() {
+    Logger::LogAdd("Entity", "Entity DTOR", DEBUG, GLF);
+    associatedClient = nullptr;
 }
 
 std::shared_ptr<Entity> Entity::GetPointer(int id, bool isClientId) {
     if (!isClientId) {
+        std::scoped_lock lock(entityMutex);
         if (AllEntities.find(id) == AllEntities.end())
             return nullptr;
 
@@ -140,7 +149,7 @@ std::shared_ptr<Entity> Entity::GetPointer(int id, bool isClientId) {
     }
 
     std::shared_ptr<Entity> result = nullptr;
-
+    std::scoped_lock lock(entityMutex);
     for (auto const &e : AllEntities) {
         if (e.second == nullptr || e.second->associatedClient == nullptr)
             continue;
@@ -173,9 +182,10 @@ std::string Entity::GetDisplayname(int id) {
 }
 
 std::shared_ptr<Entity> Entity::GetPointer(const std::string& name) {
-    for(auto const &e : AllEntities) {
-        if (Utils::InsensitiveCompare(e.second->Name, name)) {
-            return e.second;
+    std::scoped_lock lock(entityMutex);
+    for(const auto &entity: AllEntities | std::views::values) {
+        if (Utils::InsensitiveCompare(entity->Name, name)) {
+            return entity;
         }
     }
 
@@ -186,7 +196,6 @@ void Entity::Delete(int id) {
     std::shared_ptr<Entity> e = GetPointer(id);
     if (e == nullptr)
         return;
-    Network* n = Network::GetInstance();
 
     for(auto const &nc : D3PP::network::Server::roClients) {
         if (nc->GetPlayerInstance() == nullptr || nc->GetPlayerInstance()->GetEntity() == nullptr)
@@ -201,6 +210,8 @@ void Entity::Delete(int id) {
     ed.entityId = id;
     Dispatcher::post(ed);
 
+    e->Despawn();
+    std::scoped_lock lock(entityMutex);
     AllEntities.erase(id);
 }
 
@@ -231,7 +242,10 @@ void Entity::Despawn() const {
         if (nc->GetMapId() != MapID)
             continue;
 
+        auto mm = MapMain::GetInstance();
+        auto currentMap = mm->GetPointer(MapID);
         nc->DespawnEntity(selfPointer);
+        currentMap->RemoveEntity(selfPointer);
     }
 }
 
@@ -325,8 +339,8 @@ void Entity::PositionCheck() {
     }
     // -- do a teleporter check..
    for(auto const &tp : theMap->Portals) {
-       D3PP::Common::Vector3S startLoc = tp.OriginStart.GetAsBlockCoords();
-       D3PP::Common::Vector3S endLoc = tp.OriginEnd.GetAsBlockCoords();
+       Vector3S startLoc = tp.OriginStart.GetAsBlockCoords();
+       Vector3S endLoc = tp.OriginEnd.GetAsBlockCoords();
 
        if (blockLocation.X >= startLoc.X && blockLocation.X <= endLoc.X && blockLocation.Y >= startLoc.Y && blockLocation.Y<= endLoc.Y && blockLocation.Z>= startLoc.Z && blockLocation.Z <= endLoc.Z) {
            int destMapId = MapID;

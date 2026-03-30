@@ -35,7 +35,7 @@ int LuaPlayerLib::openLib(lua_State* L)
         lua_pop(L, 1);
         lua_newtable(L);
     }
-    luaL_setfuncs(L, LuaPlayerLib::lib, 0);
+    luaL_setfuncs(L, lib, 0);
     lua_setglobal(L, "Player");
     return 1;
 }
@@ -286,7 +286,7 @@ int LuaPlayerLib::LuaPlayerKick(lua_State* L) {
     std::shared_ptr<PlayerListEntry> ple = pll->GetPointer(playerNumber);
 
     if (ple != nullptr) {
-        ple->Kick(reason, count, log, show);
+        ple->Kick(reason, show);
     }
 
     return 0;

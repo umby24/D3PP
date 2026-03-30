@@ -10,12 +10,12 @@
 
 #include <string>
 #include <vector>
-#include <map>
 #include <thread>
 #include <memory>
 #include <filesystem>
+#include <shared_mutex>
 
-#include "common/TaskScheduler.h"
+#include "world/Teleporter.h"
 #include "common/MinecraftLocation.h"
 #include "common/Vectors.h"
 
@@ -36,8 +36,6 @@ namespace D3PP::files {
 }
 
 namespace D3PP::world {
-    class Teleporter;
-
     struct MapBlockChanged {
 
     };
@@ -55,7 +53,7 @@ namespace D3PP::world {
     const std::string MAP_LIST_FILE = "Map_List";
     const std::string MAP_SETTINGS_FILE = "Map_Settings";
 
-    const int MAP_BLOCK_ELEMENT_SIZE = 4;
+    constexpr int MAP_BLOCK_ELEMENT_SIZE = 4;
 
     class Map {
         friend class MapMain;
@@ -70,16 +68,23 @@ namespace D3PP::world {
         std::vector<UndoStep> UndoCache;
         std::vector<Teleporter> Portals;
         std::vector<CustomParticle> Particles;
-        std::vector<D3PP::files::MapRankElement> RankBoxes;
+        std::vector<files::MapRankElement> RankBoxes;
 
-        bool BlockchangeStopped, PhysicsStopped, loading, loaded;
+        std::shared_mutex BlockMutex;
+
+        bool BlockchangeStopped, PhysicsStopped, loaded;
         std::string filePath;
         time_t LastClient;
         int Clients;
 
         Map();
-        std::string Name() { return m_mapProvider->MapName; }
-        Common::Vector3S GetSize() { if (loaded) return Common::Vector3S{ m_mapProvider->GetSize() }; else return Common::Vector3S(); }
+        std::string Name() const { return m_mapProvider->MapName; }
+        Common::Vector3S GetSize() const
+        {
+	        if (loaded) return Common::Vector3S{ m_mapProvider->GetSize() };
+	        return {};
+        }
+
         MinecraftLocation GetSpawn() { return m_mapProvider->GetSpawn(); }
 
         void SetSpawn(MinecraftLocation location);
@@ -95,11 +100,11 @@ namespace D3PP::world {
                          bool undo, bool physic, bool send, unsigned char priority);
 
         void ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z);
-        bool Save(const std::string& directory);
+        bool Save(const std::string& directory) const;
         void Load(const std::string& directory);
         unsigned char GetBlockType(unsigned short X, unsigned short Y, unsigned short Z);
         unsigned short GetBlockPlayer(unsigned short X, unsigned short Y, unsigned short Z);
-        int BlockGetRank(unsigned short X, unsigned short Y, unsigned short Z);
+        int BlockGetRank(unsigned short X, unsigned short Y, unsigned short Z) const;
 
         void SetRankBox(unsigned short X0, unsigned short Y0, unsigned short Z0, unsigned short X1, unsigned short Y1,
                         unsigned short Z1, short rank);
@@ -107,7 +112,7 @@ namespace D3PP::world {
         void Reload();
         void Unload();
         void Send(int clientId);
-        void Resend();
+        void Resend() const;
 
         void
         AddTeleporter(std::string id, MinecraftLocation start, MinecraftLocation end, MinecraftLocation destination,
@@ -127,7 +132,7 @@ namespace D3PP::world {
         MapEnvironment GetMapEnvironment() { return m_mapProvider->GetEnvironment(); }
         void SetMapEnvironment(const MapEnvironment& env);
 
-        std::vector<int> GetEntities();
+        std::vector<int> GetEntities() const;
         void RemoveEntity(std::shared_ptr<Entity> e);
         void AddEntity(std::shared_ptr<Entity> e);
         void SetBlocks(const std::vector<unsigned char>& blocks) { m_mapProvider->SetBlocks(blocks); }
@@ -140,7 +145,7 @@ namespace D3PP::world {
         void QueueBlockPhysics(Common::Vector3S location);
 
         void QueueBlockChange(Common::Vector3S location, unsigned char priority,
-                              unsigned char oldType) const;
+                              unsigned char oldType);
 
         void  QueuePhysicsAround(const Common::Vector3S& loc);
     };

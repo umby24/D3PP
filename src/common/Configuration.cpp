@@ -6,17 +6,14 @@
 
 #define GLF __FILE__, __LINE__, __FUNCTION__
 
-NetworkSettings Configuration::NetSettings { 32, 25565, true, false};
-GeneralSettings Configuration::GenSettings { "D3PP Server", "Welcome to D3PP!","&cWelcome to D3PP", "INFO", "default.cw", 0,160, 3, true };
+NetworkSettings Configuration::NetSettings { 32, 25565, true, false, ""};
+GeneralSettings Configuration::GenSettings { "D3PP Server", "Welcome to D3PP!","&cWelcome to D3PP", "INFO", "default.cw", "&e", 0,160, 3, true };
 KillSettings Configuration::killSettings { 1, MinecraftLocation{ 0, 0, Vector3S((short)0, (short)0, (short)0)} };
 TextSettings Configuration::textSettings { "&4Error:&f ", "&e", "&3|" };
-Configuration* Configuration::_instance = nullptr;
+Configuration* Configuration::Instance = nullptr;
 
 Configuration* Configuration::GetInstance() {
-    if (_instance == nullptr)
-        _instance = new Configuration();
-    
-    return _instance;
+    return Instance;
 }
 
 Configuration::Configuration() {
@@ -26,6 +23,7 @@ Configuration::Configuration() {
     this->Teardown = [this] { Save(); };
     saveFile = false;
     filepath = Files::GetFile("configuration");
+    lastLoaded = 0;
 
     TaskScheduler::RegisterTask("Configuration", *this);
 }
@@ -44,16 +42,16 @@ void Configuration::Load() {
 
     try {
         inFile >> j;
-         Configuration::NetSettings.LoadFromJson(j);
-        Configuration::GenSettings.LoadFromJson(j);
-        Configuration::killSettings.LoadFromJson(j);
-        Configuration::textSettings.LoadFromJson(j);
+         NetSettings.LoadFromJson(j);
+        GenSettings.LoadFromJson(j);
+        killSettings.LoadFromJson(j);
+        textSettings.LoadFromJson(j);
     } catch (std::exception e) {
-        Logger::LogAdd("Configuration", "Error loading config file! using defaults.", LogType::L_ERROR, GLF);
+        Logger::LogAdd("Configuration", "Error loading config file! using defaults.", L_ERROR, GLF);
     }
 
     inFile.close();
-    Logger::LogAdd("Configuration", "Configuration Loaded.", LogType::NORMAL, GLF);
+    Logger::LogAdd("Configuration", "Configuration Loaded.", NORMAL, GLF);
 
     lastLoaded = Utils::FileModTime(filepath);
 }
@@ -61,17 +59,17 @@ void Configuration::Load() {
 void Configuration::Save() {
     json j;
 
-    Configuration::NetSettings.SaveToJson(j);
-    Configuration::GenSettings.SaveToJson(j);
-    Configuration::killSettings.SaveToJson(j);
-    Configuration::textSettings.SaveToJson(j);
+    NetSettings.SaveToJson(j);
+    GenSettings.SaveToJson(j);
+    killSettings.SaveToJson(j);
+    textSettings.SaveToJson(j);
 
     std::ofstream outFile(filepath);
     outFile << std::setw(4) << j;
     outFile.flush();
     outFile.close();
 
-    Logger::LogAdd("Configuration", "Configuration Saved.", LogType::NORMAL, GLF);
+    Logger::LogAdd("Configuration", "Configuration Saved.", NORMAL, GLF);
     lastLoaded = Utils::FileModTime(filepath);
 }
 

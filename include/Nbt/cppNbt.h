@@ -116,7 +116,7 @@ namespace Nbt {
 
     class NbtFile {
     public:
-        static Tag Load(const std::string &file, CompressionMode compression = CompressionMode::DETECT) {
+        static Tag Load(const std::string &file, CompressionMode compression = DETECT) {
             if (!std::filesystem::exists(file)) {
                 throw std::invalid_argument("Invalid argument 'file', file does not exist.");
             }
@@ -134,11 +134,11 @@ namespace Nbt {
                         std::istreambuf_iterator<char>());
             is.close();
 
-            if (compression == CompressionMode::DETECT) {
+            if (compression == DETECT) {
                 compression = DetectCompression(data);
             }
 
-            if (compression == CompressionMode::ZLib || compression == CompressionMode::GZip) {
+            if (compression == ZLib || compression == GZip) {
                 data.clear();
                 data.resize(67108864);
                 int decompSize = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char *>(data.data()), 67108864,
@@ -150,14 +150,14 @@ namespace Nbt {
             return result;
         }
 
-        static bool Save(Tag t, const std::string &filename, CompressionMode compression = CompressionMode::ZLib) {
+        static bool Save(Tag t, const std::string &filename, CompressionMode compression = ZLib) {
             if (!std::holds_alternative<TagCompound>(t)) {
                 throw std::runtime_error("TAG_COMPOUND is not the base");
             }
             TagCompound baseTag = std::get<TagCompound>(t);
             std::vector<unsigned char> encoded = Encode(baseTag);
 
-            if (compression == CompressionMode::ZLib || compression == CompressionMode::GZip) {
+            if (compression == ZLib || compression == GZip) {
                 GZIP::GZip_CompressToFile(encoded.data(), encoded.size(), filename);
             } else {
                 std::ofstream is(filename, std::ios::binary | std::ios::trunc);
@@ -814,9 +814,9 @@ namespace Nbt {
             }
 
             if (buf.at(0) == 0x1f && buf.at(1) == 0x8B)
-                return CompressionMode::ZLib;
+                return ZLib;
 
-            return CompressionMode::NONE;
+            return NONE;
         }
     };
 }
