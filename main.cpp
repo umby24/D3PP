@@ -10,11 +10,14 @@
 #include "plugins/PluginManager.h"
 #include "common/Files.h"
 #include "Command.h"
-#include "plugins/LuaPlugin.h"
 #include "ConsoleClient.h"
 #include "network/Network_Functions.h"
 #include "src/Root.h"
 #include "world/Map.h"
+
+#ifdef BUILD_GUI
+#include "gui/backend.h"
+#endif
 
 #if _WIN32
 #include <windows.h>
@@ -73,7 +76,20 @@ int main()
     serverRoot.Start();
 
     std::thread main_thread(main_loop);
+
+#ifdef BUILD_GUI
+    backend myBackend;
+    int result = myBackend.init();
+    if (result != 0) {
+        Logger::LogAdd("GUI", "Failed to initialize GUI backend, Console only going forward..", L_ERROR, GLF);
+        main_console();
+    } else {
+        myBackend.renderLoop();
+    }
+    myBackend.end();
+#else
     main_console();
+#endif
 
     D3PP::network::Server::Stop();
     TaskScheduler::RunTeardownTasks();

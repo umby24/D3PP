@@ -1,145 +1,179 @@
-cmake_minimum_required(VERSION 3.10)
-include_directories(include/)
-include_directories(/usr/include/lua5.4)
-# set the project name
-project(D3PP)
-set(CMAKE_COMPILER_)
-set (MALLOC_CHECK_ 3) 
-# set project standard
+cmake_minimum_required(VERSION 3.15)
+project(D3PP VERSION 0.1.20 LANGUAGES CXX)
+
+# ──────────────────────────────────────────────
+# Build settings
+# ──────────────────────────────────────────────
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_EXPORT_COMPILE_COMMANDS True)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(VERSION_STRING 0.1.20)
-set(VERSION ${VERSION_STRING})
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
+    cmake_policy(SET CMP0135 NEW)
+endif()
 
-if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
-		cmake_policy(SET CMP0135 NEW)
-	endif()
-    
+if(NOT MSVC)
+    add_compile_options(-pthread)
+    add_link_options(-pthread)
+endif()
+
+# ──────────────────────────────────────────────
+# Options
+# ──────────────────────────────────────────────
+option(BUILD_GUI "Build the ImGui/Vulkan/SDL2 graphical console" OFF)
+
+# ──────────────────────────────────────────────
+# Find system packages
+# ──────────────────────────────────────────────
+find_package(Lua REQUIRED)
+message(STATUS "Lua found at: ${LUA_LIBRARIES}")
+
+# ──────────────────────────────────────────────
+# Third-party: digestpp (header-only, has CMakeLists)
+# ──────────────────────────────────────────────
+add_subdirectory(lib/digestpp)
+
+if(BUILD_GUI)
+    find_package(SDL2 REQUIRED)
+    message(STATUS "SDL2 found at: ${SDL2_LIBRARIES}")
+
+    find_package(Vulkan REQUIRED)
+    message(STATUS "Vulkan found at: ${Vulkan_LIBRARIES}")
+
+    # ──────────────────────────────────────────────
+    # Third-party: ImGui (no upstream CMakeLists — build as static library)
+    # ──────────────────────────────────────────────
+    add_library(imgui STATIC
+        lib/imgui/imgui.cpp
+        lib/imgui/imgui_draw.cpp
+        lib/imgui/imgui_tables.cpp
+        lib/imgui/imgui_widgets.cpp
+        lib/imgui/backends/imgui_impl_sdl2.cpp
+        lib/imgui/backends/imgui_impl_vulkan.cpp
+        lib/imgui/misc/cpp/imgui_stdlib.cpp
+    )
+    target_include_directories(imgui PUBLIC
+        lib/imgui
+        lib/imgui/backends
+        lib/imgui/misc/cpp
+        ${SDL2_INCLUDE_DIRS}
+        ${Vulkan_INCLUDE_DIRS}
+    )
+    target_link_libraries(imgui PUBLIC
+        ${SDL2_LIBRARIES}
+        Vulkan::Vulkan
+    )
+endif()
+
+# ──────────────────────────────────────────────
+# GoogleTest (fetched at configure time)
+# ──────────────────────────────────────────────
 include(FetchContent)
 FetchContent_Declare(
-        googletest
-        URL https://github.com/google/googletest/archive/52eb8108c5bdec04579160ae17225d66034bd723.zip
+    googletest
+    URL https://github.com/google/googletest/archive/52eb8108c5bdec04579160ae17225d66034bd723.zip
 )
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL //github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-if (NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -lpthread")
-endif ()
+# ──────────────────────────────────────────────
+# Source files
+# ──────────────────────────────────────────────
+file(GLOB_RECURSE D3PP_SOURCE_FILES src/*.cpp include/*.cpp include/*.h)
 
-set(D3PP_SOURCE_FILES src/common/Files.cpp include/common/Files.h src/common/Logger.cpp include/common/Logger.h include/Utils.cpp include/Utils.h src/Block.cpp include/Block.h src/common/TaskScheduler.cpp include/common/TaskScheduler.h src/network/Network.cpp include/network/Network.h src/Rank.cpp include/Rank.h src/watchdog.cpp include/watchdog.h src/System.cpp include/System.h src/network/Chat.cpp include/network/Chat.h include/network/LinuxSockets.h include/network/WindowsSockets.h src/network/LinuxSockets.cpp src/network/WindowsSockets.cpp include/network/LinuxServerSockets.h include/network/WindowsServerSockets.h src/network/WindowsServerSockets.cpp include/world/Entity.h src/world/Entity.cpp include/network/Network_Functions.h src/network/Network_Functions.cpp include/network/Packets.h src/network/Packets.cpp include/world/Player.h src/world/Player.cpp include/common/Player_List.h src/common/Player_List.cpp src/network/PacketHandlers.cpp include/network/PacketHandlers.h include/Client.h src/Client.cpp src/network/LinuxServerSockets.cpp include/compression.h src/common/compression.cpp include/world/Map.h src/world/Map.cpp include/common/PreferenceLoader.h src/common/PreferenceLoader.cpp include/Command.h src/Command.cpp include/BuildMode.h src/BuildMode.cpp include/world/Teleporter.h src/world/Teleporter.cpp include/CPE.h src/CPE.cpp include/network/httplib.h include/plugins/Heartbeat.h src/plugins/Heartbeat.cpp
- include/plugins/LuaPlugin.h src/plugins/LuaPlugin.cpp  include/world/Physics.h src/world/Physics.cpp include/Build.h src/Build.cpp include/EventSystem.h src/EventSystem.cpp include/events/EventTimer.h include/events/EventClientAdd.h include/events/EventClientDelete.h include/events/EventClientLogin.h include/events/EventClientLogout.h include/events/EventEntityAdd.h include/events/EventEntityDelete.h include/events/EventEntityPositionSet.h include/events/EventEntityDie.h include/events/EventMapAdd.h include/events/EventMapActionDelete.h include/events/EventMapActionResize.h include/events/EventMapActionFill.h include/events/EventMapActionSave.h include/events/EventMapActionLoad.h include/events/EventMapBlockChange.h include/events/EventMapBlockChangeClient.h include/events/EventMapBlockChangePlayer.h include/events/EventChatMap.h include/events/EventChatAll.h include/events/EventChatPrivate.h include/events/EventEntityMapChange.h src/events/EventChatAll.cpp src/events/EventChatMap.cpp src/events/EventClientAdd.cpp src/events/EventClientDelete.cpp src/events/EventClientLogin.cpp src/events/EventClientLogout.cpp src/events/EventEntityAdd.cpp src/events/EventEntityDelete.cpp src/events/EventEntityDie.cpp include/CustomBlocks.h
- src/events/EventEntityMapChange.cpp src/events/EventEntityPositionSet.cpp src/events/EventMapActionDelete.cpp src/events/EventMapActionFill.cpp src/events/EventMapActionLoad.cpp src/events/EventMapActionResize.cpp src/events/EventMapActionSave.cpp src/events/EventMapAdd.cpp src/events/EventMapBlockChange.cpp src/events/EventMapBlockChangeClient.cpp src/events/EventMapBlockChangePlayer.cpp src/events/EventTimer.cpp include/common/ByteBuffer.h src/common/ByteBuffer.cpp include/network/NetworkClient.h src/network/NetworkClient.cpp include/common/MinecraftLocation.h src/common/MinecraftLocation.cpp include/events/EntityEventArgs.h src/events/EntityEventArgs.cpp include/common/Configuration.h src/common/Configuration.cpp src/ConsoleClient.cpp include/ConsoleClient.h src/CustomBlocks.cpp src/events/PlayerEventArgs.cpp include/events/PlayerEventArgs.h "include/lua/client.h" "src/lua/client.cpp" "include/lua/buildmode.h" "src/lua/buildmode.cpp" "src/lua/build.cpp" "include/lua/build.h" "include/lua/entity.h" "src/lua/entity.cpp" "src/lua/player.cpp" "include/lua/player.h" "src/lua/map.cpp" "include/lua/map.h" "src/lua/cpe.cpp" "include/lua/cpe.h" "src/lua/block.cpp" "include/lua/block.h" "include/lua/rank.h" "include/lua/teleporter.h" "include/lua/system.h" "include/lua/network.h" "src/lua/system.cpp" "src/lua/rank.cpp" "src/lua/network.cpp" "src/lua/teleporter.cpp" src/world/IMapProvider.cpp include/world/IMapProvider.h src/world/D3MapProvider.cpp include/world/D3MapProvider.h src/world/MapActions.cpp src/world/BlockChangeQueue.cpp include/world/BlockChangeQueue.h include/world/IUniqueQueue.h src/world/IUniqueQueue.cpp src/world/PhysicsQueue.cpp include/world/PhysicsQueue.h include/world/TimeQueueItem.h include/world/ChangeQueueItem.h src/network/Server.cpp include/network/Server.h include/network/IPacket.h include/network/packets/HandshakePacket.h include/network/packets/PingPacket.h include/network/packets/BlockChangePacket.h
- "src/files/D3Map.cpp" "include/files/D3Map.h" "include/common/Vectors.h" include/world/MapActions.h include/world/MapPermissions.h include/world/MapEnvironment.h
- src/network/packets/BlockChangePacket.cpp include/network/packets/ChatPacket.h  src/network/packets/ChatPacket.cpp include/network/packets/CustomBlockSupportLevelPacket.h include/network/packets/ExtEntryPacket.h include/network/packets/ExtInfoPacket.h include/network/packets/PlayerClickedPacket.h include/network/packets/PlayerTeleportPacket.h include/network/packets/TwoWayPingPacket.h include/generation/flatgrass.cpp include/common/UndoItem.h include/world/FillState.h include/plugins/LuaState.h include/plugins/PluginManager.h src/plugins/LuaState.cpp src/plugins/PluginManager.cpp include/plugins/RestApi.h src/plugins/RestApi.cpp include/Nbt/cppNbt.h src/world/MapIntensiveActions.cpp include/world/MapMain.h src/world/MapMain.cpp src/events/EventChatPrivate.cpp include/network/packets/ExtRemovePlayerName.h include/world/IMinecraftPlayer.h src/network/packets/ExtRemovePlayerName.cpp src/network/packets/DefineEffectPacket.cpp include/network/packets/DefineEffectPacket.h include/network/packets/SpawnEffectPacket.h src/network/packets/SpawnEffectPacket.cpp src/CustomParticle.cpp include/world/CustomParticle.h "src/network/packets/SetTextColor.cpp" "include/network/packets/SetTextColor.h" "src/network/packets/SetMapEnvUrlPacket.cpp" "src/network/packets/SetMapEnvPropertyPacket.cpp" "src/network/packets/SetEntityPropertyPacket.cpp" "src/network/packets/SetInventoryOrderPacket.cpp" "src/network/packets/SetHotbarPacket.cpp" "include/network/packets/SetHotbarPacket.h" "include/network/packets/SetInventoryOrderPacket.h" "include/network/packets/SetEntityPropertyPacket.h" "include/network/packets/SetMapEnvPropertyPacket.h" "include/network/packets/SetMapEnvUrlPacket.h" include/files/ClassicWorld.h src/files/ClassicWorld.cpp src/world/ClassicWorldMapProvider.cpp include/world/ClassicWorldMapProvider.h src/common/D3PPMetadata.cpp include/common/D3PPMetadata.h "src/Root.h" "src/Root.cpp")
-
-# add the executable
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-     enable_language("RC")
-     set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appicon.rc")
-    add_executable(D3PP main.cpp ${D3PP_SOURCE_FILES} ${APP_ICON_RESOURCE_WINDOWS})
-else()
-    add_executable(D3PP main.cpp ${D3PP_SOURCE_FILES} ${APP_ICON_RESOURCE_WINDOWS})
+if(NOT BUILD_GUI)
+    list(FILTER D3PP_SOURCE_FILES EXCLUDE REGEX ".*/src/gui/.*\\.cpp$")
+    list(FILTER D3PP_SOURCE_FILES EXCLUDE REGEX ".*/include/gui/.*\\.cpp$")
 endif()
-set_target_properties(D3PP PROPERTIES VERSION ${VERSION})
 
-#______________________________________________________________
-# WINDOWS (MSVC) BUILD REQUIREMENTS
-#--------------------------------------------------------------
-if (MSVC)
+# Test sources exclude main.cpp and mainGui.cpp (which start the full server/GUI)
+set(D3PP_TEST_SOURCE_FILES ${D3PP_SOURCE_FILES})
+
+list(APPEND D3PP_SOURCE_FILES main.cpp)
+
+# ──────────────────────────────────────────────
+# Main executable
+# ──────────────────────────────────────────────
+if(WIN32)
+    enable_language(RC)
+    set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appicon.rc")
+endif()
+
+add_executable(D3PP ${D3PP_SOURCE_FILES} ${APP_ICON_RESOURCE_WINDOWS})
+set_target_properties(D3PP PROPERTIES VERSION ${PROJECT_VERSION})
+
+target_include_directories(D3PP PRIVATE
+    include/
+    ${LUA_INCLUDE_DIR}
+)
+target_link_libraries(D3PP PRIVATE
+    digestpp::digestpp
+    ${LUA_LIBRARIES}
+)
+if(BUILD_GUI)
+    target_compile_definitions(D3PP PRIVATE BUILD_GUI)
+    target_link_libraries(D3PP PRIVATE imgui)
+endif()
+
+# Platform-specific link requirements
+if(MSVC)
     message(STATUS "MSVC Build --")
     find_package(ZLIB REQUIRED)
     find_package(unofficial-sqlite3 CONFIG REQUIRED)
-    target_link_libraries(D3PP unofficial::sqlite3::sqlite3)
-    target_link_libraries(D3PP ZLIB::ZLIB)
-endif ()
-
-#______________________________________________________________
-# All Target BUILD REQUIREMENTS
-#--------------------------------------------------------------
-find_package(Lua REQUIRED)
-if (Lua_FOUND)
-    MESSAGE(STATUS "Lua found at: " ${LUA_LIBRARIES})
-    include_directories(${Lua_INCLUDE_DIRS})
-    target_link_libraries(D3PP ${LUA_LIBRARIES})
-
-    
-endif ()
-if (LUA_FOUND)
-    MESSAGE(STATUS "Found uppercase lua")
-    include_directories(${LUA_INCLUDE_DIRS})
-    target_link_libraries(D3PP ${LUA_LIBRARIES})
-endif ()
-
-#______________________________________________________________
-# *NIX BUILD REQUIREMENTS
-#--------------------------------------------------------------
-if (UNIX)
-    FIND_PACKAGE ( Threads REQUIRED )
-    target_link_libraries(D3PP z)
-    target_link_libraries(D3PP sqlite3)
-endif()
-#---------------------------------------------------------------
-
-#______________________________________________________________
-# WINDOWS (Mingw) BUILD REQUIREMENTS
-#--------------------------------------------------------------
-if (NOT MSVC AND WIN32)
-    MESSAGE(STATUS "Windows MinGW")
-    find_package( Threads )
-    find_package(SQLite3)
+    target_link_libraries(D3PP PRIVATE unofficial::sqlite3::sqlite3 ZLIB::ZLIB)
+elseif(WIN32)
+    message(STATUS "Windows MinGW Build --")
     find_package(ZLIB REQUIRED)
-    target_link_libraries(D3PP ws2_32 wsock32 sqlite3 z)
-    if (ZLIB_FOUND)
-       include_directories(${ZLIB_INCLUDE_DIRS})
-       MESSAGE(STATUS "ZLIB DIR: " ${ZLIB_LIBRARIES})
+    if(ZLIB_FOUND)
+        message(STATUS "ZLIB DIR: ${ZLIB_LIBRARIES}")
     endif()
-endif ()
+    target_link_libraries(D3PP PRIVATE ws2_32 wsock32 sqlite3 z)
+else() # Unix/Linux
+    target_link_libraries(D3PP PRIVATE z sqlite3)
+endif()
 
-#______________________________________________________________
-# GOOGLE TEST REQUIREMENTS
-#--------------------------------------------------------------
+# ──────────────────────────────────────────────
+# Tests
+# ──────────────────────────────────────────────
 enable_testing()
 
-add_executable(
-  hello_test
-  ${D3PP_SOURCE_FILES}
-  Testing/hello_test.cc
-  Testing/utils_test.cc
-  Testing/Client_test.cc
-  Testing/common/MinecraftLocationTest.cc
-        Testing/common/ByteBufferTest.cc
-  Testing/files/d3map_test.cc
-        Testing/files/ClassicWorldTest.cc
-  Testing/world/entity_test.cc
-  Testing/world/mapactions_test.cc
-  Testing/world/PhysicsQueueTest.cc
-        Testing/nbt/nbt_test.cc
- "src/files/D3Map.cpp" "include/files/D3Map.h" "include/common/Vectors.h" Testing/world/IUniqueQueueTest.cc "src/network/packets/SetTextColor.cpp" "include/network/packets/SetTextColor.h" "src/network/packets/SetMapEnvUrlPacket.cpp" "src/network/packets/SetMapEnvPropertyPacket.cpp" "src/network/packets/SetEntityPropertyPacket.cpp" "src/network/packets/SetInventoryOrderPacket.cpp" "src/network/packets/SetHotbarPacket.cpp" "include/network/packets/SetHotbarPacket.h" "include/network/packets/SetInventoryOrderPacket.h" "include/network/packets/SetEntityPropertyPacket.h" "include/network/packets/SetMapEnvPropertyPacket.h" "include/network/packets/SetMapEnvUrlPacket.h"
-        Testing/network/chat_tests.cc)
-
-target_link_libraries(
-  hello_test
-  gtest_main
+add_executable(hello_test
+    ${D3PP_TEST_SOURCE_FILES}
+    Testing/hello_test.cc
+    Testing/utils_test.cc
+    Testing/Client_test.cc
+    Testing/common/MinecraftLocationTest.cc
+    Testing/common/ByteBufferTest.cc
+    Testing/files/d3map_test.cc
+    Testing/files/ClassicWorldTest.cc
+    Testing/world/entity_test.cc
+    Testing/world/mapactions_test.cc
+    Testing/world/PhysicsQueueTest.cc
+    Testing/nbt/nbt_test.cc
+    Testing/world/IUniqueQueueTest.cc
+    Testing/network/chat_tests.cc
 )
-if (MSVC) 
-    target_link_libraries(hello_test unofficial::sqlite3::sqlite3)
-    target_link_libraries(hello_test ZLIB::ZLIB)
-    target_link_libraries(hello_test ws2_32 wsock32)
-else ()
-    target_link_libraries(hello_test z)
-    target_link_libraries(hello_test sqlite3)
-endif ()
+target_include_directories(hello_test PRIVATE
+    include/
+    ${LUA_INCLUDE_DIR}
+)
+target_link_libraries(hello_test PRIVATE
+    gtest_main gmock gmock_main
+    digestpp::digestpp
+    ${LUA_LIBRARIES}
+)
+if(BUILD_GUI)
+    target_compile_definitions(hello_test PRIVATE BUILD_GUI)
+    target_link_libraries(hello_test PRIVATE imgui)
+endif()
 
-include_directories(${Lua_INCLUDE_DIRS})
-target_link_libraries(hello_test gmock gmock_main ${LUA_LIBRARIES})
-
+if(MSVC)
+    target_link_libraries(hello_test PRIVATE unofficial::sqlite3::sqlite3 ZLIB::ZLIB ws2_32 wsock32)
+elseif(WIN32)
+    target_link_libraries(hello_test PRIVATE ws2_32 wsock32 sqlite3 z)
+else()
+    target_link_libraries(hello_test PRIVATE z sqlite3)
+endif()
 
 include(GoogleTest)
 gtest_discover_tests(hello_test)

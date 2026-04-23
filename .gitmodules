@@ -1,3 +1,6 @@
-[submodule "include/digestpp"]
-	path = include/digestpp
+[submodule "digestpp"]
+	path = lib/digestpp
 	url = https://github.com/kerukuro/digestpp
+[submodule "Dear imgui"]
+	path = lib/imgui
+	url = https://github.com/ocornut/imgui.git

@@ -31,6 +31,24 @@ Logger* Logger::GetInstance() {
     return singleton_;
 }
 
+std::string Logger::GetItemTimestamp(const time_t &time) {
+    char buffer[255];
+    std::tm bt {};
+#if defined(__unix__)
+    localtime_r(&time, &bt);
+#elif defined(_MSC_VER)
+    localtime_s(&bt, (const time_t*)&time);
+#else
+    static std::mutex mtx;
+    std::lock_guard<std::mutex> lock(mtx);
+    bt = *std::localtime((const time_t*)(&time));
+#endif
+
+    strftime(buffer, sizeof(buffer), "%H:%M:%S", &bt);
+
+    return std::string(buffer);
+}
+
 void Logger::FileWrite() {
     SizeCheck();
 
@@ -96,20 +114,7 @@ void Logger::Add(struct LogMessage message) {
     else
         Utils::padTo(message.File, 15);
 
-    char buffer[255];
-    std::tm bt {};
-#if defined(__unix__)
-    localtime_r(&message.Time, &bt);
-#elif defined(_MSC_VER)
-    localtime_s(&bt, (const time_t*)&message.Time);
-#else
-    static std::mutex mtx;
-    std::lock_guard<std::mutex> lock(mtx);
-    bt = *std::localtime((const time_t*)(&message.Time));
-#endif
-
-    strftime(buffer, sizeof(buffer), "%H:%M:%S", &bt);
-    std::cout << "[" << buffer << "] ";
+    std::cout << "[" << GetItemTimestamp(message.Time) << "] ";
 
     switch(message.Type) {
         case VERBOSE:

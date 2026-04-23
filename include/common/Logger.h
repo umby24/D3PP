@@ -36,6 +36,7 @@ class Logger
         virtual ~Logger();
         static void LogAdd(std::string mod, std::string message, LogType type, std::string file, int line, std::string procedure);
         static Logger* GetInstance();
+        static std::string GetItemTimestamp(const time_t &time);
         std::vector<LogMessage> Messages;
     protected:
         void Add(struct LogMessage message);
