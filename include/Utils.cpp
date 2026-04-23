@@ -3,7 +3,6 @@
 #include <fstream>
 #include <algorithm>
 #include <ctime>
-#include <sstream>
 #include <filesystem>
 
 #include <sys/types.h>
@@ -18,6 +17,7 @@
 #endif // WIN32
 
 
+std::chrono::time_point<std::chrono::system_clock> Utils::startTime = std::chrono::system_clock::now();
 
 Utils::Utils()
 {
@@ -67,6 +67,10 @@ std::string Utils::FormatTimeDiff(const time_t& start, const time_t &end) {
     strftime(buffer, sizeof(buffer), "%H:%M:%S  %m-%d-%Y", tme_info);
     std::string meh(buffer);
     return meh;
+}
+
+std::string Utils::FormatTime(std::chrono::duration<double> time) {
+    return std::format("{:%T}", std::chrono::duration_cast<std::chrono::seconds>(time));
 }
 
 bool Utils::DirectoryExists(const std::string &filePath, bool create) {

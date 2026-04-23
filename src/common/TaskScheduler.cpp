@@ -18,12 +18,10 @@ std::map<std::string, TaskItem> TaskScheduler::_tasks;
 std::mutex TaskScheduler::_taskLock;
 
 std::string TaskScheduler::RegisterTask(std::string name, TaskItem &item) {
-    auto i = _tasks.find(name);
-
-    if (i != _tasks.end()) {
+    if (const auto i = _tasks.find(name); i != _tasks.end()) {
         // -- Not found :(
         Logger::LogAdd(MODULE_NAME, "Attempt to register existing task: " + name, VERBOSE, GLF);
-        auto postfix = rand() % 100 + 1;
+        const auto postfix = rand() % 100 + 1;
         std::string finalName = RegisterTask(name + stringulate(postfix), item);
         item.TaskId = finalName;
         return finalName;
@@ -260,8 +258,7 @@ void TaskScheduler::GenerateTaskMonitoringReport() {
 
     try {
         std::string filename = Files::GetFile("TaskScheduler_Monitor");
-        std::ofstream file(filename);
-        if (file.is_open()) {
+        if (std::ofstream file(filename); file.is_open()) {
             file << html.str();
             file.close();
             Logger::LogAdd(MODULE_NAME, "Task monitoring report generated: " + filename, VERBOSE, GLF);

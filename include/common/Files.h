@@ -7,8 +7,8 @@
 class Files
 {
     public:
-        static std::string GetFile(std::string name);
-        static std::string GetFolder(std::string name);
+        static std::string GetFile(const std::string &name);
+        static std::string GetFolder(const std::string &name);
         static void Save();
         static void Load();
     private:

@@ -13,22 +13,22 @@ const std::string MODULE_NAME = "Files";
 std::map<std::string, std::string> Files::files;
 std::map<std::string, std::string> Files::folders;
 
-std::string Files::GetFile(std::string name) {
-    if (files.find(name) == files.end()) {
+std::string Files::GetFile(const std::string &name) {
+    if (!files.contains(name)) {
         return "";
     }
 
     std::string result = files[name];
 
-    for (auto const& x : folders) {
-        Utils::replaceAll(result, "[" + x.first + "]", x.second);
+    for (const auto&[fst, value] : folders) {
+        Utils::replaceAll(result, "[" + fst + "]", value);
     }
 
     return result;
 }
 
-std::string Files::GetFolder(std::string name) {
-    if (folders.find(name) == folders.end()) {
+std::string Files::GetFolder(const std::string &name) {
+    if (!folders.contains(name)) {
         Logger::LogAdd(MODULE_NAME, "Path to folder [" + name + "] not defined", WARNING, __FILE__, __LINE__, __FUNCTION__);
         return "";
     }
@@ -68,6 +68,7 @@ void Files::LoadDefault() {
             {"Network_HTML", "[Main][HTML]Network.html"},
             {"Playerlist", "[Main][Data]playerlist.sqlite3"},
             {"Watchdog_HTML", "[Main][HTML]Watchdog.html"},
+            {"TaskScheduler_Monitor", "[Main][HTML]TaskMonitor.html"},
             {"configuration", "[Main][Data]Config.json"},
             {"BlockDefs", "[Main][Data]BlockDefs.json"},
     };
@@ -82,9 +83,8 @@ void Files::Load() {
     }
 
     json j;
-    std::ifstream iStream("files.json");
 
-    if (iStream.is_open()) {
+    if (std::ifstream iStream("files.json"); iStream.is_open()) {
         iStream >> j;
         iStream.close();
     }
@@ -109,12 +109,12 @@ void Files::Save() {
     j["folders"] = nullptr;
     j["files"] = nullptr;
 
-    for (auto const& f : folders) {
-        j["folders"][f.first] = f.second;
+    for (const auto&[fst, snd] : folders) {
+        j["folders"][fst] = snd;
     }
 
-    for (auto const& f : files) {
-        j["files"][f.first] = f.second;
+    for (const auto&[fst, snd] : files) {
+        j["files"][fst] = snd;
     }
 
     std::ofstream oStream;

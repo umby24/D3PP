@@ -75,10 +75,13 @@ class Utils
         static short BlueVal(int colorVal);
         static bool IsNumeric(std::string input);
         static std::string FormatTimeDiff(const time_t& start, const time_t &end);
+        static std::string FormatTime(std::chrono::duration<double> time);
+        static std::chrono::duration<double> GetUptime() { return std::chrono::system_clock::now() - startTime; }
         static long long CurrentUnixTime() { return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count(); }
 protected:
 
     private:
+    static std::chrono::time_point<std::chrono::system_clock> startTime;
 };
 
 #endif // UTILS_H
