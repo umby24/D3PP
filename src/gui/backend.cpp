@@ -4,9 +4,9 @@
 #include "gui/backend.h"
 
 #include "network/Network_Functions.h"
-#include "System.h"
 #include "common/Configuration.h"
 #include "gui/console.h"
+#include "gui/maps.h"
 #include "network/NetworkClient.h"
 #include "network/Server.h"
 #include "world/MapMain.h"
@@ -480,7 +480,7 @@ void backend::ImGuiLoop() {
     int fb_width, fb_height;
     SDL_GetWindowSize(window, &fb_width, &fb_height);
     Console textConsole;
-
+    Maps mapConsole;
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(fb_width, fb_height));
@@ -501,7 +501,10 @@ void backend::ImGuiLoop() {
         if (ImGui::BeginTabBar("tabBarMain", ImGuiTabBarFlags_None)) {
             if (ImGui::BeginTabItem("Overview", nullptr, ImGuiTabItemFlags_None)) {
                 ImGui::Text("Welcome to D3PP!");
-                ImGui::Text("Users Online: %d", D3PP::network::Server::roClients.size());
+                {
+                    std::shared_lock lock(D3PP::network::Server::roMutex);
+                    ImGui::Text("Users Online: %d", D3PP::network::Server::roClients.size());
+                }
                 ImGui::Text("Maps Loaded: %d", D3PP::world::MapMain::GetInstance()->_maps.size());
                 ImGui::Text("Uptime: %s", Utils::FormatTime(Utils::GetUptime()).c_str());
                 ImGui::Spacing();
@@ -514,20 +517,6 @@ void backend::ImGuiLoop() {
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("Console", nullptr, ImGuiTabItemFlags_None)) {
-                if (ImGui::BeginChild("UserListContainer", ImVec2(180, 0), ImGuiChildFlags_Borders))
-                {
-                    if (ImGui::BeginListBox("##Users", ImVec2(160, 0))) {
-                        for (auto & user : D3PP::network::Server::roClients) {
-                            ImGui::PushID(user->GetId());
-                            ImGui::Selectable(user->GetLoginName().c_str(), false);
-                            ImGui::PopID();
-                        }
-                        ImGui::EndListBox();
-                    }
-                }
-                ImGui::EndChild();
-
-                ImGui::SameLine();
                 {
                     ImGui::BeginGroup();
                     textConsole.Draw();
@@ -546,6 +535,7 @@ void backend::ImGuiLoop() {
                 bool isPublic = Configuration::NetSettings.Public;
                 std::string serverName = Configuration::GenSettings.name;
                 std::string serverMotd = Configuration::GenSettings.motd;
+                std::string welcomeMess = Configuration::GenSettings.WelcomeMessage;
 
                 if (ImGui::InputText("Server Name", &serverName, ImGuiInputTextFlags_EnterReturnsTrue)) {
                     Configuration::GenSettings.name = serverName;
@@ -554,6 +544,11 @@ void backend::ImGuiLoop() {
 
                 if (ImGui::InputText("Message of the Day", &serverMotd, ImGuiInputTextFlags_EnterReturnsTrue)) {
                     Configuration::GenSettings.motd = serverMotd;
+                    Configuration::GetInstance()->Save();
+                }
+
+                if (ImGui::InputText("Welcome Message", &welcomeMess, ImGuiInputTextFlags_EnterReturnsTrue)) {
+                    Configuration::GenSettings.WelcomeMessage = welcomeMess;
                     Configuration::GetInstance()->Save();
                 }
 
@@ -588,7 +583,7 @@ void backend::ImGuiLoop() {
             if (ImGui::BeginTabItem("Maps", nullptr, ImGuiTabItemFlags_None))
             {
                 /// @separator
-
+                mapConsole.Draw();
                 /// @separator
                 ImGui::EndTabItem();
             }

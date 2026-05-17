@@ -1,127 +1,140 @@
 # Lua Map Module
 
 ## Map.getall()
-Returns a table of all loaded maps.
+Returns a Lua table (array) of all loaded map IDs, plus the count as a second return value.
 
-## Map.setblock(mapId, x, y, z, type, undo, physic, priority, clientId, playerId)
-Sets a block at the specified coordinates on the map.
+## Map.setblock(playerNumber, mapId, x, y, z, type, undo, physics, send, priority)
+Places a block on the map, attributed to `playerNumber` (-1 for no player). `undo` and `physics` are booleans (0/1). `send` controls whether the change is sent to clients. `priority` is the block-change queue priority.
 
-## Map.setblockclient(mapId, x, y, z, type, priority, clientId)
-Sets a block at the specified coordinates for a specific client.
+## Map.setblockclient(clientId, mapId, x, y, z, mode, type)
+Processes a client-originated block change (as if the client placed/deleted the block). `mode` is 0 for delete, 1 for place.
 
-## Map.setblockplayer(mapId, x, y, z, type, undo, physic, priority, playerId, clientId)
-Sets a block at the specified coordinates for a specific player.
+## Map.setblockplayer(playerId, mapId, x, y, z, type, undo, physics, send, priority)
+Places a block attributed to the given player number. Works like `Map.setblock` but validates against the player list.
 
-## Map.moveblock(mapId, x0, y0, z0, x1, y1, z1, undo, physic, priority)
-Moves a block from one location to another on the map.
+## Map.moveblock(mapId, x0, y0, z0, x1, y1, z1, undo, physics, priority)
+Copies the block at (x0, y0, z0) to (x1, y1, z1) and clears the source position.
 
-## Map.getblock(mapId, x, y, z, clientId)
-Gets the block type at the specified coordinates for a client.
+## Map.getblock(mapId, x, y, z)
+Returns the block type ID at the specified coordinates. Returns -1 if the map is not found.
 
-## Map.getrank(mapId, x, y, z, clientId)
-Gets the rank required to modify a block at the specified coordinates.
+## Map.getrank(mapId, x, y, z)
+Returns the rank associated with the block at the given coordinates (from the per-block rank overlay). Returns -1 if not found.
 
-## Map.getplayer(mapId, x, y, z, clientId)
-Gets the player ID associated with a block at the specified coordinates.
+## Map.getplayer(mapId, x, y, z)
+Returns the player number of the last player who changed the block at the given coordinates. Returns -1 if unknown.
 
 ## Map.name(mapId)
-Returns the name of the map.
+Returns the name string of the map.
 
 ## Map.uuid(mapId)
-Returns the unique identifier (UUID) of the map.
+**Deprecated.** Always returns the string `"Deprecated"`.
 
 ## Map.directory(mapId)
-Returns the directory path of the map.
+Returns the file path of the map's save file.
 
 ## Map.buildrank(mapId)
-Gets the rank required to build on the map.
+Returns the minimum rank required to build on this map.
 
 ## Map.showrank(mapId)
-Gets the rank required to see the map in /maps.
+Returns the minimum rank required to see this map in the map list.
 
 ## Map.joinrank(mapId)
-Gets the rank required to join the map.
+Returns the minimum rank required to join this map.
 
 ## Map.size(mapId)
-Returns the dimensions (width, height, depth) of the map.
+Returns three values: the width (X), height (Y), and depth (Z) of the map.
 
 ## Map.spawn(mapId)
-Returns the spawn coordinates of the map.
+Returns five values: the spawn X, Y, Z coordinates, rotation, and look of the map.
 
 ## Map.saveinterval(mapId)
-Gets the save interval (in seconds) for the map.
+Returns the save interval for the map in seconds. (Currently always returns 10.)
 
 ## Map.setname(mapId, name)
-Sets the name of the map.
+Sets the name of the map. *(Currently a no-op in this version.)*
 
 ## Map.setdirectory(mapId, directory)
-Sets the directory path for the map.
+Sets the file path used when saving the map.
 
 ## Map.setbuildrank(mapId, rank)
-Sets the build rank for the map.
+Sets the minimum rank required to build on this map.
 
 ## Map.setjoinrank(mapId, rank)
-Sets the join rank for the map.
+Sets the minimum rank required to join this map.
 
 ## Map.setshowrank(mapId, rank)
-Sets the show rank for the map.
+Sets the minimum rank required for this map to appear in the map list.
 
-## Map.setspawn(mapId, x, y, z, yaw, pitch)
-Sets the spawn location and orientation for the map.
+## Map.setspawn(mapId, x, y, z, rotation, look)
+Sets the spawn position and orientation of the map.
 
 ## Map.setsaveinterval(mapId, interval)
-Sets the save interval (in seconds) for the map.
+Sets the save interval for the map. *(Currently a no-op in this version.)*
 
-## Map.add(name, directory, width, height, depth)
-Adds a new map with the specified parameters.
+## Map.add(mapId, sizeX, sizeY, sizeZ, name)
+Creates a new map with the given ID, dimensions, and name. Returns the actual map ID assigned.
 
-## Map.load(mapId, filename)
-Loads a map from a file.
+## Map.load(mapId, directory)
+Loads map data for `mapId` from the given file path. The load is queued as a map action.
 
-## Map.resize(mapId, width, height, depth)
-Resizes the map to the specified dimensions.
+## Map.resize(mapId, sizeX, sizeY, sizeZ)
+Queues a resize action that changes the dimensions of the map.
 
-## Map.save(mapId, filename)
-Saves the map to a file.
+## Map.save(mapId, directory)
+Queues a save action that writes the map to the given file path.
 
-## Map.fill(mapId, type, replaceType)
-Fills the map with a specific block type, optionally replacing another type.
+## Map.fill(mapId, functionName, argumentString)
+Queues a fill action. `functionName` identifies the fill generator; `argumentString` is passed to it as configuration.
 
 ## Map.delete(mapId)
-Deletes the specified map.
+Queues a delete action that removes the map from the server.
 
 ## Map.resend(mapId)
-Resends the map data to all clients.
+Immediately resends the full map to all clients currently on it.
 
-## Map.export(mapId, x, y, z, width, height, depth, filename)
-Exports a region of the map to a file.
+## Map.export(mapId, x0, y0, z0, x1, y1, z1, filename)
+Exports the block region between the two corners to a file.
 
-## Map.import(mapId, x, y, z, width, height, depth, filename, offset)
-Imports a region from a file into the map.
+## Map.exportsize(filename)
+Returns three values — the X, Y, Z dimensions — of a previously exported map file.
 
-## Map.exportsize(mapId)
-Returns the size of the last exported region.
+## Map.import(playerNumber, filename, mapId, x, y, z, scaleX, scaleY, scaleZ)
+Imports a previously exported block region into `mapId` at the given position, scaled by the provided factors. Attributed to `playerNumber`.
 
 ## Map.beginfill(mapId)
-Starts a mapfill on a map. This creates a temporary in-memory array to assign your blocks to, for speed purposes. Avoids the usual overhead of physics, blockchange queues, block type lookups, etc.
+Starts a bulk fill session for the map. Creates a temporary in-memory block array so that individual block assignments bypass the usual physics, block-change queues, and rank checks. Returns 1 on success, 0 if a fill session is already active.
 
 ## Map.getfillblock(mapId, x, y, z)
-Get the block ID at a specific location inside the temporary fill array.
+Returns the block type at (x, y, z) in the active fill buffer. Returns 0 if no fill session is active.
 
 ## Map.setfillblock(mapId, x, y, z, type)
-Sets a block inside the temporary mapfill array.
+Sets a block type in the active fill buffer. Returns 1 on success, 0 if no fill session is active.
 
 ## Map.endfill(mapId)
-Ends the mapfill and replaces the current map contents with the contents of the in-memory id.
+Ends the fill session and atomically replaces the map's block data with the fill buffer contents. Returns 1 on success, 0 if no fill session was active.
 
 ## Map.fillflat(mapId)
-Generates a flatgrass map on the given map.
+Applies the built-in flatgrass generator to the given map.
 
-## Map.createParticle(mapId, effectId, U1, V1, U2, V2, redTint, greenTint, blueTint, frameCount, particleCount, size, sizeVariation, spread, speed, gravity, baseLifetime, lifetimeVariation, collideFlags, fullBright)
-Defines a custom particle on a given map. See [here](https://wiki.vg/Classic_Protocol_Extension#CustomParticles) for each of the fields descriptions.
+## Map.createParticle(mapId, effectId, U1, V1, U2, V2, redTint, blueTint, greenTint, frameCount, particleCount, size, sizeVariation, spread, speed, gravity, baseLifetime, lifetimeVariation, collideFlags, fullBright)
+Defines a custom particle effect on the given map. See the [CustomParticles CPE spec](https://wiki.vg/Classic_Protocol_Extension#CustomParticles) for field descriptions. Returns `true` on success.
 
 ## Map.deleteParticle(mapId, particleId)
-Deletes a previously defined particle.
+Removes a previously defined custom particle from the map.
 
 ## Map.spawnParticle(mapId, particleId, originX, originY, originZ, positionX, positionY, positionZ)
-Spawns a previously defined particle on the specified map. Origin is where the effect will appear. Position is the location where the particles will move away from.
+Spawns instances of a defined particle on the map. `origin` is where the effect appears; `position` is the point particles move away from.
+
+## Map.setProperty(mapId, propertyId, value)
+Sets a numeric map-environment property. Property IDs:
+* 0 = Side block ID
+* 1 = Edge block ID
+* 2 = Side level
+* 3 = Cloud height
+* 4 = Max fog distance
+* 5 = Cloud speed
+* 6 = Weather speed
+* 7 = Weather fade
+* 8 = Exponential fog (0/1)
+* 9 = Map side offset

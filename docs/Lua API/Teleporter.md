@@ -1,28 +1,18 @@
 # Lua Teleporter Module
 
-## Teleporter.getall()
-Returns a table of all defined teleporters.
+Teleporters are named cuboid regions on a map. When an entity enters the region it is moved to the destination.
 
-## Teleporter.add(mapId, name, x1, y1, z1, x2, y2, z2, destMapId, destX, destY, destZ, destYaw, destPitch)
-Adds a new teleporter region to the specified map.  
-- `mapId`: The ID of the map where the teleporter is placed.  
-- `name`: The name of the teleporter.  
-- `x1, y1, z1, x2, y2, z2`: The coordinates defining the teleporter region (cuboid).  
-- `destMapId`: The ID of the destination map.  
-- `destX, destY, destZ`: The destination coordinates.  
-- `destYaw, destPitch`: The orientation at the destination.
+## Teleporter.getall(mapId)
+Returns a Lua table (array) of the names of all teleporters on the given map, plus the count as a second return value.
+
+## Teleporter.add(mapId, name, startX, startY, startZ, endX, endY, endZ, destMapName, destX, destY, destZ, destRotation, destLook)
+Creates a teleporter on `mapId`. The region is the cuboid between (startX, startY, startZ) and (endX, endY, endZ). `destMapName` is the name string of the destination map. The destination coordinates and orientation are in block units.
 
 ## Teleporter.delete(mapId, name)
-Deletes the teleporter with the specified name from the given map.  
-- `mapId`: The ID of the map.  
-- `name`: The name of the teleporter to delete.
+Removes the named teleporter from the given map.
 
 ## Teleporter.getlocation(mapId, name)
-Returns the region coordinates for the specified teleporter on the given map.  
-- `mapId`: The ID of the map.  
-- `name`: The name of the teleporter.
+Returns six values defining the teleporter region: `startX, startY, startZ, endX, endY, endZ` (in block coordinates). Returns nothing if the teleporter does not exist.
 
 ## Teleporter.getdestination(mapId, name)
-Returns the destination map and coordinates for the specified teleporter.  
-- `mapId`: The ID of the map.  
-- `name`: The name of the teleporter.
+Returns seven values for the teleporter's destination: `destMapName, id, destX, destY, destZ, rotation, look`. `destMapName` is a string; `id` is deprecated and always -1; the coordinates and orientation are in block units. Returns nothing if the teleporter does not exist.

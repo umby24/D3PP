@@ -1,5 +1,6 @@
 #ifndef D3PP_LUA_CLIENT_H
 #define D3PP_LUA_CLIENT_H
+#include <lua.h>
 
 struct lua_State;
 struct luaL_Reg;
@@ -17,6 +18,8 @@ protected:
 	static int LuaClientGetLoggedIn(lua_State* L);
 	static int LuaClientGetEntity(lua_State* L);
     static int LuaClientKick(lua_State* L);
+	static int LuaClientGetClientName(lua_State *L);
+
 private:
 };
 

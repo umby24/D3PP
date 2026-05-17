@@ -19,6 +19,7 @@ const struct luaL_Reg LuaClientLib::d3ClientLib[] = {
        {"isloggedin", &LuaClientGetLoggedIn},
        {"getentity", &LuaClientGetEntity},
        {"kick", &LuaClientKick},
+       {"getclientname", &LuaClientGetClientName},
        {NULL, NULL}
 };
 
@@ -175,5 +176,24 @@ int LuaClientLib::LuaClientKick(lua_State *L) {
     }
 
     lua_pushinteger(L, result);
+    return 1;
+}
+
+int LuaClientLib::LuaClientGetClientName(lua_State* L) {
+    int nArgs = lua_gettop(L);
+    if (nArgs != 1) {
+        Logger::LogAdd("Lua", "Client.getclientname called with an invalid number of arguments.", WARNING, __FILE__, __LINE__, __FUNCTION__);
+        return 0;
+    }
+
+    int clientId = static_cast<int>(luaL_checkinteger(L, 1));
+    std::shared_ptr<NetworkClient> client = std::static_pointer_cast<NetworkClient>(Network::GetClient(clientId));
+
+    if (client != nullptr) {
+        lua_pushstring(L, client->ClientName.c_str());
+    } else {
+        lua_pushstring(L, "Unknown Client");
+    }
+
     return 1;
 }

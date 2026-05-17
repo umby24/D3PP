@@ -44,6 +44,7 @@ public:
     virtual int GetCustomBlocksLevel() = 0;
     virtual int GetPing() = 0;
     virtual std::string GetLoginName() = 0;
+    virtual std::string GetIP() = 0;
     virtual bool GetGlobalChat() = 0;
     virtual int GetMapId() = 0;
     virtual bool GetLoggedIn() = 0;
@@ -95,6 +96,7 @@ public:
     std::chrono::time_point<std::chrono::steady_clock> PingTime;
     bool LoggedIn;
     bool CPE;
+    std::string ClientName;
     int CustomExtensions;
     int CustomBlocksLevel;
     bool GlobalChat;
@@ -114,6 +116,7 @@ public:
     // -- Overrides
     int GetId() override { return Id; };
     int GetRank() override;
+    std::string GetIP() override { return IP; };
     int GetCustomBlocksLevel() override { return CustomBlocksLevel; }
     bool IsStopped() override;
     int GetPing() override;

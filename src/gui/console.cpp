@@ -12,6 +12,9 @@
 #include "common/Logger.h"
 #include "network/httplib.h"
 #include "network/Network_Functions.h"
+#include "network/Server.h"
+#include "common/Player_List.h"
+#include "network/Network.h"
 
 Console::Console() {
     ClearLog();
@@ -89,6 +92,64 @@ void Console::Draw() {
 
     ImGuiStyle& style = ImGui::GetStyle();
     const float footer_height_to_reserve = style.SeparatorSize + style.ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
+
+    if (ImGui::BeginChild("UserListContainer", ImVec2(180, -footer_height_to_reserve), ImGuiChildFlags_Borders))
+    {
+        static int selected = -1;
+        if (ImGui::BeginListBox("##Users", ImVec2(160, 350))) {
+            {
+                std::shared_lock lock(D3PP::network::Server::roMutex);
+
+                for (auto & user : D3PP::network::Server::roClients) {
+                    ImGui::PushID(user->GetId());
+                    if (ImGui::Selectable(user->GetLoginName().c_str(), selected == user->GetId(), ImGuiSelectableFlags_None)) {
+                        selected = user->GetId();
+                    }
+                    ImGui::PopID();
+                }
+                ImGui::EndListBox();
+            }
+
+        }
+        if (ImGui::BeginPopupContextItem("##UsersContext", ImGuiPopupFlags_MouseButtonRight)) {
+            auto user = Network::GetClient(selected);
+            if (ImGui::MenuItem("Info")) {
+                {
+                    auto cc = std::reinterpret_pointer_cast<NetworkClient>(user);
+
+                    AddLog("User %s", user->GetLoginName().c_str());
+                    AddLog("IP: %s", user->GetIP().c_str());
+                    AddLog("Rank: %d", user->GetRank());
+                    AddLog("Supported CPE Extensions: %d", cc->CustomExtensions);
+                    AddLog("Ping: %d ms", cc->GetPing());
+                }
+            }
+            if (ImGui::MenuItem("Kick")) {
+                user->Kick("Kicked from console", false);
+            }
+            if (ImGui::MenuItem("Ban")) {
+                Player_List* pll = Player_List::GetInstance();
+                std::shared_ptr<PlayerListEntry> ple;
+
+                ple = pll->GetPointer(user->GetLoginName());
+                if (ple == nullptr) {
+                    AddLog("[Error] Can't find that player :(");
+                    return;
+                }
+                ple->Ban("Banned from console");
+                user->Kick("Banned from console", false);
+            }
+
+            if (ImGui::MenuItem("Promote")) {
+
+            }
+            ImGui::EndPopup();
+        }
+    }
+    ImGui::EndChild();
+    //ImGui::Separator();
+    ImGui::SameLine();
+
     if (ImGui::BeginChild("ScrollingRegion", ImVec2(0, -footer_height_to_reserve), ImGuiChildFlags_NavFlattened, ImGuiWindowFlags_HorizontalScrollbar)) {
         if (ImGui::BeginPopupContextWindow()) { // -- Right click options
             if (ImGui::Selectable("Clear")) ClearLog();

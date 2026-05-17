@@ -1,108 +1,89 @@
 # Lua System Module
 
-## System.msgAll(Map_ID, Message)
-## System.msgAll(Map_ID, Message, messageType)
-Send the given message to the given map. Map_ID of -1 will send to all maps.
-## System.msg(Client_ID, Message)
-## System.msgAll(Map_ID, Message, messageType)
-Sends the given message to a specific client.
+## System.msgAll(mapId, message)
+## System.msgAll(mapId, message, messageType)
+Sends `message` to all clients on the given map. Pass `-1` for `mapId` to send to every player on the server. `messageType` defaults to 0 (chat).
 
-If MessageType is specified, the message will be sent to the corresponding location on the client's screen.
+## System.msg(clientId, message)
+## System.msg(clientId, message, messageType)
+Sends `message` to a specific client. `clientId` of `-200` is a special broadcast value.
+
+`messageType` controls where the message appears on the client's screen:
 * 0 = Chat
-* 1 = Top Right
-* 2 = Top Middle Right
-* 3 = Top Bottom Right
-* 11 = Bottom Right
-* 12 = Bottom Middle Right
-* 13 = Bottom top right
-* 100 = Announcement
+* 1 = Top right
+* 2 = Top middle-right
+* 3 = Top bottom-right
+* 11 = Bottom right
+* 12 = Bottom middle-right
+* 13 = Bottom top-right
+* 100 = Announcement (centre of screen)
 
+## System.getfile(fileAlias)
+Returns the full file path for the given alias, as defined in `files.json`.
 
-## System.getfile(FileAlias)
-Returns the full filepath of the given file alias, from files.json
-## System.getfolder(FolderAlias)
-Returns the full filepath of the given folder alias, from files.json.
-## System.addEvent(EventId, Function, Type, SetOrCheck, Timer, MapId)
-Creates a lua event hook. EventID is for your reference for deleting it later.
+## System.getfolder(folderAlias)
+Returns the full folder path for the given alias, as defined in `files.json`.
 
-Function is a string with the name of the lua function that will be called when the event is triggered.
+## System.addEvent(eventId, function, type, setOrCheck, timer, mapId)
+Registers or checks for a Lua event hook.
 
-Type is a string of the event you wish to hook, see below for valid values.
+- `eventId`: a string identifier of your choice, used to delete the event later.
+- `function`: name of the Lua function to call when the event fires.
+- `type`: event type string (see list below).
+- `setOrCheck`: 1 = register the event; 0 = check only — returns `true` if the event already exists, `false` otherwise.
+- `timer`: interval in milliseconds, used only for `Timer` events.
+- `mapId`: restrict the event to a specific map ID. Pass -1 to receive events from all maps.
 
-Set or check: 0 = Check, 1 = Set.   if 0, the event will not be registered, but the function will return true if the function already exists, otherwise false.
-If 1, the event will be registered regardless.
+Valid event types and their callback signatures:
+* `Chat_All(result, mapId, message)` — chat message broadcast to all on a map. Cancelable (return `0`).
+* `Chat_Map(result, mapId, message)` — chat message broadcast to a map. Cancelable.
+* `Chat_Private` — private chat between players.
+* `Client_Add(result, clientId)` — client connecting (may not complete handshake).
+* `Client_Delete(result, clientId)` — client disconnecting.
+* `Client_Login(result, clientId)` — client fully logged in (map received, entity and player IDs assigned).
+* `Client_Logout(result, clientId)` — logged-in client leaving.
+* `Entity_Add(result, entityId)` — entity spawned.
+* `Entity_Delete(result, entityId)` — entity destroyed.
+* `Entity_Die(result, entityId)` — entity touched a kill block or was killed by script. Cancelable (return `0` to prevent death).
+* `Entity_Map_Change(entityId, newMapId, oldMapId)` — entity moved between maps.
+* `Entity_Position_Set(result, entityId, mapId, x, y, z, rotation, look, priority, sendOwn)` — entity moved.
+* `Map_Action_Delete(result, actionId, mapId)` — map about to be deleted.
+* `Map_Action_Fill(result, actionId, mapId)` — map about to be filled.
+* `Map_Action_Load(result, actionId, mapId)` — map being loaded.
+* `Map_Action_Resize(result, actionId, mapId)` — map being resized.
+* `Map_Action_Save(result, actionId, mapId)` — map being saved.
+* `Map_Add(result, mapId)` — map created.
+* `Map_Block_Change(result, playerId, mapId, x, y, z, blockType, undo, physics, send, priority)` — block change queued. Cancelable.
+* `Map_Block_Change_Client(result, clientId, mapId, x, y, z, mode, blockType)` — client-originated block change. Cancelable; canceling also resends the original block to the client.
+* `Map_Block_Change_Player(result, playerNumber)` — not currently triggered.
+* `Timer(mapId)` — fires every `timer` milliseconds.
 
-Timer is the value in milliseconds your callback function will be called at, if registering a timer event.
+## System.deleteEvent(eventId)
+Unregisters the event hook with the given ID.
 
-MapID is if you only wish to receive this event from a certain map ID. -1 gives you all events globally.
-
-Valid event types:
-* Chat_All(Result, mapId, Message)
-  * Triggered when a chat message is going to be sent to all players on a map or server wide. Cancelable, return '0' to cancel.
-* Chat_Map(Result, mapid, Message)
-  * Triggered when a chat message is going to be sent to all players on a map. Cancelable, return '0' to cancel.
-* Chat_Private
-  * Triggered when one player is sending a chat message to another.
-* Client_Add(Result, clientId)
-  * Triggered when a client is connecting to the server. Can be triggered even if a client does not complete the handshake process.
-* Client_Delete(Result, clientId)
-  * Triggered when a client is disconnecting from the server.
-* Client_Login(Result, clientId)
-  * Triggered when a client has successfully logged in. (Completed server handshake and received a map, entity id, player id.)
-* Client_Logout(Result, clientId)
-  * Triggered when a client that is logged in leaves the server.
-* Entity_Add(Result, entityId)
-  * Triggered when an entity is created / spawned somewhere on the server. 
-* Entity_Delete(Result, entityId)
-  * Triggered when an entity is destroyed.
-* Entity_Die(Result, entityId)
-  * Triggered when an entity interacts with a block that can kill you, or is triggered by a script. Cancelable, return '0' to prevent the player from dying.
-* Entity_Map_Change(EntityId, newMapId, oldMapId)
-  * Triggered when an entity changes from one map to another.
-* Entity_Position_Set(Result, EntityId, mapId, X, Y, Z, Rotation, Look, Priority, sendOwn)
-  * Triggered whenever an entity moves.
-* Map_Action_Delete(result, actionId, mapId)
-  * Triggered before a map is deleted.
-* Map_Action_Fill(result, actionId, mapId)
-  * Triggered before a map is filled.
-* Map_Action_Load(result, actionId, mapId)
-  * Triggered when a map is loaded, by script or reload.
-* Map_Action_Resize(result, actionId, mapId)
-  * Triggered when a map is resized, by script or command.
-* Map_Action_Save(result, actionId, mapId)
-  * Triggered when a map is aved
-* Map_Add(result, mapId)
-  * Triggered when a map is created
-* Map_Block_Change(result, playerId, mapId, x, y, z, blockType, undo, physics, send, priority)
-  * Triggered when a block change is made to a map. Cancelable, return '0' to prevent the block change.
-* Map_Block_Change_Client(result, clientId, mapId, x, y, z, mode, blockType)
-  * Triggered when a client makes a block change (not by script). Cancelable; return '0' to prevent the block change **and resend the old block to the client trying to make the change**.
-* Map_Block_Change_Player(result, playerNumber)
-  * Not currently triggered
-* Timer(mapId)
-  * Triggers every x milliseconds, where x is a value you provide when registering the event.
-
-## System.deleteEvent(EventId)
-Unregisters this event hook.
 ## System.log(message)
 ## System.log(message, type)
-Logs using the built in system logger.
-Valid types are info, warning, error. Default is info.
+Writes to the server log. Valid `type` values are `"info"` (default), `"warning"`, and `"error"`.
+
 ## System.getplatform()
-Returns 'linux' or 'windows' based on compiler args
+Returns `"linux"` or `"windows"` based on the build target.
+
 ## System.addCmd(name, group, minRank, function, description)
-Name is the command, for example, for a command of `/potato` the value of name should be `potato`.
+Registers a chat command.
 
-Group is the grouping in the command list to include this in. General, Map, OP, etc.
+- `name`: the command name without the leading `/` (e.g. `"potato"` for `/potato`).
+- `group`: the category shown in the command list (e.g. `"General"`, `"Map"`, `"OP"`).
+- `minRank`: minimum rank number required to use the command.
+- `function`: name of the Lua callback function. The `"Lua:"` prefix is added automatically if omitted.
+- `description`: help text shown by `/cmdhelp <name>`.
 
-MinRank is the minimum rank to use this command
-
-Function is a string, formatted as `Lua:CALLBACK_FUNCTION`
-
-Description is the help text that you will see when calling `/cmdhelp yourcommand`
-
-## System.setServerName(name)
-Set the name of the server in the settings, also updates your heartbeat on the next beat.
+Re-registering an existing command name replaces it.
 
 ## System.setSoftwareName(name)
-Set the name of the server software; for use when creating large plugin packages modifying server functionality.
+Sets the software name reported by the server. Useful for large plugin packages that fundamentally alter server behaviour.
+
+## System.setServerName(name)
+Sets the server's display name in the configuration and triggers an update on the next heartbeat.
+
+## System.addTextColor(character, red, green, blue, alpha)
+Registers a custom colour code. `character` must be a single character. RGB and alpha values are integers 0–255. Re-registering the same character replaces the existing entry.

@@ -1,10 +1,13 @@
 # Lua Build Module
 
-## Build.line(playerNumber, mapId, x0, y0, z0, x1, y1, z1, material, replaceMaterial, hollow, priority, undo, physics)
-Creates a line between the given points, made my the given player. -1 for no player.
+## Build.line(playerNumber, mapId, x0, y0, z0, x1, y1, z1, material, priority, undo, physics)
+Draws a line of blocks between the two given points, attributed to `playerNumber` (-1 for no player).
+
 ## Build.box(playerNumber, mapId, x0, y0, z0, x1, y1, z1, material, replaceMaterial, hollow, priority, undo, physics)
-Creates a box ("Cuboid") between the given points. Replace can be -1, or a material to be replaced. Hollow is 0 or 1.
+Fills the cuboid between the two given points with `material`. `replaceMaterial` can be -1 (replace all) or a specific block ID to replace only that type. `hollow` is 1 for a hollow shell, 0 for solid.
+
 ## Build.sphere(playerNumber, mapId, x, y, z, radius, material, replaceMaterial, hollow, priority, undo, physics)
-Creates a Sphere at the given point, of the given radius.
+Creates a sphere centred at (x, y, z) with the given radius. `replaceMaterial` and `hollow` work the same as in `Build.box`.
+
 ## Build.rankbox(mapId, x0, y0, z0, x1, y1, z1, rank, maxRank)
-Creates an area where only the given ranks are permitted to build within the given map.
+Marks the cuboid region on `mapId` so that only players whose rank is between `rank` and `maxRank` (inclusive) may build within it.

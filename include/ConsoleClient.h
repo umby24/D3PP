@@ -27,6 +27,7 @@ public:
     int GetPing() override { return 1337; }
     int GetMapId() override { return -1; }
     std::string GetLoginName() override { return "[CONSOLE]"; }
+    std::string GetIP() override { return "127.0.0.1"; }
     bool GetGlobalChat() override { return true; }
     void SetGlobalChat(bool active) override { /* noop */ }
     bool IsStopped() override { return false; }

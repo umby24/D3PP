@@ -95,7 +95,8 @@ void PacketHandlers::HandleExtInfo(const std::shared_ptr<NetworkClient> &client)
     std::string appName = client->ReceiveBuffer->ReadString();
     const short extensions = client->ReceiveBuffer->ReadShort();
     client->CPE = true;
-    
+    client->ClientName = appName;
+
     if (extensions == 0) {
         CPE::PreLoginExtensions(client);
     }

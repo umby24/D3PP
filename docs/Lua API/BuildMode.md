@@ -1,38 +1,48 @@
 # Lua BuildMode Module
-A BuildMode is a state where a player is constructing or providing details needed to perform a build
-operation on an area.
 
-While in a non-normal build mode, block changes are local only.
+A BuildMode is a state where a player is constructing or providing the details needed to perform a build operation on an area.
 
-In a build mode, each player has 5 different build variables. You can pick which build variable using the index field when getting a build variable.
+While in a non-normal build mode, block changes are local only (they do not actually alter the map).
 
-Each build variable index can hold 1 coordinate, 1 long, 1 float, and 1 string.
+Each player has 5 build variable slots, indexed 0–4. Each slot can hold one coordinate (X, Y, Z), one integer ("long"), one float, and one string independently.
 
-State is for you to track what step the player is at in the process. When changing state, build variables retain their value.
+`State` lets you track which step the player is at in a multi-step build process. Build variables retain their values when the state changes. All build variables are cleared when build mode is reset to normal.
 
-When resetting build mode to normal, all build variables are lost.
+## BuildMode.create(name, plugin)
+Registers a new named build mode. `plugin` is the plugin that owns this mode (used for scoping).
 
-## BuildMode.set(Client_ID, Buildmode)
-Sets the current buildmode of the given client.
-## BuildMode.get(Client_ID)
-Returns the current buildmode of the given client.
-## BuildMode.setstate(Client_ID, Value)
-Sets the value (int) of the client's current build mode.
-## BuildMode.getstate(Client_ID)
-Returns the state of the client's build mode. -1 if none.
-## BuildMode.setcoordinate(Client_ID, Index, Value)
-Sets the X,Y,Z Coordinate of the client's build mode.
-## BuildMode.getcoordinate(Client_ID, Index)
-Returns X,Y,Z coordinate of the client's build mode. -1 if none.
-## BuildMode.getlong(Client_ID, Index)
-Returns the Long Value of the client's build mode.
-## BuildMode.setlong(Client_ID, Index, Value)
-Sets the Long Value of the client's build mode.
-## BuildMode.setfloat(Client_ID, Index, Value)
-Sets the Float Value of the client's build mode.
-## BuildMode.getfloat(Client_ID, Index)
-Gets the Float Value of the client's build mode.
-## BuildMode.getstring(Client_ID, Index)
-ets the String value of the client's build mode.
-## BuildMode.setstring(Client_ID, Index, Value)
-Sets the String Value of the client's build mode.
+## BuildMode.set(clientId, buildmode)
+Sets the current build mode of the given client.
+
+## BuildMode.get(clientId)
+Returns the current build mode name of the given client, or `""` if none.
+
+## BuildMode.setstate(clientId, value)
+Sets the integer state of the client's current build mode.
+
+## BuildMode.getstate(clientId)
+Returns the state integer of the client's build mode. Returns -1 if no build mode is active.
+
+## BuildMode.setcoordinate(clientId, index, x, y, z)
+Sets the stored coordinate at `index` for the given client's build mode.
+
+## BuildMode.getcoordinate(clientId, index)
+Returns three values (x, y, z) for the stored coordinate at `index`. Returns -1, -1, -1 if not set.
+
+## BuildMode.setlong(clientId, index, value)
+Sets the integer value at `index` in the client's build mode storage.
+
+## BuildMode.getlong(clientId, index)
+Returns the integer value at `index` in the client's build mode storage. Returns -1 if not set.
+
+## BuildMode.setfloat(clientId, index, value)
+Sets the float value at `index` in the client's build mode storage.
+
+## BuildMode.getfloat(clientId, index)
+Returns the float value at `index` in the client's build mode storage. Returns -1 if not set.
+
+## BuildMode.setstring(clientId, index, value)
+Sets the string value at `index` in the client's build mode storage.
+
+## BuildMode.getstring(clientId, index)
+Returns the string value at `index` in the client's build mode storage.
