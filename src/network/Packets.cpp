@@ -16,7 +16,7 @@ static std::shared_ptr<NetworkClient> GetPlayer(int id) {
 void Packets::SendClientHandshake(int clientId, char protocolVersion, std::string serverName, std::string serverMotd,
                                   char userType) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
-    if (c->canSend && c->SendBuffer != nullptr) {
+    if (c != nullptr && c->canSend && c->SendBuffer != nullptr) {
         const std::scoped_lock sLock(c->sendLock);
         c->SendBuffer->Write(static_cast<unsigned char>(0));
         c->SendBuffer->Write(static_cast<unsigned char>(protocolVersion));
@@ -29,9 +29,18 @@ void Packets::SendClientHandshake(int clientId, char protocolVersion, std::strin
     }
 }
 
+void Packets::SendPing(int clientId) {
+    std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
+    if (c != nullptr && c->canSend && c->SendBuffer != nullptr) {
+        const std::scoped_lock sLock(c->sendLock);
+        c->SendBuffer->Write(static_cast<unsigned char>(1));
+        c->SendBuffer->Purge();
+    }
+}
+
 void Packets::SendMapInit(int clientId) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
-    if (c->canSend && c->SendBuffer != nullptr) {
+    if (c != nullptr &&c->canSend && c->SendBuffer != nullptr) {
         const std::scoped_lock sLock(c->sendLock);
         c->SendBuffer->Write(static_cast<unsigned char>(2));
         c->SendBuffer->Purge();
@@ -40,7 +49,7 @@ void Packets::SendMapInit(int clientId) {
 
 void Packets::SendMapData(int clientId, short chunkSize, char *data, unsigned char percentComplete) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
-    if (c->canSend && c->SendBuffer != nullptr) {
+    if (c != nullptr &&c->canSend && c->SendBuffer != nullptr) {
         const std::scoped_lock sLock(c->sendLock);
         c->SendBuffer->Write(static_cast<unsigned char>(3));
         c->SendBuffer->Write(chunkSize);
@@ -52,7 +61,7 @@ void Packets::SendMapData(int clientId, short chunkSize, char *data, unsigned ch
 }
 
 void Packets::SendMapFinalize(int clientId, short sizeX, short sizeY, short sizeZ) {
-	if (const std::shared_ptr<NetworkClient> c = GetPlayer(clientId); c->canSend && c->SendBuffer != nullptr) {
+	if (const std::shared_ptr<NetworkClient> c = GetPlayer(clientId); c != nullptr && c->canSend && c->SendBuffer != nullptr) {
         const std::scoped_lock sLock(c->sendLock);
         c->SendBuffer->Write(static_cast<unsigned char>(4));
         c->SendBuffer->Write(sizeX);
@@ -64,7 +73,7 @@ void Packets::SendMapFinalize(int clientId, short sizeX, short sizeY, short size
 
 void Packets::SendBlockChange(int clientId, short x, short y, short z, unsigned char type) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
-    if (c->canSend && c->SendBuffer != nullptr) {
+    if (c != nullptr && c->canSend && c->SendBuffer != nullptr) {
         const std::scoped_lock sLock(c->sendLock);
         c->SendBuffer->Write(static_cast<unsigned char>(6));
         c->SendBuffer->Write(x);
@@ -110,7 +119,7 @@ void Packets::SendPlayerTeleport(int clientId, char playerId, short x, short y, 
 
 void Packets::SendDespawnEntity(int clientId, char playerId) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
-    if (c->canSend && c->SendBuffer != nullptr) {
+    if (c != nullptr && c->canSend && c->SendBuffer != nullptr) {
         const std::scoped_lock sLock(c->sendLock);
         c->SendBuffer->Write(static_cast<unsigned char>(12));
         c->SendBuffer->Write(static_cast<unsigned char>(playerId));
@@ -136,7 +145,7 @@ void Packets::SendChatMessage(int clientId, std::string message, char location) 
 
 void Packets::SendDisconnect(int clientId, std::string reason) {
     std::shared_ptr<NetworkClient> c = GetPlayer(clientId);
-    if (c->canSend && c->SendBuffer != nullptr) {
+    if (c != nullptr && c->canSend && c->SendBuffer != nullptr) {
         const std::scoped_lock sLock(c->sendLock);
         c->SendBuffer->Write(static_cast<unsigned char>(14));
         if (reason.size() != 64) Utils::padTo(reason, 64);
@@ -146,7 +155,7 @@ void Packets::SendDisconnect(int clientId, std::string reason) {
 }
 
 void Packets::SendExtInfo(std::shared_ptr<NetworkClient> client, std::string serverName, int extensionCount) {
-    if (client->canSend && client->SendBuffer != nullptr) {
+    if (client != nullptr && client->canSend && client->SendBuffer != nullptr) {
         const std::scoped_lock sLock(client->sendLock);
         client->SendBuffer->Write(static_cast<unsigned char>(16));
         if (serverName.size() != 64) Utils::padTo(serverName, 64);

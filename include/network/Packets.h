@@ -15,6 +15,7 @@ class NetworkClient;
 class Packets {
 public:
     static void SendClientHandshake(int clientId, char protocolVersion, std::string serverName, std::string serverMotd, char userType);
+    static void SendPing(int clientId);
     static void SendMapInit(int clientId);
     static void SendMapData(int clientId, short chunkSize, char* data, unsigned char percentComplete);
     static void SendMapFinalize(int clientId, short sizeX, short sizeY, short sizeZ);

@@ -4,7 +4,6 @@
 #include "Client.h"
 #include "world/Player.h"
 #include "world/Entity.h"
-#include "network/Network.h"
 #include "network/NetworkClient.h"
 #include "network/Server.h"
 #include "network/packets/DefineEffectPacket.h"

@@ -189,8 +189,7 @@ void NetworkClient::HandleEvent(const Event& e) {
 }
 
 void NetworkClient::OutputPing() {
-    const std::scoped_lock<std::mutex> sLock(sendLock);
-    SendBuffer->Write((unsigned char)1);
+    Packets::SendPing(this->Id);
 }
 
 void NetworkClient::Kick(const std::string& message, bool hide) {
@@ -432,13 +431,15 @@ bool NetworkClient::IsDataAvailable() {
 
 void NetworkClient::SendQueued() {
     const std::scoped_lock<std::mutex> sLock(sendLock);
-    int sendSize = SendBuffer->Size();
-    std::vector<unsigned char> allBytes = SendBuffer->GetAllBytes();
+    if (canSend) {
+        int sendSize = SendBuffer->Size();
+        std::vector<unsigned char> allBytes = SendBuffer->GetAllBytes();
 
-    int bytesSent = clientSocket->Send(reinterpret_cast<char *>(allBytes.data()), sendSize);
+        int bytesSent = clientSocket->Send(reinterpret_cast<char *>(allBytes.data()), sendSize);
 
-    DataAvailable = false;
-    D3PP::network::Server::SentIncrement += bytesSent;
+        DataAvailable = false;
+        D3PP::network::Server::SentIncrement += bytesSent;
+    }
 }
 
 bool NetworkClient::ReadData() {
