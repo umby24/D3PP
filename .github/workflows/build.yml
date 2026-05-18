@@ -10,7 +10,7 @@ jobs:
 #          - "21.10"
 #    runs-on: ubuntu-latest
 #    steps:
-#      - uses: actions/checkout@v2
+#      - uses: actions/checkout@v4
 #        with:
 #          submodules: true
 #      - run: docker build --tag build:ubuntu-${{ matrix.version }} --build-arg version=${{ matrix.version }} docker/ubuntu
@@ -26,7 +26,7 @@ jobs:
 #      - run: docker cp build:/tmp/D3PP/D3PP ${{ github.workspace }}/D3PP
 #        name: "Copy Files"
 #      - name: Upload artifacts
-#        uses: actions/upload-artifact@v3
+#        uses: actions/upload-artifact@v4
 #        with:
 #            name: D3PP-docker ${{ matrix.version }}
 #            path: ${{ github.workspace }}/D3PP
@@ -37,7 +37,7 @@ jobs:
 #      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
 #      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
 #      - name: Check out repository code
-#        uses: actions/checkout@v2
+#        uses: actions/checkout@v4
 #        with:
 #          submodules: true
 #      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
@@ -57,7 +57,7 @@ jobs:
 #        run: |
 #          mkdir artifacts && cp build/D3PP.exe artifacts/D3PP.exe
 #      - name: Upload artifacts
-#        uses: actions/upload-artifact@v3
+#        uses: actions/upload-artifact@v4
 #        with:
 #            name: D3PP-Win64
 #            path: ${{ github.workspace }}/artifacts
@@ -70,20 +70,12 @@ jobs:
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
       - name: Install Deps
-        run: sudo apt-get update && sudo apt-get -y install sqlite3 libc6 libstdc++6 cmake
-      - name: Download Latest Lua
-        run: curl https://www.lua.org/ftp/lua-5.4.4.tar.gz --output lua-5.4.4.tar.gz
-      - name: Unpack Lua
-        run: tar -zxf lua-5.4.4.tar.gz
-      - name: Install Lua
-        run: cd lua-5.4.4 && make all test && sudo make install
-      - name: Create Symlinks
-        run: sudo ln -s /lib/x86_64-linux-gnu/liblua5.4.so.0.0.0 /lib/x86_64-linux-gnu/liblua-5.4.so
+        run: sudo apt-get update && sudo apt-get -y install cmake liblua5.4-dev libsqlite3-dev zlib1g-dev
       - name: Cmake Build
         run: |
           mkdir build && cd build && cmake ../ && make
@@ -95,7 +87,7 @@ jobs:
         run: |
           mkdir artifacts && cp build/D3PP artifacts/D3PP
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
             name: D3PP
             path: ${{ github.workspace }}/artifacts

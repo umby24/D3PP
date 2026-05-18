@@ -113,35 +113,41 @@ void Console::Draw() {
         }
         if (ImGui::BeginPopupContextItem("##UsersContext", ImGuiPopupFlags_MouseButtonRight)) {
             auto user = Network::GetClient(selected);
-            if (ImGui::MenuItem("Info")) {
-                {
-                    auto cc = std::reinterpret_pointer_cast<NetworkClient>(user);
+            if (user != nullptr) {
+                if (ImGui::MenuItem("Info")) {
+                    {
+                        if (user != nullptr) {
+                            auto cc = std::reinterpret_pointer_cast<NetworkClient>(user);
 
-                    AddLog("User %s", user->GetLoginName().c_str());
-                    AddLog("IP: %s", user->GetIP().c_str());
-                    AddLog("Rank: %d", user->GetRank());
-                    AddLog("Supported CPE Extensions: %d", cc->CustomExtensions);
-                    AddLog("Ping: %d ms", cc->GetPing());
+                            Logger::LogAdd("UI", "User " + user->GetLoginName(), NORMAL, GLF);
+                            Logger::LogAdd("UI", "IP: " + user->GetIP(), NORMAL, GLF);
+                            Logger::LogAdd("UI", "Rank: " + stringulate(cc->GetRank()), NORMAL, GLF);
+                            Logger::LogAdd("UI", "Supported CPE Extensions: " + stringulate(cc->CustomExtensions), NORMAL, GLF);
+                            Logger::LogAdd("UI", "Ping: " + stringulate(cc->GetPing()) + "ms", NORMAL, GLF);
+                        }
+                    }
                 }
-            }
-            if (ImGui::MenuItem("Kick")) {
-                user->Kick("Kicked from console", false);
-            }
-            if (ImGui::MenuItem("Ban")) {
-                Player_List* pll = Player_List::GetInstance();
-                std::shared_ptr<PlayerListEntry> ple;
-
-                ple = pll->GetPointer(user->GetLoginName());
-                if (ple == nullptr) {
-                    AddLog("[Error] Can't find that player :(");
-                    return;
+                if (ImGui::MenuItem("Kick")) {
+                    if (user != nullptr) {
+                        user->Kick("Kicked from console", false);
+                    }
                 }
-                ple->Ban("Banned from console");
-                user->Kick("Banned from console", false);
-            }
+                if (ImGui::MenuItem("Ban")) {
+                    Player_List* pll = Player_List::GetInstance();
+                    std::shared_ptr<PlayerListEntry> ple;
 
-            if (ImGui::MenuItem("Promote")) {
+                    ple = pll->GetPointer(user->GetLoginName());
+                    if (ple == nullptr) {
+                        AddLog("[Error] Can't find that player :(");
+                        return;
+                    }
+                    ple->Ban("Banned from console");
+                    user->Kick("Banned from console", false);
+                }
 
+                if (ImGui::MenuItem("Promote")) {
+
+                }
             }
             ImGui::EndPopup();
         }

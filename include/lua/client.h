@@ -1,6 +1,5 @@
 #ifndef D3PP_LUA_CLIENT_H
 #define D3PP_LUA_CLIENT_H
-#include <lua.h>
 
 struct lua_State;
 struct luaL_Reg;
