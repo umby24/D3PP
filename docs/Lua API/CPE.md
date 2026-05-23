@@ -55,6 +55,19 @@ Sets the weather visible to the given client. Values: 0 = none, 1 = rain, 2 = sn
 ## CPE.createblockdef(blockId, name, solidity, movementSpeed, topTexture, sideTexture, bottomTexture, transmitsLight, walkSound, fullBright, shape, drawType, fogDensity, fogR, fogG, fogB)
 Creates a custom block definition server-wide (also saved in `Data/CustomBlocks.json`). `blockId` must be 1–255 and cannot be 0 (air).
 
+### Solidity
+ - 0 = Walk-through - block does not collide with the player, and does not interfere with jumping. Players fall through this block. (e.g. Air)
+ - 1 = Swim-through - block allows the player to descend or ascend slowly (at WalkSpeed), as if they were swimming.
+ - 2 = Solid - block collides with the player. Players may walk on this block. (e.g. Stone)
+ - 3 = Partially slippery - same as Solid, but player slides if they are directly on top of this block (e.g. Ice)
+ - 4 = Fully slippery - same as Solid, but player slides if they touch this block at all
+ - 5 = Water - block has same collision behaviour as Water block in Minecraft Classic
+ - 6 = Lava - block has same collision behaviour as Lava block in Minecraft Classic
+ - 7 = Rope - block has rope/ladder climbing interaction (e.g. Rope)
+
+### Speed
+A value of 0 translates to 0.25 ratio (25% speed), 128 to 1.00 ratio (100% speed), and 255 to 3.96 (396% speed).
+
 ## CPE.deleteblockdef(blockId)
 Removes a custom block definition server-wide.
 

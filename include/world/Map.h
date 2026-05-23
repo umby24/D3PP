@@ -60,7 +60,7 @@ namespace D3PP::world {
 
     public:
         int ID;
-        time_t SaveTime;
+        std::chrono::time_point<std::chrono::system_clock> SaveTime;
 
         std::unique_ptr<PhysicsQueue> pQueue;
         std::unique_ptr<BlockChangeQueue> bcQueue;
@@ -74,7 +74,7 @@ namespace D3PP::world {
 
         bool BlockchangeStopped, PhysicsStopped, loaded;
         std::string filePath;
-        time_t LastClient;
+        std::chrono::time_point<std::chrono::system_clock> LastClient;
         int Clients;
 
         Map();

@@ -91,17 +91,17 @@ void D3PP::world::MapMain::MainFunc() {
 
     for(const auto &[mapId, mapPtr] : _maps) {
         // -- Auto save maps every 5 minutes
-        if (mapPtr->SaveTime + 5*60 < time(nullptr) && mapPtr->loaded) {
-            mapPtr->SaveTime = time(nullptr);
+        if ((std::chrono::system_clock::now() - mapPtr->SaveTime) > std::chrono::minutes(5) && mapPtr->loaded) {
+            mapPtr->SaveTime = std::chrono::system_clock::now();
             AddSaveAction(0, mapId, "");
         }
         if (mapPtr->Clients > 0) {
-            mapPtr->LastClient = time(nullptr);
+            mapPtr->LastClient = std::chrono::system_clock::now();
             if (!mapPtr->loaded) {
                 mapPtr->Reload();
             }
         }
-        if (mapPtr->loaded && (time(nullptr) - mapPtr->LastClient) > 200) { // -- Unload unused maps after 3 minutes
+        if (mapPtr->loaded && (std::chrono::system_clock::now() - mapPtr->LastClient) > std::chrono::minutes(3) && mapPtr->Clients == 0) { // -- Unload unused maps after 3 minutes
             mapPtr->Unload();
         }
     }
