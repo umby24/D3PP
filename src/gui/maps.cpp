@@ -5,7 +5,6 @@
 #include "gui/maps.h"
 
 #include "imgui.h"
-#include "misc/cpp/imgui_stdlib.h"
 #include "common/Logger.h"
 #include "world/Map.h"
 #include "world/MapMain.h"

@@ -157,8 +157,8 @@ int LuaSystemLib::LuaEventAdd(lua_State* L) {
             eventId,
             function,
             typeAsEvent,
-            clock(),
-            timed,
+            std::chrono::steady_clock::now(),
+            std::chrono::milliseconds(timed),
             mapId
     };
 

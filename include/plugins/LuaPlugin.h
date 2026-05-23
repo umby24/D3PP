@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <chrono>
 #include <EventSystem.h>
 
 #include "common/TaskScheduler.h"
@@ -24,8 +25,8 @@ struct LuaEvent {
     std::string eventId;
     std::string functionName;
     Event::DescriptorType type;
-    clock_t lastRun;
-    long duration;
+    std::chrono::time_point<std::chrono::steady_clock> lastRun;
+    std::chrono::milliseconds duration;
     int mapId;
 };
 

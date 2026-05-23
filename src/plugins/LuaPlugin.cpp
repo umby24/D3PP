@@ -204,10 +204,10 @@ void LuaPlugin::TimerMain() { {
                 }
         }
         for (auto &val : eventsFire) {
-            if (clock() >= (val.lastRun + val.duration)) {
+            if (std::chrono::steady_clock::now() >= (val.lastRun + val.duration)) {
                 {
                     std::shared_lock lock(m_luaState->eventMutex);
-                    m_luaState->events[timerDescriptor][val.eventId].lastRun = clock();
+                    m_luaState->events[timerDescriptor][val.eventId].lastRun = std::chrono::steady_clock::now();
                 }
                 std::scoped_lock rcLock(executionMutex);
                 lua_getglobal(m_luaState->GetState(),
