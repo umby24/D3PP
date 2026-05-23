@@ -7,6 +7,7 @@
 #include "common/Configuration.h"
 #include "gui/console.h"
 #include "gui/maps.h"
+#include "gui/playerdb.h"
 #include "network/NetworkClient.h"
 #include "network/Server.h"
 #include "world/MapMain.h"
@@ -481,6 +482,7 @@ void backend::ImGuiLoop() {
     SDL_GetWindowSize(window, &fb_width, &fb_height);
     Console textConsole;
     Maps mapConsole;
+    PlayerDB dbConsole;
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(fb_width, fb_height));
@@ -593,20 +595,11 @@ void backend::ImGuiLoop() {
             if (ImGui::BeginTabItem("PlayerDB", nullptr, ImGuiTabItemFlags_None))
             {
                 /// @separator
-
+                dbConsole.Draw();
                 /// @separator
                 ImGui::EndTabItem();
             }
             /// @end TabItem
-
-            /// @begin TabItem
-            if (ImGui::BeginTabItem("Plugins", nullptr, ImGuiTabItemFlags_None))
-            {
-                /// @separator
-
-                /// @separator
-                ImGui::EndTabItem();
-            }
         }
         ImGui::EndTabBar();
     }
