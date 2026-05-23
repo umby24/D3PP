@@ -141,7 +141,7 @@ void Map::Reload() {
     loaded = true;
     BlockchangeStopped = false;
     PhysicsStopped = false;
-    LastClient = time(nullptr);
+    LastClient = std::chrono::system_clock::now();
     Logger::LogAdd(MODULE_NAME, "Map Reloaded [" + m_mapProvider->MapName + "]", NORMAL, GLF);
 }
 
@@ -283,7 +283,7 @@ void Map::BlockChange(const std::shared_ptr<IMinecraftClient>& client, unsigned 
     Block* bm = Block::GetInstance();
 
     if (!loaded) {
-        LastClient = time(nullptr);
+        LastClient = std::chrono::system_clock::now();
         Reload();
     }
     unsigned char rawBlock;
@@ -431,7 +431,7 @@ void Map::BlockChange (short playerNumber, unsigned short X, unsigned short Y, u
 
 unsigned char Map::GetBlockType(unsigned short X, unsigned short Y, unsigned short Z) {
      if (!loaded) {
-         LastClient = time(nullptr);
+         LastClient = std::chrono::system_clock::now();
          Reload();
          if (!loaded) {
              return 255; // -- error reloading :( 
@@ -458,7 +458,7 @@ void Map::QueueBlockChange(Vector3S location, unsigned char priority, unsigned c
     bcQueue->TryQueue(newQueueItem);
 }
 
-Map::Map() : ID(0), SaveTime(0), Particles(), RankBoxes(), BlockMutex(), LastClient(0), Clients(0), IActions()
+Map::Map() : ID(0), SaveTime{}, Particles(), RankBoxes(), BlockMutex(), LastClient{}, Clients(0), IActions()
 {
 	loaded = false;
 	BlockchangeStopped = false;
@@ -472,7 +472,7 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
 	const Vector3S location1(X1, Y1, Z1);
 
     if (!loaded) {
-        LastClient = time(nullptr);
+        LastClient = std::chrono::system_clock::now();
         Reload();
     }
 
@@ -522,7 +522,7 @@ void Map::BlockMove(unsigned short X0, unsigned short Y0, unsigned short Z0, uns
 
 unsigned short Map::GetBlockPlayer(unsigned short X, unsigned short Y, unsigned short Z) {
     if (!loaded) {
-        LastClient = time(nullptr);
+        LastClient = std::chrono::system_clock::now();
         Reload();
     }
 

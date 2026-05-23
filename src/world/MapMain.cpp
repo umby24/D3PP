@@ -397,10 +397,10 @@ int D3PP::world::MapMain::Add(int id, const short x, const short y, const short 
 
     auto newMap = std::make_shared<Map>();
     newMap->ID = id;
-    newMap->SaveTime = time(nullptr);
+    newMap->SaveTime = std::chrono::system_clock::now();
     newMap->BlockchangeStopped = false;
     newMap->Clients = 0;
-    newMap->LastClient = time(nullptr);
+    newMap->LastClient = std::chrono::system_clock::now();
     Vector3S sizeVector {x, y, z};
     if (name.ends_with("D3")) {
         newMap->m_mapProvider = std::make_unique<D3MapProvider>();
