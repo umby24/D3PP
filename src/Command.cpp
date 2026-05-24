@@ -1078,12 +1078,17 @@ void CommandMain::CommandSaveMap() {
         return;
 
     MapMain* mm = MapMain::GetInstance();
+    auto mapInstance = mm->GetPointer(e->MapID);
     std::string mapDirectory;
 
     if (!ParsedText0.empty()) {
-        mapDirectory = Files::GetFolder("Maps") + ParsedText0;
-        if (mapDirectory.substr(mapDirectory.size()-2, 1) != "/") {
-            mapDirectory += "/";
+        if (mapInstance->filePath.ends_with(".cw")) {
+            mapDirectory = Files::GetFolder("CWMaps") + ParsedText0 + ".cw";
+        } else {
+            mapDirectory = Files::GetFolder("Maps") + ParsedText0;
+            if (mapDirectory.substr(mapDirectory.size()-2, 1) != "/") {
+                mapDirectory += "/";
+            }
         }
     }
 

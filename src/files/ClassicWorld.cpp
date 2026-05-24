@@ -127,7 +127,6 @@ void D3PP::files::ClassicWorld::Load() {
 
 void D3PP::files::ClassicWorld::Save(std::string filepath) {
     m_filePath = filepath;
-    Logger::LogAdd("ClassicWorld", "[S] Path set to " + m_filePath, DEBUG, GLF);
     auto nbtMetadata = foreignMeta.Write();
 
     for (auto &p : metaParsers) {
