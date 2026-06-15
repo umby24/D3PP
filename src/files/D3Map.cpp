@@ -75,6 +75,7 @@ namespace D3PP::files {
         bool D3Map::Load(std::string path)
         {
             if (!std::filesystem::exists(path)) {
+                Logger::LogAdd("D3Map", "Attempted to load a file that doesn't exist [" + path + "]", WARNING, GLF);
                 return false;
             }
 
@@ -89,6 +90,10 @@ namespace D3PP::files {
             ReadPortals();
             ReadParticles();
             mapPath = ogMapPath;
+
+		    if (!loadResult)
+		        Logger::LogAdd("D3Map", "Failed to read mapdata for [" + mapPath + "]", WARNING, GLF);
+
             return loadResult;
         }
 		bool D3Map::Save()
