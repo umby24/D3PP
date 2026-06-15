@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(D3PP VERSION 0.1.21 LANGUAGES CXX)
+project(D3PP VERSION 0.1.22 LANGUAGES CXX)
 
 # ──────────────────────────────────────────────
 # Build settings
