@@ -165,6 +165,9 @@ void Console::Draw() {
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1)); // Tighten spacing
 
         for (auto & msg : lg->Messages) {
+            if (msg.Type == LogType::VERBOSE || msg.Type == LogType::DEBUG)
+                continue;
+
             ImGui::PushStyleColor(ImGuiCol_Text, GetColor(msg.Type));
             std::string myThing = ("[" + Logger::GetItemTimestamp(msg.Time) + "] {" + LogLevelToString(msg.Type) + "} " + msg.Message);
             ImGui::TextWrapped(myThing.c_str());
