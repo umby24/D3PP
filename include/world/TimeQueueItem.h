@@ -11,6 +11,18 @@ namespace D3PP::world {
     struct TimeQueueItem {
         Common::Vector3S Location;
         std::chrono::time_point<std::chrono::steady_clock> Time;
+
+        bool operator()(const TimeQueueItem &a, const TimeQueueItem &b) const {
+            return a.Time < b.Time;
+        }
+
+        bool operator< (const TimeQueueItem &b) const {
+            return Time < b.Time;
+        }
+
+        bool operator> (const TimeQueueItem &b) const {
+            return Time > b.Time;
+        }
     };
 }
 

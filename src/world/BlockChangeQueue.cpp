@@ -18,10 +18,10 @@ bool D3PP::world::BlockChangeQueue::TryDequeue(ChangeQueueItem &out) {
 }
 
 void D3PP::world::BlockChangeQueue::TryQueue(const ChangeQueueItem &in) {
+    std::scoped_lock<std::mutex> pLock(m_accessLock);
     if (IsQueued(in.Location))
         return;
 
-    std::scoped_lock<std::mutex> pLock(m_accessLock);
     m_ChangeQueue.push(in);
     Queue(in.Location);
 }

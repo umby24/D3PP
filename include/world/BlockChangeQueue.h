@@ -15,12 +15,13 @@ namespace D3PP::world {
     class BlockChangeQueue : IUniqueQueue {
     public:
         explicit BlockChangeQueue(const Common::Vector3S& size);
+        int GetSize() const override { return m_ChangeQueue.size(); }
         bool TryDequeue(ChangeQueueItem& out);
         void TryQueue(const ChangeQueueItem &in);
         void Clear();
     private:
         std::mutex m_accessLock;
-        std::priority_queue<ChangeQueueItem, std::vector<ChangeQueueItem>, std::less<std::vector<ChangeQueueItem>::value_type> > m_ChangeQueue;
+        std::priority_queue<ChangeQueueItem> m_ChangeQueue;
         void TryDequeue_();
     };
 }

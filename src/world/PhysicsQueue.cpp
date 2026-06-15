@@ -10,7 +10,7 @@ bool D3PP::world::PhysicsQueue::TryDequeue(TimeQueueItem &out) {
     if (m_PhysicsQueue.empty())
         return false;
 
-    out = m_PhysicsQueue.front();
+    out = m_PhysicsQueue.top();
     m_PhysicsQueue.pop();
     Dequeue(out.Location);
 
@@ -18,10 +18,10 @@ bool D3PP::world::PhysicsQueue::TryDequeue(TimeQueueItem &out) {
 }
 
 void D3PP::world::PhysicsQueue::TryQueue(const TimeQueueItem &in) {
+    std::scoped_lock<std::mutex> pLock(m_accessLock);
     if (IsQueued(in.Location))
         return;
 
-    std::scoped_lock<std::mutex> pLock(m_accessLock);
     m_PhysicsQueue.push(in);
     Queue(in.Location);
 }
@@ -40,7 +40,7 @@ void D3PP::world::PhysicsQueue::TryDequeue_() {
     if (m_PhysicsQueue.empty())
         return;
 
-    auto out = m_PhysicsQueue.front();
+    auto out = m_PhysicsQueue.top();
     m_PhysicsQueue.pop();
     Dequeue(out.Location);
 }

@@ -18,7 +18,7 @@ namespace D3PP::world {
         virtual ~IUniqueQueue() = default;
 
         [[nodiscard]] int GetOffset(const Common::Vector3S& loc) const;
-
+        [[nodiscard]] virtual int GetSize() const { return m_queueData.size(); }
         bool IsQueued(const Common::Vector3S& loc);
 
         void Queue(const Common::Vector3S& loc);
