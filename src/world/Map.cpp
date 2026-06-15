@@ -262,7 +262,6 @@ void Map::Resend() const
     }
 
     bcQueue->Clear();
-    pQueue->Clear();
 }
 
 /**
