@@ -3,9 +3,9 @@
 
 #include <memory>
 #include <thread>
+#include <string>
 
 #include "common/TaskScheduler.h"
-#include "common/MinecraftLocation.h"
 #include "common/Vectors.h"
 
 namespace D3PP::world {
@@ -46,6 +46,7 @@ namespace D3PP::world {
             return (x + y * sizeX + z * sizeX * sizeY) * blockSize;
         }
         static Common::Vector3S GetMapExportSize(const std::string &filename);
+        std::string GetUniqueName(const std::string &desired, int ignoreId = -1) const;
         void Init();
         void MainFunc();
         void Shutdown();

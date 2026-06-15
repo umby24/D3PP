@@ -414,7 +414,7 @@ int LuaMapLib::LuaMapSetName(lua_State* L) {
         return 0;
     }
 
-    //map->data.Name = newName;
+    map->SetName(mm->GetUniqueName(newName, map->ID));
     return 0;
 }
 

@@ -11,6 +11,7 @@
 #include <mutex>
 #include <map>
 #include <vector>
+#include <deque>
 #include <atomic>
 
 #include "common/TaskScheduler.h"
@@ -145,7 +146,9 @@ private:
     int Id;
     int eventSubId, addSubId, removeSubId, m_currentUndoIndex;
     std::string taskId;
-    std::vector<D3PP::Common::UndoItem> m_undoItems;
+    // -- deque so trimming the oldest entry at the 50000 cap is O(1) instead of
+    // -- an O(n) front-shift; physics floods hammer this on the hot path.
+    std::deque<D3PP::Common::UndoItem> m_undoItems;
     std::atomic<bool> DataAvailable;
     std::atomic<bool> DataWaiting;
     std::unique_ptr<Sockets> clientSocket;

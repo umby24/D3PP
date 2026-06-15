@@ -11,15 +11,17 @@ std::vector<std::vector<char>> Physics::FillArray;
 using namespace D3PP::world;
 
 /* Block falls straight down */
-void Physics::BlockPhysics10(std::shared_ptr<Map> physMap, int x, int y, int z) {
+bool Physics::BlockPhysics10(std::shared_ptr<Map> physMap, int x, int y, int z) {
     int currentBlock = physMap->GetBlockType(x, y, z);
     if (physMap->GetBlockType(x, y, z-1) == 0) {
         physMap->BlockMove(x, y, z, x, y, z-1, true, true, 1);
+        return true;
     }
+    return false;
 }
 
 /* Block falls in 45 degree bevels (builds a pyramid) */
-void Physics::BlockPhysics11(std::shared_ptr<Map> physMap, int x, int y, int z) {
+bool Physics::BlockPhysics11(std::shared_ptr<Map> physMap, int x, int y, int z) {
     int currentBlock = physMap->GetBlockType(x, y, z);
     int blockBelow = physMap->GetBlockType(x, y, z-1);
 
@@ -45,11 +47,14 @@ void Physics::BlockPhysics11(std::shared_ptr<Map> physMap, int x, int y, int z) 
         physMap->BlockMove(x, y, z, x, y+1,z-1, true, true, 1);
     } else if (blockBelowBehind == 0 && blockBehind == 0) {
         physMap->BlockMove(x, y, z, x, y-1, z-1, true, true, 1);
+    } else {
+        return false;
     }
+    return true;
 }
 
 /* Minecraft original fluid physics (Block duplicates laterally and downwardly) */
-void Physics::BlockPhysics20(std::shared_ptr<Map> physMap, int x, int y, int z) {
+bool Physics::BlockPhysics20(std::shared_ptr<Map> physMap, int x, int y, int z) {
     int currentBlock = physMap->GetBlockType(x, y, z);
     unsigned short blockPlayer = physMap->GetBlockPlayer(x, y, z);
     int blockBelow = physMap->GetBlockType(x, y, z-1);
@@ -59,22 +64,25 @@ void Physics::BlockPhysics20(std::shared_ptr<Map> physMap, int x, int y, int z) 
     int blockBehind =  physMap->GetBlockType(x, y-1, z);
 
     if (blockBelow == 0) {
-        physMap->BlockChange(blockPlayer, x, y, z-1, currentBlock, true, true, true, 1);
+        physMap->BlockChange(blockPlayer, x, y, z-1, currentBlock, false, true, true, 1);
     } else if (blockRight == 0) {
-        physMap->BlockChange(blockPlayer, x+1, y, z, currentBlock, true, true, true, 1);
+        physMap->BlockChange(blockPlayer, x+1, y, z, currentBlock, false, true, true, 1);
     } else if (blockLeft == 0) {
-        physMap->BlockChange(blockPlayer, x-1, y, z, currentBlock, true, true, true, 1);
+        physMap->BlockChange(blockPlayer, x-1, y, z, currentBlock, false, true, true, 1);
     } else if (blockForward == 0) {
-        physMap->BlockChange(blockPlayer, x, y+1, z, currentBlock, true, true, true, 1);
+        physMap->BlockChange(blockPlayer, x, y+1, z, currentBlock, false, true, true, 1);
     } else if (blockBehind == 0) {
-        physMap->BlockChange(blockPlayer, x, y-1, z, currentBlock, true, true, true, 1);
+        physMap->BlockChange(blockPlayer, x, y-1, z, currentBlock, false, true, true, 1);
+    } else {
+        return false;
     }
+    return true;
 }
 
 /* More realistic fluid (D3 Fluid) */
-void Physics::BlockPhysics21(std::shared_ptr<Map> physMap, int x, int y, int z) {
+bool Physics::BlockPhysics21(std::shared_ptr<Map> physMap, int x, int y, int z) {
     if (physMap == nullptr) {
-        return;
+        return false;
     }
 
    int currentBlock = physMap->GetBlockType(x, y, z);
@@ -82,7 +90,7 @@ void Physics::BlockPhysics21(std::shared_ptr<Map> physMap, int x, int y, int z) 
 
    if (blockBelow == 0) {
        physMap->BlockMove(x, y, z, x, y, z-1, true, true, 1);
-       return;
+       return true;
    }
    // -- This is a flood-search algorithm..
     if (!FillArray.size() != Physics_Fill_X) {
@@ -186,4 +194,6 @@ void Physics::BlockPhysics21(std::shared_ptr<Map> physMap, int x, int y, int z) 
            _blockFill.clear();
        }
    }
+
+   return found;
 }

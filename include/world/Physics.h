@@ -23,10 +23,12 @@ struct BlockFillPhysics {
 
 class Physics {
 public:
-    static void BlockPhysics10(std::shared_ptr<D3PP::world::Map> physMap, int x, int y, int z);
-    static void BlockPhysics11(std::shared_ptr<D3PP::world::Map> physMap, int x, int y, int z);
-    static void BlockPhysics20(std::shared_ptr<D3PP::world::Map> physMap, int x, int y, int z);
-    static void BlockPhysics21(std::shared_ptr<D3PP::world::Map> physMap, int x, int y, int z);
+    // -- Each returns true if the block actually did something (moved/changed),
+    // -- so callers can avoid perpetually re-queueing settled blocks.
+    static bool BlockPhysics10(std::shared_ptr<D3PP::world::Map> physMap, int x, int y, int z);
+    static bool BlockPhysics11(std::shared_ptr<D3PP::world::Map> physMap, int x, int y, int z);
+    static bool BlockPhysics20(std::shared_ptr<D3PP::world::Map> physMap, int x, int y, int z);
+    static bool BlockPhysics21(std::shared_ptr<D3PP::world::Map> physMap, int x, int y, int z);
 private:
     static std::vector<BlockFillPhysics> _blockFill;
     static std::vector<std::vector<char>> FillArray;

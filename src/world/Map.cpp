@@ -559,31 +559,39 @@ void Map::ProcessPhysics(unsigned short X, unsigned short Y, unsigned short Z) {
         blockEntry = bm->GetBlock(m_mapProvider->GetBlock(Vector3S(X, Y, Z)));
     }
 
-        switch (blockEntry.Physics) {
-            case 10:
-                Physics::BlockPhysics10(mapMain->GetPointer(ID), X, Y, Z);
-                break;
-            case 11:
-                Physics::BlockPhysics11(mapMain->GetPointer(ID), X, Y, Z);
-                break;
-            case 20:
-                Physics::BlockPhysics20(mapMain->GetPointer(ID), X, Y, Z);
-                break;
-            case 21:
-                Physics::BlockPhysics21(mapMain->GetPointer(ID), X, Y, Z);
-                break;
-        }
+    bool acted = false;
+    switch (blockEntry.Physics) {
+        case 10:
+            acted = Physics::BlockPhysics10(mapMain->GetPointer(ID), X, Y, Z);
+            break;
+        case 11:
+            acted = Physics::BlockPhysics11(mapMain->GetPointer(ID), X, Y, Z);
+            break;
+        case 20:
+            acted = Physics::BlockPhysics20(mapMain->GetPointer(ID), X, Y, Z);
+            break;
+        case 21:
+            acted = Physics::BlockPhysics21(mapMain->GetPointer(ID), X, Y, Z);
+            break;
+    }
 
-        if (!blockEntry.PhysicsPlugin.empty()) {
-	        plugins::PluginManager *pm = plugins::PluginManager::GetInstance();
-            std::string pluginName = blockEntry.PhysicsPlugin;
-            Utils::replaceAll(pluginName, "Lua:", "");
-            pm->TriggerPhysics(ID, X, Y, Z, pluginName);
-        }
+    bool pluginPhysics = false;
+    if (!blockEntry.PhysicsPlugin.empty()) {
+	    plugins::PluginManager *pm = plugins::PluginManager::GetInstance();
+        std::string pluginName = blockEntry.PhysicsPlugin;
+        Utils::replaceAll(pluginName, "Lua:", "");
+        pm->TriggerPhysics(ID, X, Y, Z, pluginName);
+        pluginPhysics = true;
+    }
 
-        if (blockEntry.PhysicsRepeat) {
-            QueueBlockPhysics(Vector3S(X, Y, Z));
-        }
+    // -- Only keep re-ticking a block if it actually did something this pass.
+    // -- A settled block (e.g. a fluid that can't flow) is reactivated by its
+    // -- neighbours via QueuePhysicsAround when one of them changes, so there is
+    // -- no need to spin on it every tick. Plugin-driven physics has no acted
+    // -- signal, so it keeps its previous repeat behaviour.
+    if (blockEntry.PhysicsRepeat && (acted || pluginPhysics)) {
+        QueueBlockPhysics(Vector3S(X, Y, Z));
+    }
 }
 
 int Map::BlockGetRank(unsigned short X, unsigned short Y, unsigned short Z) const

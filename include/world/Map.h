@@ -9,6 +9,7 @@
 #define GLF __FILE__, __LINE__, __FUNCTION__
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <thread>
 #include <memory>
@@ -136,6 +137,7 @@ namespace D3PP::world {
         void RemoveEntity(std::shared_ptr<Entity> e);
         void AddEntity(std::shared_ptr<Entity> e);
         void SetBlocks(const std::vector<unsigned char>& blocks) { m_mapProvider->SetBlocks(blocks); }
+        void SetName(std::string name) { m_mapProvider->MapName = std::move(name); }
         std::unique_ptr<FillState> CurrentFillState;
         MapIntensiveActions IActions;
     protected:

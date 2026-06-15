@@ -28,6 +28,11 @@ void D3PP::world::ClassicWorldMapProvider::CreateNew(const Common::Vector3S &siz
 }
 
 bool D3PP::world::ClassicWorldMapProvider::Save(const std::string &filePath) {
+    // MapName is the authoritative map name (it survives importing a different
+    // file's contents). Sync it into the underlying file before writing so the
+    // saved name matches this map rather than whatever file was last loaded.
+    m_cwMap->MapName = MapName;
+
     if (filePath.empty())
         m_cwMap->Save(m_currentPath);
     else
@@ -37,13 +42,28 @@ bool D3PP::world::ClassicWorldMapProvider::Save(const std::string &filePath) {
 }
 
 bool D3PP::world::ClassicWorldMapProvider::Load(const std::string &filePath) {
-    if (m_cwMap == nullptr) {
+    if (!std::filesystem::exists(filePath)) {
+        Logger::LogAdd("CWMap", "Attempted to load a CW file that doesn't exist [" + filePath + "]", WARNING, GLF);
+        return false;
+    }
+
+    const bool firstLoad = (m_cwMap == nullptr);
+    const bool samePath = (m_currentPath == filePath);
+
+    // m_cwMap caches the file it was constructed with, and ClassicWorld::Load()
+    // won't re-read from disk once block data is present. So loading a *different*
+    // file (or the very first load) requires a fresh instance; otherwise the
+    // requested file is silently ignored and the previously loaded map is kept.
+    if (firstLoad || !samePath) {
         m_cwMap = std::make_unique<files::ClassicWorld>(filePath);
-        m_currentPath = filePath;
         m_cwMap->metaParsers.insert(std::make_pair("D3PP", m_d3meta));
     }
 
-    m_currentPath = filePath;
+    // m_currentPath is the map's home/save location. Only establish it on the
+    // first load; when importing a *different* file into an existing map we read
+    // that file's contents but must keep saving back to the original file.
+    if (firstLoad)
+        m_currentPath = filePath;
 
     try {
         m_cwMap->Load();
@@ -52,7 +72,10 @@ bool D3PP::world::ClassicWorldMapProvider::Load(const std::string &filePath) {
         return false;
     }
 
-    MapName = m_cwMap->MapName;
+    // Refresh the display name from the file on the first load or when reloading
+    // the map's own file; when importing a different file keep the existing name.
+    if (firstLoad || samePath)
+        MapName = m_cwMap->MapName;
 
     return true;
 }
