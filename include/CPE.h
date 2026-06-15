@@ -28,7 +28,7 @@
 #define ENTITY_PROPERTIES_EXT_NAME "EntityProperty"
 #define INVENTORY_ORDER_EXT_NAME "InventoryOrder"
 #define SET_HOTBAR_EXT_NAME "SetHotbar"
-
+#define BULK_BLOCK_UPDATE_EXT_NAME "BulkBlockUpdate"
 
 #include <memory>
 #include <string>

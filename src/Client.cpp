@@ -163,7 +163,7 @@ void Client::LoginCpe(int clientId, std::string name, std::string mppass, char v
     c->CPE = true;
     myPlayer->myClientId = c->GetId();
 
-    Packets::SendExtInfo(c, "D3PP Server " + stringulate(SYSTEM_VERSION_NUMBER), 27);
+    Packets::SendExtInfo(c, "D3PP Server " + stringulate(SYSTEM_VERSION_NUMBER), 28);
     Packets::SendExtEntry(c, CUSTOM_BLOCKS_EXT_NAME, 1);
     Packets::SendExtEntry(c, HELDBLOCK_EXT_NAME, 1);
     Packets::SendExtEntry(c, CLICK_DISTANCE_EXT_NAME, 1);
@@ -191,6 +191,7 @@ void Client::LoginCpe(int clientId, std::string name, std::string mppass, char v
     Packets::SendExtEntry(c, ENTITY_PROPERTIES_EXT_NAME, 1);
     Packets::SendExtEntry(c, MAP_ASPECT_EXT_NAME, 1);
     Packets::SendExtEntry(c, TEXT_COLORS_EXT_NAME, 1);
+    Packets::SendExtEntry(c, BULK_BLOCK_UPDATE_EXT_NAME, 1);
 
     c->player = std::move(myPlayer);
     Logger::LogAdd(MODULE_NAME, "LoginCPE complete", DEBUG, GLF);

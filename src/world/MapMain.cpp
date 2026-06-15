@@ -22,10 +22,14 @@
 #include "world/D3MapProvider.h"
 #include "world/Player.h"
 #include "world/MapMain.h"
+
+#include "Block.h"
 #include "compression.h"
 #include "System.h"
 #include "watchdog.h"
 #include "Utils.h"
+#include "common/ByteBuffer.h"
+#include "network/packets/BulkBlockChangePacket.h"
 
 
 const std::string MODULE_NAME = "MapMain";
@@ -146,12 +150,14 @@ void D3PP::world::MapMain::AddLoadAction(int clientId, const int mapId, const st
         return;
 
     const std::function loadAction = [thisMap, clientId, directory](){
+        // Import the file's contents into the current map but keep this map's
+        // own name and save location (filePath) untouched.
         thisMap->Load(directory);
-        thisMap->filePath = directory;
 
         if (clientId > 0) {
             NetworkFunctions::SystemMessageNetworkSend(clientId, "&eMap Loaded.");
         }
+        thisMap->Resend();
         EventMapActionLoad mal{};
         mal.actionId = -1;
         mal.mapId = thisMap->ID;
@@ -168,6 +174,7 @@ void D3PP::world::MapMain::LoadImmediately(const int mapId, const std::string& d
         return;
 
     thisMap->Load(directory);
+    thisMap->SetName(GetUniqueName(thisMap->Name(), thisMap->ID));
     thisMap->filePath = directory;
 }
 
@@ -224,22 +231,48 @@ void D3PP::world::MapMain::AddDeleteAction(const int clientId, const int mapId) 
         NetworkFunctions::SystemMessageNetworkSend(clientId, "&eMap Deleted.");
     }
 }
+inline int GetBulkIndex(D3PP::Common::Vector3S location, D3PP::Common::Vector3S mapSize) {
+    return (location.Z * mapSize.Y + location.Y) * mapSize.X + location.X;
+}
 
 void D3PP::world::MapMain::MapBlockChange() const {
     while (System::IsRunning) {
         watchdog::Watch("Map_Blockchanging", "Begin thread-slope", 0);
-
+        Block* b = Block::GetInstance();
         for(const auto &[mapId, mapPtr] : _maps) {
             if (mapPtr->BlockchangeStopped || !mapPtr->loaded)
                 continue;
-
-            int maxChangedSec = 1100 / 10;
             ChangeQueueItem i{};
+            int maxChangedSec = 5000;
+
 
             while (maxChangedSec > 0) {
                 if (mapPtr->bcQueue == nullptr) {
                     continue;
                 }
+
+                if (mapPtr->bcQueue->GetSize() > 256) { // -- We have enough to build a bulk block update.
+                    ByteBuffer indicies(nullptr);
+                    unsigned char count = -1; // -- Because the count is minus one for some reason
+                    std::vector<unsigned char> blocks;
+                    for (int il = 0; il < 256; il++) {
+                        if (mapPtr->bcQueue->TryDequeue(i)) {
+                            unsigned char currentMat = mapPtr->GetBlockType(i.Location.X, i.Location.Y, i.Location.Z);
+                            MapBlock mb = b->GetBlock(currentMat);
+                            int index = GetBulkIndex(i.Location, mapPtr->GetSize());
+                            indicies.Write(index);
+                            blocks.push_back(mb.OnClient);
+                            count++;
+                        }
+                    }
+
+                    network::BulkBlockChangePacket packet(count, indicies.GetAllBytes(), blocks);
+                    NetworkFunctions::PacketToMap(mapId, packet, "BulkBlockUpdate", 1);
+                    maxChangedSec--; // -- I know it's wrong but it should supercharge the speed of bulk updates, which is the point.
+                    continue;
+                }
+
+                // -- Singular mode
                 if (mapPtr->bcQueue->TryDequeue(i)) {
                     unsigned char currentMat = mapPtr->GetBlockType(i.Location.X, i.Location.Y, i.Location.Z);
                     NetworkFunctions::NetworkOutBlockSet2Map(mapId, i.Location.X, i.Location.Y, i.Location.Z,
@@ -274,8 +307,11 @@ void D3PP::world::MapMain::MapBlockPhysics() const {
                         map->ProcessPhysics(physItem.Location.X, physItem.Location.Y, physItem.Location.Z);
                         counter++;
                     } else {
-                        // -- Not ready yet, push it back to the end.
+                        // -- The queue is a min-heap by time, so if the soonest item
+                        // -- isn't due yet then nothing else is either. Put it back and
+                        // -- stop draining this map so we don't burn the budget spinning.
                         map->pQueue->TryQueue(physItem);
+                        break;
                     }
                 }
                 counter++;
@@ -402,6 +438,10 @@ int D3PP::world::MapMain::Add(int id, const short x, const short y, const short 
     newMap->Clients = 0;
     newMap->LastClient = std::chrono::system_clock::now();
     Vector3S sizeVector {x, y, z};
+    if (createNew) {
+        name = GetUniqueName(newMap->filePath);
+    }
+
     if (name.ends_with("D3")) {
         newMap->m_mapProvider = std::make_unique<D3MapProvider>();
         newMap->filePath = Files::GetFolder("Maps") + name + "/";
@@ -519,6 +559,23 @@ Vector3S D3PP::world::MapMain::GetMapExportSize(const std::string& filename) {
     result.Z = tempData[8];
     result.Z |= tempData[9] << 8;
     return result;
+}
+
+std::string D3PP::world::MapMain::GetUniqueName(const std::string &desired, int ignoreId) const {
+    std::string result = desired;
+    int antiCollideNumber = 1;
+    // -- Collision.
+    while (true) {
+        std::shared_ptr<Map> collideMap = GetPointer(result);
+        if (collideMap == nullptr || collideMap->ID == ignoreId) {
+            if (result != desired)
+                Logger::LogAdd(MODULE_NAME, "Map name taken, temporary renaming in place [" + desired +
+                    "] -> [" + result + "]", WARNING, GLF);
+            return result;
+        }
+        result = desired + "_" + stringulate(antiCollideNumber++);
+
+    }
 }
 
 void D3PP::world::MapMain::LoadD3Maps() {
