@@ -60,6 +60,9 @@ class CommandMain : TaskItem {
         void Load();
         void Save();
         void RefreshGroups();
+        // -- Registers a command, replacing any existing command that shares its
+        // -- name (case-insensitive) so the newest registration always wins.
+        void AddCommand(const Command& command);
         void MainFunc();
         void CommandDo(const std::shared_ptr<IMinecraftClient>& client, const std::string& input);
         // -- Administrative
@@ -116,6 +119,13 @@ class CommandMain : TaskItem {
         void CommandUndo();
         void CommandRedo();
         void CommandUserMaps();
+
+        void CommandStopBlocks();
+
+        void CommandStartBlocks();
+
+        void CommandClientInfo();
+
         // -- Commands not ported: Player Attribute Get, map directory rename, map blocks count, set/delete/bring/tp to location, time.
 
     private:

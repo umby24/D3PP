@@ -266,7 +266,6 @@ int LuaSystemLib::LuaAddCommand(lua_State* L) {
         handleFunction = "Lua:" + handleFunction;
 
     CommandMain* cm = CommandMain::GetInstance();
-    std::erase_if(cm->Commands, [&commandName](const Command &c){ return c.Id == commandName; });
 
     Command newCmd;
     newCmd.Id = commandName;
@@ -279,7 +278,7 @@ int LuaSystemLib::LuaAddCommand(lua_State* L) {
     newCmd.Hidden = false;
     newCmd.Internal = false;
     newCmd.CanConsole = true;
-    cm->Commands.push_back(newCmd);
+    cm->AddCommand(newCmd);
     cm->RefreshGroups();
 
     return 0;

@@ -15,6 +15,7 @@
 #include "common/Files.h"
 #include "System.h"
 #include "Utils.h"
+#include "common/ByteBuffer.h"
 #include "plugins/PluginManager.h"
 
 const std::string MODULE_NAME = "Command";
@@ -52,7 +53,7 @@ void CommandMain::Init() {
     PluginReloadCommand.CanConsole = true;
     PluginReloadCommand.Description = "Reloads all Lua Plugins";
     PluginReloadCommand.Group = "Plugins";
-    Commands.push_back(PluginReloadCommand);
+    AddCommand(PluginReloadCommand);
 
     Command kickCommand;
     kickCommand.Id = "Kick";
@@ -65,7 +66,7 @@ void CommandMain::Init() {
     kickCommand.Function = [this] { CommandKick(); };
     kickCommand.Description = "kick [player] - Kicks a player from the server";
     kickCommand.Group = "Admin";
-    Commands.push_back(kickCommand);
+    AddCommand(kickCommand);
 
     Command banCommand;
     banCommand.Id = "Ban";
@@ -78,7 +79,7 @@ void CommandMain::Init() {
     banCommand.Function = [this] { CommandBan(); };
     banCommand.Description = "ban [player] - Bans from the server";
     banCommand.Group = "Admin";
-    Commands.push_back(banCommand);
+    AddCommand(banCommand);
 
     Command unbanCommand;
     unbanCommand.Id = "Un-Ban";
@@ -91,7 +92,7 @@ void CommandMain::Init() {
     unbanCommand.Function = [this] { CommandUnban(); };
     unbanCommand.Description = "unban [player] - Unbans from the server";
     unbanCommand.Group = "Admin";
-    Commands.push_back(unbanCommand);
+    AddCommand(unbanCommand);
 
     Command stopcmd;
     stopcmd.Id = "Stop-Player";
@@ -104,7 +105,7 @@ void CommandMain::Init() {
     stopcmd.Function = [this] { CommandStop(); };
     stopcmd.Description = "stop [player] - Stops a player from building";
     stopcmd.Group = "Admin";
-    Commands.push_back(stopcmd);
+    AddCommand(stopcmd);
 
     Command unstopCmd;
     unstopCmd.Id = "Un-Stop";
@@ -117,7 +118,7 @@ void CommandMain::Init() {
     unstopCmd.Function = [this] { CommandUnStop(); };
     unstopCmd.Description = "unstop [player] - Unstops a player, allowing them to build again.";
     unstopCmd.Group = "Admin";
-    Commands.push_back(unstopCmd);
+    AddCommand(unstopCmd);
 
     Command muteCmd;
     muteCmd.Id = "Mute-Player";
@@ -130,7 +131,7 @@ void CommandMain::Init() {
     muteCmd.Function = [this] { CommandMute(); };
     muteCmd.Description = "mute [player] [minutes] - Prevent a player from chatting for a time.";
     muteCmd.Group = "Admin";
-    Commands.push_back(muteCmd);
+    AddCommand(muteCmd);
 
     Command unMuteCmd;
     unMuteCmd.Id = "Unmute-Player";
@@ -143,7 +144,7 @@ void CommandMain::Init() {
     unMuteCmd.Function = [this] { CommandUnmute(); };
     muteCmd.Description = "unmute [player] - Allow a player to chat again.";
     muteCmd.Group = "Admin";
-    Commands.push_back(unMuteCmd);
+    AddCommand(unMuteCmd);
 
     Command listCommands;
     listCommands.Id = "List-Commands";
@@ -156,7 +157,7 @@ void CommandMain::Init() {
     listCommands.Function = [this] { CommandCommands(); };
     listCommands.Description = "commands [group(opt)] - Displays all commands, optionally within a specific group.";
     listCommands.Group = "Common";
-    Commands.push_back(listCommands);
+    AddCommand(listCommands);
 
     Command helpCommand;
     helpCommand.Id = "Command-Help";
@@ -169,7 +170,7 @@ void CommandMain::Init() {
     helpCommand.Function = [this] { CommandHelp(); };
     helpCommand.Description = "help [cmd] - Displays the help text of a command.";
     helpCommand.Group = "Common";
-    Commands.push_back(helpCommand);
+    AddCommand(helpCommand);
 
     Command listPlayers;
     listPlayers.Id = "List-Players";
@@ -182,7 +183,7 @@ void CommandMain::Init() {
     listPlayers.Function = [this] { CommandPlayers(); };
     listPlayers.Description = "players - Lists all players on the server and in which map they are in.";
     listPlayers.Group = "Common";
-    Commands.push_back(listPlayers);
+    AddCommand(listPlayers);
 
     Command pInfoCmd;
     pInfoCmd.Id = "Player-Info";
@@ -195,7 +196,7 @@ void CommandMain::Init() {
     pInfoCmd.Function = [this] { CommandPlayerInfo(); };
     pInfoCmd.Description = "pinfo [player] - Displays the playerDB stats of this user.";
     pInfoCmd.Group = "Admin";
-    Commands.push_back(pInfoCmd);
+    AddCommand(pInfoCmd);
 
     Command pingCommand;
     pingCommand.Id = "Ping";
@@ -208,7 +209,7 @@ void CommandMain::Init() {
     pingCommand.Function = [this] { CommandPing(); };
     pingCommand.Description = "Displays the network delay between yourself and the server.";
     pingCommand.Group = "Common";
-    Commands.push_back(pingCommand);
+    AddCommand(pingCommand);
 
     Command globalCommand;
     globalCommand.Id = "Global";
@@ -221,7 +222,7 @@ void CommandMain::Init() {
     globalCommand.Function = [this] { CommandGlobal(); };
     globalCommand.Description = "global - Toggles global chat by default on or off.";
     globalCommand.Group = "Chat";
-    Commands.push_back(globalCommand);
+    AddCommand(globalCommand);
 
     Command changeMapCommand;
     changeMapCommand.Id = "Map";
@@ -234,7 +235,7 @@ void CommandMain::Init() {
     changeMapCommand.Function = [this] { CommandChangeMap(); };
     changeMapCommand.Description = "map [name] - Change to a new map.";
     changeMapCommand.Group = "Map";
-    Commands.push_back(changeMapCommand);
+    AddCommand(changeMapCommand);
 
     Command changeRankCommand;
     changeRankCommand.Id = "Set-Rank";
@@ -247,7 +248,7 @@ void CommandMain::Init() {
     changeRankCommand.Function = [this] { CommandChangeRank(); };
     changeRankCommand.Description = "setrank [name] [-1 - 65535]- Change a player to a new rank";
     changeRankCommand.Group = "Admin";
-    Commands.push_back(changeRankCommand);
+    AddCommand(changeRankCommand);
 
     Command mapSaveCommand;
     mapSaveCommand.Id = "Map-Save";
@@ -260,7 +261,7 @@ void CommandMain::Init() {
     mapSaveCommand.Function = [this] { CommandSaveMap(); };
     mapSaveCommand.Description = "Saves the map you are on.";
     mapSaveCommand.Group = "Map";
-    Commands.push_back(mapSaveCommand);
+    AddCommand(mapSaveCommand);
 
     Command getRankCommand;
     getRankCommand.Id = "Get-Rank";
@@ -273,7 +274,7 @@ void CommandMain::Init() {
     getRankCommand.Function = [this] { CommandGetRank(); };
     getRankCommand.Description = "getrank [player] - Gets the rank of a player.";
     getRankCommand.Group = "Common";
-    Commands.push_back(getRankCommand);
+    AddCommand(getRankCommand);
 
     Command setMaterialCommand;
     setMaterialCommand.Id = "Material";
@@ -286,7 +287,7 @@ void CommandMain::Init() {
     setMaterialCommand.Function = [this] { CommandSetMaterial(); };
     setMaterialCommand.Description = "material [block name] - Binds stone to instead build this material. /cancel to stop.";
     setMaterialCommand.Group = "Building";
-    Commands.push_back(setMaterialCommand);
+    AddCommand(setMaterialCommand);
 
     Command materialList;
     materialList.Id = "List-Materials";
@@ -299,7 +300,7 @@ void CommandMain::Init() {
     materialList.Function = [this] { CommandMaterials(); };
     materialList.Description = "Displays a list of all custom blocks on the server.";
     materialList.Group = "Building";
-    Commands.push_back(materialList);
+    AddCommand(materialList);
 
     Command undoPLayer;
     undoPLayer.Id = "Undo-Player";
@@ -312,7 +313,7 @@ void CommandMain::Init() {
     undoPLayer.Function = [this] { CommandUndoPlayer(); };
     undoPLayer.Description = "undoplayer [player] [time] - Undoes the blocks placed by a player in the given duration.";
     undoPLayer.Group = "Building";
-    Commands.push_back(undoPLayer);
+    AddCommand(undoPLayer);
 
     Command undoCmd;
     undoCmd.Id = "Undo";
@@ -325,7 +326,7 @@ void CommandMain::Init() {
     undoCmd.Function = [this] { CommandUndo(); };
     undoCmd.Description = "undo [time] - Undoes your block changes for the past [time] seconds.";
     undoCmd.Group = "Building";
-    Commands.push_back(undoCmd);
+    AddCommand(undoCmd);
 
     Command redoCmd;
     redoCmd.Id = "Redo";
@@ -338,7 +339,7 @@ void CommandMain::Init() {
     redoCmd.Function = [this] { CommandRedo(); };
     redoCmd.Description = "redo [time] - Replays block changes you removed with /undo";
     redoCmd.Group = "Building";
-    Commands.push_back(redoCmd);
+    AddCommand(redoCmd);
 
     Command mapList;
     mapList.Id = "List-Maps";
@@ -351,7 +352,7 @@ void CommandMain::Init() {
     mapList.Function = [this] { CommandListMaps(); };
     mapList.Description = "Lists all maps available to change to.";
     mapList.Group = "Common";
-    Commands.push_back(mapList);
+    AddCommand(mapList);
 
     Command serverInfo;
     serverInfo.Id = "Server-Info";
@@ -364,7 +365,7 @@ void CommandMain::Init() {
     serverInfo.Function = [this] { CommandServerInfo(); };
     serverInfo.Description = "Displays information about this server.";
     serverInfo.Group = "Common";
-    Commands.push_back(serverInfo);
+    AddCommand(serverInfo);
 
     Command logCommand;
     logCommand.Id = "Log";
@@ -377,7 +378,7 @@ void CommandMain::Init() {
     logCommand.Function = [this] { CommandLogLast(); };
     logCommand.Description = "log [lines] - Display the last lines from the server console log.";
     logCommand.Group = "Admin";
-    Commands.push_back(logCommand);
+    AddCommand(logCommand);
 
     Command tpCommand;
     tpCommand.Id = "Teleport";
@@ -390,7 +391,7 @@ void CommandMain::Init() {
     tpCommand.Function = [this] { CommandTeleport(); };
     tpCommand.Description = "tp [player] - Teleport yourself to another player.";
     tpCommand.Group = "Common";
-    Commands.push_back(tpCommand);
+    AddCommand(tpCommand);
 
     Command bringCommand;
     bringCommand.Id = "Bring";
@@ -403,7 +404,7 @@ void CommandMain::Init() {
     bringCommand.Function = [this] { CommandBring(); };
     bringCommand.Description = "bring [player] - Bring a player to your location.";
     bringCommand.Group = "Common";
-    Commands.push_back(bringCommand);
+    AddCommand(bringCommand);
 
     Command mLoadCommand;
     mLoadCommand.Id = "Map-Load";
@@ -416,7 +417,7 @@ void CommandMain::Init() {
     mLoadCommand.Function = [this] { CommandLoadMap(); };
     mLoadCommand.Description = "mapload [folder] - Loads a map from a given file into this map file.";
     mLoadCommand.Group = "Map";
-    Commands.push_back(mLoadCommand);
+    AddCommand(mLoadCommand);
 
     Command mResizeCmd;
     mResizeCmd.Id = "Map-Resize";
@@ -429,7 +430,7 @@ void CommandMain::Init() {
     mResizeCmd.Function = [this] { CommandResizeMap(); };
     mResizeCmd.Description = "mapresize [x] [y] [z] - Resizes this map to a new size.";
     mResizeCmd.Group = "Map";
-    Commands.push_back(mResizeCmd);
+    AddCommand(mResizeCmd);
 
     Command mfillCommand;
     mfillCommand.Id = "Map-Fill";
@@ -442,7 +443,7 @@ void CommandMain::Init() {
     mfillCommand.Function = [this] { CommandMapFill(); };
     mfillCommand.Description = "mapfill [gen] [args] - Run a map generator on this map. Args optional.";
     mfillCommand.Group = "Map";
-    Commands.push_back(mfillCommand);
+    AddCommand(mfillCommand);
 
     Command mRename;
     mRename.Id = "Map-Rename";
@@ -455,7 +456,7 @@ void CommandMain::Init() {
     mRename.Function = [this] { CommandRenameMap(); };
     mRename.Description = "maprename [name] - Changes the name of this map in settings and on disk.";
     mRename.Group = "Map";
-    Commands.push_back(mRename);
+    AddCommand(mRename);
 
     Command mDelete;
     mDelete.Id = "Map-Delete";
@@ -468,7 +469,7 @@ void CommandMain::Init() {
     mDelete.Function = [this] { CommandDeleteMap(); };
     mDelete.Description = "Delete this map.";
     mDelete.Group = "Map";
-    Commands.push_back(mDelete);
+    AddCommand(mDelete);
 
     Command mAdd;
     mAdd.Id = "Map-Add";
@@ -481,7 +482,7 @@ void CommandMain::Init() {
     mAdd.Function = [this] { CommandAddMap(); };
     mAdd.Description = "mapadd [name] - Creates a new map on the server.";
     mAdd.Group = "Map";
-    Commands.push_back(mAdd);
+    AddCommand(mAdd);
 
     Command mrbs;
     mrbs.Id = "Map_Rank_Build_Set";
@@ -494,7 +495,7 @@ void CommandMain::Init() {
     mrbs.Function = [this] { CommandMapRankBuildSet(); };
     mrbs.Description = "mapbuildrank [rank] - Sets the minimum rank you need to build on this map.";
     mrbs.Group = "Map";
-    Commands.push_back(mrbs);
+    AddCommand(mrbs);
 
     Command mrss;
     mrss.Id = "Map_Rank_Show_Set";
@@ -507,7 +508,7 @@ void CommandMain::Init() {
     mrss.Function = [this] { CommandMapRankShowSet(); };
     mrss.Description = "mapshowrank [rank] - Sets the minimum rank you need to have to see this map on /maps.";
     mrss.Group = "Map";
-    Commands.push_back(mrss);
+    AddCommand(mrss);
 
     Command mrjs;
     mrjs.Id = "Map_Rank_Join_Set";
@@ -520,7 +521,33 @@ void CommandMain::Init() {
     mrjs.Function = [this] { CommandMapRankJoinSet(); };
     mrjs.Description = "mapjoinrank [rank] - Sets the minimum rank to join this map.";
     mrjs.Group = "Map";
-    Commands.push_back(mrjs);
+    AddCommand(mrjs);
+
+    Command mStopBc;
+    mStopBc.Id = "Map_Blocks_Stop";
+    mStopBc.Name = "bstop";
+    mStopBc.Internal = true;
+    mStopBc.Hidden = false;
+    mStopBc.Rank = 150;
+    mStopBc.RankShow = 150;
+    mStopBc.CanConsole = false;
+    mStopBc.Function = [this] { CommandStopBlocks(); };
+    mStopBc.Description = "Stops block changes from being processed on this map.";
+    mStopBc.Group = "Map";
+    AddCommand(mStopBc);
+
+    Command mStartBc;
+    mStartBc.Id = "Map_Blocks_Start";
+    mStartBc.Name = "pstart";
+    mStartBc.Internal = true;
+    mStartBc.Hidden = false;
+    mStartBc.Rank = 150;
+    mStartBc.RankShow = 150;
+    mStartBc.CanConsole = false;
+    mStartBc.Function = [this] { CommandStartBlocks(); };
+    mStartBc.Description = "Enables block changes on this map.";
+    mStartBc.Group = "Map";
+    AddCommand(mStartBc);
 
     Command mStopPhys;
     mStopPhys.Id = "Map_Physic_Stop";
@@ -533,7 +560,7 @@ void CommandMain::Init() {
     mStopPhys.Function = [this] { CommandStopPhysics(); };
     mStopPhys.Description = "Stops block physics from being processed on this map.";
     mStopPhys.Group = "Map";
-    Commands.push_back(mStopPhys);
+    AddCommand(mStopPhys);
 
     Command mStartPhys;
     mStartPhys.Id = "Map_Physic_Start";
@@ -546,7 +573,7 @@ void CommandMain::Init() {
     mStartPhys.Function = [this] { CommandStartPhysics(); };
     mStartPhys.Description = "Enables block physics on this map.";
     mStartPhys.Group = "Map";
-    Commands.push_back(mStartPhys);
+    AddCommand(mStartPhys);
 
     Command mSetSpawn;
     mSetSpawn.Id = "Set-Spawn";
@@ -559,7 +586,7 @@ void CommandMain::Init() {
     mSetSpawn.Function = [this] { CommandSetSpawn(); };
     mSetSpawn.Description = "Sets the map spawn point to your current location.";
     mSetSpawn.Group = "Map";
-    Commands.push_back(mSetSpawn);
+    AddCommand(mSetSpawn);
 
     Command mSetKillSpawn;
     mSetKillSpawn.Id = "Set-Killspawn";
@@ -572,7 +599,7 @@ void CommandMain::Init() {
     mSetKillSpawn.Function = [this] { CommandSetKilLSpawn(); };
     mSetKillSpawn.Description = "Sets the respawn location of the map to your current location.";
     mSetKillSpawn.Group = "Map";
-    Commands.push_back(mSetKillSpawn);
+    AddCommand(mSetKillSpawn);
 
     Command mTeleporters;
     mTeleporters.Id = "List-Teleporters";
@@ -585,7 +612,7 @@ void CommandMain::Init() {
     mTeleporters.Function = [this] { CommandTeleporters(); };
     mTeleporters.Description = "Lists all teleporters on this map.";
     mTeleporters.Group = "Map";
-    Commands.push_back(mTeleporters);
+    AddCommand(mTeleporters);
 
     Command cDeleteTp;
     cDeleteTp.Id = "Delete-Teleporterbox";
@@ -598,7 +625,7 @@ void CommandMain::Init() {
     cDeleteTp.Function = [this] { CommandDeleteTeleporter(); };
     cDeleteTp.Description = "deltp [name] - Deletes a teleporter from this map.";
     cDeleteTp.Group = "Map";
-    Commands.push_back(cDeleteTp);
+    AddCommand(cDeleteTp);
 
     Command mapInfo;
     mapInfo.Id = "Map-Info";
@@ -611,7 +638,20 @@ void CommandMain::Init() {
     mapInfo.Function = [this] { CommandMapInfo(); };
     mapInfo.Description = "Displays information about the current map.";
     mapInfo.Group = "Map";
-    Commands.push_back(mapInfo);
+    AddCommand(mapInfo);
+
+    Command cInfo;
+    cInfo.Id = "Client-Info";
+    cInfo.Name = "cinfo";
+    cInfo.Internal = true;
+    cInfo.Hidden = true;
+    cInfo.Rank = 200;
+    cInfo.RankShow = 200;
+    cInfo.CanConsole = false;
+    cInfo.Function = [this] { CommandClientInfo(); };
+    cInfo.Description = "Displays information about the current Client {DEBUG}";
+    cInfo.Group = "DEBUG";
+    AddCommand(cInfo);
 
     Command usermaps;
     usermaps.Id = "List-Usermaps";
@@ -624,7 +664,7 @@ void CommandMain::Init() {
     usermaps.Function = [this] { CommandUserMaps(); };
     usermaps.Description = "Display a list of saved builds for import.";
     usermaps.Group = "Building";
-    Commands.push_back(usermaps);
+    AddCommand(usermaps);
 
     Command placeCmd;
     placeCmd.Id = "Place";
@@ -637,10 +677,17 @@ void CommandMain::Init() {
     placeCmd.Function = [this] { CommandPlace(); };
     placeCmd.Description = "Places a block below your feet. Default of whatever block you placed last.";
     placeCmd.Group = "Building";
-    Commands.push_back(placeCmd);
+    AddCommand(placeCmd);
 
     Save();
 }
+void CommandMain::AddCommand(const Command& command) {
+    // -- Remove any existing command sharing this name so the newest one wins.
+    // -- Lookup in CommandDo matches on Name (case-insensitive), so dedupe on Name.
+    std::erase_if(Commands, [&command](const Command &c){ return Utils::InsensitiveCompare(c.Name, command.Name); });
+    Commands.push_back(command);
+}
+
 void CommandMain::RefreshGroups() {
     // -- Build list of groups.
     CommandGroups.clear();
@@ -1469,7 +1516,7 @@ void CommandMain::CommandLoadMap() {
     std::string mapDirectory;
 
     if (!ParsedText0.empty()) {
-        mapDirectory = Files::GetFolder("Maps") + ParsedText0;
+        mapDirectory = ParsedText0;
     }
 
     MapMain* mapMain = MapMain::GetInstance();
@@ -1517,7 +1564,7 @@ void CommandMain::CommandRenameMap() {
     MapMain* mapMain = MapMain::GetInstance();
     std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
     std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
-    //cMap->Name() = ParsedText0;
+    cMap->SetName(mapMain->GetUniqueName(ParsedText0, cMap->ID));
     mapMain->SaveFile = true;
     c->SendChat("§SMap Renamed.");
 }
@@ -1729,6 +1776,7 @@ void CommandMain::CommandMapInfo() {
     textToSend += "§SName: " + cMap->Name() + "<br>";
     textToSend += "§SId: " + stringulate(cMap->ID) + "<br>";
     textToSend += "§SDirectory: " + cMap->filePath + "<br>";
+    textToSend += "§SBCQ: &3" + stringulate(cMap->bcQueue->GetSize()) + " §S- PHQ: &3" + stringulate(cMap->pQueue->GetSize()) + "<br>";
     Vector3S mapSize = cMap->GetSize();
     textToSend += "§SSize: " + stringulate(mapSize.X)  + "x" + stringulate(mapSize.Y)  + "x" + stringulate(mapSize.Z) + "<br>";
     MapPermissions perms = cMap->GetMapPermissions();
@@ -1745,7 +1793,7 @@ void CommandMain::CommandMapInfo() {
     textToSend += "§SSky Color: " + to_hex_format(mapEnv.SkyColor) + "<br>";
     textToSend += "§SCloud Color: " + to_hex_format(mapEnv.CloudColor) + "<br>";
     textToSend += "§SFog Color: " + to_hex_format(mapEnv.FogColor) + "<br>";
-    textToSend += "§ALight Color: " + to_hex_format(mapEnv.Alight) + "<br>";
+    textToSend += "§SALight Color: " + to_hex_format(mapEnv.Alight) + "<br>";
     textToSend += "§SDLight Color: " + to_hex_format(mapEnv.DLight) + "<br>";
 
 
@@ -1821,4 +1869,30 @@ void CommandMain::CommandUserMaps() {
         }
     }
     c->SendChat(textToSend);
+}
+
+void CommandMain::CommandStopBlocks() {
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
+    MapMain* mapMain = MapMain::GetInstance();
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
+    cMap->BlockchangeStopped = true;
+    c->SendChat("§SBlock changes stopped.");
+}
+
+void CommandMain::CommandStartBlocks() {
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
+    MapMain* mapMain = MapMain::GetInstance();
+    std::shared_ptr<Entity> clientEntity = Entity::GetPointer(CommandClientId, true);
+    std::shared_ptr<Map> cMap = mapMain->GetPointer(clientEntity->MapID);
+    cMap->BlockchangeStopped = false;
+    c->SendChat("§SBlock changes started.");
+}
+
+void CommandMain::CommandClientInfo() {
+    std::shared_ptr<IMinecraftClient> c = Network::GetClient(CommandClientId);
+    std::shared_ptr<NetworkClient> concrete = std::static_pointer_cast<NetworkClient>(c);
+
+    c->SendChat("§SYour Send Queue: " + stringulate(concrete->SendBuffer->Size()) + ".");
+    c->SendChat("§SYour Receive Queue: " + stringulate(concrete->ReceiveBuffer->Size()) + ".");
 }
