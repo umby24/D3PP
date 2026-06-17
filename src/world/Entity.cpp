@@ -242,10 +242,12 @@ void Entity::Despawn() const {
         if (nc->GetMapId() != MapID)
             continue;
 
-        auto mm = MapMain::GetInstance();
-        auto currentMap = mm->GetPointer(MapID);
+        // -- Despawn only tells other clients to remove this entity's avatar.
+        // -- Map occupancy bookkeeping (Clients) is owned by the lifecycle call
+        // -- sites (Client::Logout, map switch in PlayerMain), so doing it here --
+        // -- once per other client on the map -- corrupted the count and could
+        // -- unload a map that still had players on it.
         nc->DespawnEntity(selfPointer);
-        currentMap->RemoveEntity(selfPointer);
     }
 }
 
