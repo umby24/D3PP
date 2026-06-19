@@ -638,7 +638,6 @@ void Map::AddTeleporter(std::string id, MinecraftLocation start, MinecraftLocati
     MapTeleporterElement mte;
     Vector3S startVec = start.GetAsBlockCoords();
     Vector3S endVec = end.GetAsBlockCoords();
-    Vector3S destVec = end.GetAsBlockCoords();
 
     if (startVec.X > endVec.X) {
         int tmp = startVec.X;

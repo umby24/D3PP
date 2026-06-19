@@ -17,7 +17,8 @@ namespace D3PP::Common {
         short ShowRank;
         std::vector<world::Teleporter> portals;
         std::vector<world::CustomParticle> particles;
-        std::vector<unsigned char> history;
+        std::vector<int> history;
+        std::vector<unsigned char> metadata;
 
         Nbt::TagCompound Read(Nbt::TagCompound metadata) override;
         Nbt::TagCompound Write() override;

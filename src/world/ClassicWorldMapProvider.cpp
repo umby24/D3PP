@@ -23,6 +23,8 @@ void D3PP::world::ClassicWorldMapProvider::CreateNew(const Common::Vector3S &siz
     m_cwMap->CreatingUsername = CreatingUser;
     m_currentPath = path;
     MapName = name;
+    m_d3meta->history.resize(m_cwMap->BlockData.size());
+    m_d3meta->metadata.resize(m_cwMap->BlockData.size());
     m_cwMap->metaParsers.insert(std::make_pair("D3PP", m_d3meta));
     m_cwMap->Save(m_currentPath);
 }
@@ -77,6 +79,14 @@ bool D3PP::world::ClassicWorldMapProvider::Load(const std::string &filePath) {
     if (firstLoad || samePath)
         MapName = m_cwMap->MapName;
 
+    // -- Update the history and metadata entries if they need to be.
+    if (m_d3meta->metadata.size() != m_cwMap->BlockData.size()) {
+        m_d3meta->metadata.resize(m_cwMap->BlockData.size());
+    }
+    if (m_d3meta->history.size() != m_cwMap->BlockData.size()) {
+        m_d3meta->history.resize(m_cwMap->BlockData.size());
+    }
+
     return true;
 }
 
@@ -99,7 +109,8 @@ void D3PP::world::ClassicWorldMapProvider::SetSize(const Common::Vector3S &newSi
 
     int totalSize = newSize.X * newSize.Y * newSize.Z;
     m_cwMap->BlockData.resize(totalSize);
-
+    m_d3meta->metadata.resize(m_cwMap->BlockData.size());
+    m_d3meta->history.resize(m_cwMap->BlockData.size());
     m_cwMap->Size = Common::Vector3S{newSize.X, newSize.Z, newSize.Y};
 
 }
@@ -129,11 +140,22 @@ unsigned char D3PP::world::ClassicWorldMapProvider::GetBlock(const Common::Vecto
 }
 
 short D3PP::world::ClassicWorldMapProvider::GetLastPlayer(const Common::Vector3S &location) {
-    return 0;
+    int blockIndex = GetBlockIndex(location.X, location.Y, location.Z);
+    if (blockIndex >= m_cwMap->BlockData.size()) return 0;
+    int histEntry = m_d3meta->history[blockIndex];
+    // -- Upper 2 bytes are the player, lower 2 are what block it used to be.
+    short playerId = histEntry >> 16;
+    return playerId;
 }
 
 void D3PP::world::ClassicWorldMapProvider::SetLastPlayer(const Common::Vector3S &location, const short &player) {
-// -- TODO:
+    int blockIndex = GetBlockIndex(location.X, location.Y, location.Z);
+    if (blockIndex >= m_cwMap->BlockData.size()) return;
+    int histEntry = m_d3meta->history[blockIndex];
+    // -- Shift player so it occupies the top two bytes
+    // -- Copy in the bottom two bytes that were already there.
+    histEntry = (static_cast<int>(player) << 16) | (histEntry & 0xFFFF);
+    m_d3meta->history[blockIndex] = histEntry;
 }
 
 void D3PP::world::ClassicWorldMapProvider::SetBlocks(const std::vector<unsigned char> &blocks) {

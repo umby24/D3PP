@@ -61,6 +61,18 @@ Nbt::TagCompound D3PP::Common::D3PPMetadata::Read(Nbt::TagCompound metadata) {
         }
     }
 
+    this->metadata.clear();
+    if (cpeBase.data.contains("Metadata")) {
+        for (auto q : std::get<Nbt::TagByteArray>(cpeBase.data["Metadata"])) {
+            this->metadata.push_back(static_cast<unsigned char>(q));
+        }
+    }
+    if (cpeBase.data.contains("History")) {
+        for (auto q : std::get<Nbt::TagIntArray>(cpeBase.data["History"])) {
+            this->history.push_back(q);
+        }
+    }
+
     metadata.data.erase("D3PP");
     return metadata;
 }
@@ -129,6 +141,12 @@ Nbt::TagCompound D3PP::Common::D3PPMetadata::Write() {
     }
     parts.base = partList;
     base.data.insert({"Particles", { parts }});
+    std::vector<signed char> tempArr(metadata.begin(), metadata.end());
+
+    base.data.insert({"Metadata", {Nbt::TagByteArray(tempArr)}});
+
+    base.data.insert({"History", {Nbt::TagIntArray(this->history)}});
+    tempArr.clear();
 
     return base;
 }

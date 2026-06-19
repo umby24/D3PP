@@ -435,6 +435,7 @@ bool LuaPlugin::IsLoaded() {
  */
 void LuaPlugin::LoadNewOrChanged() {
     std::vector<std::string> pluginFiles = EnumerateDirectory(m_folder);
+    std::ranges::reverse(pluginFiles); // -- Try to load lesser nested files first, maybe?
 
     for (auto const& file : pluginFiles) {
         auto i = _files.find(file);

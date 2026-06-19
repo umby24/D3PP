@@ -22,24 +22,11 @@ const int MaxStringLength = 65;
 const std::string MODULE_NAME = "CHAT";
 
 /**
- * Escapes % -> & so users can use color codes.
- * Escapes %% -> % , so users maintain usage of % sign.
  * Inserts line breaks at <br>
  * @param input
  * @param currentEntityId
  */
 void Chat::HandleChatEscapes(std::string &input) {
-    Utils::replaceAll(input, "%%", "§"); // -- Temporarily move an escaped % sign to something we wont remove.
-    std::string percentString = "%";
-    std::string andString = "&";
-
-    for (int i = 48; i < 57; i++) { // -- For numbers 0-9, replace %[n] with &[n]
-        Utils::replaceAll(input, percentString + (char)i, andString + (char)i);
-    }
-    for (int i = 97; i < 102; i++) { // -- characters a-f, same thing.
-        Utils::replaceAll(input, percentString + (char)i, andString + (char)i);
-    }
-    Utils::replaceAll(input, "§", percentString); // -- Replace the escaped percentages from before.
     Utils::replaceAll(input, "<br>", "\n"); // -- Insert line breaks [Legacy D3 thing..]
 }
 
