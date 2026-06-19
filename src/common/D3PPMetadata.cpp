@@ -24,7 +24,15 @@ Nbt::TagCompound D3PP::Common::D3PPMetadata::Read(Nbt::TagCompound metadata) {
             world::Teleporter newTp;
             auto comp = std::get<Nbt::TagCompound>(t.second);
             newTp.Name = t.first;
-            newTp.DestinationMap = std::get<Nbt::TagString>(comp["DestinationMap"]);
+            newTp.DestinationMap = std::get<Nbt::TagString>(comp["Destination"]);
+            Vector3S start(std::get<Nbt::TagShort>(comp["startX"]), std::get<Nbt::TagShort>(comp["startY"]), std::get<Nbt::TagShort>(comp["startZ"]));
+            Vector3S end(std::get<Nbt::TagShort>(comp["endX"]), std::get<Nbt::TagShort>(comp["endY"]), std::get<Nbt::TagShort>(comp["endZ"]));
+            Vector3S dest(std::get<Nbt::TagShort>(comp["DestX"]), std::get<Nbt::TagShort>(comp["DestY"]), std::get<Nbt::TagShort>(comp["DestZ"]));
+            newTp.OriginStart.SetAsBlockCoords(start);
+            newTp.OriginEnd.SetAsBlockCoords(end);
+            newTp.Destination.SetAsBlockCoords(dest);
+
+            portals.push_back(newTp);
         }
     }
     if (cpeBase.data.contains("Particles")) {
