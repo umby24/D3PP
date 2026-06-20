@@ -75,6 +75,7 @@ Nbt::TagCompound D3PP::Common::D3PPMetadata::Read(Nbt::TagCompound metadata) {
             this->metadata.push_back(static_cast<unsigned char>(q));
         }
     }
+    this->history.clear();
     if (cpeBase.data.contains("History")) {
         for (auto q : std::get<Nbt::TagIntArray>(cpeBase.data["History"])) {
             this->history.push_back(q);

@@ -316,7 +316,7 @@ namespace Nbt {
         }
 
     protected:
-        static Tag Decode(std::vector<unsigned char> data) {
+        static Tag Decode(const std::vector<unsigned char> &data) {
             if (data.at(0) != TAG_COMPOUND) {
                 throw std::runtime_error("TAG_COMPOUND is not the base");
             }
@@ -337,7 +337,7 @@ namespace Nbt {
             return result;
         }
 
-        static TagCompound ReadCompound(std::vector<unsigned char> data, int &offset) {
+        static TagCompound ReadCompound(const std::vector<unsigned char> &data, int &offset) {
             TagType nextType = TAG_END;
             TagCompound baseTag;
             std::string nextName = "";
@@ -395,7 +395,7 @@ namespace Nbt {
                 data.push_back(static_cast<unsigned char>(TAG_COMPOUND));
         }
 
-        static Tag ReadOnType(std::vector<unsigned char> data, int &offset, TagType nextType) {
+        static Tag ReadOnType(const std::vector<unsigned char> &data, int &offset, TagType nextType) {
             Tag nextTag;
             switch (nextType) {
                 case TAG_BYTE: {
@@ -492,7 +492,7 @@ namespace Nbt {
                 WriteCompound(std::get<TagCompound>(t), data);
         }
 
-        static TagList ReadList(std::vector<unsigned char> data, int &offset) {
+        static TagList ReadList(const std::vector<unsigned char> &data, int &offset) {
             auto listType = static_cast<TagType>(data.at(offset++));
             TagInt listLength = ReadInt(data, offset);
             TagList result;
@@ -631,7 +631,7 @@ namespace Nbt {
             }
         }
 
-        static TagByte ReadByte(std::vector<unsigned char> data, int &offset) {
+        static TagByte ReadByte(const std::vector<unsigned char> &data, int &offset) {
             return data.at(offset++);
         }
 
@@ -639,7 +639,7 @@ namespace Nbt {
             data.push_back(static_cast<unsigned char>(tag));
         }
 
-        static TagShort ReadShort(std::vector<unsigned char> data, int &offset) {
+        static TagShort ReadShort(const std::vector<unsigned char> &data, int &offset) {
             short val = 0;
             val |= data.at(offset++) << 8;
             val |= data.at(offset++);
@@ -651,7 +651,7 @@ namespace Nbt {
             data.push_back(static_cast<unsigned char>(tag));
         }
 
-        static TagInt ReadInt(std::vector<unsigned char> data, int &offset) {
+        static TagInt ReadInt(const std::vector<unsigned char> &data, int &offset) {
             int result = 0;
             result |= data.at(offset++) << 24;
             result |= data.at(offset++) << 16;
@@ -667,7 +667,7 @@ namespace Nbt {
             data.push_back(static_cast<unsigned char>(tag));
         }
 
-        static TagLong ReadLong(std::vector<unsigned char> data, int &offset) {
+        static TagLong ReadLong(const std::vector<unsigned char> &data, int &offset) {
             TagLong result = 0;
             char *resultD = (char *) &result;
             resultD[7] = data.at(offset++);
@@ -692,7 +692,7 @@ namespace Nbt {
             data.push_back(static_cast<unsigned char>(tag));
         }
 
-        static TagFloat ReadFloat(std::vector<unsigned char> data, int &offset) {
+        static TagFloat ReadFloat(const std::vector<unsigned char> &data, int &offset) {
             TagFloat result = 0;
             char *resultD = (char *) &result;
             resultD[3] = data.at(offset++);
@@ -711,7 +711,7 @@ namespace Nbt {
             data.push_back(static_cast<unsigned char>(tagD[0]));
         }
 
-        static TagDouble ReadDouble(std::vector<unsigned char> data, int &offset) {
+        static TagDouble ReadDouble(const std::vector<unsigned char> &data, int &offset) {
             TagDouble result = 0;
             char *resultD = (char *) &result;
             resultD[7] = data.at(offset++);
@@ -738,7 +738,7 @@ namespace Nbt {
             data.push_back(static_cast<unsigned char>(tagD[0]));
         }
 
-        static TagByteArray ReadByteArray(std::vector<unsigned char> data, int &offset) {
+        static TagByteArray ReadByteArray(const std::vector<unsigned char> &data, int &offset) {
             TagInt arraySize = ReadInt(data, offset);
             TagByteArray result;
             result.resize(arraySize);
@@ -756,7 +756,7 @@ namespace Nbt {
             }
         }
 
-        static TagString ReadString(std::vector<unsigned char> data, int &offset) {
+        static TagString ReadString(const std::vector<unsigned char> &data, int &offset) {
             short strLen = 0;
             strLen |= data.at(offset++) << 8;
             strLen |= data.at(offset++);
@@ -774,9 +774,10 @@ namespace Nbt {
             }
         }
 
-        static TagIntArray ReadIntArray(std::vector<unsigned char> data, int &offset) {
+        static TagIntArray ReadIntArray(const std::vector<unsigned char> &data, int &offset) {
             TagInt arraySize = ReadInt(data, offset);
             TagIntArray result;
+            // -- Locks up here
             for (int i = 0; i < arraySize; i++) {
                 result.push_back(ReadInt(data, offset));
             }
@@ -791,7 +792,7 @@ namespace Nbt {
             }
         }
 
-        static TagLongArray ReadLongArray(std::vector<unsigned char> data, int &offset) {
+        static TagLongArray ReadLongArray(const std::vector<unsigned char> &data, int &offset) {
             TagInt arraySize = ReadInt(data, offset);
             TagLongArray result;
             for (int i = 0; i < arraySize; i++) {
