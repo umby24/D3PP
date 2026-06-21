@@ -26,7 +26,7 @@ void D3PP::world::D3MapProvider::CreateNew(const Common::Vector3S &size, const s
 }
 
 bool D3PP::world::D3MapProvider::Save(const std::string &filePath) {
-    if (filePath == "")
+    if (filePath.empty())
         return m_d3map->Save();
 
     return m_d3map->Save(filePath);

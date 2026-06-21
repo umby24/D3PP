@@ -106,6 +106,7 @@ void D3PP::world::MapMain::MainFunc() {
             }
         }
         if (mapPtr->loaded && (std::chrono::system_clock::now() - mapPtr->LastClient) > std::chrono::minutes(3) && mapPtr->Clients == 0) { // -- Unload unused maps after 3 minutes
+            mapPtr->Save("");
             mapPtr->Unload();
         }
     }

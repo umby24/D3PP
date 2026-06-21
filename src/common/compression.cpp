@@ -27,8 +27,9 @@ int GZIP::GZip_Decompress(unsigned char *output, int outputLen, unsigned char *i
 
     int aResult = inflate(&asdf, Z_NO_FLUSH);
 
-    if (aResult != Z_STREAM_END && aResult != Z_OK) {
-        return aResult;
+    if (aResult != Z_STREAM_END) {
+        inflateEnd(&asdf);
+        return -1;
     }
 
     inflateEnd(&asdf);
@@ -53,8 +54,9 @@ int GZIP::GZip_Compress(unsigned char *output, int outputLen, unsigned char *inp
 
     int aResult = deflate(&asdf, Z_FINISH);
 
-    if (aResult != Z_STREAM_END && aResult != Z_OK) {
-        return aResult;
+    if (aResult != Z_STREAM_END) {
+        deflateEnd(&asdf);
+        return -1;
     }
 
     deflateEnd(&asdf);
@@ -66,9 +68,10 @@ int GZIP::GZip_CompressBound(int inputLen) {
 }
 
 bool GZIP::GZip_CompressToFile(unsigned char *input, int inputLen, std::string filename) {
+    int bound = GZip_CompressBound(inputLen);
     unsigned char* compressed;
-    compressed = new unsigned char[inputLen];
-    int compResult = GZip_Compress(compressed, inputLen, input, inputLen);
+    compressed = new unsigned char[bound];
+    int compResult = GZip_Compress(compressed, bound, input, inputLen);
 
     if (compResult == -1) {
         delete[] compressed;

@@ -139,10 +139,24 @@ namespace Nbt {
             }
 
             if (compression == ZLib || compression == GZip) {
-                data.clear();
-                data.resize(67108864);
-                int decompSize = GZIP::GZip_DecompressFromFile(reinterpret_cast<unsigned char *>(data.data()), 67108864,
-                                                               file);
+                // GZip_DecompressFromFile returns <= 0 when the output buffer was
+                // too small to hold the whole stream. Start at 64 MiB and keep
+                // doubling until the map fits, so large maps (e.g. ones carrying a
+                // per-block History int array) don't get silently truncated.
+                std::size_t capacity = 67108864;
+                const std::size_t maxCapacity = 1ull << 30; // 1 GiB ceiling (output length is passed as int)
+                int decompSize = 0;
+                while (true) {
+                    data.assign(capacity, 0);
+                    decompSize = GZIP::GZip_DecompressFromFile(
+                        reinterpret_cast<unsigned char *>(data.data()),
+                        static_cast<int>(capacity), file);
+                    if (decompSize > 0)
+                        break;
+                    if (capacity >= maxCapacity)
+                        throw std::runtime_error("NBT file decompresses to more than the supported maximum size");
+                    capacity *= 2;
+                }
                 data.resize(decompSize);
             }
 
@@ -777,7 +791,6 @@ namespace Nbt {
         static TagIntArray ReadIntArray(const std::vector<unsigned char> &data, int &offset) {
             TagInt arraySize = ReadInt(data, offset);
             TagIntArray result;
-            // -- Locks up here
             for (int i = 0; i < arraySize; i++) {
                 result.push_back(ReadInt(data, offset));
             }
